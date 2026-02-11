@@ -9,7 +9,7 @@ namespace MasterPlay.Service.Workers
     public class MasterPlayWorker : BackgroundService
     {
         private readonly IHostedService _backupService;
-        private readonly IHostedService _libraryService;  // MỚI: service con scan GameLibrary
+        private readonly IHostedService _libraryService;
 
         public MasterPlayWorker(
             IHostedService backupService,

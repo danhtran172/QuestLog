@@ -19,6 +19,7 @@ namespace MasterPlay.Service
                 {
                     services.AddHostedService<MasterPlayWorker>();
                     services.AddHostedService<BackupService>();
+                    services.AddHostedService<LibraryService>();
                 });
     }
 }

@@ -11,6 +11,8 @@ namespace MasterPlay.Models
         public string ConfigFilePath { get; set; } = string.Empty;
         public string DataFilePath { get; set; } = string.Empty;
         public string GameLibraryPath { get; set; } = string.Empty;
+        public string AvailableGamesPath { get; set; } = string.Empty;
+
     }
 
     public static class ConfigManager
@@ -64,46 +66,28 @@ namespace MasterPlay.Models
             return fallback;
         }
 
-        public static string GetConfigData(string dataField)
+        public static string GetAvailableGamesPath()
         {
-            if (string.IsNullOrWhiteSpace(dataField))
-            {
-                return string.Empty;
-            }
-
             var config = LoadConfig();
-
-            var property = typeof(Config).GetProperty(dataField);
-            if (property != null && property.PropertyType == typeof(string))
+            if (!string.IsNullOrEmpty(config.AvailableGamesPath))
             {
-                string value = property.GetValue(config) as string ?? string.Empty;
-
-                // Xử lý fallback đặc biệt cho BackupRootPath
-                if (dataField == "BackupRootPath" && string.IsNullOrEmpty(value))
-                {
-                    value = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                        "MasterPlayBackups");
-                    config.BackupRootPath = value;
-                    SaveConfig(config);
-                }
-
-                return value;
+                return config.AvailableGamesPath;
             }
-
-            return string.Empty;
+            return null;
         }
+
 
         public static Config LoadConfig()
         {
             string dir = GetConfigDirectory();
-            string configPath = GetConfigPath();  // Bây giờ an toàn
+            string configPath = GetConfigPath();
 
             if (!Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
             }
 
+            //Nếu ko có file config thì tạo mới default
             if (!File.Exists(configPath))
             {
                 var defaultConfig = new Config
@@ -112,7 +96,9 @@ namespace MasterPlay.Models
                     DataFilePath = Path.Combine(dir, "gameData.json"),
                     BackupRootPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                        "MasterPlayBackups")
+                        "Backups"),
+                    GameLibraryPath = "D:\\Games",
+                    AvailableGamesPath = Path.Combine(dir, "availableGames.json")
                 };
 
                 string json = JsonConvert.SerializeObject(defaultConfig, Formatting.Indented);
@@ -123,23 +109,23 @@ namespace MasterPlay.Models
             string content = File.ReadAllText(configPath);
             var loadedConfig = JsonConvert.DeserializeObject<Config>(content) ?? new Config();
 
-            // Fix nếu thiếu field
-            bool changed = false;
-            if (string.IsNullOrEmpty(loadedConfig.ConfigFilePath))
-            {
-                loadedConfig.ConfigFilePath = configPath;
-                changed = true;
-            }
-            if (string.IsNullOrEmpty(loadedConfig.DataFilePath))
-            {
-                loadedConfig.DataFilePath = Path.Combine(dir, "gameData.json");
-                changed = true;
-            }
+    // Fix nếu thiếu field
+            //bool changed = false;
+            //if (string.IsNullOrEmpty(loadedConfig.ConfigFilePath))
+            //{
+            //    loadedConfig.ConfigFilePath = configPath;
+            //    changed = true;
+            //}
+            //if (string.IsNullOrEmpty(loadedConfig.DataFilePath))
+            //{
+            //    loadedConfig.DataFilePath = Path.Combine(dir, "gameData.json");
+            //    changed = true;
+            //}
 
-            if (changed)
-            {
-                SaveConfig(loadedConfig);
-            }
+            //if (changed)
+            //{
+            //    SaveConfig(loadedConfig);
+            //}
 
             return loadedConfig;
         }
@@ -189,6 +175,20 @@ namespace MasterPlay.Models
                 games[index] = updatedGame;
                 SaveGamesData(games);
             }
+        }
+
+        public static List<AvailableGame> LoadAvailableGames()
+        {
+            
+            string path = GetAvailableGamesPath();
+            Console.WriteLine("path: " + path);
+            if (!File.Exists(path))
+            {
+                return new List<AvailableGame>();
+            }
+
+            string json = File.ReadAllText(path);
+            return JsonConvert.DeserializeObject<List<AvailableGame>>(json) ?? new List<AvailableGame>();
         }
     }
 }

@@ -13,4 +13,11 @@ namespace MasterPlay.Models
         public string ImagePath { get; set; } = string.Empty;
         public bool IsDisabled { get; set; } = false;
     }
+
+    public class AvailableGame
+    {
+        public string ExeName { get; set; } = string.Empty;
+        public string FullPath { get; set; } = string.Empty;
+        public string AddedTime { get; set; } = string.Empty;
+    }
 }

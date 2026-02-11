@@ -2,6 +2,7 @@
 using MasterPlay.UI.ViewModels;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MasterPlay.UI
 {
@@ -24,13 +25,15 @@ namespace MasterPlay.UI
 
             foreach (var game in activeGames)
             {
-                Games.Add(new GameViewModel(game));
+                var vm = new GameViewModel(game);
+                vm.CheckPlayableExe();
+                Games.Add(vm);
             }
 
             if (activeGames.Count == 0 && allGames.Count > 0)
             {
                 MessageBox.Show("There are no Actived Game.\nAll Games are Disabled.",
-                                "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                                "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else if (activeGames.Count == 0)
             {
@@ -39,15 +42,6 @@ namespace MasterPlay.UI
             }
         }
 
-        //private void AddGameButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    var addWindow = new AddGameWindow();
-        //    addWindow.Owner = this;
-        //    if (addWindow.ShowDialog() == true)
-        //    {
-        //        LoadGamesFromConfig(); // Refresh list
-        //    }
-        //}
         private void AddGameButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -96,14 +90,18 @@ namespace MasterPlay.UI
                 catch (Exception ex)
                 {
                     // Chỉ hiện lỗi khi hệ thống gặp sự cố nghiêm trọng (như lỗi InitializeComponent)
-                    MessageBox.Show($"Lỗi hệ thống khi mở chỉnh sửa: {ex.Message}", "Thông báo");
+                    MessageBox.Show($"Lỗi hệ thống khi mở chỉnh sửa: {ex.Message}", "Notification");
                 }
             }
         }
 
-        private void DisableGame_Click(object sender, RoutedEventArgs e)
+        private void PlayGame_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Disable feature coming soon.", "Info");
+            if (sender is Button btn && btn.DataContext is GameViewModel vm)
+            {
+                // TODO: Launch game
+                MessageBox.Show($"Launch game: {vm.Game.Name} ({vm.Game.ExeName}.exe)");
+            }
         }
     }
 }

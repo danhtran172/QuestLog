@@ -18,7 +18,7 @@ namespace MasterPlay.Service.Services
         {
             // Đường dẫn availableGames.json cùng thư mục với config
             ;
-            _availableGamesPath = ConfigManager.GetConfigData("availableGames.json");
+            _availableGamesPath = ConfigManager.GetGameLibraryPath();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
