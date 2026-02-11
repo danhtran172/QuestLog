@@ -129,7 +129,7 @@
                             Visibility="{Binding IsConfigReadOnly, Converter={StaticResource InverseBoolToVis}}"
                             ToolTip="Browse File"
                             Margin="10,0,0,0">
-                        <Image Source="/Assets/OpenFile.png" Width="20" Height="20"
+                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
                                RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>
@@ -163,7 +163,7 @@
                             Visibility="{Binding IsGameDataReadOnly, Converter={StaticResource InverseBoolToVis}}"
                             ToolTip="Browse File"
                             Margin="10,0,0,0">
-                        <Image Source="/Assets/OpenFile.png" Width="20" Height="20"
+                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
                                RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>

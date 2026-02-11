@@ -192,18 +192,30 @@
             </Grid>
 
             <!-- Cover Image URL -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="COVER IMAGE URL" 
-                       Style="{StaticResource FieldLabelStyle}" 
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,25"/>
-            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}" 
-                     Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,25"/>
-            <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
-                 Background="#6FA4AF"
-                 Margin="15,0,0,0"
-                 Command="{Binding SyncImageCommand}" RenderTransformOrigin="6.904,8.36">   
-                <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" 
-            RenderOptions.BitmapScalingMode="HighQuality"/>
-            </Button>
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="COVER IMAGE URL"
+           Style="{StaticResource FieldLabelStyle}"
+           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,25"/>
+
+            <Grid Grid.Row="4" Grid.Column="1" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}"
+             Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+
+                <!-- Nút Sync - nằm cùng hàng bên phải TextBox, chỉ hiện ở Edit mode -->
+                <Button Grid.Column="1"
+            Style="{StaticResource IconButtonStyle}"
+            Background="#6FA4AF"
+            Margin="15,0,0,0"
+            Command="{Binding SyncImageCommand}"
+            Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
         </Grid>
 
         <!-- Footer -->
