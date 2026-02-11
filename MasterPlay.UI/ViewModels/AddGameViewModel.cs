@@ -47,12 +47,12 @@ namespace MasterPlay.UI.ViewModels
             string name = GameName.Trim();
             if (string.IsNullOrEmpty(name))
             {
-                statusMessage = "Please enter the game name first.";
+                StatusMessage = "Please enter the game name first.";
                 return;
             }
 
             IsSyncing = true;
-            statusMessage = "Syncing... Please wait.";
+            StatusMessage = "Syncing... Please wait.";
 
             try
             {
@@ -68,11 +68,11 @@ namespace MasterPlay.UI.ViewModels
                 //     LoadpreviewImage(imgUrl);
                 // }
 
-                statusMessage = "Sync completed!";
+                StatusMessage = "Sync completed!";
             }
             catch (Exception ex)
             {
-                statusMessage = $"Sync failed: {ex.Message}";
+                StatusMessage = $"Sync failed: {ex.Message}";
             }
             finally
             {
@@ -83,14 +83,14 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void AddGame()
         {
-            MessageBox.Show("Button Clicked");
             string name = GameName.Trim();
             string exe = ExeName.Trim();
             string saveLoc = SaveLocation.Trim();
 
+
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(saveLoc))
             {
-                statusMessage = "All required fields must be filled.";
+                StatusMessage = "All required fields must be filled.";
                 return;
             }
 
@@ -101,7 +101,7 @@ namespace MasterPlay.UI.ViewModels
                 // Check duplicate name (case insensitive)
                 if (games.Exists(g => g.Name.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    statusMessage = "Game name already exists.";
+                    StatusMessage = "This Game name already exists.";
                     return;
                 }
 
@@ -110,7 +110,7 @@ namespace MasterPlay.UI.ViewModels
 
                 if (string.IsNullOrEmpty(backupRoot))
                 {
-                    statusMessage = "Backup root path is not set in config.";
+                    StatusMessage = "Backup root path is not set in config.";
                     return;
                 }
 
@@ -127,7 +127,10 @@ namespace MasterPlay.UI.ViewModels
                 string gameFolder = Path.Combine(backupRoot, newGame.Name);
                 newGame.BackupFolderPath = gameFolder;
 
-                games.Add(newGame);
+                var game = InputFormater(newGame);
+
+
+                games.Add(game);
                 ConfigManager.SaveGamesData(games);
 
                 Directory.CreateDirectory(gameFolder);
@@ -135,12 +138,12 @@ namespace MasterPlay.UI.ViewModels
                 string txtPath = Path.Combine(gameFolder, "SaveFileLocation.txt");
                 File.WriteAllText(txtPath, newGame.SaveFilePath);
 
-                statusMessage = "Game added successfully!";
+                StatusMessage = "Game added successfully!";
                 RequestClose?.Invoke(true); // Success → close window
             }
             catch (Exception ex)
             {
-                statusMessage = $"Error: {ex.Message}";
+                StatusMessage = $"Error: {ex.Message}";
             }
         }
 
@@ -154,7 +157,7 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(url))
             {
-                previewImage = null;
+                PreviewImage = null;
                 return;
             }
 
@@ -165,11 +168,11 @@ namespace MasterPlay.UI.ViewModels
                 bitmap.UriSource = new Uri(url, UriKind.Absolute);
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.EndInit();
-                previewImage = bitmap;
+                PreviewImage = bitmap;
             }
             catch
             {
-                previewImage = null;
+                PreviewImage = null;
             }
         }
 
@@ -177,5 +180,34 @@ namespace MasterPlay.UI.ViewModels
         {
             LoadpreviewImage(value);
         }
+   
+
+    private Game? InputFormater(Game game)
+        {
+          
+
+            // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
+            if (string.IsNullOrWhiteSpace(game.Name))
+            {
+                var original = ConfigManager.LoadGames().FirstOrDefault(g => g.Id == game.Id);
+                game.Name = original?.Name ?? "Unknown Game";
+            }
+
+            // 2. ExeName: Tự xóa đuôi .exe
+            if (!string.IsNullOrWhiteSpace(game.ExeName))
+            {
+                string trimmed = game.ExeName.Trim();
+                if (trimmed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    game.ExeName = trimmed[..^4].Trim();
+                }
+            }
+
+            // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
+            game.SaveFilePath = game.SaveFilePath?.Trim('"').Trim() ?? string.Empty;
+            game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
+            game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
+
+            return game;
+        } }
     }
-}
