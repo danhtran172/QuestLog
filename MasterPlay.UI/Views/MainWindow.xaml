@@ -1,0 +1,155 @@
+﻿<Window x:Class="MasterPlay.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="MasterPlay" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen"
+        Background="White"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style x:Key="CircleActionButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse x:Name="circle" Fill="{TemplateBinding Background}"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="circle" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,25">
+            <Image Source="/Assets/MasterplayLogo.png" 
+                HorizontalAlignment="Left"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   Margin="-14,-12,0,-20" Width="175"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Nút Add Game -->
+                    <Button Style="{StaticResource IconButtonStyle}"
+                        Click="AddGameButton_Click"
+                        ToolTip="Add Game">
+                        <Image Source="/Assets/Add.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+
+                    <!-- Nút Settings -->
+                    <Button Style="{StaticResource IconButtonStyle}"
+                        Click="SettingsButton_Click"
+                        ToolTip="Settings"
+                        Margin="12,0,0,0">
+                        <Image Source="/Assets/Setting.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{StaticResource PrimaryGreenBrush}"
+                    CornerRadius="6,6,0,0" Padding="20,12" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="140"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="GAME TITLE" Foreground="White" FontWeight="Bold" FontSize="11"/>
+                    <TextBlock Grid.Column="1" Text="PLAY TIME" Foreground="White" FontWeight="Bold" FontSize="11"/>
+                    <TextBlock Grid.Column="2" Text="ACTIONS" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <ListView Grid.Row="1" x:Name="GamesListView"
+                      ItemsSource="{Binding Games}"
+                      Background="Transparent" BorderThickness="0"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Focusable" Value="False"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListViewItem">
+                                    <Border x:Name="itemBorder"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="#F0F0F0"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="20,15">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource HoverGreenBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource HoverGreenBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:GameViewModel}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="140"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="{Binding Game.Name}"
+                                       VerticalAlignment="Center" FontSize="15"
+                                       FontWeight="SemiBold" Foreground="{StaticResource MainTextBrush}"/>
+
+                            <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource SubTextBrush}" FontSize="13"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <!-- Nút View Info -->
+                                <Button Style="{StaticResource CircleActionButtonStyle}"
+                                        Background="#3291B6"
+                                        Click="EditGame_Click"
+                                        ToolTip="View Details">
+                                    <Image Source="/Assets/Info.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </Grid>
+</Window>

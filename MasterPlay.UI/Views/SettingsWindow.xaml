@@ -1,0 +1,195 @@
+﻿<Window x:Class="MasterPlay.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
+        Title="Settings" Height="480" Width="650"  
+    WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="White" FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+
+        <!-- Style cho TextBox hiện đại -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                            <Trigger Property="IsReadOnly" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F9F9F9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <vm:SettingsViewModel />
+    </Window.DataContext>
+
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Title -->
+            <RowDefinition Height="Auto"/>
+            <!-- Backup Root Path -->
+            <RowDefinition Height="Auto"/>
+            <!-- Config File Path -->
+            <RowDefinition Height="Auto"/>
+            <!-- Game Data File Path -->
+            <RowDefinition Height="*"/>
+            <!-- Khoảng trống để đẩy footer xuống dưới -->
+            <RowDefinition Height="Auto"/>
+            <!-- Status Message -->
+            <RowDefinition Height="Auto"/>
+            <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- Tiêu đề -->
+        <TextBlock Grid.Row="0" Text="APPLICATION SETTINGS"
+                   FontSize="18" FontWeight="Bold" Foreground="#A1BC98"
+                   Margin="0,0,0,25"/>
+
+        <!-- Backup Root Path -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+            <TextBlock Text="Backup Root Path" FontWeight="SemiBold"
+                       Foreground="#555555" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding BackupRootPath}"
+                         IsReadOnly="{Binding IsBackupReadOnly}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#3291B6"
+                            Command="{Binding EditBackupCommand}"
+                            Visibility="{Binding IsBackupReadOnly, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Edit">
+                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#FADA7A"
+                            Command="{Binding BrowseBackupCommand}"
+                            Visibility="{Binding IsBackupReadOnly, Converter={StaticResource InverseBoolToVis}}"
+                            ToolTip="Browse Folder"
+                            Margin="10,0,0,0">
+                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Config File Path -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,20">
+            <!-- Thêm Margin bottom 20 để đều -->
+            <TextBlock Text="Config File Path" FontWeight="SemiBold"
+                       Foreground="#555555" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding ConfigPath}"
+                         IsReadOnly="{Binding IsConfigReadOnly}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#3291B6"
+                            Command="{Binding EditConfigCommand}"
+                            Visibility="{Binding IsConfigReadOnly, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Edit">
+                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#FADA7A"
+                            Command="{Binding BrowseConfigCommand}"
+                            Visibility="{Binding IsConfigReadOnly, Converter={StaticResource InverseBoolToVis}}"
+                            ToolTip="Browse File"
+                            Margin="10,0,0,0">
+                        <Image Source="/Assets/OpenFile.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Game Data File Path -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,20">
+            <!-- Margin bottom 20 để giãn cách đều -->
+            <TextBlock Text="Game Data File Path" FontWeight="SemiBold"
+                       Foreground="#555555" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding GameDataPath}"
+                         IsReadOnly="{Binding IsGameDataReadOnly}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#3291B6"
+                            Command="{Binding EditGameDataCommand}"
+                            Visibility="{Binding IsGameDataReadOnly, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Edit">
+                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Background="#FADA7A"
+                            Command="{Binding BrowseGameDataCommand}"
+                            Visibility="{Binding IsGameDataReadOnly, Converter={StaticResource InverseBoolToVis}}"
+                            ToolTip="Browse File"
+                            Margin="10,0,0,0">
+                        <Image Source="/Assets/OpenFile.png" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Status Message -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}"
+                   Foreground="#E74C3C" FontStyle="Italic" FontSize="12"
+                   TextWrapping="Wrap" Margin="0,15,0,0"/>
+
+        <!-- Footer: Cancel và Save Settings -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Style="{StaticResource IconButtonStyle}"
+                    Background="#708A58"
+                    Command="{Binding SaveCommand}">
+                <Image Source="/Assets/Save.png" Width="20" Height="20"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
+            <Button Style="{StaticResource IconButtonStyle}"
+                    Command="{Binding CancelCommand}"
+                    Margin="12,0,0,0">
+                <Image Source="/Assets/Close.png" Width="20" Height="20"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

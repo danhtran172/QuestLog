@@ -1,0 +1,250 @@
+﻿<Window x:Class="MasterPlay.UI.EditGameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
+        Title="Game Details" Height="750" Width="750"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="White" FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+
+        <!-- Giữ các style cục bộ cần thiết -->
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <Style x:Key="ValueTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style x:Key="NAStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="#BDC3C7"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Style TextBox giữ nguyên -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Background="White" CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="280"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Phần header ảnh lớn + tên game + nút Delete/Edit -->
+        <Grid Grid.Row="0">
+            <Image Source="{Binding PreviewImage}" Stretch="UniformToFill" 
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <Border Background="#A0000000">
+                <Grid Margin="40,0,40,30" VerticalAlignment="Bottom">
+                    <TextBlock Text="{Binding Game.Name}" FontSize="42" FontWeight="ExtraBold" 
+                               Foreground="White" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.7"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+
+                    <!-- Nút Delete Game (chỉ hiện khi không read-only) -->
+                    <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Style="{StaticResource IconButtonStyle}"
+                            Background="#A94A4A"
+                            Command="{Binding DeleteGameCommand}" ToolTip="Delete Game"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                        <Image Source="/Assets/Delete.png" Width="20" Height="20" 
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Nút Toggle Edit Mode -->
+            <Button Style="{StaticResource IconButtonStyle}"
+                    Background="#3291B6"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25"
+                    Command="{Binding ToggleEditModeCommand}" ToolTip="Edit Mode"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                <Image Source="/Assets/Edit.png" Width="18" Height="18" 
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
+        </Grid>
+
+        <!-- Phần thông tin chi tiết -->
+        <Grid Grid.Row="1" Margin="40,35,40,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Game Name -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="GAME NAME" 
+                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,25"
+                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,25"
+                     Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}" 
+                     Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+
+            <!-- Process Name -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="PROCESS NAME" 
+                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,25"/>
+            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,25">
+                <TextBlock Style="{StaticResource ValueTextStyle}" 
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                    <Run Text="{Binding Game.ExeName}"/><Run Text=".exe"/>
+                </TextBlock>
+                <TextBox Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" 
+                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+            </Grid>
+
+            <!-- Save Location -->
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="SAVE LOCATION" 
+                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,25"/>
+            <Grid Grid.Row="2" Grid.Column="1" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" 
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding Game.SaveFilePath}" Style="{StaticResource ValueTextStyle}" 
+                               Visibility="{Binding Game.SaveFilePath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
+                    <TextBlock Text="N/A" Style="{StaticResource NAStyle}" 
+                               Visibility="{Binding Game.SaveFilePath, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+                <TextBox Grid.Column="0" Text="{Binding Game.SaveFilePath, UpdateSourceTrigger=PropertyChanged}" 
+                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                <!-- Nút Open Save Folder -->
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                        Background="#FADA7A"
+                        Margin="15,0,0,0"
+                        Command="{Binding OpenSaveFolderCommand}">
+                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
+
+            <!-- Backup Folder -->
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="BACKUP FOLDER" 
+                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,25"/>
+            <Grid Grid.Row="3" Grid.Column="1" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" 
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding Game.BackupFolderPath}" Style="{StaticResource ValueTextStyle}" 
+                               Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
+                    <TextBlock Text="N/A" Style="{StaticResource NAStyle}" 
+                               Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+                <TextBox Grid.Column="0" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" 
+                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                <!-- Nút Open Backup Folder -->
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                        Background="#FADA7A"
+                        Margin="15,0,0,0"
+                        Command="{Binding OpenBackupFolderCommand}">
+                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
+
+            <!-- Cover Image URL -->
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="COVER IMAGE URL" 
+                       Style="{StaticResource FieldLabelStyle}" 
+                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,25"/>
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}" 
+                     Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,25"/>
+            <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                 Background="#6FA4AF"
+                 Margin="15,0,0,0"
+                 Command="{Binding SyncImageCommand}" RenderTransformOrigin="6.904,8.36">   
+                <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" 
+            RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
+        </Grid>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Padding="40,15" BorderBrush="#F5F5F5" BorderThickness="0,1,0,0" Background="#FAFAFA">
+            <Grid>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#E74C3C" VerticalAlignment="Center" 
+                           FontStyle="Italic" FontSize="11" MaxWidth="350" HorizontalAlignment="Left"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Nút SAVE / CANCEL khi edit -->
+                    <StackPanel Orientation="Horizontal" 
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                Background="#708A58"                         
+                                Command="{Binding SaveCommand}">
+                            <Image Source="/Assets/Save.png" 
+                          Width="20" Height="20" 
+                          RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                Margin="12,0,0,0"
+                                Command="{Binding CancelCommand}">
+                            <Image Source="/Assets/Cancel.png" 
+                          Width="20" Height="20" 
+                            Margin="0,0,2.5,0"       
+                          RenderOptions.BitmapScalingMode="HighQuality"/>       
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Nút CLOSE khi read-only -->
+                    <Button Style="{StaticResource IconButtonStyle}"
+                            Margin="12,0,0,0"
+                            Command="{Binding CloseCommand}" 
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                            <Image Source="/Assets/Close.png" 
+                            Width="20" Height="20" 
+                            RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

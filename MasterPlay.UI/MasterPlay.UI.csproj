@@ -1,0 +1,95 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+	  <ApplicationIcon>Assets\MasterPlayIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Add.png" />
+    <None Remove="Assets\Back.png" />
+    <None Remove="Assets\Cancel.png" />
+    <None Remove="Assets\Cheking.png" />
+    <None Remove="Assets\Close.png" />
+    <None Remove="Assets\Clound Sync.png" />
+    <None Remove="Assets\Danger.png" />
+    <None Remove="Assets\Delete.png" />
+    <None Remove="Assets\Edit.png" />
+    <None Remove="Assets\Edit2.png" />
+    <None Remove="Assets\EditFolder.png" />
+    <None Remove="Assets\Filter.png" />
+    <None Remove="Assets\Filter2.png" />
+    <None Remove="Assets\Info.png" />
+    <None Remove="Assets\Info2.png" />
+    <None Remove="Assets\MasterplayLogo.png" />
+    <None Remove="Assets\More.png" />
+    <None Remove="Assets\OpenFolder.png" />
+    <None Remove="Assets\Play.png" />
+    <None Remove="Assets\Save.png" />
+    <None Remove="Assets\Service.png" />
+    <None Remove="Assets\Setting.png" />
+    <None Remove="Assets\Sort.png" />
+    <None Remove="Assets\Sync.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\MasterPlayIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Edit.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Cheking.png" />
+    <Resource Include="Assets\Edit4.png" />
+    <Resource Include="Assets\Edit3.png" />
+    <Resource Include="Assets\MasterPlayIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Info.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageReference Include="System.Net.Http.Json" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MasterPlay.Models\MasterPlay.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Add.png" />
+    <Resource Include="Assets\Back.png" />
+    <Resource Include="Assets\Cancel.png" />
+    <Resource Include="Assets\Close.png" />
+    <Resource Include="Assets\Clound Sync.png" />
+    <Resource Include="Assets\Danger.png" />
+    <Resource Include="Assets\Delete.png" />
+    <Resource Include="Assets\Edit2.png" />
+    <Resource Include="Assets\EditFolder.png" />
+    <Resource Include="Assets\Filter.png" />
+    <Resource Include="Assets\Filter2.png" />
+    <Resource Include="Assets\Info2.png" />
+    <Resource Include="Assets\MasterplayLogo.png" />
+    <Resource Include="Assets\More.png" />
+    <Resource Include="Assets\OpenFolder.png" />
+    <Resource Include="Assets\Play.png" />
+    <Resource Include="Assets\Save.png" />
+    <Resource Include="Assets\Service.png" />
+    <Resource Include="Assets\Setting.png" />
+    <Resource Include="Assets\Sort.png" />
+    <Resource Include="Assets\Sync.png" />
+  </ItemGroup>
+
+</Project>

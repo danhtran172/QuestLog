@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MasterPlay.Models/MasterPlay.Models.csproj" />
+  <Project Path="MasterPlay.UI/MasterPlay.UI.csproj" Id="94031e00-5cae-45dd-9131-63d30db14742" />
+  <Project Path="MasterPlayService/MasterPlay.Service.csproj" />
+</Solution>
