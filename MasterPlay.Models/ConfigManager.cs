@@ -10,11 +10,12 @@ namespace MasterPlay.Models
         public string BackupRootPath { get; set; } = string.Empty;
         public string ConfigFilePath { get; set; } = string.Empty;
         public string DataFilePath { get; set; } = string.Empty;
+        public string GameLibraryPath { get; set; } = string.Empty;
     }
 
     public static class ConfigManager
     {
-        // Không thay đổi
+        
         public static string GetConfigDirectory()
         {
             return Path.Combine(@"D:\\Apps\\[AppData]", "MasterPlay");
@@ -24,6 +25,17 @@ namespace MasterPlay.Models
         public static string GetConfigPath()
         {
             return Path.Combine(GetConfigDirectory(), "config.json");
+        }
+
+        public static string GetGameLibraryPath()
+        {
+            var config = LoadConfig();
+            if (string.IsNullOrEmpty(config.GameLibraryPath))
+            {
+                config.GameLibraryPath = Path.Combine(config.BackupRootPath, "GameLibrary");
+                SaveConfig(config);
+            }
+            return config.GameLibraryPath;
         }
 
         // SỬA: Tính DataFilePath trực tiếp nếu chưa có
