@@ -26,7 +26,7 @@ namespace MasterPlay.UI
             foreach (var game in activeGames)
             {
                 var vm = new GameViewModel(game);
-                vm.CheckPlayableExe();
+                vm.CheckPlayableGames();
                 Games.Add(vm);
             }
 

@@ -10,6 +10,7 @@
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <converters:BoolToOpacityConverter x:Key="BoolToOpacity"/>
 
         <!-- Giữ các style cục bộ cần thiết -->
         <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
@@ -156,11 +157,14 @@
                          Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
                 <!-- Nút Open Save Folder -->
                 <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
-                        Background="#FADA7A"
-                        Margin="15,0,0,0"
-                        Command="{Binding OpenSaveFolderCommand}">
-                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" 
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+        Background="#FADA7A"
+        Margin="15,0,0,0"
+        Command="{Binding OpenSaveFolderCommand}"
+        IsEnabled="{Binding SaveFolderAccessible}"  
+                    Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                    <!-- Mờ nếu không mở được -->
+                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
+           RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
 
@@ -183,11 +187,14 @@
                          Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
                 <!-- Nút Open Backup Folder -->
                 <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
-                        Background="#FADA7A"
-                        Margin="15,0,0,0"
-                        Command="{Binding OpenBackupFolderCommand}">
-                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" 
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+        Background="#FADA7A"
+        Margin="15,0,0,0"
+        Command="{Binding OpenBackupFolderCommand}"
+        IsEnabled="{Binding BackupFolderAccessible}"  
+                    Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                    <!-- Mờ nếu không mở được -->
+                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
+           RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
 

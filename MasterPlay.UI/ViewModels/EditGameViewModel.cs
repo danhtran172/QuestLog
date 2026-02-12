@@ -28,12 +28,19 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string statusMessage = string.Empty;
 
+        // MỚI: Chỉ dùng khi view mode (IsReadOnly = true)
+        [ObservableProperty]
+        private bool saveFolderAccessible;
+
+        [ObservableProperty]
+        private bool backupFolderAccessible;
+
         public event Action<bool>? RequestClose;
 
         public EditGameViewModel(Game selectedGame)
         {
             Game = selectedGame ?? new Game();
-            LoadPreviewImage(Game.ImagePath);
+            ReloadGameFromConfig();  // Load và check ngay từ đầu
         }
 
         // --- LOGIC XỬ LÝ THƯ MỤC ---
@@ -60,22 +67,19 @@ namespace MasterPlay.UI.ViewModels
         private void ToggleEditMode()
         {
             IsReadOnly = !IsReadOnly;
-            ReloadGameFromConfig();
+            ReloadGameFromConfig();  // Reload và check lại folder khi toggle
             if (IsReadOnly) StatusMessage = string.Empty;
         }
 
         private void InputFormater()
         {
             if (Game == null) return;
-            //MessageBox.Show("Formated called");
-
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(Game.Name))
             {
                 var original = ConfigManager.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
                 Game.Name = original?.Name ?? "Unknown Game";
             }
-
             // 2. ExeName: Tự xóa đuôi .exe
             if (!string.IsNullOrWhiteSpace(Game.ExeName))
             {
@@ -85,7 +89,6 @@ namespace MasterPlay.UI.ViewModels
                     Game.ExeName = trimmed[..^4].Trim();
                 }
             }
-
             // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
             Game.SaveFilePath = Game.SaveFilePath?.Trim('"').Trim() ?? string.Empty;
             Game.BackupFolderPath = Game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
@@ -95,12 +98,10 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Save()
         {
-
             try
             {
                 var games = ConfigManager.LoadGames();
                 int index = games.FindIndex(g => g.Id == Game.Id);
-
                 if (index >= 0)
                 {
                     // Xử lý tạo thư mục backup và file info
@@ -110,17 +111,13 @@ namespace MasterPlay.UI.ViewModels
                         {
                             Directory.CreateDirectory(Game.BackupFolderPath);
                         }
-
                         string infoFilePath = Path.Combine(Game.BackupFolderPath, "save_location.txt");
                         File.WriteAllText(infoFilePath, Game.SaveFilePath);
                     }
-
-
                     InputFormater();
                     games[index] = Game;
                     ConfigManager.SaveGamesData(games);
-
-                    ReloadGameFromConfig();
+                    ReloadGameFromConfig();  // Reload và check lại folder sau save
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
                 }
@@ -137,21 +134,18 @@ namespace MasterPlay.UI.ViewModels
         {
             var result = MessageBox.Show($"Are you sure to Disable '{Game.Name}'?\n(Game will be hide but stil remaining data.)",
                 "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
             if (result == MessageBoxResult.Yes)
             {
                 try
                 {
                     var games = ConfigManager.LoadGames();
                     var gameToDisable = games.FirstOrDefault(g => g.Id == Game.Id);
-
                     if (gameToDisable != null)
                     {
                         gameToDisable.IsDisabled = true;
-                        ConfigManager.SaveGamesData(games);  // Lưu thay đổi
-
+                        ConfigManager.SaveGamesData(games);
                         StatusMessage = gameToDisable.Name + " is Disabled!";
-                        RequestClose?.Invoke(true);  // Đóng window và refresh list ở Main
+                        RequestClose?.Invoke(true);
                     }
                 }
                 catch (Exception ex)
@@ -172,6 +166,7 @@ namespace MasterPlay.UI.ViewModels
                 Game = originalGame;
                 BackupFolderPath = Game.BackupFolderPath;
                 LoadPreviewImage(Game.ImagePath);
+                ReloadGameFromConfig();  // Reload và check lại folder khi Cancel
             }
             IsReadOnly = true;
             StatusMessage = string.Empty;
@@ -206,9 +201,22 @@ namespace MasterPlay.UI.ViewModels
             var reloaded = games.FirstOrDefault(g => g.Id == Game.Id);
             if (reloaded != null)
             {
-                Game = reloaded;  // Gán object mới từ JSON
+                Game = reloaded;
                 BackupFolderPath = Game.BackupFolderPath;
                 LoadPreviewImage(Game.ImagePath);
+
+                // MỚI: Check ngầm folder chỉ khi ở view mode (IsReadOnly = true)
+                if (IsReadOnly)
+                {
+                    SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFilePath);
+                    BackupFolderAccessible = FileHelper.FileCheck(Game.BackupFolderPath);
+                }
+                else
+                {
+                    // Edit mode: luôn enable và không mờ
+                    SaveFolderAccessible = true;
+                    BackupFolderAccessible = true;
+                }
             }
         }
     }

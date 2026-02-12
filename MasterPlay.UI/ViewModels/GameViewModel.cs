@@ -24,7 +24,7 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        public void CheckPlayableExe()
+        public void CheckPlayableGames()
         {
             if (Game == null || string.IsNullOrWhiteSpace(Game.ExeName))
             {
