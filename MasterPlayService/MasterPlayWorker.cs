@@ -1,60 +1,37 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using MasterPlay.Service.Services;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 
 namespace MasterPlay.Service.Workers
 {
     public class MasterPlayWorker : BackgroundService
     {
-        private readonly IHostedService _backupService;
-        private readonly IHostedService _libraryService;
-
-        public MasterPlayWorker(
-            IHostedService backupService,
-            IHostedService libraryService)  // Inject thêm service con
+        private readonly BackupService _backupService;
+        // private readonly LibraryService _libraryService; // Thêm vào nếu có
+        private readonly ILogger _logger;
+        public MasterPlayWorker(BackupService backupService, ILogger<MasterPlayWorker> logger)
         {
             _backupService = backupService;
-            _libraryService = libraryService;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
-            Console.WriteLine("MasterPlay Main Worker started");
+            _logger.LogInformation("MasterPlayWorker is starting...");
 
-            // Khởi động BackupService
-            if (_backupService is BackgroundService bgService)
-            {
-                await bgService.StartAsync(stoppingToken);
-            }
+            _backupService.Start(stoppingToken);
 
-            // Khởi động GameLibraryScannerService
-            if (_libraryService is BackgroundService gameLibService)
-            {
-                await gameLibService.StartAsync(stoppingToken);
-            }
+            _logger.LogInformation("MasterPlayWorker is now running in background.");
 
-            // Giữ worker chính chạy (có thể thêm track playtime sau)
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            // Stop BackupService
-            if (_backupService is BackgroundService bgService)
-            {
-                await bgService.StopAsync(cancellationToken);
-            }
-
-            // Stop GameLibraryScannerService
-            if (_libraryService is BackgroundService gameLibService)
-            {
-                await gameLibService.StopAsync(cancellationToken);
-            }
-
+            _logger.LogInformation("MasterPlayWorker is receiving Stop signal...");
+            _backupService.Stop();
             await base.StopAsync(cancellationToken);
+            _logger.LogInformation("MasterPlayWorker has stopped.");
         }
     }
 }

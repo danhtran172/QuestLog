@@ -118,7 +118,7 @@ namespace MasterPlay.UI.ViewModels
                 {
                     Name = name,
                     ExeName = exe,
-                    SaveFilePath = saveLoc,
+                    SaveFolderPath = saveLoc,
                     ImagePath = ImagePath.Trim(),
                     TotalPlayTimeSeconds = 0,
                     IsDisabled = false,
@@ -136,7 +136,7 @@ namespace MasterPlay.UI.ViewModels
                 Directory.CreateDirectory(gameFolder);
 
                 string txtPath = Path.Combine(gameFolder, "SaveFileLocation.txt");
-                File.WriteAllText(txtPath, newGame.SaveFilePath);
+                File.WriteAllText(txtPath, newGame.SaveFolderPath);
 
                 StatusMessage = "Game added successfully!";
                 RequestClose?.Invoke(true); // Success → close window
@@ -204,7 +204,7 @@ namespace MasterPlay.UI.ViewModels
             }
 
             // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
-            game.SaveFilePath = game.SaveFilePath?.Trim('"').Trim() ?? string.Empty;
+            game.SaveFolderPath = game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
 

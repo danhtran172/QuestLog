@@ -1,25 +1,43 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using MasterPlay.Service.Services;
 using MasterPlay.Service.Workers;
-using MasterPlay.Service.Services;
+using Serilog;
 
 namespace MasterPlay.Service
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            // Cấu hình Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.File("logs/masterplay_log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
+            try
+            {
+                Log.Information("===== Starting MasterPlay Service Host =====");
+                await CreateHostBuilder(args).Build().RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseWindowsService()
-                .ConfigureServices(services =>
+                .UseSerilog() // Thay thế logger mặc định bằng Serilog
+                .UseWindowsService(options => { options.ServiceName = "MasterPlayService"; })
+                .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddSingleton<BackupService>();
                     services.AddHostedService<MasterPlayWorker>();
-                    services.AddHostedService<BackupService>();
-                    services.AddHostedService<LibraryService>();
                 });
     }
 }

@@ -177,18 +177,18 @@ namespace MasterPlay.Models
             }
         }
 
-        public static List<AvailableGame> LoadAvailableGames()
+        public static List<DetectedGame> LoadAvailableGames()
         {
             
             string path = GetAvailableGamesPath();
             Console.WriteLine("path: " + path);
             if (!File.Exists(path))
             {
-                return new List<AvailableGame>();
+                return new List<DetectedGame>();
             }
 
             string json = File.ReadAllText(path);
-            return JsonConvert.DeserializeObject<List<AvailableGame>>(json) ?? new List<AvailableGame>();
+            return JsonConvert.DeserializeObject<List<DetectedGame>>(json) ?? new List<DetectedGame>();
         }
     }
 }

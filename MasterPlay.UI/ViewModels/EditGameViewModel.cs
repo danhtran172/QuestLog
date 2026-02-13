@@ -57,7 +57,7 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFilePath, "Save Folder"));
+        private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFolderPath, "Save Folder"));
 
         [RelayCommand]
         private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
@@ -90,7 +90,7 @@ namespace MasterPlay.UI.ViewModels
                 }
             }
             // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
-            Game.SaveFilePath = Game.SaveFilePath?.Trim('"').Trim() ?? string.Empty;
+            Game.SaveFolderPath = Game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.BackupFolderPath = Game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.ImagePath = Game.ImagePath?.Trim('"').Trim() ?? string.Empty;
         }
@@ -112,7 +112,7 @@ namespace MasterPlay.UI.ViewModels
                             Directory.CreateDirectory(Game.BackupFolderPath);
                         }
                         string infoFilePath = Path.Combine(Game.BackupFolderPath, "save_location.txt");
-                        File.WriteAllText(infoFilePath, Game.SaveFilePath);
+                        File.WriteAllText(infoFilePath, Game.SaveFolderPath);
                     }
                     InputFormater();
                     games[index] = Game;
@@ -208,7 +208,7 @@ namespace MasterPlay.UI.ViewModels
                 // MỚI: Check ngầm folder chỉ khi ở view mode (IsReadOnly = true)
                 if (IsReadOnly)
                 {
-                    SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFilePath);
+                    SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFolderPath);
                     BackupFolderAccessible = FileHelper.FileCheck(Game.BackupFolderPath);
                 }
                 else

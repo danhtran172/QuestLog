@@ -1,0 +1,127 @@
+2026-02-13 13:50:07.683 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 13:50:07.960 +07:00 [DBG] Hosting starting
+2026-02-13 13:50:07.972 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 13:50:07.972 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 13:50:07.976 +07:00 [INF] Hosting environment: Development
+2026-02-13 13:50:07.976 +07:00 [INF] Backup engine initialized at: "2026-02-13T13:50:07.9738428+07:00"
+2026-02-13 13:50:07.978 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 13:50:07.980 +07:00 [DBG] Hosting started
+2026-02-13 13:50:07.981 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 13:51:07.991 +07:00 [INF] Starting backup process for file: save_backup.dat
+2026-02-13 13:51:07.993 +07:00 [INF] Backup completed successfully for: save_backup.dat
+2026-02-13 13:52:07.990 +07:00 [INF] Starting backup process for file: save_backup.dat
+2026-02-13 13:52:07.991 +07:00 [INF] Backup completed successfully for: save_backup.dat
+2026-02-13 13:52:48.731 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 13:52:49.054 +07:00 [DBG] Hosting starting
+2026-02-13 13:52:49.074 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 13:52:49.074 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 13:52:49.083 +07:00 [INF] Hosting environment: Development
+2026-02-13 13:52:49.083 +07:00 [INF] Backup engine initialized at: "2026-02-13T13:52:49.0805023+07:00"
+2026-02-13 13:52:49.085 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 13:52:49.087 +07:00 [DBG] Hosting started
+2026-02-13 13:52:49.088 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 13:53:49.461 +07:00 [INF] Starting backup session for: save_backup.dat
+2026-02-13 13:53:49.464 +07:00 [WRN] Game Elden Ring: Source file not found at 
+2026-02-13 13:53:49.466 +07:00 [WRN] Game Cyberpunk 2077: Source file not found at 
+2026-02-13 13:53:49.467 +07:00 [WRN] Game Stardew Valley: Source file not found at 
+2026-02-13 13:53:49.468 +07:00 [WRN] Game Cyberpunk 2071: Source file not found at 
+2026-02-13 13:53:49.469 +07:00 [WRN] Game AC Black Flag: Source file not found at 
+2026-02-13 13:53:49.471 +07:00 [WRN] Game Ac 4: Source file not found at 
+2026-02-13 13:53:49.472 +07:00 [WRN] Game fff: Source file not found at 
+2026-02-13 13:53:49.473 +07:00 [WRN] Game a: Source file not found at 
+2026-02-13 13:53:49.474 +07:00 [WRN] Game âsasas: Source file not found at 
+2026-02-13 13:53:49.477 +07:00 [INF] Backup session finished.
+2026-02-13 13:54:49.101 +07:00 [INF] Starting backup session for: save_backup.dat
+2026-02-13 13:54:49.102 +07:00 [WRN] Game Elden Ring: Source file not found at 
+2026-02-13 13:54:49.103 +07:00 [WRN] Game Cyberpunk 2077: Source file not found at 
+2026-02-13 13:54:49.104 +07:00 [WRN] Game Stardew Valley: Source file not found at 
+2026-02-13 13:54:49.105 +07:00 [WRN] Game Cyberpunk 2071: Source file not found at 
+2026-02-13 13:54:49.106 +07:00 [WRN] Game AC Black Flag: Source file not found at 
+2026-02-13 13:54:49.107 +07:00 [WRN] Game Ac 4: Source file not found at 
+2026-02-13 13:54:49.108 +07:00 [WRN] Game fff: Source file not found at 
+2026-02-13 13:54:49.109 +07:00 [WRN] Game a: Source file not found at 
+2026-02-13 13:54:49.110 +07:00 [WRN] Game âsasas: Source file not found at 
+2026-02-13 13:54:49.112 +07:00 [INF] Backup session finished.
+2026-02-13 13:55:49.104 +07:00 [INF] Starting backup session for: save_backup.dat
+2026-02-13 13:55:49.105 +07:00 [WRN] Game Elden Ring: Source file not found at 
+2026-02-13 13:55:49.107 +07:00 [WRN] Game Cyberpunk 2077: Source file not found at 
+2026-02-13 13:55:49.108 +07:00 [WRN] Game Stardew Valley: Source file not found at 
+2026-02-13 13:55:49.109 +07:00 [WRN] Game Cyberpunk 2071: Source file not found at 
+2026-02-13 13:55:49.110 +07:00 [WRN] Game AC Black Flag: Source file not found at 
+2026-02-13 13:55:49.111 +07:00 [WRN] Game Ac 4: Source file not found at 
+2026-02-13 13:55:49.113 +07:00 [WRN] Game fff: Source file not found at 
+2026-02-13 13:55:49.114 +07:00 [WRN] Game a: Source file not found at 
+2026-02-13 13:55:49.115 +07:00 [WRN] Game âsasas: Source file not found at 
+2026-02-13 13:55:49.117 +07:00 [INF] Backup session finished.
+2026-02-13 13:56:23.161 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 13:56:23.492 +07:00 [DBG] Hosting starting
+2026-02-13 13:56:23.512 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 13:56:23.513 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 13:56:23.522 +07:00 [INF] Hosting environment: Development
+2026-02-13 13:56:23.522 +07:00 [INF] Backup engine initialized at: "2026-02-13T13:56:23.5193217+07:00"
+2026-02-13 13:56:23.524 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 13:56:23.526 +07:00 [DBG] Hosting started
+2026-02-13 13:56:23.527 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 13:57:23.647 +07:00 [DBG] Game Elden Ring (ed) is not running. Backup skipped.
+2026-02-13 13:57:23.653 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077) is not running. Backup skipped.
+2026-02-13 13:57:23.658 +07:00 [DBG] Game Stardew Valley (StardewValley) is not running. Backup skipped.
+2026-02-13 13:57:23.664 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077) is not running. Backup skipped.
+2026-02-13 13:57:23.672 +07:00 [DBG] Game AC Black Flag (bf) is not running. Backup skipped.
+2026-02-13 13:57:23.680 +07:00 [DBG] Game Ac 4 (bf) is not running. Backup skipped.
+2026-02-13 13:57:23.687 +07:00 [DBG] Game fff (ff) is not running. Backup skipped.
+2026-02-13 13:57:23.696 +07:00 [DBG] Game a (a) is not running. Backup skipped.
+2026-02-13 13:57:23.704 +07:00 [DBG] Game âsasas (bg) is not running. Backup skipped.
+2026-02-13 13:58:23.545 +07:00 [DBG] Game Elden Ring (ed) is not running. Backup skipped.
+2026-02-13 13:58:23.555 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077) is not running. Backup skipped.
+2026-02-13 13:58:23.561 +07:00 [DBG] Game Stardew Valley (StardewValley) is not running. Backup skipped.
+2026-02-13 13:58:23.567 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077) is not running. Backup skipped.
+2026-02-13 13:58:23.574 +07:00 [DBG] Game AC Black Flag (bf) is not running. Backup skipped.
+2026-02-13 13:58:23.580 +07:00 [DBG] Game Ac 4 (bf) is not running. Backup skipped.
+2026-02-13 13:58:23.586 +07:00 [DBG] Game fff (ff) is not running. Backup skipped.
+2026-02-13 13:58:23.593 +07:00 [DBG] Game a (a) is not running. Backup skipped.
+2026-02-13 13:58:23.599 +07:00 [DBG] Game âsasas (bg) is not running. Backup skipped.
+2026-02-13 13:58:47.710 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 13:58:47.981 +07:00 [DBG] Hosting starting
+2026-02-13 13:58:47.997 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 13:58:47.998 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 13:58:48.005 +07:00 [INF] Hosting environment: Development
+2026-02-13 13:58:48.005 +07:00 [INF] Backup engine initialized at: "2026-02-13T13:58:48.0021566+07:00"
+2026-02-13 13:58:48.006 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 13:58:48.009 +07:00 [DBG] Hosting started
+2026-02-13 13:58:48.010 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 13:59:48.169 +07:00 [DBG] Game Elden Ring (ed.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.175 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.183 +07:00 [DBG] Game Stardew Valley (StardewValley.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.190 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.197 +07:00 [DBG] Game AC Black Flag (bf.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.203 +07:00 [DBG] Game Ac 4 (bf.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.210 +07:00 [DBG] Game fff (ff.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.217 +07:00 [DBG] Game a (a.exe) is not running. Backup skipped.
+2026-02-13 13:59:48.223 +07:00 [DBG] Game âsasas (bg.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.077 +07:00 [DBG] Game Elden Ring (ed.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.086 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.092 +07:00 [DBG] Game Stardew Valley (StardewValley.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.098 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.105 +07:00 [DBG] Game AC Black Flag (bf.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.112 +07:00 [DBG] Game Ac 4 (bf.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.118 +07:00 [DBG] Game fff (ff.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.124 +07:00 [DBG] Game a (a.exe) is not running. Backup skipped.
+2026-02-13 14:00:48.130 +07:00 [DBG] Game âsasas (bg.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.036 +07:00 [DBG] Game Elden Ring (ed.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.041 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.047 +07:00 [DBG] Game Stardew Valley (StardewValley.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.053 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.058 +07:00 [DBG] Game AC Black Flag (bf.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.064 +07:00 [DBG] Game Ac 4 (bf.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.070 +07:00 [DBG] Game fff (ff.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.075 +07:00 [DBG] Game a (a.exe) is not running. Backup skipped.
+2026-02-13 14:01:48.081 +07:00 [DBG] Game âsasas (bg.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.022 +07:00 [DBG] Game Elden Ring (ed.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.029 +07:00 [DBG] Game Cyberpunk 2077 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.038 +07:00 [DBG] Game Stardew Valley (StardewValley.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.044 +07:00 [DBG] Game Cyberpunk 2071 (Cyberpunk2077.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.050 +07:00 [DBG] Game AC Black Flag (bf.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.056 +07:00 [DBG] Game Ac 4 (bf.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.062 +07:00 [DBG] Game fff (ff.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.068 +07:00 [DBG] Game a (a.exe) is not running. Backup skipped.
+2026-02-13 14:02:48.074 +07:00 [DBG] Game âsasas (bg.exe) is not running. Backup skipped.
