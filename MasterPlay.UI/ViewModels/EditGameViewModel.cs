@@ -77,7 +77,7 @@ namespace MasterPlay.UI.ViewModels
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(Game.Name))
             {
-                var original = ConfigManager.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
+                var original = Data.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
                 Game.Name = original?.Name ?? "Unknown Game";
             }
             // 2. ExeName: Tự xóa đuôi .exe
@@ -100,7 +100,7 @@ namespace MasterPlay.UI.ViewModels
         {
             try
             {
-                var games = ConfigManager.LoadGames();
+                var games = Data.LoadGames();
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
                 {
@@ -116,7 +116,7 @@ namespace MasterPlay.UI.ViewModels
                     }
                     InputFormater();
                     games[index] = Game;
-                    ConfigManager.SaveGamesData(games);
+                    Data.SaveGamesData(games);
                     ReloadGameFromConfig();  // Reload và check lại folder sau save
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
@@ -138,12 +138,12 @@ namespace MasterPlay.UI.ViewModels
             {
                 try
                 {
-                    var games = ConfigManager.LoadGames();
+                    var games = Data.LoadGames();
                     var gameToDisable = games.FirstOrDefault(g => g.Id == Game.Id);
                     if (gameToDisable != null)
                     {
                         gameToDisable.IsDisabled = true;
-                        ConfigManager.SaveGamesData(games);
+                        Data.SaveGamesData(games);
                         StatusMessage = gameToDisable.Name + " is Disabled!";
                         RequestClose?.Invoke(true);
                     }
@@ -159,7 +159,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel()
         {
-            var games = ConfigManager.LoadGames();
+            var games = Data.LoadGames();
             var originalGame = games.FirstOrDefault(g => g.Id == Game.Id);
             if (originalGame != null)
             {
@@ -197,7 +197,7 @@ namespace MasterPlay.UI.ViewModels
 
         private void ReloadGameFromConfig()
         {
-            var games = ConfigManager.LoadGames();
+            var games = Data.LoadGames();
             var reloaded = games.FirstOrDefault(g => g.Id == Game.Id);
             if (reloaded != null)
             {

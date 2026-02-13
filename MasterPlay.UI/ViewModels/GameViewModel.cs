@@ -24,38 +24,11 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        //public void CheckPlayableGames()
-        //{
-        //    if (Game == null || string.IsNullOrWhiteSpace(Game.ExeName))
-        //    {
-        //        hasPlayableExe = false;
-        //        return;
-        //    }
-
-        //    try
-        //    {
-        //        var available = ConfigManager.LoadAvailableGames();
-
-        //        var processName = Game.ExeName + ".exe";
-        //        var able = available.Any(a =>
-        //            string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase));
-        //        string fullPath = available.FirstOrDefault(a =>
-        //            string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
-
-
-        //        hasPlayableExe = able && FileHelper.FileCheck(fullPath);
-        //    }
-        //    catch
-        //    {
-        //        hasPlayableExe = false;
-        //    }
-        //}
-
         public string getProcessPath()
         {
             try
             {
-                var available = ConfigManager.LoadAvailableGames();
+                var available = Data.LoadAvailableGames();
                 var processName = Game.ExeName + ".exe";
 
                 string fullPath = available.FirstOrDefault(a =>
@@ -73,8 +46,5 @@ namespace MasterPlay.UI.ViewModels
             Game = game;
             hasPlayableExe = game.Ready;
         }
-
-
-
     }
 }

@@ -38,7 +38,7 @@ namespace MasterPlay.UI.ViewModels
 
         public SettingsViewModel()
         {
-            var config = ConfigManager.LoadConfig();
+            var config = Data.LoadConfig();
 
             BackupRootPath = config.BackupRootPath;
             ConfigPath = config.ConfigFilePath;
@@ -52,7 +52,7 @@ namespace MasterPlay.UI.ViewModels
             if (string.IsNullOrEmpty(gameDataPath))
             {
                 gameDataPath = Path.Combine(
-                    Path.GetDirectoryName(ConfigPath) ?? ConfigManager.GetConfigDirectory(),
+                    Path.GetDirectoryName(ConfigPath) ?? Data.GetConfigDirectory(),
                     "gameData.json");
             }
         }
@@ -133,13 +133,13 @@ namespace MasterPlay.UI.ViewModels
         {
             try
             {
-                var config = ConfigManager.LoadConfig();
+                var config = Data.LoadConfig();
 
                 config.BackupRootPath = BackupRootPath;
                 config.ConfigFilePath = ConfigPath;
                 config.DataFilePath = gameDataPath;
 
-                ConfigManager.SaveConfig(config);
+                Data.SaveConfig(config);
 
                 StatusMessage = "Save Succesfully!";
                 MessageBox.Show("Save success!", "Notification", MessageBoxButton.OK, MessageBoxImage.Information);

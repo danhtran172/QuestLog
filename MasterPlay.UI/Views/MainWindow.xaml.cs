@@ -16,27 +16,27 @@ namespace MasterPlay.UI
         {
             InitializeComponent();
             DataContext = this;
-            RefreshCommand = new RelayCommand(LoadGamesFromConfig);
+            RefreshCommand = new RelayCommand(LoadGamesData);
 
-            LoadGamesFromConfig();
+            LoadGamesData();
         }
 
-        private void LoadGamesFromConfig()
+        private void LoadGamesData()
         {
             Games.Clear();
-            var allGames = ConfigManager.GetAllGames();
-            var activeGames = allGames.Where(g => !g.IsDisabled).ToList();
+            Data.SortGames();
+            Data.SyncReadyGames();
+            var activeGames = Data.LoadGames().Where(g => !g.IsDisabled).ToList();
 
             foreach (var game in activeGames)
             {
                 var vm = new GameViewModel(game);
-                //vm.CheckPlayableGames();
                 Games.Add(vm);
             }
 
-            if (activeGames.Count == 0 && allGames.Count > 0)
+            if (activeGames.Count == 0)
             {
-                MessageBox.Show("There are no Actived Game.\nAll Games are Disabled.",
+                MessageBox.Show("There are no Actived Game.",
                                 "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else if (activeGames.Count == 0)
@@ -54,7 +54,7 @@ namespace MasterPlay.UI
                 addWindow.Owner = this;
                 addWindow.ShowDialog();
                 // nếu thành công thì refresh
-                LoadGamesFromConfig();
+                LoadGamesData();
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace MasterPlay.UI
             var settingsWindow = new SettingsWindow();
             settingsWindow.Owner = this;
             settingsWindow.ShowDialog();
-            LoadGamesFromConfig(); // Optional refresh
+            LoadGamesData(); // Optional refresh
         }
 
         private void EditGame_Click(object sender, RoutedEventArgs e)
@@ -88,7 +88,7 @@ namespace MasterPlay.UI
                     // Hiển thị cửa sổ và cập nhật lại danh sách sau khi đóng
                     if (editWindow.ShowDialog() == true)
                     {
-                        LoadGamesFromConfig();
+                        LoadGamesData();
                     }
                 }
                 catch (Exception ex)

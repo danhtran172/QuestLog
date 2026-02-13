@@ -45,7 +45,9 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                var games = ConfigManager.LoadGames();
+                Data.SyncReadyGames();
+
+                var games = Data.LoadGames().Where(x => x.Ready).ToList();
                 bool dataChanged = false;
 
                 foreach (var game in games)
@@ -76,7 +78,7 @@ namespace MasterPlay.Service.Services
 
                 if (dataChanged)
                 {
-                    ConfigManager.SaveGamesData(games);
+                    Data.SaveGamesData(games);
                 }
             }
             catch (Exception ex)

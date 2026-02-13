@@ -58,3 +58,27 @@
 2026-02-14 00:08:23.123 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
 2026-02-14 00:08:23.129 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
 2026-02-14 00:08:23.304 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-14 00:23:11.282 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-14 00:23:11.587 +07:00 [DBG] Hosting starting
+2026-02-14 00:23:11.605 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-14 00:23:11.606 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-14 00:23:11.614 +07:00 [INF] Hosting environment: Development
+2026-02-14 00:23:11.615 +07:00 [INF] Backup engine initialized at: "2026-02-14T00:23:11.6116718+07:00"
+2026-02-14 00:23:11.616 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-14 00:23:11.619 +07:00 [DBG] Hosting started
+2026-02-14 00:23:11.621 +07:00 [INF] Library Scanner Service started.
+2026-02-14 00:23:11.622 +07:00 [INF] PlayTime Service started (1 min interval).
+2026-02-14 00:23:11.624 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-14 00:23:11.734 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-14 00:23:11.970 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-14 01:16:09.494 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-14 01:16:09.790 +07:00 [DBG] Hosting starting
+2026-02-14 01:16:09.812 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-14 01:16:09.813 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-14 01:16:09.825 +07:00 [INF] Hosting environment: Development
+2026-02-14 01:16:09.826 +07:00 [INF] Backup engine initialized at: "2026-02-14T01:16:09.8218678+07:00"
+2026-02-14 01:16:09.828 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-14 01:16:09.831 +07:00 [DBG] Hosting started
+2026-02-14 01:16:09.837 +07:00 [INF] Library Scanner Service started.
+2026-02-14 01:16:09.838 +07:00 [INF] PlayTime Service started (1 min interval).
+2026-02-14 01:16:09.839 +07:00 [INF] MasterPlayWorker is now running in background.

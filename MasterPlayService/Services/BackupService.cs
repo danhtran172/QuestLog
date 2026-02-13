@@ -36,8 +36,8 @@ public void PerformBackup(string backupFileName)
         try
         {
             _isBackupRunning = true;
-            var config = ConfigManager.LoadConfig();
-            var games = ConfigManager.LoadGames();
+            var config = Data.LoadConfig();
+            var games = Data.LoadGames();
 
             if (string.IsNullOrEmpty(config.BackupRootPath)) return;
 

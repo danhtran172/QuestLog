@@ -96,7 +96,7 @@ namespace MasterPlay.UI.ViewModels
 
             try
             {
-                var games = ConfigManager.LoadGames();
+                var games = Data.LoadGames();
 
                 // Check duplicate name (case insensitive)
                 if (games.Exists(g => g.Name.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -105,7 +105,7 @@ namespace MasterPlay.UI.ViewModels
                     return;
                 }
 
-                var config = ConfigManager.LoadConfig();
+                var config = Data.LoadConfig();
                 string backupRoot = config.BackupRootPath;
 
                 if (string.IsNullOrEmpty(backupRoot))
@@ -131,7 +131,7 @@ namespace MasterPlay.UI.ViewModels
 
 
                 games.Add(game);
-                ConfigManager.SaveGamesData(games);
+                Data.SaveGamesData(games);
 
                 Directory.CreateDirectory(gameFolder);
 
@@ -189,7 +189,7 @@ namespace MasterPlay.UI.ViewModels
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(game.Name))
             {
-                var original = ConfigManager.LoadGames().FirstOrDefault(g => g.Id == game.Id);
+                var original = Data.LoadGames().FirstOrDefault(g => g.Id == game.Id);
                 game.Name = original?.Name ?? "Unknown Game";
             }
 
