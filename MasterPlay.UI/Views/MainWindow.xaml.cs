@@ -3,17 +3,20 @@ using MasterPlay.UI.ViewModels;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MasterPlay.UI
 {
     public partial class MainWindow : Window
     {
         public ObservableCollection<GameViewModel> Games { get; } = new ObservableCollection<GameViewModel>();
-
+        public ICommand RefreshCommand { get; set; }
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
+            RefreshCommand = new RelayCommand(LoadGamesFromConfig);
+
             LoadGamesFromConfig();
         }
 
@@ -26,7 +29,7 @@ namespace MasterPlay.UI
             foreach (var game in activeGames)
             {
                 var vm = new GameViewModel(game);
-                vm.CheckPlayableGames();
+                //vm.CheckPlayableGames();
                 Games.Add(vm);
             }
 
@@ -103,5 +106,13 @@ namespace MasterPlay.UI
                 MessageBox.Show($"Launch game: {vm.Game.Name} ({vm.Game.ExeName}.exe)");
             }
         }
+    }
+    public class RelayCommand : ICommand
+    {
+        private readonly Action _execute;
+        public RelayCommand(Action execute) => _execute = execute;
+        public bool CanExecute(object parameter) => true;
+        public void Execute(object parameter) => _execute();
+        public event EventHandler CanExecuteChanged;
     }
 }

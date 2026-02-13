@@ -31,6 +31,8 @@ namespace MasterPlay.Service.Services
         {
             try
             {
+                ConfigManager.SetReadyStatus();
+
                 var config = ConfigManager.LoadConfig();
                 var library = config.GameLibraryPath;
                 if (string.IsNullOrEmpty(library) || !Directory.Exists(library))

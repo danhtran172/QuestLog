@@ -28,7 +28,7 @@ namespace MasterPlay.UI.ViewModels
         {
             if (Game == null || string.IsNullOrWhiteSpace(Game.ExeName))
             {
-                
+
                 hasPlayableExe = false;
                 return;
             }
@@ -43,9 +43,9 @@ namespace MasterPlay.UI.ViewModels
                 string fullPath = available.FirstOrDefault(a =>
                     string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
 
-                
+
                 hasPlayableExe = able && FileHelper.FileCheck(fullPath);
-                }
+            }
             catch
             {
                 hasPlayableExe = false;
@@ -55,7 +55,10 @@ namespace MasterPlay.UI.ViewModels
         public GameViewModel(Game game)
         {
             Game = game;
+            hasPlayableExe = game.Ready;
         }
+
+
 
     }
 }

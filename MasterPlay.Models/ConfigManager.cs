@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MasterPlay.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -197,6 +198,34 @@ namespace MasterPlay.Models
 
             string json = File.ReadAllText(path);
             return JsonConvert.DeserializeObject<List<DetectedGame>>(json) ?? new List<DetectedGame>();
+        }
+
+        public static void SetReadyStatus()
+        {
+            var games = LoadGames();
+            var availables = LoadAvailableGames();
+
+            foreach (var game in games)
+            {
+                try
+                {
+                    var processName = game.ExeName + ".exe";
+                    var able = availables.Any(a =>
+                        string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase));
+                    
+                    string fullPath = availables.FirstOrDefault(a =>
+                        string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
+
+
+                    game.Ready = able && FileHelper.FileCheck(fullPath);
+                    
+                }
+                catch
+                {
+                    game.Ready = false;
+                }
+            }
+            SaveGamesData(games);
         }
     }
 }

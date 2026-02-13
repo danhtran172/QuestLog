@@ -10,7 +10,9 @@
         WindowStartupLocation="CenterScreen"
         Background="White"
         FontFamily="Segoe UI">
-
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    </Window.InputBindings>
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
