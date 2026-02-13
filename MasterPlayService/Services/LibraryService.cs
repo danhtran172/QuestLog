@@ -32,6 +32,7 @@ namespace MasterPlay.Service.Services
             try
             {
                 ConfigManager.SetReadyStatus();
+                ConfigManager.SortGames();
 
                 var config = ConfigManager.LoadConfig();
                 var library = config.GameLibraryPath;

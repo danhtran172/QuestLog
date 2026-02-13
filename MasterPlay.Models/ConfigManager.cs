@@ -200,6 +200,22 @@ namespace MasterPlay.Models
             return JsonConvert.DeserializeObject<List<DetectedGame>>(json) ?? new List<DetectedGame>();
         }
 
+        public static void SortGames()
+        {
+            var games = LoadGames();
+            if (games != null)
+            {
+                games
+                    .OrderByDescending(g => g.Ready)                // Ready (true > false)
+                    .ThenBy(g => g.IsDisabled)                     // IsDisabled (false > true)
+                    .ThenByDescending(g => g.TotalPlayTimeSeconds) // Playtime (nhiều > ít)
+                    .ThenBy(g => g.Name)                           // Name (A > Z)
+                    .ToList();
+                SaveGamesData(games);
+            }
+
+        }
+
         public static void SetReadyStatus()
         {
             var games = LoadGames();

@@ -1,0 +1,13 @@
+2026-02-14 00:00:13.162 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-14 00:00:13.563 +07:00 [DBG] Hosting starting
+2026-02-14 00:00:13.580 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-14 00:00:13.580 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-14 00:00:13.588 +07:00 [INF] Hosting environment: Development
+2026-02-14 00:00:13.588 +07:00 [INF] Backup engine initialized at: "2026-02-14T00:00:13.5852158+07:00"
+2026-02-14 00:00:13.589 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-14 00:00:13.592 +07:00 [DBG] Hosting started
+2026-02-14 00:00:13.594 +07:00 [INF] Library Scanner Service started.
+2026-02-14 00:00:13.595 +07:00 [INF] PlayTime Service started (1 min interval).
+2026-02-14 00:00:13.596 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-14 00:00:13.794 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-14 00:00:14.010 +07:00 [INF] Library scan completed. Found 31 process.

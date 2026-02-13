@@ -87,5 +87,58 @@ namespace MasterPlay.Helpers
             }
         }
 
+        public static void RunProcess(string path)
+        {
+            try
+            {
+                // 1. Validate the path
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    Console.WriteLine("[ERROR] Launch failed: Path is null or empty.");
+                    return;
+                }
+
+                if (!File.Exists(path))
+                {
+                    Console.WriteLine($"[ERROR] Launch failed: File does not exist at '{path}'.");
+                    return;
+                }
+
+                // 2. Prepare the process start information
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = path,
+                    // Setting the WorkingDirectory to the folder containing the exe is CRITICAL for games
+                    WorkingDirectory = Path.GetDirectoryName(path),
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Normal
+                };
+
+                Console.WriteLine($"[INFO] Initializing process: {Path.GetFileName(path)}");
+
+                // 3. Start the process
+                using (Process? exeProcess = Process.Start(startInfo))
+                {
+                    if (exeProcess != null)
+                    {
+                        Console.WriteLine($"[SUCCESS] Process started successfully (PID: {exeProcess.Id}).");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[WARNING] Process started but handle is null.");
+                    }
+                }
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                // This usually happens if the user cancels the UAC prompt (Run as Admin)
+                Console.WriteLine($"[ERROR] System/Permission error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] An unexpected error occurred: {ex.Message}");
+            }
+        }
+
     }
 }

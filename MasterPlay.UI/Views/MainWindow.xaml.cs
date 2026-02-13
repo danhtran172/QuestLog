@@ -1,4 +1,5 @@
-﻿using MasterPlay.Models;
+﻿using MasterPlay.Helpers;
+using MasterPlay.Models;
 using MasterPlay.UI.ViewModels;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -103,7 +104,8 @@ namespace MasterPlay.UI
             if (sender is Button btn && btn.DataContext is GameViewModel vm)
             {
                 // TODO: Launch game
-                MessageBox.Show($"Launch game: {vm.Game.Name} ({vm.Game.ExeName}.exe)");
+                //MessageBox.Show($"Launch game: {vm.Game.Name} ({vm.Game.ExeName}.exe)");
+                FileHelper.RunProcess(vm.getProcessPath());
             }
         }
     }
