@@ -31,7 +31,7 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                ConfigManager.SetReadyStatus();
+                ConfigManager.SyncReadyGames();
                 ConfigManager.SortGames();
 
                 var config = ConfigManager.LoadConfig();

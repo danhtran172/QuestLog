@@ -205,7 +205,7 @@ namespace MasterPlay.Models
             var games = LoadGames();
             if (games != null)
             {
-                games
+                games = games
                     .OrderByDescending(g => g.Ready)                // Ready (true > false)
                     .ThenBy(g => g.IsDisabled)                     // IsDisabled (false > true)
                     .ThenByDescending(g => g.TotalPlayTimeSeconds) // Playtime (nhiều > ít)
@@ -216,7 +216,7 @@ namespace MasterPlay.Models
 
         }
 
-        public static void SetReadyStatus()
+        public static void SyncReadyGames()
         {
             var games = LoadGames();
             var availables = LoadAvailableGames();
