@@ -1,4 +1,5 @@
 ﻿using MasterPlay.Service.Services;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 
@@ -7,11 +8,12 @@ namespace MasterPlay.Service.Workers
     public class MasterPlayWorker : BackgroundService
     {
         private readonly BackupService _backupService;
-        // private readonly LibraryService _libraryService; // Thêm vào nếu có
+         private readonly LibraryService _library;
         private readonly ILogger _logger;
-        public MasterPlayWorker(BackupService backupService, ILogger<MasterPlayWorker> logger)
+        public MasterPlayWorker(BackupService backupService, LibraryService library, ILogger<MasterPlayWorker> logger)
         {
             _backupService = backupService;
+            _library = library;
             _logger = logger;
         }
 
@@ -20,6 +22,7 @@ namespace MasterPlay.Service.Workers
             _logger.LogInformation("MasterPlayWorker is starting...");
 
             _backupService.Start(stoppingToken);
+            _library.Start(stoppingToken);
 
             _logger.LogInformation("MasterPlayWorker is now running in background.");
 
@@ -30,6 +33,7 @@ namespace MasterPlay.Service.Workers
         {
             _logger.LogInformation("MasterPlayWorker is receiving Stop signal...");
             _backupService.Stop();
+            _library.Stop();
             await base.StopAsync(cancellationToken);
             _logger.LogInformation("MasterPlayWorker has stopped.");
         }

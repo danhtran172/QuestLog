@@ -177,6 +177,15 @@ namespace MasterPlay.Models
             }
         }
 
+        public static void SaveAvailableGames(List<DetectedGame> games)
+        {
+            string path = GetAvailableGamesPath();
+            if (string.IsNullOrEmpty(path)) return;
+
+            string json = JsonConvert.SerializeObject(games, Formatting.Indented);
+            File.WriteAllText(path, json);
+        }
+
         public static List<DetectedGame> LoadAvailableGames()
         {
             

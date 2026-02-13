@@ -125,3 +125,339 @@
 2026-02-13 14:02:48.062 +07:00 [DBG] Game fff (ff.exe) is not running. Backup skipped.
 2026-02-13 14:02:48.068 +07:00 [DBG] Game a (a.exe) is not running. Backup skipped.
 2026-02-13 14:02:48.074 +07:00 [DBG] Game âsasas (bg.exe) is not running. Backup skipped.
+2026-02-13 14:34:54.341 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 14:34:54.687 +07:00 [DBG] Hosting starting
+2026-02-13 14:34:54.706 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 14:34:54.707 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 14:34:54.719 +07:00 [INF] Hosting environment: Development
+2026-02-13 14:34:54.719 +07:00 [INF] Backup engine initialized at: "2026-02-13T14:34:54.7152933+07:00"
+2026-02-13 14:34:54.721 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 14:34:54.723 +07:00 [DBG] Hosting started
+2026-02-13 14:34:54.725 +07:00 [INF] Library Scanner Service started.
+2026-02-13 14:34:54.728 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 14:34:55.002 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:34:55.433 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:35:54.751 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:35:54.774 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:35:54.782 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:35:54.792 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:35:54.801 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:35:54.807 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:35:54.816 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:35:54.825 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:35:54.834 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:35:54.841 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:35:54.857 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:36:54.750 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:36:54.765 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:36:54.775 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:36:54.784 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:36:54.793 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:36:54.800 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:36:54.807 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:36:54.816 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:36:54.825 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:36:54.833 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:36:54.865 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:37:54.737 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:37:54.743 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:37:54.749 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:37:54.754 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:37:54.761 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:37:54.768 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:37:54.775 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:37:54.783 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:37:54.793 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:37:54.803 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:37:54.842 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:38:54.738 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:38:54.742 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:38:54.752 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:38:54.760 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:38:54.769 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:38:54.776 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:38:54.781 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:38:54.790 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:38:54.797 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:38:54.806 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:38:54.843 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:39:54.737 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:39:54.739 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:39:54.748 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:39:54.757 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:39:54.764 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:39:54.774 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:39:54.781 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:39:54.786 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:39:54.794 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:39:54.801 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:39:54.846 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:40:54.744 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:40:54.759 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:40:54.766 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:40:54.773 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:40:54.782 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:40:54.788 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:40:54.794 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:40:54.802 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:40:54.810 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:40:54.819 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:40:54.845 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:41:54.739 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:41:54.759 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:41:54.768 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:41:54.777 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:41:54.783 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:41:54.790 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:41:54.797 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:41:54.803 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:41:54.808 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:41:54.817 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:41:54.853 +07:00 [ERR] Error during library scanning.
+Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: ". Path '[0].InUse', line 6, position 4.
+   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)
+   at Newtonsoft.Json.JsonTextReader.Read()
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateObject(Object newObject, JsonReader reader, JsonObjectContract contract, JsonProperty member, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.PopulateList(IList list, JsonReader reader, JsonArrayContract contract, JsonProperty containerProperty, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateList(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, Object existingValue, String id)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateValueInternal(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)
+   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)
+   at Newtonsoft.Json.JsonSerializer.DeserializeInternal(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonSerializer.Deserialize(JsonReader reader, Type objectType)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value, JsonSerializerSettings settings)
+   at Newtonsoft.Json.JsonConvert.DeserializeObject[T](String value)
+   at MasterPlay.Models.ConfigManager.LoadAvailableGames() in D:\Workspace\MasterPlay\MasterPlay.Models\ConfigManager.cs:line 200
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 47
+2026-02-13 14:43:07.179 +07:00 [INF] ===== Starting MasterPlay Service Host =====
+2026-02-13 14:43:07.429 +07:00 [DBG] Hosting starting
+2026-02-13 14:43:07.444 +07:00 [INF] MasterPlayWorker is starting...
+2026-02-13 14:43:07.445 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-13 14:43:07.453 +07:00 [INF] Hosting environment: Development
+2026-02-13 14:43:07.453 +07:00 [INF] Backup engine initialized at: "2026-02-13T14:43:07.4504306+07:00"
+2026-02-13 14:43:07.455 +07:00 [INF] Content root path: D:\Workspace\MasterPlay\MasterPlayService
+2026-02-13 14:43:07.457 +07:00 [DBG] Hosting started
+2026-02-13 14:43:07.459 +07:00 [INF] Library Scanner Service started.
+2026-02-13 14:43:07.460 +07:00 [INF] MasterPlayWorker is now running in background.
+2026-02-13 14:43:07.543 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:43:07.768 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:44:07.486 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:44:07.503 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:44:07.509 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:44:07.515 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:44:07.521 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:44:07.527 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:44:07.533 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:44:07.539 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:44:07.545 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:44:07.551 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:44:07.743 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:45:07.468 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:45:07.480 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:45:07.487 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:45:07.495 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:45:07.502 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:45:07.509 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:45:07.516 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:45:07.524 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:45:07.532 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:45:07.538 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:45:07.731 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:46:07.473 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:46:07.482 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:46:07.488 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:46:07.494 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:46:07.499 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:46:07.504 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:46:07.513 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:46:07.522 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:46:07.531 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:46:07.540 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:46:07.732 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:47:07.479 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:47:07.493 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:47:07.499 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:47:07.504 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:47:07.510 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:47:07.516 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:47:07.523 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:47:07.528 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:47:07.534 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:47:07.540 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:47:07.720 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:48:07.474 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:48:07.486 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:48:07.492 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:48:07.499 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:48:07.507 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:48:07.514 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:48:07.521 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:48:07.528 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:48:07.534 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:48:07.542 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:48:07.729 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:49:07.466 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:49:07.479 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:49:07.485 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:49:07.491 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:49:07.497 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:49:07.502 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:49:07.508 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:49:07.514 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:49:07.521 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:49:07.527 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:49:07.719 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:50:07.473 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:50:07.512 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:50:07.519 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:50:07.524 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:50:07.531 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:50:07.537 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:50:07.544 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:50:07.550 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:50:07.557 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:50:07.562 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:50:07.754 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:51:07.480 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:51:07.491 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:51:07.497 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:51:07.502 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:51:07.510 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:51:07.516 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:51:07.522 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:51:07.528 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:51:07.534 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:51:07.540 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:51:07.729 +07:00 [INF] Library scan completed. Found 31 games.
+2026-02-13 14:52:07.468 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-13 14:52:07.479 +07:00 [WRN] Game Elden Ring: Running but save folder:  do not exist
+2026-02-13 14:52:07.485 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder:  do not exist
+2026-02-13 14:52:07.491 +07:00 [WRN] Game Stardew Valley: Running but save folder:  do not exist
+2026-02-13 14:52:07.497 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder:  do not exist
+2026-02-13 14:52:07.503 +07:00 [WRN] Game AC Black Flag: Running but save folder:  do not exist
+2026-02-13 14:52:07.508 +07:00 [WRN] Game Ac 4: Running but save folder:  do not exist
+2026-02-13 14:52:07.515 +07:00 [WRN] Game fff: Running but save folder:  do not exist
+2026-02-13 14:52:07.521 +07:00 [WRN] Game a: Running but save folder:  do not exist
+2026-02-13 14:52:07.528 +07:00 [WRN] Game âsasas: Running but save folder:  do not exist
+2026-02-13 14:52:07.733 +07:00 [INF] Library scan completed. Found 31 games.

@@ -1,115 +1,83 @@
 ﻿using MasterPlay.Models;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace MasterPlay.Service.Services
 {
-    public class LibraryService : BackgroundService
+    public class LibraryService
     {
-        private readonly string _availableGamesPath;
+        private readonly ILogger<LibraryService> _logger;
+        private System.Timers.Timer? _scanTimer;
 
-        public LibraryService()
+        public LibraryService(ILogger<LibraryService> logger)
         {
-            // Đường dẫn availableGames.json cùng thư mục với config
-            ;
-            _availableGamesPath = ConfigManager.GetGameLibraryPath();
+            _logger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public void Start(CancellationToken stoppingToken)
         {
-            Console.WriteLine("GameLibraryScannerService started - Scanning GameLibrary every 60 seconds");
+            _logger.LogInformation("Library Scanner Service started.");
 
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await ScanGameLibrary();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"GameLibrary scan error: {ex.Message}");
-                }
+            // Quét ngay lập tức khi start
+            Task.Run(() => ScanLibrary());
 
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-            }
+            _scanTimer = new System.Timers.Timer(60000);
+            _scanTimer.Elapsed += (s, e) => ScanLibrary();
+            _scanTimer.AutoReset = true;
+            _scanTimer.Start();
         }
 
-        private async Task ScanGameLibrary()
+        private void ScanLibrary()
         {
-            string libraryPath = ConfigManager.GetGameLibraryPath();
-
-            if (!Directory.Exists(libraryPath))
+            try
             {
-                Console.WriteLine($"GameLibrary folder not found: {libraryPath}");
-                return;
-            }
-
-            // Lấy tất cả .exe trong thư mục (không đệ quy, chỉ file trực tiếp)
-            var exeFiles = Directory.GetFiles(libraryPath, "*.exe", SearchOption.TopDirectoryOnly);
-
-            // Load availableGames.json (nếu chưa có thì tạo rỗng)
-            List<AvailableGame> availableGames = LoadAvailableGames();
-
-            // Danh sách exe hiện có trong thư mục
-            var currentExeNames = exeFiles.Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            // 1. Thêm file .exe mới vào availableGames
-            foreach (string exeFile in exeFiles)
-            {
-                string exeName = Path.GetFileName(exeFile);
-                if (!availableGames.Any(g => string.Equals(g.ExeName, exeName, StringComparison.OrdinalIgnoreCase)))
+                var config = ConfigManager.LoadConfig();
+                var library = config.GameLibraryPath;
+                if (string.IsNullOrEmpty(library) || !Directory.Exists(library))
                 {
-                    availableGames.Add(new AvailableGame
+                    _logger.LogWarning("LibraryPath not found or invalid: {path}", library);
+                    return;
+                }
+
+                _logger.LogInformation("Scanning library for .exe files in: {path}", library);
+
+                // 1. Tìm tất cả file .exe (quét cả thư mục con)
+                var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
+
+                // 2. Load danh sách cũ để giữ lại trạng thái Ignore/InUse
+                var existingGames = ConfigManager.LoadAvailableGames();
+                var newList = new List<DetectedGame>();
+
+                foreach (var file in exeFiles)
+                {
+                    string fileName = Path.GetFileName(file);
+                    var existing = existingGames.FirstOrDefault(g => g.FullPath.Equals(file, StringComparison.OrdinalIgnoreCase));
+
+                    newList.Add(new DetectedGame
                     {
-                        ExeName = exeName,
-                        FullPath = exeFile,
-                        AddedTime = DateTime.Now.ToString("o")
+                        ExeName = fileName,
+                        FullPath = file,
+                        // Nếu đã có trong danh sách cũ thì giữ nguyên Ignore, nếu chưa thì mặc định false
+                        Ignore = existing?.Ignore ?? false,
+                        // Kiểm tra xem process này có đang chạy không
+                        InUse = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(fileName)).Length > 0
                     });
-
-                    Console.WriteLine($"Added new game: {exeName}");
                 }
-            }
 
-            // 2. Xóa các entry trong availableGames mà file .exe không còn tồn tại
-            int removedCount = availableGames.RemoveAll(g => !currentExeNames.Contains(g.ExeName));
-            if (removedCount > 0)
+                // 3. Lưu lại vào availableGames.json
+                ConfigManager.SaveAvailableGames(newList);
+                _logger.LogInformation("Library scan completed. Found {count} games.", newList.Count);
+            }
+            catch (Exception ex)
             {
-                Console.WriteLine($"Removed {removedCount} missing games from availableGames.json");
+                _logger.LogError(ex, "Error during library scanning.");
             }
-
-            // Lưu lại file
-            SaveAvailableGames(availableGames);
         }
 
-        private List<AvailableGame> LoadAvailableGames()
+        public void Stop()
         {
-            if (!File.Exists(_availableGamesPath))
-            {
-                return new List<AvailableGame>();
-            }
-
-            string json = File.ReadAllText(_availableGamesPath);
-            return JsonConvert.DeserializeObject<List<AvailableGame>>(json) ?? new List<AvailableGame>();
+            _scanTimer?.Stop();
+            _logger.LogInformation("Library Scanner Service stopped.");
         }
-
-        private void SaveAvailableGames(List<AvailableGame> games)
-        {
-            string json = JsonConvert.SerializeObject(games, Formatting.Indented);
-            File.WriteAllText(_availableGamesPath, json);
-        }
-    }
-
-    // Model đơn giản cho availableGames.json
-    public class AvailableGame
-    {
-        public string ExeName { get; set; } = string.Empty;
-        public string FullPath { get; set; } = string.Empty;
-        public string AddedTime { get; set; } = string.Empty;
     }
 }

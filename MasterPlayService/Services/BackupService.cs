@@ -64,7 +64,7 @@ public void PerformBackup(string backupFileName)
                 // 2. Nếu game đang chạy, kiểm tra file save có tồn tại không
                 if (string.IsNullOrEmpty(game.SaveFolderPath) || !File.Exists(game.SaveFolderPath))
                 {
-                    _logger.LogWarning("Game {name}: Running but save file not found at {path}", game.Name, game.SaveFolderPath);
+                    _logger.LogWarning("Game {name}: Running but save folder: {path} do not exist", game.Name, game.SaveFolderPath);
                     continue;
                 }
 

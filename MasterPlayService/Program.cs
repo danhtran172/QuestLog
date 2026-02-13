@@ -36,6 +36,7 @@ namespace MasterPlay.Service
                 .UseWindowsService(options => { options.ServiceName = "MasterPlayService"; })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddSingleton<LibraryService>();
                     services.AddSingleton<BackupService>();
                     services.AddHostedService<MasterPlayWorker>();
                 });
