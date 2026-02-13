@@ -148,12 +148,12 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" 
                             Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Game.SaveFilePath}" Style="{StaticResource ValueTextStyle}" 
-                               Visibility="{Binding Game.SaveFilePath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Game.SaveFolderPath}" Style="{StaticResource ValueTextStyle}" 
+                               Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
                     <TextBlock Text="N/A" Style="{StaticResource NAStyle}" 
-                               Visibility="{Binding Game.SaveFilePath, Converter={StaticResource BoolToVis}}"/>
+                               Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
-                <TextBox Grid.Column="0" Text="{Binding Game.SaveFilePath, UpdateSourceTrigger=PropertyChanged}" 
+                <TextBox Grid.Column="0" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" 
                          Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
                 <!-- Nút Open Save Folder -->
                 <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"

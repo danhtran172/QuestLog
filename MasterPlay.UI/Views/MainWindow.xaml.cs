@@ -13,7 +13,7 @@ namespace MasterPlay.UI
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = this; // Bind ItemsSource="{Binding Games}" với property Games
+            DataContext = this;
             LoadGamesFromConfig();
         }
 

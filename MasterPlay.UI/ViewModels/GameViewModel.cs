@@ -36,12 +36,12 @@ namespace MasterPlay.UI.ViewModels
             try
             {
                 var available = ConfigManager.LoadAvailableGames();
-                
 
+                var processName = Game.ExeName + ".exe";
                 var able = available.Any(a =>
-                    string.Equals(a.ExeName, Game.ExeName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase));
                 string fullPath = available.FirstOrDefault(a =>
-                    string.Equals(a.ExeName, Game.ExeName, StringComparison.OrdinalIgnoreCase))?.FullPath;
+                    string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
 
                 
                 hasPlayableExe = able && FileHelper.FileCheck(fullPath);

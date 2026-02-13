@@ -66,7 +66,7 @@ namespace MasterPlay.Service.Services
 
                 // 3. Lưu lại vào availableGames.json
                 ConfigManager.SaveAvailableGames(newList);
-                _logger.LogInformation("Library scan completed. Found {count} games.", newList.Count);
+                _logger.LogInformation("Library scan completed. Found {count} process.", newList.Count);
             }
             catch (Exception ex)
             {

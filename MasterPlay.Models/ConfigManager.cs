@@ -138,7 +138,6 @@ namespace MasterPlay.Models
             File.WriteAllText(path, json);
         }
 
-        // GAME LIST - không thay đổi nhiều
         public static List<Game> LoadGames()
         {
             string path = GetGameDataPath();

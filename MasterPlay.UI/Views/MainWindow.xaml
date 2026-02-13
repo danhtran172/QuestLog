@@ -123,7 +123,7 @@
                     Style="{StaticResource IconButtonStyle}"
                     Background="#5A7863"
                     Margin="15,0,15,0" 
-                                Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
+                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
                     ToolTip="Play Game"
                     Click="PlayGame_Click">
                                 <Image Source="/Assets/Play.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>

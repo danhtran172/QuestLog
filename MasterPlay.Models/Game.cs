@@ -12,5 +12,6 @@ namespace MasterPlay.Models
         public long TotalPlayTimeSeconds { get; set; } = 0;
         public string ImagePath { get; set; } = string.Empty;
         public bool IsDisabled { get; set; } = false;
+        public bool Ready { get; set; } = false;
     }
 }
