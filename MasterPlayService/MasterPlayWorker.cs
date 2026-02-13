@@ -9,11 +9,14 @@ namespace MasterPlay.Service.Workers
     {
         private readonly BackupService _backupService;
          private readonly LibraryService _library;
+        private readonly PlayTimeService _playTime;
         private readonly ILogger _logger;
-        public MasterPlayWorker(BackupService backupService, LibraryService library, ILogger<MasterPlayWorker> logger)
+        public MasterPlayWorker(BackupService backupService, LibraryService library, PlayTimeService playTime, ILogger<MasterPlayWorker> logger)
         {
             _backupService = backupService;
             _library = library;
+            _playTime = playTime;
+
             _logger = logger;
         }
 
@@ -23,6 +26,7 @@ namespace MasterPlay.Service.Workers
 
             _backupService.Start(stoppingToken);
             _library.Start(stoppingToken);
+            _playTime.Start();
 
             _logger.LogInformation("MasterPlayWorker is now running in background.");
 

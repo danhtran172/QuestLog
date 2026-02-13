@@ -38,6 +38,8 @@ namespace MasterPlay.Service
                 {
                     services.AddSingleton<LibraryService>();
                     services.AddSingleton<BackupService>();
+                    services.AddSingleton<PlayTimeService>();
+
                     services.AddHostedService<MasterPlayWorker>();
                 });
     }
