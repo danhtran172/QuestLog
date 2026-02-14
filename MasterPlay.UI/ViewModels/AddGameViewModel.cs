@@ -34,6 +34,9 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private bool isSyncing = false;
 
+        [ObservableProperty]
+        private bool isBusy;
+
         public event Action<bool>? RequestClose;
 
         public AddGameViewModel()
@@ -44,39 +47,26 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private async Task Sync()
         {
-            string name = GameName.Trim();
-            if (string.IsNullOrEmpty(name))
-            {
-                StatusMessage = "Please enter the game name first.";
-                return;
-            }
-
-            IsSyncing = true;
-            StatusMessage = "Syncing... Please wait.";
-
+            if (string.IsNullOrWhiteSpace(GameName)) return;
+            isBusy = true;
             try
-            {
-                // TODO: Uncomment when you have API keys
-                // var (exe, save) = await GetGameInfoFromGemini(name);
-                // ExeName = exe ?? ExeName;
-                // SaveLocation = save ?? SaveLocation;
+            {   
+                GameName = await ApiHelper.GetGameFormatedNameAsync(GameName);
+                ImagePath = await ApiHelper.GetGameImageUrlAsync(GameName);
+                //ExeName = await ApiHelper.GetProcessNameAsync(GameName);
+                //MessageBox.Show(ExeName);
+                var result = await ApiHelper.GetGameMetadataAsync(GameName);
+                if (result != null)
+                {
+                    ExeName = result.ExeName;
+                    SaveLocation = result.SaveFolderPath;
+                    //    MessageBox.Show("GameName: " + GameName + "\n Exe: " + exeName + "\nSave: " + SaveLocation);
+                }
 
-                // string imgUrl = await GetCoverImageFromRawg(name);
-                // if (!string.IsNullOrEmpty(imgUrl))
-                // {
-                //     ImagePath = imgUrl;
-                //     LoadpreviewImage(imgUrl);
-                // }
-
-                StatusMessage = "Sync completed!";
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Sync failed: {ex.Message}";
             }
             finally
             {
-                IsSyncing = false;
+                isBusy = false;
             }
         }
 
@@ -85,7 +75,11 @@ namespace MasterPlay.UI.ViewModels
         {
             string name = GameName.Trim();
             string exe = ExeName.Trim();
-            string saveLoc = SaveLocation.Trim();
+            if (exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                exe = exe[..^4].Trim();
+            }
+            string saveLoc = SaveLocation?.Trim('"').Trim() ?? string.Empty;
 
 
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(saveLoc))
@@ -184,8 +178,7 @@ namespace MasterPlay.UI.ViewModels
 
     private Game? InputFormater(Game game)
         {
-          
-
+         
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(game.Name))
             {
@@ -202,8 +195,6 @@ namespace MasterPlay.UI.ViewModels
                     game.ExeName = trimmed[..^4].Trim();
                 }
             }
-
-            // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
             game.SaveFolderPath = game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
