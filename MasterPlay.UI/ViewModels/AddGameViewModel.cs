@@ -4,6 +4,7 @@ using GenerativeAI.Types;
 using MasterPlay.Models;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -52,16 +53,9 @@ namespace MasterPlay.UI.ViewModels
             try
             {   
                 GameName = await ApiHelper.GetGameFormatedNameAsync(GameName);
+                
+                ExeName = await Data.FindClosestGameExeAsync(GameName)?? "Not Found";
                 ImagePath = await ApiHelper.GetGameImageUrlAsync(GameName);
-                //ExeName = await ApiHelper.GetProcessNameAsync(GameName);
-                //MessageBox.Show(ExeName);
-                var result = await ApiHelper.GetGameMetadataAsync(GameName);
-                if (result != null)
-                {
-                    ExeName = result.ExeName;
-                    SaveLocation = result.SaveFolderPath;
-                    //    MessageBox.Show("GameName: " + GameName + "\n Exe: " + exeName + "\nSave: " + SaveLocation);
-                }
 
             }
             finally
@@ -118,7 +112,8 @@ namespace MasterPlay.UI.ViewModels
                     IsDisabled = false,
                 };
 
-                string gameFolder = Path.Combine(backupRoot, newGame.Name);
+
+                string gameFolder = Path.Combine(backupRoot, ValidFolderName(gameName));
                 newGame.BackupFolderPath = gameFolder;
 
                 var game = InputFormater(newGame);
@@ -200,5 +195,17 @@ namespace MasterPlay.UI.ViewModels
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
 
             return game;
-        } }
+        } 
+
+    private string ValidFolderName(string GameName)
+        {
+            char[] invalid = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
+            string result = new string(GameName.Select(c => invalid.Contains(c) ? '-' : c).ToArray());
+
+            result = Regex.Replace(result, "-+", "-").Trim('-', ' ');
+
+            if (result.Length > 200) result = result.Substring(0, 200).TrimEnd('-');
+            return result;
+        }
     }
+}

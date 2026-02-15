@@ -3,150 +3,165 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
+        xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         mc:Ignorable="d"
         Title="MasterPlay" Height="600" Width="900"
         WindowStartupLocation="CenterScreen"
-        Background="White"
+        Background="#F8F9FA"
         FontFamily="Segoe UI">
+
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     </Window.InputBindings>
+
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="ModernSearchBox" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="20" Background="{TemplateBinding Background}">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="5,0,0,0"/>
+                                <TextBlock Text="Search games..." Foreground="#999" IsHitTestVisible="False" VerticalAlignment="Center" Margin="15,0"
+                                           Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryGreenBrush}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,25">
-            <Image Source="/Assets/MasterplayLogo.png" 
-                HorizontalAlignment="Left"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality"
-                   Margin="-14,-12,0,-20" Width="175"/>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <!-- Nút Add Game -->
-                    <Button Style="{StaticResource IconButtonStyle}"
-                        Click="AddGameButton_Click"
-                        ToolTip="Add Game">
-                        <Image Source="/Assets/Add.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-
-                    <!-- Nút Settings -->
-                    <Button Style="{StaticResource IconButtonStyle}"
-                        Click="SettingsButton_Click"
-                        ToolTip="Settings"
-                        Margin="12,0,0,0">
-                        <Image Source="/Assets/Setting.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Image Source="/Assets/MasterplayLogo.png" HorizontalAlignment="Left" Width="150" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Style="{StaticResource IconButtonStyle}" Click="AddGameButton_Click" ToolTip="Add Game">
+                    <Image Source="/Assets/Add.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Style="{StaticResource IconButtonStyle}" Click="SettingsButton_Click" ToolTip="Settings" Margin="15,0,0,0">
+                    <Image Source="/Assets/Setting.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="220"/>
+            </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" Background="{StaticResource PrimaryGreenBrush}"
-                    CornerRadius="6,6,0,0" Padding="20,12" Margin="0,0,0,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="180"/>
-                        <ColumnDefinition Width="140"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="GAME TITLE" Foreground="White" FontWeight="Bold" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="PLAY TIME" Foreground="White" FontWeight="Bold" FontSize="11"/>
-                    <TextBlock Grid.Column="2" Text="ACTIONS" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
-                </Grid>
-            </Border>
+            <TextBox x:Name="SearchBox" 
+                     Style="{StaticResource ModernSearchBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     TextChanged="SearchBox_TextChanged"/>
 
-            <ListView Grid.Row="1" x:Name="GamesListView"
-                      ItemsSource="{Binding Games}"
-                      Background="Transparent" BorderThickness="0"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Focusable" Value="False"/>
-                        <Setter Property="Background" Value="White"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListViewItem">
-                                    <Border x:Name="itemBorder"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="#F0F0F0"
-                                            BorderThickness="0,0,0,1"
-                                            Padding="20,15">
-                                        <ContentPresenter/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource HoverGreenBrush}"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource HoverGreenBrush}"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
+            <ComboBox x:Name="SortComboBox"
+          Grid.Column="1"
+          Margin="15,0,0,0"
+          Height="38"
+          VerticalContentAlignment="Center"
+          SelectedIndex="0"
+          SelectionChanged="SortComboBox_SelectionChanged"
+          Background="White"
+          BorderBrush="#E0E0E0"
+          Padding="10,0">
+                <ComboBox.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="19"/>
                     </Style>
-                </ListView.ItemContainerStyle>
+                </ComboBox.Resources>
 
-                <ListView.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:GameViewModel}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <!-- Cột 0: Game Name -->
-                                <ColumnDefinition Width="80"/>
-                                <!-- Cột 1: Play icon (tăng width để đẹp hơn) -->
-                                <ColumnDefinition Width="180"/>
-                                <!-- Cột 2: Play Time -->
-                                <ColumnDefinition Width="140"/>
-                                <!-- Cột 3: Actions -->
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0" Text="{Binding Game.Name}"
-                       VerticalAlignment="Center" FontSize="15"
-                       FontWeight="SemiBold" Foreground="{StaticResource MainTextBrush}"/>
-
-                            <!-- Nút Play - nằm ngay sau tên game, cách 15px hai bên -->
-                            <Button Grid.Column="1"
-                    Style="{StaticResource IconButtonStyle}"
-                    Background="#5A7863"
-                    Margin="15,0,15,0" 
-                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
-                    ToolTip="Play Game"
-                    Click="PlayGame_Click">
-                                <Image Source="/Assets/Play.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            </Button>
-
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayPlayTime}"
-                       VerticalAlignment="Center"
-                       Foreground="{StaticResource SubTextBrush}" FontSize="13"/>
-
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Style="{StaticResource IconButtonStyle}"
-                        Background="#3291B6"
-                        Click="EditGame_Click"
-                        ToolTip="View Details">
-                                    <Image Source="/Assets/Info.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                <ComboBoxItem Content="Name (A-Z)"/>
+                <ComboBoxItem Content="Status"/>
+                <ComboBoxItem Content="Play Time"/>
+            </ComboBox>
         </Grid>
+
+        <ListView Grid.Row="2" x:Name="GamesListView"
+                  ItemsSource="{Binding FilteredGames}"
+                  Background="Transparent" BorderThickness="0"
+                  Grid.IsSharedSizeScope="True"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border x:Name="itemBorder" Background="White" CornerRadius="8" 
+                                        BorderBrush="#F0F0F0" BorderThickness="1" Margin="0,0,0,8" Padding="15,10">
+                                    <ContentPresenter/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="itemBorder" Property="Background" Value="#F0FAF3"/>
+                                        <Setter TargetName="itemBorder" Property="BorderBrush" Value="{StaticResource PrimaryGreenBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:GameViewModel}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" SharedSizeGroup="GameTitleColumn"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="PlayTimeColumn"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="ActionColumn"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Game.Name}"
+                                       FontSize="16" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource MainTextBrush}"
+                                       VerticalAlignment="Center"/>
+
+                            <Button Style="{StaticResource IconButtonStyle}"
+                                    Width="28" Height="28" Margin="12,0,0,0"
+                                    Background="{StaticResource PrimaryGreenBrush}"
+                                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
+                                    Click="PlayGame_Click">
+                                <Image Source="/Assets/Play.png" Width="12" Height="12" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}"
+                                   Width="150" Margin="20,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource SubTextBrush}" FontSize="13"/>
+
+                        <Button Grid.Column="3" Style="{StaticResource IconButtonStyle}"
+                                HorizontalAlignment="Right"
+                                Background="#3291B6"
+                                Click="EditGame_Click"
+                                ToolTip="View Details">
+                            <Image Source="/Assets/Info.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </Window>

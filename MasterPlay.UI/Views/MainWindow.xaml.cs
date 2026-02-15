@@ -1,7 +1,9 @@
 ﻿using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.UI.ViewModels;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,38 +13,99 @@ namespace MasterPlay.UI
     public partial class MainWindow : Window
     {
         public ObservableCollection<GameViewModel> Games { get; } = new ObservableCollection<GameViewModel>();
-        public ICommand RefreshCommand { get; set; }
+        public ObservableCollection<GameViewModel> FilteredGames { get; } = new ObservableCollection<GameViewModel>();
+
+        private string _searchText = string.Empty;
+
+        public ICommand RefreshCommand { get; }
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             RefreshCommand = new RelayCommand(LoadGamesData);
-
             LoadGamesData();
         }
 
         private void LoadGamesData()
         {
             Games.Clear();
+            FilteredGames.Clear();
+
             Data.SortGames();
             Data.SyncReadyGames();
-            var activeGames = Data.LoadGames().Where(g => !g.IsDisabled).ToList();
+
+            var activeGames = Data.LoadGames()
+                                 .Where(g => !g.IsDisabled)
+                                 .ToList();
 
             foreach (var game in activeGames)
             {
                 var vm = new GameViewModel(game);
                 Games.Add(vm);
+                FilteredGames.Add(vm);
+                
             }
+
+            ApplyFilterAndSort();
 
             if (activeGames.Count == 0)
             {
-                MessageBox.Show("There are no Actived Game.",
+                MessageBox.Show("There are no active games.",
                                 "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            else if (activeGames.Count == 0)
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
             {
-                MessageBox.Show("There are no Game added.",
-                                "Welcome to MasterPlay", MessageBoxButton.OK, MessageBoxImage.Information);
+                _searchText = textBox.Text?.Trim().ToLowerInvariant() ?? string.Empty;
+                ApplyFilterAndSort();
+            }
+        }
+
+        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyFilterAndSort();
+        }
+
+        private void ApplyFilterAndSort()
+        {
+            var query = Games.AsQueryable();
+
+            // Lọc theo tên (search)
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                query = query.Where(vm =>
+                    vm.Game.Name.ToLowerInvariant().Contains(_searchText) == true);
+            }
+
+            // Sắp xếp theo lựa chọn
+            int sortIndex = SortComboBox?.SelectedIndex ?? 0;
+            switch (sortIndex)
+            {
+                case 0: // Name (A-Z)
+                    query = query.OrderBy(vm => vm.Game.Name);
+                    break;
+
+                case 1: // Playable First (Ready = true trước)
+                    query = query.OrderByDescending(vm => vm.Game.Ready)
+                                 .ThenBy(vm => vm.Game.Name);
+                    break;
+
+                case 2: // Play Time (descending)
+                    query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds)
+                                 .ThenBy(vm => vm.Game.Name);
+                    break;
+            }
+
+            var result = query.ToList();
+
+            FilteredGames.Clear();
+            foreach (var vm in result)
+            {
+                FilteredGames.Add(vm);
             }
         }
 
@@ -53,7 +116,6 @@ namespace MasterPlay.UI
                 var addWindow = new AddGameWindow();
                 addWindow.Owner = this;
                 addWindow.ShowDialog();
-                // nếu thành công thì refresh
                 LoadGamesData();
             }
             catch (Exception ex)
@@ -67,25 +129,20 @@ namespace MasterPlay.UI
             var settingsWindow = new SettingsWindow();
             settingsWindow.Owner = this;
             settingsWindow.ShowDialog();
-            LoadGamesData(); // Optional refresh
+            LoadGamesData();
         }
 
         private void EditGame_Click(object sender, RoutedEventArgs e)
         {
-            // Ép kiểu tường minh để tránh xung đột namespace với WinForms
-            if (sender is System.Windows.Controls.Button btn &&
-                btn.DataContext is MasterPlay.UI.ViewModels.GameViewModel gameVm)
+            if (sender is Button btn && btn.DataContext is GameViewModel gameVm)
             {
                 try
                 {
-                    // Kiểm tra dữ liệu game trước khi mở window
                     if (gameVm.Game == null) return;
 
-                    // Khởi tạo và truyền tham số trực tiếp vào Constructor
-                    var editWindow = new MasterPlay.UI.EditGameWindow(gameVm.Game);
+                    var editWindow = new EditGameWindow(gameVm.Game);
                     editWindow.Owner = this;
 
-                    // Hiển thị cửa sổ và cập nhật lại danh sách sau khi đóng
                     if (editWindow.ShowDialog() == true)
                     {
                         LoadGamesData();
@@ -93,8 +150,7 @@ namespace MasterPlay.UI
                 }
                 catch (Exception ex)
                 {
-                    // Chỉ hiện lỗi khi hệ thống gặp sự cố nghiêm trọng (như lỗi InitializeComponent)
-                    MessageBox.Show($"Lỗi hệ thống khi mở chỉnh sửa: {ex.Message}", "Notification");
+                    MessageBox.Show($"Lỗi khi mở chỉnh sửa: {ex.Message}", "Notification");
                 }
             }
         }
@@ -103,18 +159,33 @@ namespace MasterPlay.UI
         {
             if (sender is Button btn && btn.DataContext is GameViewModel vm)
             {
-                // TODO: Launch game
-                //MessageBox.Show($"Launch game: {vm.Game.Name} ({vm.Game.ExeName}.exe)");
-                FileHelper.RunProcess(vm.getProcessPath());
+                try
+                {
+                    string processPath = vm.getProcessPath();
+                    if (!string.IsNullOrEmpty(processPath))
+                    {
+                        FileHelper.RunProcess(processPath);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không tìm thấy đường dẫn thực thi của game.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Không thể chạy game: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
     }
+
+    // RelayCommand đơn giản
     public class RelayCommand : ICommand
     {
         private readonly Action _execute;
         public RelayCommand(Action execute) => _execute = execute;
-        public bool CanExecute(object parameter) => true;
-        public void Execute(object parameter) => _execute();
-        public event EventHandler CanExecuteChanged;
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => _execute?.Invoke();
+        public event EventHandler? CanExecuteChanged;
     }
 }

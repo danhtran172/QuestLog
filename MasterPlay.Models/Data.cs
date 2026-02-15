@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MasterPlay.Models
 {
@@ -13,15 +15,14 @@ namespace MasterPlay.Models
         public string DataFilePath { get; set; } = string.Empty;
         public string GameLibraryPath { get; set; } = string.Empty;
         public string AvailableGamesPath { get; set; } = string.Empty;
-
     }
 
     public static class Data
     {
-        //PATH
+        // PATH helpers
         public static string GetConfigDirectory()
         {
-            return Path.Combine(@"D:\\Apps\\[AppData]", "MasterPlay");
+            return Path.Combine(@"D:\Apps\[AppData]", "MasterPlay");
         }
 
         public static string GetConfigPath()
@@ -31,9 +32,6 @@ namespace MasterPlay.Models
 
         public static string GetGameLibraryPath()
         {
-            string configPath = GetConfigPath(); // an toàn, không vòng lặp
-            string dir = Path.GetDirectoryName(configPath) ?? GetConfigDirectory();
-
             var config = LoadConfig();
             if (string.IsNullOrEmpty(config.GameLibraryPath))
             {
@@ -45,58 +43,40 @@ namespace MasterPlay.Models
 
         public static string GetGameDataPath()
         {
-            string configPath = GetConfigPath(); // an toàn, không vòng lặp
-            string dir = Path.GetDirectoryName(configPath) ?? GetConfigDirectory();
-
-            // Nếu config đã load và có DataFilePath → dùng nó
-            var config = LoadConfig(); // Load một lần, không đệ quy
+            var config = LoadConfig();
             if (!string.IsNullOrEmpty(config.DataFilePath))
             {
                 return config.DataFilePath;
             }
 
-            string fallback = Path.Combine(dir, "gameData.json");
-
-            if (string.IsNullOrEmpty(config.DataFilePath))
-            {
-                config.DataFilePath = fallback;
-                SaveConfig(config);
-            }
-
+            string fallback = Path.Combine(GetConfigDirectory(), "gameData.json");
+            config.DataFilePath = fallback;
+            SaveConfig(config);
             return fallback;
         }
+
         public static string GetAvailableGamesPath()
         {
-            string configPath = GetConfigPath();
-            string dir = Path.GetDirectoryName(configPath) ?? GetConfigDirectory();
             var config = LoadConfig();
             if (!string.IsNullOrEmpty(config.AvailableGamesPath))
             {
                 return config.AvailableGamesPath;
             }
 
-            string fallback = Path.Combine(dir, "availableGames.json");
-            if (string.IsNullOrEmpty(config.AvailableGamesPath))
-            {
-                config.AvailableGamesPath = fallback;
-                SaveConfig(config);
-            }
-
+            string fallback = Path.Combine(GetConfigDirectory(), "availableGames.json");
+            config.AvailableGamesPath = fallback;
+            SaveConfig(config);
             return fallback;
         }
-       
-        //CONFIG
+
+        // CONFIG
         public static Config LoadConfig()
         {
-            string dir = GetConfigDirectory();
             string configPath = GetConfigPath();
+            string dir = Path.GetDirectoryName(configPath) ?? GetConfigDirectory();
 
-            if (!Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
+            Directory.CreateDirectory(dir);
 
-            //Nếu ko có file config thì tạo mới default
             if (!File.Exists(configPath))
             {
                 var defaultConfig = new Config
@@ -106,33 +86,32 @@ namespace MasterPlay.Models
                     BackupRootPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                         "Backups"),
-                    GameLibraryPath = "D:\\Games",
+                    GameLibraryPath = @"D:\Games",
                     AvailableGamesPath = Path.Combine(dir, "availableGames.json")
                 };
-
-                string json = JsonConvert.SerializeObject(defaultConfig, Formatting.Indented);
-                File.WriteAllText(configPath, json);
+                SaveConfig(defaultConfig);
                 return defaultConfig;
             }
 
             string content = File.ReadAllText(configPath);
-            var loadedConfig = JsonConvert.DeserializeObject<Config>(content) ?? new Config();
-            return loadedConfig;
+            var config = JsonConvert.DeserializeObject<Config>(content) ?? new Config();
+            return config;
         }
 
         public static void SaveConfig(Config config)
         {
-            string path = GetConfigPath();  // an toàn
+            string path = GetConfigPath();
             config.ConfigFilePath = path;
+
             string json = JsonConvert.SerializeObject(config, Formatting.Indented);
             File.WriteAllText(path, json);
         }
 
-        //GAMES
-
+        // GAMES
         public static List<Game> LoadGames()
         {
             string path = GetGameDataPath();
+
             if (!File.Exists(path))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
@@ -141,8 +120,7 @@ namespace MasterPlay.Models
             }
 
             string content = File.ReadAllText(path);
-            var games = JsonConvert.DeserializeObject<List<Game>>(content);
-            return games ?? new List<Game>();
+            return JsonConvert.DeserializeObject<List<Game>>(content) ?? new List<Game>();
         }
 
         public static void UpdateGame(Game updatedGame)
@@ -163,12 +141,11 @@ namespace MasterPlay.Models
             File.WriteAllText(path, json);
         }
 
-        //AVAILABLE GAMES
+        // AVAILABLE GAMES
         public static List<DetectedGame> LoadAvailableGames()
         {
-            
             string path = GetAvailableGamesPath();
-            Console.WriteLine("path: " + path);
+
             if (!File.Exists(path))
             {
                 return new List<DetectedGame>();
@@ -176,7 +153,6 @@ namespace MasterPlay.Models
 
             string json = File.ReadAllText(path);
             return JsonConvert.DeserializeObject<List<DetectedGame>>(json) ?? new List<DetectedGame>();
-  
         }
 
         public static void SaveAvailableGames(List<DetectedGame> games)
@@ -188,21 +164,18 @@ namespace MasterPlay.Models
             File.WriteAllText(path, json);
         }
 
-        //SYSTEM
+        // SYSTEM
         public static void SortGames()
         {
             var games = LoadGames();
-            if (games != null)
-            {
-                games = games
-                    .OrderByDescending(g => g.Ready)                // Ready (true > false)
-                    .ThenBy(g => g.IsDisabled)                     // IsDisabled (false > true)
-                    .ThenByDescending(g => g.TotalPlayTimeSeconds) // Playtime (nhiều > ít)
-                    .ThenBy(g => g.Name)                           // Name (A > Z)
-                    .ToList();
-                SaveGamesData(games);
-            }
+            games = games
+                .OrderByDescending(g => g.Ready)
+                .ThenBy(g => g.IsDisabled)
+                .ThenByDescending(g => g.TotalPlayTimeSeconds)
+                .ThenBy(g => g.Name)
+                .ToList();
 
+            SaveGamesData(games);
         }
 
         public static void SyncReadyGames()
@@ -214,23 +187,63 @@ namespace MasterPlay.Models
             {
                 try
                 {
-                    var processName = game.ExeName + ".exe";
-                    var able = availables.Any(a =>
+                    string processName = game.ExeName?.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) == true
+                        ? game.ExeName
+                        : game.ExeName + ".exe";
+
+                    var match = availables.FirstOrDefault(a =>
                         string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase));
-                    
-                    string fullPath = availables.FirstOrDefault(a =>
-                        string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
 
-
-                    game.Ready = able && FileHelper.FileCheck(fullPath);
-                    
+                    game.Ready = match != null && FileHelper.FileCheck(match.FullPath);
                 }
                 catch
                 {
                     game.Ready = false;
                 }
             }
+
             SaveGamesData(games);
         }
-    }
+
+        // FUZZY SEARCH
+            public static async Task<string?> FindClosestGameExeAsync(
+                string gameName,
+                double minSimilarity = 0.6)
+            {
+            var jsonFilePath = "D:\\Apps\\[AppData]\\MasterPlay\\game_metaData.json";
+
+
+                if (string.IsNullOrWhiteSpace(gameName))
+                    throw new ArgumentException("Game name cannot be empty", nameof(gameName));
+
+                if (!File.Exists(jsonFilePath))
+                    throw new FileNotFoundException("JSON file not found", jsonFilePath);
+
+                try
+                {
+                    string jsonContent = await File.ReadAllTextAsync(jsonFilePath);
+                    var games = JsonConvert.DeserializeObject<List<GameEntry>>(jsonContent);
+
+                    if (games == null || games.Count == 0)
+                        return "N/A";
+
+                    var bestMatch = games
+                        .Where(x => x.Game.ToLowerInvariant() == gameName.ToLowerInvariant())
+                        .FirstOrDefault();
+
+                    return bestMatch?.Exe;
+                }
+                catch (JsonException ex)
+                {
+                    throw new InvalidOperationException($"Invalid JSON format in {jsonFilePath}", ex);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error while searching game '{gameName}': {ex.Message}", ex);
+                }
+            }
+
+           
+        }
+    
 }
