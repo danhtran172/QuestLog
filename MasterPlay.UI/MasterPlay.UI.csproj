@@ -30,6 +30,7 @@
     <None Remove="Assets\OpenFolder.png" />
     <None Remove="Assets\Play.png" />
     <None Remove="Assets\Save.png" />
+    <None Remove="Assets\Search.png" />
     <None Remove="Assets\Service.png" />
     <None Remove="Assets\Setting.png" />
     <None Remove="Assets\Sort.png" />
@@ -86,6 +87,7 @@
     <Resource Include="Assets\OpenFolder.png" />
     <Resource Include="Assets\Play.png" />
     <Resource Include="Assets\Save.png" />
+    <Resource Include="Assets\Search.png" />
     <Resource Include="Assets\Service.png" />
     <Resource Include="Assets\Setting.png" />
     <Resource Include="Assets\Sort.png" />

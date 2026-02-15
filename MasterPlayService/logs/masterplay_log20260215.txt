@@ -3343,3 +3343,506 @@ System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\Mas
 2026-02-15 16:24:56.166 +07:00 [INF] Library scan completed. Found 31 process.
 2026-02-15 16:24:56.172 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
 2026-02-15 16:24:56.178 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:25:56.072 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:25:56.073 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:25:56.081 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:25:56.095 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:25:56.103 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:25:56.110 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:25:56.117 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:25:56.123 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:25:56.130 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:25:56.136 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:25:56.142 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:25:56.149 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:25:56.155 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:25:56.163 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:25:56.168 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:25:56.170 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:25:56.176 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:26:56.062 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:26:56.065 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:26:56.072 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:26:56.082 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:26:56.089 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:26:56.096 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:26:56.103 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:26:56.110 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:26:56.117 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:26:56.122 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:26:56.129 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:26:56.135 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:26:56.142 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:26:56.149 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:26:56.155 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:26:56.159 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:27:56.061 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:27:56.064 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:27:56.068 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:27:56.078 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:27:56.086 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:27:56.096 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:27:56.103 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:27:56.109 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:27:56.116 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:27:56.122 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:27:56.129 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:27:56.135 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:27:56.141 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:27:56.147 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:27:56.153 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:27:56.157 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:27:56.159 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:28:56.061 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:28:56.063 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:28:56.066 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:28:56.073 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:28:56.081 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:28:56.089 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:28:56.096 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:28:56.103 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:28:56.110 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:28:56.117 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:28:56.124 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:28:56.131 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:28:56.138 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:28:56.144 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:28:56.150 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:28:56.157 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:28:56.162 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:29:56.065 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:29:56.066 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:29:56.072 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:29:56.080 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:29:56.086 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:29:56.096 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:29:56.104 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:29:56.114 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:29:56.123 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:29:56.132 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:29:56.141 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:29:56.150 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:29:56.160 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:29:56.164 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:29:56.168 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:29:56.176 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:30:56.068 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:30:56.071 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:30:56.079 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:30:56.085 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:30:56.092 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:30:56.098 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:30:56.105 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:30:56.112 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:30:56.118 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:30:56.126 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:30:56.134 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:30:56.141 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:30:56.148 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:30:56.155 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:30:56.162 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:30:56.166 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:31:56.063 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:31:56.070 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:31:56.075 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:31:56.080 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:31:56.081 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:31:56.087 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:31:56.095 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:31:56.106 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:31:56.117 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:31:56.128 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:31:56.140 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:31:56.150 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:31:56.160 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:31:56.169 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:31:56.178 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:31:56.178 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:31:56.188 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:32:56.078 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 34
+2026-02-15 16:32:56.083 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:32:56.090 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:32:56.096 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:32:56.106 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:32:56.115 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:32:56.126 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:32:56.134 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:32:56.140 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:32:56.148 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:32:56.157 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:32:56.166 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:32:56.175 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:32:56.182 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:32:56.192 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:33:56.069 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:33:56.072 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:33:56.078 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:33:56.088 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:33:56.098 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:33:56.103 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:33:56.109 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:33:56.115 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:33:56.121 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:33:56.129 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:33:56.135 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:33:56.144 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:33:56.150 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:33:56.156 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:33:56.160 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:33:56.166 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:34:56.070 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:34:56.073 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:34:56.076 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:34:56.087 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:34:56.098 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:34:56.105 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:34:56.114 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:34:56.124 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:34:56.134 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:34:56.144 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:34:56.153 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:34:56.162 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:34:56.166 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:34:56.170 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:34:56.176 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:34:56.182 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:34:56.189 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:35:56.062 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:35:56.066 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:35:56.072 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:35:56.082 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:35:56.088 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:35:56.094 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:35:56.101 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:35:56.110 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:35:56.117 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:35:56.125 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:35:56.131 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:35:56.138 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:35:56.146 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:35:56.152 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:35:56.158 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:35:56.160 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:36:56.069 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:36:56.071 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:36:56.079 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:36:56.086 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:36:56.093 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:36:56.099 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:36:56.106 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:36:56.112 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:36:56.119 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:36:56.126 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:36:56.133 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:36:56.141 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:36:56.148 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:36:56.156 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:36:56.163 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:36:56.167 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:37:56.076 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:37:56.079 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:37:56.087 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:37:56.094 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:37:56.101 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:37:56.107 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:37:56.114 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:37:56.120 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:37:56.126 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:37:56.132 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:37:56.139 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:37:56.147 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:37:56.156 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:37:56.164 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:37:56.169 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:37:56.171 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:38:56.064 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:38:56.070 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:38:56.077 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:38:56.080 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:38:56.085 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:38:56.091 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:38:56.098 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:38:56.105 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:38:56.112 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:38:56.119 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:38:56.126 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:38:56.133 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:38:56.139 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:38:56.146 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:38:56.153 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:38:56.160 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:38:56.177 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:39:56.064 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 34
+2026-02-15 16:39:56.071 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:39:56.077 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:39:56.086 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:39:56.093 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:39:56.100 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:39:56.106 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:39:56.114 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:39:56.120 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:39:56.129 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:39:56.135 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:39:56.142 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:39:56.148 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:39:56.155 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:39:56.161 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:40:56.068 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 34
+2026-02-15 16:40:56.074 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:40:56.081 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:40:56.086 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:40:56.092 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:40:56.098 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:40:56.104 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:40:56.110 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:40:56.115 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:40:56.121 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:40:56.126 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:40:56.132 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:40:56.139 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:40:56.146 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:40:56.152 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:41:56.066 +07:00 [ERR] Error tracking playtime.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.PlayTimeService.TrackPlayTime() in D:\Workspace\MasterPlay\MasterPlayService\Services\PlaytimeTracker.cs:line 48
+2026-02-15 16:41:56.071 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:41:56.074 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:41:56.081 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:41:56.087 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:41:56.095 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:41:56.103 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:41:56.111 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:41:56.118 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:41:56.124 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:41:56.130 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:41:56.137 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:41:56.143 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:41:56.151 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:41:56.157 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:41:56.160 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:41:56.163 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:42:56.070 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:42:56.076 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:42:56.082 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:42:56.084 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:42:56.089 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:42:56.095 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:42:56.102 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:42:56.108 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:42:56.115 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:42:56.122 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:42:56.128 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:42:56.135 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:42:56.141 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:42:56.148 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:42:56.155 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:42:56.175 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:43:56.070 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllText(String path, Encoding encoding)
+   at MasterPlay.Models.Data.LoadGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 122
+   at MasterPlay.Models.Data.SortGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 170
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 35
+2026-02-15 16:43:56.077 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:43:56.083 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:43:56.089 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:43:56.096 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:43:56.101 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:43:56.107 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:43:56.113 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:43:56.119 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:43:56.126 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:43:56.132 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:43:56.138 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:43:56.144 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:43:56.150 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:43:56.156 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:44:56.069 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllText(String path, Encoding encoding)
+   at MasterPlay.Models.Data.LoadGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 122
+   at MasterPlay.Models.Data.SortGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 170
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 35
+2026-02-15 16:44:56.075 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:44:56.081 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:44:56.086 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:44:56.092 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:44:56.098 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:44:56.104 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:44:56.110 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:44:56.116 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:44:56.123 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:44:56.129 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:44:56.134 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:44:56.141 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:44:56.146 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:44:56.153 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:45:56.072 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 34
+2026-02-15 16:45:56.081 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:45:56.088 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:45:56.094 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:45:56.099 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:45:56.105 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:45:56.111 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:45:56.117 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:45:56.123 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:45:56.129 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:45:56.136 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:45:56.142 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:45:56.148 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:45:56.153 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:45:56.159 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:46:56.066 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:46:56.075 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:46:56.078 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:46:56.082 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:46:56.088 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:46:56.095 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:46:56.101 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:46:56.107 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:46:56.113 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:46:56.120 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:46:56.127 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:46:56.132 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:46:56.139 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:46:56.145 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:46:56.151 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:46:56.170 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:47:56.075 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:47:56.080 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:47:56.086 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:47:56.093 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:47:56.100 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:47:56.107 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:47:56.113 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:47:56.119 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:47:56.127 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:47:56.134 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:47:56.141 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:47:56.148 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:47:56.154 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:47:56.161 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:47:56.166 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:47:56.167 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:48:56.066 +07:00 [INF] Scanning library for .exe files in: D:\Games
+2026-02-15 16:48:56.075 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:48:56.083 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:48:56.089 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:48:56.096 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:48:56.103 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:48:56.109 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:48:56.115 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:48:56.123 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:48:56.129 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:48:56.137 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:48:56.143 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:48:56.149 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:48:56.155 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:48:56.161 +07:00 [INF] Library scan completed. Found 31 process.
+2026-02-15 16:48:56.162 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
+2026-02-15 16:49:56.061 +07:00 [ERR] Error during library scanning.
+System.IO.IOException: The process cannot access the file 'D:\Apps\[AppData]\MasterPlay\game_data.json' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.WriteToFile(String path, FileMode mode, String contents, Encoding encoding)
+   at MasterPlay.Models.Data.SaveGamesData(List`1 games) in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 141
+   at MasterPlay.Models.Data.SyncReadyGames() in D:\Workspace\MasterPlay\MasterPlay.Models\Data.cs:line 205
+   at MasterPlay.Service.Services.LibraryService.ScanLibrary() in D:\Workspace\MasterPlay\MasterPlayService\Services\LibraryService.cs:line 34
+2026-02-15 16:49:56.067 +07:00 [WRN] Game Grand Theft Auto V Enhanched: Running but save folder: 1 do not exist
+2026-02-15 16:49:56.073 +07:00 [WRN] Game Stardew Valley: Running but save folder: C:\Users\Vynne\AppData\Roaming\StardewValley\Saves\Vynne_123456789 do not exist
+2026-02-15 16:49:56.080 +07:00 [WRN] Game Elden Ring: Running but save folder: C:\Users\Admin\Documents\CPY_SAVES do not exist
+2026-02-15 16:49:56.087 +07:00 [WRN] Game Cyberpunk 2077: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:49:56.093 +07:00 [WRN] Game AAAA: Running but save folder: hhhh do not exist
+2026-02-15 16:49:56.100 +07:00 [WRN] Game AC Black Flag: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:49:56.106 +07:00 [WRN] Game Assassin's Creed: Running but save folder: %userprofile%\Saved Games\Assassin's Creed do not exist
+2026-02-15 16:49:56.113 +07:00 [WRN] Game Assassin’s Creed IV: Black Flag: Running but save folder: 1 do not exist
+2026-02-15 16:49:56.120 +07:00 [WRN] Game Cyberpunk 2071: Running but save folder: C:\Users\Vynne\Saved Games\CD Projekt Red\Cyberpunk 2077\UserDefault\UserSettings.json do not exist
+2026-02-15 16:49:56.127 +07:00 [WRN] Game Metal Gear Solid V: The Phantom Pain: Running but save folder: 1 do not exist
+2026-02-15 16:49:56.134 +07:00 [WRN] Game a: Running but save folder: a do not exist
+2026-02-15 16:49:56.141 +07:00 [WRN] Game Ac 4: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed IV Black Flag do not exist
+2026-02-15 16:49:56.149 +07:00 [WRN] Game D:D: Running but save folder: 1 do not exist
+2026-02-15 16:49:56.156 +07:00 [WRN] Game fff: Running but save folder: C:\Users\Admin\Documents\Assassin's Creed Liberation HD do not exist
