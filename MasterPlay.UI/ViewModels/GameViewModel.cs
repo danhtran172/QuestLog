@@ -20,15 +20,15 @@ namespace MasterPlay.UI.ViewModels
             get
             {
                 var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
-                return $"{ts.Hours:D2}h{ts.Minutes:D2}m";
+                return $"{(int)ts.TotalHours:D2}h{ts.Minutes:D2}m";
             }
         }
 
         public string getProcessPath()
         {
+            var available = Data.LoadAvailableGames();
             try
-            {
-                var available = Data.LoadAvailableGames();
+            {               
                 var processName = Game.ExeName + ".exe";
 
                 string fullPath = available.FirstOrDefault(a =>

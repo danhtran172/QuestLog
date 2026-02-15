@@ -37,6 +37,7 @@ namespace MasterPlay.UI
 
             var activeGames = Data.LoadGames()
                                  .Where(g => !g.IsDisabled)
+                                 .OrderBy(g => g.Ready)
                                  .ToList();
 
             foreach (var game in activeGames)
@@ -74,28 +75,30 @@ namespace MasterPlay.UI
         {
             var query = Games.AsQueryable();
 
-            // Lọc theo tên (search)
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
                 query = query.Where(vm =>
                     vm.Game.Name.ToLowerInvariant().Contains(_searchText) == true);
             }
 
-            // Sắp xếp theo lựa chọn
             int sortIndex = SortComboBox?.SelectedIndex ?? 0;
             switch (sortIndex)
             {
-                case 0: // Name (A-Z)
-                    query = query.OrderBy(vm => vm.Game.Name);
-                    break;
 
-                case 1: // Playable First (Ready = true trước)
+
+                case 0: // Playable First (Ready = true trước)
                     query = query.OrderByDescending(vm => vm.Game.Ready)
-                                 .ThenBy(vm => vm.Game.Name);
+                                 .ThenBy(vm => vm.Game.Name)
+                                 .ThenBy(vm => vm.Game.TotalPlayTimeSeconds);
                     break;
-
+                case 1: // Name (A-Z)
+                    query = query.OrderBy(vm => vm.Game.Name)
+                        .ThenBy(vm => vm.Game.Ready)
+                        .ThenBy(vm => vm.Game.TotalPlayTimeSeconds);
+                    break;
                 case 2: // Play Time (descending)
                     query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds)
+                                 .ThenBy(vm => vm.Game.Ready)
                                  .ThenBy(vm => vm.Game.Name);
                     break;
             }

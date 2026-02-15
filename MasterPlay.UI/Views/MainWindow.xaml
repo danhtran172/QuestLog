@@ -28,8 +28,8 @@
                 <ComboBox x:Name="SortComboBox" Width="90" Style="{StaticResource ModernComboBoxStyle}" 
                           SelectionChanged="SortComboBox_SelectionChanged"
                           SelectedIndex="0" Margin="0,0,20,0">
-                    <ComboBoxItem Content="Name"/>
                     <ComboBoxItem Content="Status"/>
+                    <ComboBoxItem Content="Name"/>
                     <ComboBoxItem Content="Time"/>
                 </ComboBox>
 
