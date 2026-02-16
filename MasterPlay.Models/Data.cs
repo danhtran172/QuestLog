@@ -169,8 +169,8 @@ namespace MasterPlay.Models
         {
             var games = LoadGames();
             games = games
-                .OrderByDescending(g => g.Ready)
-                .ThenBy(g => g.IsDisabled)
+                .OrderByDescending(g => g.IsDisabled)
+                .ThenBy(g => g.Ready)
                 .ThenByDescending(g => g.TotalPlayTimeSeconds)
                 .ThenBy(g => g.Name)
                 .ToList();

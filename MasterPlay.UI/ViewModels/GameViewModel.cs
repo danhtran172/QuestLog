@@ -15,6 +15,7 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private bool hasPlayableExe;
+        public bool ShowFolderWarning => !checkFolderWarning();
         public string DisplayPlayTime
         {
             get
@@ -41,6 +42,10 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
+        public bool checkFolderWarning()
+        {
+            return FileHelper.FileCheck(Game.SaveFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath);
+        }
         public GameViewModel(Game game)
         {
             Game = game;

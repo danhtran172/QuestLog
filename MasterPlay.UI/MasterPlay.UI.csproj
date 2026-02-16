@@ -17,6 +17,7 @@
     <None Remove="Assets\Close.png" />
     <None Remove="Assets\Clound Sync.png" />
     <None Remove="Assets\Danger.png" />
+    <None Remove="Assets\Danger1.png" />
     <None Remove="Assets\Delete.png" />
     <None Remove="Assets\Edit.png" />
     <None Remove="Assets\Edit2.png" />
@@ -42,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\Danger1.png" />
     <Resource Include="Assets\Edit.png" />
   </ItemGroup>
 

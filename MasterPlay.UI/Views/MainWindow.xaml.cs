@@ -88,18 +88,18 @@ namespace MasterPlay.UI
 
                 case 0: // Playable First (Ready = true trước)
                     query = query.OrderByDescending(vm => vm.Game.Ready)
-                                 .ThenBy(vm => vm.Game.Name)
-                                 .ThenBy(vm => vm.Game.TotalPlayTimeSeconds);
-                    break;
-                case 1: // Name (A-Z)
-                    query = query.OrderBy(vm => vm.Game.Name)
-                        .ThenBy(vm => vm.Game.Ready)
-                        .ThenBy(vm => vm.Game.TotalPlayTimeSeconds);
-                    break;
-                case 2: // Play Time (descending)
-                    query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds)
-                                 .ThenBy(vm => vm.Game.Ready)
+                                 
+                                 .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
                                  .ThenBy(vm => vm.Game.Name);
+                    break;
+                case 1: // Playable First (Ready = true trước)
+                    query = query.OrderByDescending(vm => vm.Game.Ready);
+                    break;
+                case 2: // Name (A-Z)
+                    query = query.OrderBy(vm => vm.Game.Name);
+                    break;
+                case 3: // Play Time (descending)
+                    query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds);
                     break;
             }
 
