@@ -27,7 +27,7 @@ namespace MasterPlay.UI
             LoadGamesData();
         }
 
-        private void LoadGamesData()
+        public void LoadGamesData()
         {
             Games.Clear();
             FilteredGames.Clear();

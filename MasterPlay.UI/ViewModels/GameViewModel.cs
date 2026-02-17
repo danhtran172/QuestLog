@@ -3,7 +3,10 @@ using MasterPlay.Helpers;
 using MasterPlay.Models;
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.Windows;
+using System.Linq;
+
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -16,6 +19,7 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private bool hasPlayableExe;
         public bool ShowFolderWarning => !checkFolderWarning();
+        public bool IsGameRunning =>  CheckRunningGame();
         public string DisplayPlayTime
         {
             get
@@ -51,5 +55,25 @@ namespace MasterPlay.UI.ViewModels
             Game = game;
             hasPlayableExe = game.Ready;
         }
-    }
+
+
+        public bool CheckRunningGame()
+            
+            {
+                if (Game.Ready)
+                {
+                    var processName = Game?.ExeName;
+                    // Loại bỏ đuôi .exe nếu người dùng lỡ nhập vào
+                    if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        processName = processName.Substring(0, processName.Length - 4);
+                    }
+
+                    Process[] processes = Process.GetProcessesByName(processName);
+                    return processes.Length > 0;
+                }
+                return false;
+            }
+
+}
 }

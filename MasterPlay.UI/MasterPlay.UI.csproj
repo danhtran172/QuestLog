@@ -27,9 +27,11 @@
     <None Remove="Assets\Info.png" />
     <None Remove="Assets\Info2.png" />
     <None Remove="Assets\MasterplayLogo.png" />
+    <None Remove="Assets\Minus.png" />
     <None Remove="Assets\More.png" />
     <None Remove="Assets\OpenFolder.png" />
     <None Remove="Assets\Play.png" />
+    <None Remove="Assets\Plus.png" />
     <None Remove="Assets\Save.png" />
     <None Remove="Assets\Search.png" />
     <None Remove="Assets\Service.png" />
@@ -85,9 +87,11 @@
     <Resource Include="Assets\Filter2.png" />
     <Resource Include="Assets\Info2.png" />
     <Resource Include="Assets\MasterplayLogo.png" />
+    <Resource Include="Assets\Minus.png" />
     <Resource Include="Assets\More.png" />
     <Resource Include="Assets\OpenFolder.png" />
     <Resource Include="Assets\Play.png" />
+    <Resource Include="Assets\Plus.png" />
     <Resource Include="Assets\Save.png" />
     <Resource Include="Assets\Search.png" />
     <Resource Include="Assets\Service.png" />

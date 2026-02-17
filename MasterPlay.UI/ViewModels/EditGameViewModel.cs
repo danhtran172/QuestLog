@@ -28,22 +28,31 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string statusMessage = string.Empty;
 
-        // MỚI: Chỉ dùng khi view mode (IsReadOnly = true)
         [ObservableProperty]
         private bool saveFolderAccessible;
 
         [ObservableProperty]
         private bool backupFolderAccessible;
 
+        // Play time properties - PascalCase để binding đúng
+        [ObservableProperty]
+        private int playTimeHours;
+
+        [ObservableProperty]
+        private int playTimeMinutes;
+
+        [ObservableProperty]
+        private int adjustMinutes;
+
         public event Action<bool>? RequestClose;
 
         public EditGameViewModel(Game selectedGame)
         {
             Game = selectedGame ?? new Game();
-            ReloadGameFromConfig();  // Load và check ngay từ đầu
+            ReloadGameFromConfig(); // Load ban đầu
         }
 
-        // --- LOGIC XỬ LÝ THƯ MỤC ---
+        // --- Folder handling ---
         private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
         {
             if (!FileHelper.TryOpenLocations(out var errors, locations))
@@ -62,25 +71,25 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
 
-        // --- LOGIC CHỈNH SỬA & VALIDATE ---
+        // --- Edit & Validate ---
         [RelayCommand]
         private void ToggleEditMode()
         {
             IsReadOnly = !IsReadOnly;
-            ReloadGameFromConfig();  // Reload và check lại folder khi toggle
+            ReloadGameFromConfig();
             if (IsReadOnly) StatusMessage = string.Empty;
         }
 
         private void InputFormater()
         {
             if (Game == null) return;
-            // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
+
             if (string.IsNullOrWhiteSpace(Game.Name))
             {
                 var original = Data.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
                 Game.Name = original?.Name ?? "Unknown Game";
             }
-            // 2. ExeName: Tự xóa đuôi .exe
+
             if (!string.IsNullOrWhiteSpace(Game.ExeName))
             {
                 string trimmed = Game.ExeName.Trim();
@@ -89,7 +98,7 @@ namespace MasterPlay.UI.ViewModels
                     Game.ExeName = trimmed[..^4].Trim();
                 }
             }
-            // 3. Clean Paths: Xóa dấu ngoặc kép và khoảng trắng thừa
+
             Game.SaveFolderPath = Game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.BackupFolderPath = Game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.ImagePath = Game.ImagePath?.Trim('"').Trim() ?? string.Empty;
@@ -104,7 +113,6 @@ namespace MasterPlay.UI.ViewModels
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
                 {
-                    // Xử lý tạo thư mục backup và file info
                     if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath))
                     {
                         if (!Directory.Exists(Game.BackupFolderPath))
@@ -114,10 +122,11 @@ namespace MasterPlay.UI.ViewModels
                         string infoFilePath = Path.Combine(Game.BackupFolderPath, "save_location.txt");
                         File.WriteAllText(infoFilePath, Game.SaveFolderPath);
                     }
+
                     InputFormater();
                     games[index] = Game;
                     Data.SaveGamesData(games);
-                    ReloadGameFromConfig();  // Reload và check lại folder sau save
+                    ReloadGameFromConfig();
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
                 }
@@ -132,7 +141,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void DeleteGame()
         {
-            var result = MessageBox.Show($"Are you sure to Disable '{Game.Name}'?\n(Game will be hide but stil remaining data.)",
+            var result = MessageBox.Show($"Are you sure to Disable '{Game.Name}'?\n(Game will be hidden but data remains.)",
                 "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
@@ -144,7 +153,7 @@ namespace MasterPlay.UI.ViewModels
                     {
                         gameToDisable.IsDisabled = true;
                         Data.SaveGamesData(games);
-                        StatusMessage = gameToDisable.Name + " is Disabled!";
+                        StatusMessage = $"{gameToDisable.Name} is Disabled!";
                         RequestClose?.Invoke(true);
                     }
                 }
@@ -166,7 +175,7 @@ namespace MasterPlay.UI.ViewModels
                 Game = originalGame;
                 BackupFolderPath = Game.BackupFolderPath;
                 LoadPreviewImage(Game.ImagePath);
-                ReloadGameFromConfig();  // Reload và check lại folder khi Cancel
+                ReloadGameFromConfig();
             }
             IsReadOnly = true;
             StatusMessage = string.Empty;
@@ -205,7 +214,6 @@ namespace MasterPlay.UI.ViewModels
                 BackupFolderPath = Game.BackupFolderPath;
                 LoadPreviewImage(Game.ImagePath);
 
-                // MỚI: Check ngầm folder chỉ khi ở view mode (IsReadOnly = true)
                 if (IsReadOnly)
                 {
                     SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFolderPath);
@@ -213,10 +221,120 @@ namespace MasterPlay.UI.ViewModels
                 }
                 else
                 {
-                    // Edit mode: luôn enable và không mờ
                     SaveFolderAccessible = true;
                     BackupFolderAccessible = true;
+                    UpdatePlayTimeFieldsFromSeconds();
                 }
+            }
+        }
+
+        partial void OnIsReadOnlyChanged(bool value)
+        {
+            if (!value) // Vào edit mode
+            {
+                UpdatePlayTimeFieldsFromSeconds();
+            }
+        }
+
+        partial void OnPlayTimeHoursChanged(int value)
+        {
+            if (value < 0) PlayTimeHours = 0;
+            UpdateTotalPlayTimeFromFields();
+        }
+
+        partial void OnPlayTimeMinutesChanged(int value)
+        {
+            if (value < 0) PlayTimeMinutes = 0;
+            if (value >= 60)
+            {
+                PlayTimeHours += value / 60;
+                PlayTimeMinutes = value % 60;
+            }
+            UpdateTotalPlayTimeFromFields();
+        }
+
+        private void UpdatePlayTimeFieldsFromSeconds()
+        {
+            var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+            PlayTimeHours = (int)ts.TotalHours;
+            PlayTimeMinutes = ts.Minutes;
+            OnPropertyChanged(nameof(PlayTimeHours));
+            OnPropertyChanged(nameof(PlayTimeMinutes));
+        }
+
+        private void UpdateTotalPlayTimeFromFields()
+        {
+            Game.TotalPlayTimeSeconds = (PlayTimeHours * 3600L) + (PlayTimeMinutes * 60L);
+        }
+
+        [RelayCommand]
+        private void SyncImage()
+        {
+            if (string.IsNullOrWhiteSpace(Game.ImagePath))
+            {
+                PreviewImage = null;
+                StatusMessage = "No image URL provided.";
+                return;
+            }
+
+            try
+            {
+                LoadPreviewImage(Game.ImagePath);
+                StatusMessage = "Image preview updated successfully.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to load image: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private void AdjustPlayTimeUp()
+        {
+            if (AdjustMinutes <= 0)
+            {
+                StatusMessage = "Please enter a positive number of minutes.";
+                return;
+            }
+
+            Game.TotalPlayTimeSeconds += AdjustMinutes * 60L;
+            UpdatePlayTimeFieldsFromSeconds();
+            StatusMessage = $"Added {AdjustMinutes} minutes to play time.";
+            AdjustMinutes = 0;
+        }
+
+        [RelayCommand]
+        private void AdjustPlayTimeDown()
+        {
+            if (AdjustMinutes <= 0)
+            {
+                StatusMessage = "Please enter a positive number of minutes.";
+                return;
+            }
+
+            long newSeconds = Game.TotalPlayTimeSeconds - (AdjustMinutes * 60L);
+            if (newSeconds < 0)
+            {
+                Game.TotalPlayTimeSeconds = 0;
+                StatusMessage = "Play time cannot be negative. Reset to 0.";
+            }
+            else
+            {
+                Game.TotalPlayTimeSeconds = newSeconds;
+                StatusMessage = $"Subtracted {AdjustMinutes} minutes from play time.";
+            }
+
+            UpdatePlayTimeFieldsFromSeconds();
+            AdjustMinutes = 0;
+        }
+
+        // Dùng cho view mode hiển thị
+        public string DisplayPlayTime
+        {
+            get
+            {
+                var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+                return $"{(int)ts.TotalHours}h {ts.Minutes}m";
             }
         }
     }
