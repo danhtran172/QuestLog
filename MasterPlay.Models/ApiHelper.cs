@@ -1,6 +1,7 @@
 ﻿using GenerativeAI;
 using Google.GenAI;
 using Google.GenAI.Types;
+using MasterPlay.Models.Models;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;

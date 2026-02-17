@@ -1,15 +1,10 @@
 ﻿<Window x:Class="MasterPlay.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         Title="MasterPlay" Height="600" Width="900" WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
-    <Window.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <converters:BooleanInverseConverter x:Key="BoolInverse"/>
-    </Window.Resources>
     <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -84,13 +79,12 @@
                                 </Rectangle>
                             </Grid>
                             <!-- Nút Play -->
-                            <Button Style="{StaticResource IconButtonStyle}"
-                                    Width="28" Height="28"
-                                    Margin="12,0,0,0"
-                                  
-                                    IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}"
-                                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
-                                    Click="PlayGame_Click">
+                            <Button Style="{StaticResource PlayButtonStyle}"  
+                                Width="28" Height="28"
+        Margin="12,0,0,0"
+        IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}"
+        Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
+        Click="PlayGame_Click">
                                 <Image Width="12" Height="12" RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Style>
                                         <Style TargetType="Image">

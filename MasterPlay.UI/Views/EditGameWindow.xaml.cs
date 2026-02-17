@@ -1,4 +1,4 @@
-﻿using MasterPlay.Models;
+﻿using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels;
 using System.Windows;
 

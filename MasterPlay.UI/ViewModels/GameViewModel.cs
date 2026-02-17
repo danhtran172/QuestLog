@@ -1,24 +1,30 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
-using Newtonsoft.Json;
+using MasterPlay.Models.Models;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows;
 
 namespace MasterPlay.UI.ViewModels
 {
     public partial class GameViewModel : ObservableObject
     {
+        // --- Properties ---
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayPlayTime))]
         private Game _game;
-
         [ObservableProperty]
         private bool hasPlayableExe;
 
-        // Tất cả logic chuyển về đây
+        // --- Constructors and Initialization ---
+        public GameViewModel(Game game)
+        {
+            Game = game ?? throw new ArgumentNullException(nameof(game));
+            HasPlayableExe = game.Ready;
+        }
+
+        // --- Public Properties: Display and Status Helpers ---
         public bool ShowFolderWarning => !CheckFolderWarning();
 
         public bool IsGameRunning => CheckRunningGame();
@@ -32,9 +38,10 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
+        // --- Private Methods: Path and Status Checks ---
         public string GetProcessPath()
         {
-            var available = Data.LoadAvailableGames();
+            var available = DataHelper.LoadAvailableGames();
             try
             {
                 var processName = Game.ExeName + ".exe";
@@ -48,32 +55,23 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        public bool CheckFolderWarning()
+        private bool CheckFolderWarning()
         {
             return FileHelper.FileCheck(Game.SaveFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath);
         }
 
-        public bool CheckRunningGame()
+        private bool CheckRunningGame()
         {
             if (!Game.Ready) return false;
-
             var processName = Game?.ExeName;
             if (string.IsNullOrEmpty(processName)) return false;
-
             // Loại bỏ đuôi .exe nếu có
             if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
                 processName = processName.Substring(0, processName.Length - 4);
             }
-
             Process[] processes = Process.GetProcessesByName(processName);
             return processes.Length > 0;
-        }
-
-        public GameViewModel(Game game)
-        {
-            Game = game ?? throw new ArgumentNullException(nameof(game));
-            HasPlayableExe = game.Ready;
         }
     }
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -26,6 +26,7 @@
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="SharpDX.XInput" Version="4.2.0" />
     <PackageReference Include="System.Management" Version="10.0.2" />
     <PackageReference Include="System.Net.Http.Json" Version="10.0.2" />
   </ItemGroup>
@@ -34,4 +35,8 @@
     <ProjectReference Include="..\MasterPlay.Models\MasterPlay.Models.csproj" />
     <ProjectReference Include="..\MasterPlay.UI\MasterPlay.UI.csproj" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="echo @echo off &gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo setlocal &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo ^&gt;nul 2^&gt;^&amp;1 &quot;%25%25SYSTEMROOT%25%25\system32\cacls.exe&quot; &quot;%25%25SYSTEMROOT%25%25\system32\config\system&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo if '%25%25errorlevel%25%25' NEQ '0' ( goto UACPrompt ) else ( goto gotAdmin ) &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo :UACPrompt &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo echo Set UAC = CreateObject^(&quot;Shell.Application&quot;^) ^&gt; &quot;%25%25temp%25%25\getadmin.vbs&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo echo UAC.ShellExecute &quot;%25%25~s0&quot;, &quot;&quot;, &quot;&quot;, &quot;runas&quot;, 1 ^&gt;^&gt; &quot;%25%25temp%25%25\getadmin.vbs&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo &quot;%25%25temp%25%25\getadmin.vbs&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo exit /B &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo :gotAdmin &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo if exist &quot;%25%25temp%25%25\getadmin.vbs&quot; ( del &quot;%25%25temp%25%25\getadmin.vbs&quot; ) &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo pushd &quot;%25%25~dp0&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo sc create &quot;MasterPlayService&quot; binPath= &quot;%25%25~dp0MasterPlay.Service.exe&quot; start= auto displayname= &quot;MasterPlay Background Service&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo sc start &quot;MasterPlayService&quot; &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;echo pause &gt;&gt; &quot;$(PublishDir)Install.bat&quot;&#xD;&#xA;&#xD;&#xA;echo @echo off &gt; &quot;$(PublishDir)Uninstall.bat&quot;&#xD;&#xA;echo sc stop &quot;MasterPlayService&quot; &gt;&gt; &quot;$(PublishDir)Uninstall.bat&quot;&#xD;&#xA;echo sc delete &quot;MasterPlayService&quot; &gt;&gt; &quot;$(PublishDir)Uninstall.bat&quot;&#xD;&#xA;echo pause &gt;&gt; &quot;$(PublishDir)Uninstall.bat&quot;" />
+  </Target>
 </Project>

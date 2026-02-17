@@ -8,13 +8,16 @@ namespace MasterPlay.Service
     {
         public static async Task Main(string[] args)
         {
-            // Cấu hình Serilog
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.File("logs/masterplay_log.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
 
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string logPath = Path.Combine(baseDir, "logs", "masterplay_log.txt");
+            Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Debug()
+                    .WriteTo.Console()
+                    .WriteTo.File(logPath,
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 7)
+                    .CreateLogger();
             try
             {
                 Log.Information("===== Starting MasterPlay Service Host =====");
@@ -32,7 +35,7 @@ namespace MasterPlay.Service
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseSerilog() // Thay thế logger mặc định bằng Serilog
+                .UseSerilog()
                 .UseWindowsService(options => { options.ServiceName = "MasterPlayService"; })
                 .ConfigureServices((hostContext, services) =>
                 {

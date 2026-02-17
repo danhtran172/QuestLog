@@ -1,6 +1,8 @@
-﻿using MasterPlay.Models;
+﻿using MasterPlay.Helpers;
+using MasterPlay.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.IO;
 
 namespace MasterPlay.Service.Services
 {
@@ -17,83 +19,146 @@ namespace MasterPlay.Service.Services
 
         public void Start(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Backup engine initialized at: {time}", DateTimeOffset.Now);
-
-            _primaryBackupTimer = new System.Timers.Timer(60000); // 1 min
-            _primaryBackupTimer.Elapsed += (s, e) => PerformBackup("save_backup.dat");
+            _logger.LogInformation("BACKUP SERVICE STARTED");
+            _primaryBackupTimer = new System.Timers.Timer(60000); // 1 phút
+            _primaryBackupTimer.Elapsed += (s, e) => PerformBackup();
             _primaryBackupTimer.AutoReset = true;
             _primaryBackupTimer.Start();
         }
 
-public void PerformBackup(string backupFileName)
-    {
-        if (_isBackupRunning)
+        public void PerformBackup()
         {
-            _logger.LogWarning("Backup skipped: Previous session still active.");
-            return;
-        }
-
-        try
-        {
-            _isBackupRunning = true;
-            var config = Data.LoadConfig();
-            var games = Data.LoadGames();
-
-            if (string.IsNullOrEmpty(config.BackupRootPath)) return;
-
-            foreach (var game in games)
+            if (_isBackupRunning)
             {
-                // 1. Kiểm tra xem Game có đang chạy hay không
-                if (string.IsNullOrEmpty(game.ExeName))
+                _logger.LogWarning("Backup skipped: Previous session still active.");
+                return;
+            }
+
+            try
+            {
+                _isBackupRunning = true;
+                var config = DataHelper.LoadConfig();
+                var games = DataHelper.LoadGames();
+
+                if (string.IsNullOrEmpty(config.BackupRootPath))
                 {
-                    _logger.LogWarning("Game {name}: ExeName is not configured. Skipping...", game.Name);
-                    continue;
+                    _logger.LogWarning("Backup skipped: BackupRootPath is empty.");
+                    return;
                 }
 
-                // Xử lý tên Exe (bỏ đuôi .exe nếu người dùng lỡ nhập vào config)
-                string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
-
-                bool isGameRunning = Process.GetProcessesByName(processName).Length > 0;
-
-                //if (!isGameRunning)
-                //{
-                //    _logger.LogDebug("Game {name} ({exe}.exe) is not running. Backup skipped.", game.Name, processName );
-                //    continue;
-                //}
-
-                // 2. Nếu game đang chạy, kiểm tra file save có tồn tại không
-                if (string.IsNullOrEmpty(game.SaveFolderPath) || !File.Exists(game.SaveFolderPath))
+                foreach (var game in games)
                 {
-                    _logger.LogWarning("Game {name}: Running but save folder: {path} do not exist", game.Name, game.SaveFolderPath);
-                    continue;
+                    if (string.IsNullOrEmpty(game.ExeName) || string.IsNullOrEmpty(game.SaveFolderPath))
+                    {
+                        continue;
+                    }
+
+                    if (!Directory.Exists(game.SaveFolderPath))
+                    {
+                        _logger.LogWarning("Save folder not found for game {name}: {path}", game.Name, game.SaveFolderPath);
+                        continue;
+                    }
+
+                    string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
+                    Process[] processes = Process.GetProcessesByName(processName);
+
+                    bool shouldBackup = false;
+
+                    if (processes.Length > 0)
+                    {
+                        // Game đang chạy → backup luôn
+                        shouldBackup = true;
+                        _logger.LogInformation("Game {name} is running → perform backup", game.Name);
+                    }
+                    else
+                    {
+                        // Game không chạy → kiểm tra process gần nhất có tắt trong 1 phút không
+                        DateTime now = DateTime.UtcNow;
+                        bool recentProcess = false;
+
+                        // Tìm process có tên tương tự (để tránh miss nếu tên process thay đổi nhẹ)
+                        foreach (var proc in Process.GetProcesses())
+                        {
+                            if (proc.ProcessName.Contains(processName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                try
+                                {
+                                    DateTime startTime = proc.StartTime.ToUniversalTime();
+                                    if ((now - startTime).TotalMinutes < 2)
+                                    {
+                                        recentProcess = true;
+                                        break;
+                                    }
+                                }
+                                catch { /* Bỏ qua process không truy cập được */ }
+                            }
+                        }
+
+                        if (recentProcess)
+                        {
+                            shouldBackup = true;
+                            _logger.LogInformation("Game {name} just stopped within 1 minute → perform backup", game.Name);
+                        }
+                    }
+
+                    if (!shouldBackup)
+                    {
+                        _logger.LogInformation("Skipped backup for {name}: not running and no recent activity", game.Name);
+                        continue;
+                    }
+
+                    _logger.LogInformation("Starting backup for game: {name}", game.Name);
+
+                    string backupFolder = Path.Combine(config.BackupRootPath, game.Name);
+                    Directory.CreateDirectory(backupFolder);
+
+                    string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    string backupSubFolder = Path.Combine(backupFolder, $"Backup_{timestamp}");
+                    Directory.CreateDirectory(backupSubFolder);
+
+                    CopyDirectory(game.SaveFolderPath, backupSubFolder);
+
+                    _logger.LogInformation("Backup successful for {name} at {path}", game.Name, backupSubFolder);
                 }
-
-                // 3. Thực hiện Backup
-                _logger.LogInformation("{name} is Running. Starting backup...", game.Name);
-
-                string backupFolder = Path.Combine(config.BackupRootPath, game.Name);
-                Directory.CreateDirectory(backupFolder);
-
-                string fullPath = Path.GetFullPath(Path.Combine(backupFolder, backupFileName));
-
-                File.Copy(game.SaveFolderPath, fullPath, true);
-
-                _logger.LogInformation("{name}: Backup successful! in {path}", game.Name, fullPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during backup process.");
+            }
+            finally
+            {
+                _isBackupRunning = false;
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during selective backup process.");
-        }
-        finally
-        {
-            _isBackupRunning = false;
-        }
-    }
 
-    public void Stop()
+        private void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            var dir = new DirectoryInfo(sourceDir);
+
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            Directory.CreateDirectory(destinationDir);
+
+            foreach (FileInfo file in dir.GetFiles())
+            {
+                string targetFilePath = Path.Combine(destinationDir, file.Name);
+                file.CopyTo(targetFilePath, true);
+            }
+
+            foreach (DirectoryInfo subDir in dirs)
+            {
+                string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+                CopyDirectory(subDir.FullName, newDestinationDir);
+            }
+        }
+
+        public void Stop()
         {
             _primaryBackupTimer?.Stop();
+            _primaryBackupTimer?.Dispose();
             _logger.LogInformation("Backup engine stopped at: {time}", DateTimeOffset.Now);
         }
     }

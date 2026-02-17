@@ -2,127 +2,54 @@
 using CommunityToolkit.Mvvm.Input;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
+using MasterPlay.Models.Models;
+using MasterPlay.UI.ViewModels.Generral;
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Windows.Media.Imaging;
-using System.Windows;
+using System.IO;
 using System.Linq;
-using System.Windows.Threading;
+using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace MasterPlay.UI.ViewModels
 {
-    public partial class EditGameViewModel : ObservableObject
+    public partial class EditGameViewModel : BaseViewModel
     {
+        // --- Properties ---
         [ObservableProperty]
         private Game game;
-
         [ObservableProperty]
         private string backupFolderPath = string.Empty;
-
         [ObservableProperty]
         private BitmapImage? previewImage;
-
         [ObservableProperty]
         private bool isReadOnly = true;
-
-        [ObservableProperty]
-        private string statusMessage = string.Empty;
-
         [ObservableProperty]
         private bool saveFolderAccessible;
-
         [ObservableProperty]
         private bool backupFolderAccessible;
-
         // Play time properties
         [ObservableProperty]
         private int playTimeHours;
-
         [ObservableProperty]
         private int playTimeMinutes;
-
         [ObservableProperty]
         private int adjustMinutes;
 
-        public event Action<bool>? RequestClose;
-
-        // Timer để tự động xóa StatusMessage sau 3 giây
-        private readonly DispatcherTimer _statusTimer;
-
+        // --- Constructors and Initialization ---
         public EditGameViewModel(Game selectedGame)
         {
             Game = selectedGame ?? new Game();
             ReloadGameFromConfig();
-
-            _statusTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(3)
-            };
-            _statusTimer.Tick += (s, e) =>
-            {
-                StatusMessage = string.Empty;
-                _statusTimer.Stop();
-            };
         }
 
-        // Khi StatusMessage thay đổi → tự động chạy timer 3s để xóa
-        partial void OnStatusMessageChanged(string value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                _statusTimer.Stop(); // Dừng timer cũ nếu đang chạy
-                _statusTimer.Start(); // Bắt đầu lại 3 giây
-            }
-        }
-
-        // --- Folder handling ---
-        private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
-        {
-            if (!FileHelper.TryOpenLocations(out var errors, locations))
-            {
-                MessageBox.Show(
-                    "Cannot Open Folder:\n" + string.Join("\n", errors),
-                    "Access Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
-        }
-
-        [RelayCommand]
-        private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFolderPath, "Save Folder"));
-
-        [RelayCommand]
-        private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
-
-        // --- Edit & Validate ---
+        // --- Commands: Mode Toggling and Saving ---
         [RelayCommand]
         private void ToggleEditMode()
         {
             IsReadOnly = !IsReadOnly;
             ReloadGameFromConfig();
             if (IsReadOnly) StatusMessage = string.Empty;
-        }
-
-        private void InputFormater()
-        {
-            if (Game == null) return;
-            if (string.IsNullOrWhiteSpace(Game.Name))
-            {
-                var original = Data.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
-                Game.Name = original?.Name ?? "Unknown Game";
-            }
-            if (!string.IsNullOrWhiteSpace(Game.ExeName))
-            {
-                string trimmed = Game.ExeName.Trim();
-                if (trimmed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    Game.ExeName = trimmed[..^4].Trim();
-                }
-            }
-            Game.SaveFolderPath = Game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
-            Game.BackupFolderPath = Game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
-            Game.ImagePath = Game.ImagePath?.Trim('"').Trim() ?? string.Empty;
         }
 
         [RelayCommand]
@@ -134,8 +61,7 @@ namespace MasterPlay.UI.ViewModels
                 {
                     UpdateBackupFolderPath(Game.Name);
                 }
-
-                var games = Data.LoadGames();
+                var games = DataHelper.LoadGames();
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
                 {
@@ -148,23 +74,18 @@ namespace MasterPlay.UI.ViewModels
                         string infoFilePath = Path.Combine(Game.BackupFolderPath, "save_location.txt");
                         File.WriteAllText(infoFilePath, Game.SaveFolderPath);
                     }
-
-                    InputFormater();
+                    ViewModelHelpers.InputFormatter(Game);
                     games[index] = Game;
-                    Data.SaveGamesData(games);
+                    DataHelper.SaveGamesData(games);
                     ReloadGameFromConfig();
-
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
-
-                    // KHÔNG gọi RequestClose ở đây nữa → giữ window mở, chỉ quay về view mode
                 }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error: {ex.Message}";
                 MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                // Nếu lỗi, có thể đóng hoặc không, tùy bạn (ở đây giữ mở để xem lỗi)
             }
         }
 
@@ -177,16 +98,14 @@ namespace MasterPlay.UI.ViewModels
             {
                 try
                 {
-                    var games = Data.LoadGames();
+                    var games = DataHelper.LoadGames();
                     var gameToDisable = games.FirstOrDefault(g => g.Id == Game.Id);
                     if (gameToDisable != null)
                     {
                         gameToDisable.IsDisabled = true;
-                        Data.SaveGamesData(games);
+                        DataHelper.SaveGamesData(games);
                         StatusMessage = $"{gameToDisable.Name} is Disabled!";
-
-                        // Add! Vì delete thì nên đóng window sau khi thông báo
-                        RequestClose?.Invoke(true);
+                        RaiseRequestClose(true);
                     }
                 }
                 catch (Exception ex)
@@ -200,13 +119,13 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel()
         {
-            var games = Data.LoadGames();
+            var games = DataHelper.LoadGames();
             var originalGame = games.FirstOrDefault(g => g.Id == Game.Id);
             if (originalGame != null)
             {
                 Game = originalGame;
                 BackupFolderPath = Game.BackupFolderPath;
-                LoadPreviewImage(Game.ImagePath);
+                PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
                 ReloadGameFromConfig();
             }
             IsReadOnly = true;
@@ -214,126 +133,16 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void Close() => RequestClose?.Invoke(false);
+        private void Close() => RaiseRequestClose(false);
 
-        private void LoadPreviewImage(string? url)
-        {
-            if (string.IsNullOrWhiteSpace(url)) { PreviewImage = null; return; }
-            try
-            {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(url, UriKind.Absolute);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-                PreviewImage = bitmap;
-            }
-            catch { PreviewImage = null; }
-        }
+        // --- Commands: Folder Handling ---
+        [RelayCommand]
+        private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFolderPath, "Save Folder"));
 
-        partial void OnGameChanged(Game value)
-        {
-            LoadPreviewImage(value?.ImagePath);
-            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
-            {
-                UpdateBackupFolderPath(value.Name);
-            }
-        }
+        [RelayCommand]
+        private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
 
-        private void UpdateBackupFolderPath(string newGameName)
-        {
-            if (string.IsNullOrWhiteSpace(newGameName)) return;
-
-            string backupRoot = Data.GetBackupRootPath(); // Giả sử hàm này tồn tại
-            string validFolderName = AddGameViewModel.ValidFolderName(newGameName); // Giả sử hàm này tồn tại
-            string newBackupFolder = Path.Combine(backupRoot, validFolderName);
-
-            if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) &&
-                Directory.Exists(Game.BackupFolderPath) &&
-                Game.BackupFolderPath != newBackupFolder)
-            {
-                try
-                {
-                    Directory.Move(Game.BackupFolderPath, newBackupFolder);
-                    StatusMessage = $"Backup folder renamed to: {validFolderName}";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Failed to rename backup folder: {ex.Message}";
-                }
-            }
-            else if (!Directory.Exists(newBackupFolder))
-            {
-                Directory.CreateDirectory(newBackupFolder);
-            }
-
-            Game.BackupFolderPath = newBackupFolder;
-            string infoFilePath = Path.Combine(newBackupFolder, "save_location.txt");
-            File.WriteAllText(infoFilePath, Game.SaveFolderPath);
-        }
-
-        private void ReloadGameFromConfig()
-        {
-            var games = Data.LoadGames();
-            var reloaded = games.FirstOrDefault(g => g.Id == Game.Id);
-            if (reloaded != null)
-            {
-                Game = reloaded;
-                BackupFolderPath = Game.BackupFolderPath;
-                LoadPreviewImage(Game.ImagePath);
-                if (IsReadOnly)
-                {
-                    SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFolderPath);
-                    BackupFolderAccessible = FileHelper.FileCheck(Game.BackupFolderPath);
-                }
-                else
-                {
-                    SaveFolderAccessible = true;
-                    BackupFolderAccessible = true;
-                    UpdatePlayTimeFieldsFromSeconds();
-                }
-            }
-        }
-
-        partial void OnIsReadOnlyChanged(bool value)
-        {
-            if (!value) // Vào edit mode
-            {
-                UpdatePlayTimeFieldsFromSeconds();
-            }
-        }
-
-        partial void OnPlayTimeHoursChanged(int value)
-        {
-            if (value < 0) PlayTimeHours = 0;
-            UpdateTotalPlayTimeFromFields();
-        }
-
-        partial void OnPlayTimeMinutesChanged(int value)
-        {
-            if (value < 0) PlayTimeMinutes = 0;
-            if (value >= 60)
-            {
-                PlayTimeHours += value / 60;
-                PlayTimeMinutes = value % 60;
-            }
-            UpdateTotalPlayTimeFromFields();
-        }
-
-        private void UpdatePlayTimeFieldsFromSeconds()
-        {
-            var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
-            PlayTimeHours = (int)ts.TotalHours;
-            PlayTimeMinutes = ts.Minutes;
-            OnPropertyChanged(nameof(PlayTimeHours));
-            OnPropertyChanged(nameof(PlayTimeMinutes));
-        }
-
-        private void UpdateTotalPlayTimeFromFields()
-        {
-            Game.TotalPlayTimeSeconds = (PlayTimeHours * 3600L) + (PlayTimeMinutes * 60L);
-        }
-
+        // --- Commands: Sync and Adjustment ---
         [RelayCommand]
         private void SyncImage()
         {
@@ -345,7 +154,7 @@ namespace MasterPlay.UI.ViewModels
             }
             try
             {
-                LoadPreviewImage(Game.ImagePath);
+                PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
                 StatusMessage = "Image preview updated successfully.";
             }
             catch (Exception ex)
@@ -391,6 +200,121 @@ namespace MasterPlay.UI.ViewModels
             AdjustMinutes = 0;
         }
 
+        // --- Private Methods: Folder Handling ---
+        private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
+        {
+            if (!FileHelper.TryOpenLocations(out var errors, locations))
+            {
+                MessageBox.Show(
+                    "Cannot Open Folder:\n" + string.Join("\n", errors),
+                    "Access Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
+        // --- Private Methods: Data Loading and Updating ---
+        private void ReloadGameFromConfig()
+        {
+            var games = DataHelper.LoadGames();
+            var reloaded = games.FirstOrDefault(g => g.Id == Game.Id);
+            if (reloaded != null)
+            {
+                Game = reloaded;
+                BackupFolderPath = Game.BackupFolderPath;
+                PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
+                if (IsReadOnly)
+                {
+                    SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFolderPath);
+                    BackupFolderAccessible = FileHelper.FileCheck(Game.BackupFolderPath);
+                }
+                else
+                {
+                    SaveFolderAccessible = true;
+                    BackupFolderAccessible = true;
+                    UpdatePlayTimeFieldsFromSeconds();
+                }
+            }
+        }
+
+        private void UpdateBackupFolderPath(string newGameName)
+        {
+            if (string.IsNullOrWhiteSpace(newGameName)) return;
+            string backupRoot = DataHelper.GetBackupRootPath();
+            string validFolderName = ViewModelHelpers.ValidFolderName(newGameName);
+            string newBackupFolder = Path.Combine(backupRoot, validFolderName);
+            if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) &&
+                Directory.Exists(Game.BackupFolderPath) &&
+                Game.BackupFolderPath != newBackupFolder)
+            {
+                try
+                {
+                    Directory.Move(Game.BackupFolderPath, newBackupFolder);
+                    StatusMessage = $"Backup folder renamed to: {validFolderName}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"Failed to rename backup folder: {ex.Message}";
+                }
+            }
+            else if (!Directory.Exists(newBackupFolder))
+            {
+                Directory.CreateDirectory(newBackupFolder);
+            }
+            Game.BackupFolderPath = newBackupFolder;
+        }
+
+        // --- Private Methods: Play Time Handling ---
+        private void UpdatePlayTimeFieldsFromSeconds()
+        {
+            var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+            PlayTimeHours = (int)ts.TotalHours;
+            PlayTimeMinutes = ts.Minutes;
+            OnPropertyChanged(nameof(PlayTimeHours));
+            OnPropertyChanged(nameof(PlayTimeMinutes));
+        }
+
+        private void UpdateTotalPlayTimeFromFields()
+        {
+            Game.TotalPlayTimeSeconds = (PlayTimeHours * 3600L) + (PlayTimeMinutes * 60L);
+        }
+
+        // --- Partial Methods: Property Changed Handlers ---
+        partial void OnGameChanged(Game value)
+        {
+            PreviewImage = ViewModelHelpers.LoadPreviewImage(value?.ImagePath);
+            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
+            {
+                UpdateBackupFolderPath(value.Name);
+            }
+        }
+
+        partial void OnIsReadOnlyChanged(bool value)
+        {
+            if (!value) // Vào edit mode
+            {
+                UpdatePlayTimeFieldsFromSeconds();
+            }
+        }
+
+        partial void OnPlayTimeHoursChanged(int value)
+        {
+            if (value < 0) PlayTimeHours = 0;
+            UpdateTotalPlayTimeFromFields();
+        }
+
+        partial void OnPlayTimeMinutesChanged(int value)
+        {
+            if (value < 0) PlayTimeMinutes = 0;
+            if (value >= 60)
+            {
+                PlayTimeHours += value / 60;
+                PlayTimeMinutes = value % 60;
+            }
+            UpdateTotalPlayTimeFromFields();
+        }
+
+        // --- Public Properties: Display Helpers ---
         public string DisplayPlayTime
         {
             get

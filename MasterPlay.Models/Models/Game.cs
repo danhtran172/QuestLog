@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MasterPlay.Models
+namespace MasterPlay.Models.Models
 {
     public class Game
     {

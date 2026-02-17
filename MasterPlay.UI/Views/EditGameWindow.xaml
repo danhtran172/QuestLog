@@ -2,60 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
-        xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
-        Title="Game Details" Height="820" Width="750"
+        Title="Game Details" Height="680" Width="680"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White" FontFamily="Segoe UI">
-    <Window.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
-        <converters:BoolToOpacityConverter x:Key="BoolToOpacity"/>
-
-        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#888888"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="13"/>
-        </Style>
-        <Style x:Key="ValueTextStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="Foreground" Value="#2C3E50"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-        </Style>
-        <Style x:Key="NAStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="Foreground" Value="#BDC3C7"/>
-            <Setter Property="FontStyle" Value="Italic"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="BorderBrush" Value="#DDDDDD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="White" CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
-                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="280"/>
@@ -63,7 +12,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Grid Grid.Row="0">
             <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -88,207 +36,179 @@
             </Button>
         </Grid>
 
-        <!-- Details -->
-        <Grid Grid.Row="1" Margin="40,35,40,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <!-- 0: Play Time (View mode) -->
-                <RowDefinition Height="Auto"/>
-                <!-- 1: Game Name -->
-                <RowDefinition Height="Auto"/>
-                <!-- 2: Process Name -->
-                <RowDefinition Height="Auto"/>
-                <!-- 3: Save Location -->
-                <RowDefinition Height="Auto"/>
-                <!-- 4: Backup Folder -->
-                <RowDefinition Height="Auto"/>
-                <!-- 5: Cover Image URL -->
-                <RowDefinition Height="Auto"/>
-                <!-- 6: Total Play Time (Edit mode) -->
-            </Grid.RowDefinitions>
-
-            <!-- Play Time - View mode -->
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="PLAY TIME"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}"/>
-            <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,0,20"
-                       Style="{StaticResource ValueTextStyle}"
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}"
-                       Text="{Binding DisplayPlayTime}"/>
-
-            <!-- Game Name -->
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="GAME NAME"
-           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
-           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-
-            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,20" 
-      Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="40,35,40,20">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <TextBox Grid.Column="0"
-             Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="PLAY TIME"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,0,20"
+                           Style="{StaticResource ValueTextStyle}"
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}"
+                           Text="{Binding DisplayPlayTime}"/>
 
-                <Button Grid.Column="1"
-            Style="{StaticResource IconButtonStyle}"
-            Background="#6FA4AF"
-            Margin="15,0,0,0"
-            Command="{Binding SyncGameNameCommand}"
-            ToolTip="Refresh game name">
-                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
-               RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-            <!-- Process Name -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="PROCESS NAME"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
-            <Grid Grid.Row="2" Grid.Column="1" Margin="0,0,0,20">
-                <TextBlock Style="{StaticResource ValueTextStyle}"
-                           Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                    <Run Text="{Binding Game.ExeName}"/><Run Text=".exe"/>
-                </TextBlock>
-                <TextBox Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-            </Grid>
-
-            <!-- Save Location -->
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="SAVE LOCATION"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
-            <Grid Grid.Row="3" Grid.Column="1" Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" VerticalAlignment="Center"
-                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Game.SaveFolderPath}" Style="{StaticResource ValueTextStyle}"
-                               Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
-                    <TextBlock Text="N/A" Style="{StaticResource NAStyle}"
-                               Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource BoolToVis}}"/>
-                </StackPanel>
-                <TextBox Grid.Column="0" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
-                        Background="#FADA7A" Margin="15,0,0,0"
-                        Command="{Binding OpenSaveFolderCommand}"
-                        IsEnabled="{Binding SaveFolderAccessible}"
-                        Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
-                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-
-            <!-- Backup Folder -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="BACKUP FOLDER"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
-            <Grid Grid.Row="4" Grid.Column="1" Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" VerticalAlignment="Center"
-                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Game.BackupFolderPath}" Style="{StaticResource ValueTextStyle}"
-                               Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
-                    <TextBlock Text="N/A" Style="{StaticResource NAStyle}"
-                               Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource BoolToVis}}"/>
-                </StackPanel>
-                <TextBox Grid.Column="0" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
-                        Background="#FADA7A" Margin="15,0,0,0"
-                        Command="{Binding OpenBackupFolderCommand}"
-                        IsEnabled="{Binding BackupFolderAccessible}"
-                        Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
-                    <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-
-            <!-- Cover Image URL -->
-            <TextBlock Grid.Row="5" Grid.Column="0" Text="COVER IMAGE URL"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-            <Grid Grid.Row="5" Grid.Column="1" Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-                <Button Grid.Column="1"
-                        Style="{StaticResource IconButtonStyle}"
-                        Background="#6FA4AF"
-                        Margin="15,0,0,0"
-                        Command="{Binding SyncImageCommand}"
-                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"
-                        ToolTip="Refresh preview image">
-                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-
-            <!-- Total Play Time (Edit mode) -->
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="TOTAL PLAY TIME"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-
-            <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,20"
-                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"
-                        Orientation="Horizontal" VerticalAlignment="Center">
-
-                <!-- Hours -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
-                    <TextBox Width="60" HorizontalContentAlignment="Center" 
-                             Text="{Binding PlayTimeHours, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="h" VerticalAlignment="Center" Margin="3,0,0,0"
-                               FontSize="14" FontWeight="Medium"/>
-                </StackPanel>
-
-                <!-- Minutes -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,100,0">
-                    <TextBox Width="45" HorizontalContentAlignment="Center"
-                             Text="{Binding PlayTimeMinutes, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="m" VerticalAlignment="Center" Margin="3,0,0,0"
-                               FontSize="14" FontWeight="Medium"/>
-                </StackPanel>
-
-                <!-- Adjust: - [TextBox] + -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
-                            Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
-                            Width="20" Height="20">
-                        <Image Source="/Assets/Minus.png" Width="14" Height="14"
-                                RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="GAME NAME"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,20"
+                      Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Column="1"
+                            Style="{StaticResource IconButtonStyle}"
+                            Background="#6FA4AF"
+                            Margin="15,0,0,0"
+                            Command="{Binding SyncGameNameCommand}"
+                            ToolTip="Refresh game name">
+                        <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
+                </Grid>
 
-                    <TextBox Width="70" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="PROCESS NAME"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
+                <Grid Grid.Row="2" Grid.Column="1" Margin="0,0,0,20">
+                    <TextBlock Style="{StaticResource ValueTextStyle}"
+                               Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                        <Run Text="{Binding Game.ExeName}"/><Run Text=".exe"/>
+                    </TextBlock>
+                    <TextBox Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                </Grid>
 
-                    <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
-                            Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
-                            Width="20" Height="20">
-                        <Image Source="/Assets/Plus.png" Width="14" Height="14"
-                                RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="SAVE LOCATION"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
+                <Grid Grid.Row="3" Grid.Column="1" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding Game.SaveFolderPath}" Style="{StaticResource ValueTextStyle}"
+                                   Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
+                        <TextBlock Text="N/A" Style="{StaticResource NAStyle}"
+                                   Visibility="{Binding Game.SaveFolderPath, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                    <TextBox Grid.Column="0" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                            Background="#FADA7A" Margin="15,0,0,0"
+                            Command="{Binding OpenSaveFolderCommand}"
+                            IsEnabled="{Binding SaveFolderAccessible}"
+                            Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                        <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
+                </Grid>
 
-        <!-- Footer -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="BACKUP FOLDER"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
+                <Grid Grid.Row="4" Grid.Column="1" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding Game.BackupFolderPath}" Style="{StaticResource ValueTextStyle}"
+                                   Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource InverseBoolToVis}}" TextWrapping="Wrap"/>
+                        <TextBlock Text="N/A" Style="{StaticResource NAStyle}"
+                                   Visibility="{Binding Game.BackupFolderPath, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                    <TextBox Grid.Column="0" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                            Background="#FADA7A" Margin="15,0,0,0"
+                            Command="{Binding OpenBackupFolderCommand}"
+                            IsEnabled="{Binding BackupFolderAccessible}"
+                            Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                        <Image Source="/Assets/OpenFolder.png" Width="18" Height="18"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </Grid>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="COVER IMAGE URL"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                <Grid Grid.Row="5" Grid.Column="1" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Grid.Column="1"
+                            Style="{StaticResource IconButtonStyle}"
+                            Background="#6FA4AF"
+                            Margin="15,0,0,0"
+                            Command="{Binding SyncImageCommand}"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"
+                            ToolTip="Refresh preview image">
+                        <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </Grid>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="TOTAL PLAY TIME"
+                           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
+                           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+                <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,20"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"
+                            Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+                        <TextBox Width="60" HorizontalContentAlignment="Center"
+                                 Text="{Binding PlayTimeHours, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="h" VerticalAlignment="Center" Margin="3,0,0,0"
+                                   FontSize="14" FontWeight="Medium"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,100,0">
+                        <TextBox Width="45" HorizontalContentAlignment="Center"
+                                 Text="{Binding PlayTimeMinutes, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="m" VerticalAlignment="Center" Margin="3,0,0,0"
+                                   FontSize="14" FontWeight="Medium"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
+                                Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
+                                Width="20" Height="20">
+                            <Image Source="/Assets/Minus.png" Width="10" Height="10"
+                                    RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <TextBox Width="70" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
+                                Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
+                                Width="20" Height="20">
+                            <Image Source="/Assets/Plus.png" Width="10" Height="10"
+                                    RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
         <Border Grid.Row="2" Padding="40,15" BorderBrush="#F5F5F5" BorderThickness="0,1,0,0" Background="#FAFAFA">
             <Grid>
-                <!-- Status Message ở giữa -->
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#E74C3C" 
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#E74C3C"
                            FontStyle="Italic" FontSize="11" MaxWidth="500"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                <!-- Delete (bên trái) -->
                 <Button Style="{StaticResource IconButtonStyle}"
                         Background="#A94A4A"
                         HorizontalAlignment="Left"
@@ -297,8 +217,6 @@
                     <Image Source="/Assets/Delete.png" Width="20" Height="20"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
-
-                <!-- Save / Cancel / Close (bên phải, giữ nguyên) -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal"
                                 Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
@@ -316,7 +234,6 @@
                                    RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                     </StackPanel>
-
                     <Button Style="{StaticResource IconButtonStyle}"
                             Margin="12,0,0,0"
                             Command="{Binding CloseCommand}"

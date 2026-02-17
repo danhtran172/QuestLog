@@ -25,10 +25,10 @@ namespace MasterPlay.UI
         public void LoadGamesData()
         {
             Games.Clear();
-            Data.SortGames();
-            Data.SyncReadyGames();
+            DataHelper.SortGames();
+            DataHelper.SyncReadyGames();
 
-            var activeGames = Data.LoadGames()
+            var activeGames = DataHelper.LoadGames()
                                  .Where(g => !g.IsDisabled)
                                  .OrderBy(g => g.Ready)
                                  .ToList();
@@ -159,6 +159,7 @@ namespace MasterPlay.UI
                     if (!string.IsNullOrEmpty(processPath))
                     {
                         FileHelper.RunProcess(processPath);
+                        LoadGamesData();
                     }
                     else
                     {

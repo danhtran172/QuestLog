@@ -10,7 +10,6 @@ namespace MasterPlay.Service.Services
         private readonly ILogger<PlayTimeService> _logger;
         private System.Timers.Timer? _timer;
 
-        // --- Win32 API để check Active Window và Input ---
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
@@ -34,8 +33,8 @@ namespace MasterPlay.Service.Services
 
         public void Start()
         {
-            _logger.LogInformation("PlayTime Service started (1 min interval).");
-            _timer = new System.Timers.Timer(60000); // 1 phút
+            _logger.LogInformation("PLAYTIME SERVICE STARTED");
+            _timer = new System.Timers.Timer(30000);
             _timer.Elapsed += (s, e) => TrackPlayTime();
             _timer.AutoReset = true;
             _timer.Start();
@@ -45,49 +44,57 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                Data.SyncReadyGames();
+                DataHelper.SyncReadyGames();
 
-                var games = Data.LoadGames().Where(x => x.Ready).ToList();
+                var games = DataHelper.LoadGames().Where(x => x.Ready).ToList();
                 bool dataChanged = false;
 
                 foreach (var game in games)
                 {
                     if (game.IsDisabled || string.IsNullOrEmpty(game.ExeName)) continue;
 
-                    // 1. Check Process đang chạy
                     string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
                     var processes = Process.GetProcessesByName(processName);
                     if (processes.Length == 0) continue;
+                    if (processes.Length > 0) _logger.LogInformation(game.Name + " is running");
 
-                    // 2. Check Game Window có đang được Focus (Foreground) không
+
                     bool isForeground = false;
                     IntPtr fgWindow = GetForegroundWindow();
                     GetWindowThreadProcessId(fgWindow, out uint fgPid);
                     if (processes.Any(p => p.Id == fgPid)) isForeground = true;
 
-                    // 3. Check Input (Tay cầm/Chuột/Phím) trong 1 phút qua
-                    bool hadInput = GetIdleTime() < 60000; // Idle dưới 60s nghĩa là có hoạt động
+                    bool hadInput = GetIdleTime() < 30000;
 
                     if (isForeground && hadInput)
                     {
-                        game.TotalPlayTimeSeconds += 60;
+                        game.TotalPlayTimeSeconds += 30;
                         dataChanged = true;
-                        _logger.LogInformation("Playtime +1m for {name}. Total: {time}s", game.Name, game.TotalPlayTimeSeconds);
+                        _logger.LogInformation("Updated playtime for {name}, time: {time}s", game.Name, game.TotalPlayTimeSeconds);
+                    }
+                     if (!isForeground)
+                    {
+                        _logger.LogInformation("No foreground");
+
+                    }
+                     if (!hadInput)
+                    {
+                        _logger.LogInformation("No input");
+
                     }
                 }
 
                 if (dataChanged)
                 {
-                    Data.SaveGamesData(games);
+                    DataHelper.SaveGamesData(games);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error tracking playtime.");
+                _logger.LogError(ex, "Error occurred while tracking playtime.");
             }
         }
 
-        // Hàm tính thời gian máy tính không nhận được bất kỳ Input nào (ms)
         private uint GetIdleTime()
         {
             LASTINPUTINFO lastInput = new LASTINPUTINFO();
@@ -99,6 +106,7 @@ namespace MasterPlay.Service.Services
         public void Stop()
         {
             _timer?.Stop();
+            _logger.LogInformation("PlayTime tracking stopped.");
         }
     }
 }

@@ -16,9 +16,8 @@ namespace MasterPlay.Service.Services
 
         public void Start(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Library Scanner Service started.");
+            _logger.LogInformation("LIBRARY SERVICE STARTED");
 
-            // Quét ngay lập tức khi start
             Task.Run(() => ScanLibrary());
 
             _scanTimer = new System.Timers.Timer(60000);
@@ -31,31 +30,28 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                Data.SyncReadyGames();
-                Data.SortGames();
+                DataHelper.SyncReadyGames();
+                DataHelper.SortGames();
 
-                var config = Data.LoadConfig();
+                var config = DataHelper.LoadConfig();
                 var libraries = config.GameLibraryPath;
                 foreach (var library in libraries)
                 {
                     if (string.IsNullOrEmpty(library) || !Directory.Exists(library))
                     {
-                        _logger.LogWarning("LibraryPath not found or invalid: {path}", library);
+                        _logger.LogWarning("Invalid library path: {path}", library);
                         return;
                     }
 
-                    _logger.LogInformation("Scanning library for .exe files in: {path}", library);
+                    _logger.LogInformation("Scanning library: {path}", library);
 
                     var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
-
-                    var existingGames = Data.LoadAvailableGames();
+                    var existingGames = DataHelper.LoadAvailableGames();
                     var newList = new List<DetectedGame>();
 
                     foreach (var file in exeFiles)
                     {
                         string fileName = Path.GetFileName(file);
-                        var existing = existingGames.FirstOrDefault(g => g.FullPath.Equals(file, StringComparison.OrdinalIgnoreCase));
-
                         newList.Add(new DetectedGame
                         {
                             ExeName = fileName,
@@ -63,9 +59,8 @@ namespace MasterPlay.Service.Services
                         });
                     }
 
-                    // 3. Lưu lại vào availableGames.json
-                    Data.SaveAvailableGames(newList);
-                    _logger.LogInformation("Library scan completed. Found {count} process.", newList.Count);
+                    DataHelper.SaveAvailableGames(newList);
+                    _logger.LogInformation("Library scan completed. Found {count} executables.", newList.Count);
                 }
             }
             catch (Exception ex)
