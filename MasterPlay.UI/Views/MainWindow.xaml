@@ -4,9 +4,11 @@
         xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         Title="MasterPlay" Height="600" Width="900" WindowStartupLocation="CenterScreen"
-        Background="#F8F9FA" FontFamily="Segoe UI">
+        Background="#F8F9FA" FontFamily="Segoe UI"
+        KeyDown="Window_KeyDown">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BooleanInverseConverter x:Key="BoolInverse"/>
     </Window.Resources>
     <Grid Margin="25">
         <Grid.RowDefinitions>
@@ -36,7 +38,7 @@
                 </Button>
             </StackPanel>
         </Grid>
-        <ListView Grid.Row="1" x:Name="GamesListView" ItemsSource="{Binding FilteredGames}"
+        <ListView Grid.Row="1" x:Name="GamesListView" ItemsSource="{Binding Games}"
                   Background="Transparent" BorderThickness="0" Grid.IsSharedSizeScope="True">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
@@ -58,7 +60,6 @@
                     </Setter>
                 </Style>
             </ListView.ItemContainerStyle>
-
             <ListView.ItemTemplate>
                 <DataTemplate DataType="{x:Type vm:GameViewModel}">
                     <Grid>
@@ -68,46 +69,55 @@
                             <ColumnDefinition Width="60"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Game.Name}" 
-                           FontSize="16" 
-                           FontWeight="SemiBold" 
-                           Foreground="{StaticResource MainTextBrush}" 
-                           VerticalAlignment="Center"/>
-
-                            <!-- Icon danger: màu vàng, nhỏ, nằm sau tên, trước nút play, lệch nhẹ lên trên -->
+                            <TextBlock Text="{Binding Game.Name}"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource MainTextBrush}"
+                                       VerticalAlignment="Center"/>
+                            <!-- Icon danger -->
                             <Grid Width="14" Height="14" Margin="8, -2, 0, 0" VerticalAlignment="Center"
-      Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}">
-
+                                  Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}">
                                 <Rectangle Fill="#F5AD18">
                                     <Rectangle.OpacityMask>
                                         <ImageBrush ImageSource="/Assets/Danger.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                                     </Rectangle.OpacityMask>
                                 </Rectangle>
                             </Grid>
-
-                        <Button Style="{StaticResource IconButtonStyle}" 
-                        Width="28" Height="28" 
-                        Margin="12,0,0,0" 
-                        Background="#A1BC98"
-                        IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolToVis}}"  
-                                Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}" 
-                        Click="PlayGame_Click">
-                                <Image Source="/Assets/Play.png" Width="12" Height="12" RenderOptions.BitmapScalingMode="HighQuality"/>
-                        </Button>
+                            <!-- Nút Play -->
+                            <Button Style="{StaticResource IconButtonStyle}"
+                                    Width="28" Height="28"
+                                    Margin="12,0,0,0"
+                                  
+                                    IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}"
+                                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
+                                    Click="PlayGame_Click">
+                                <Image Width="12" Height="12" RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Source" Value="/Assets/Play.png"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
+                                                    <Setter Property="Source" Value="/Assets/Playing.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Button>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
                             <TextBlock Text="Play time: "
-                           FontSize="10"
-                           Foreground="#79C9C5"
-                           VerticalAlignment="Bottom"
-                           Margin="0,0,4,2"/>
+                                       FontSize="10"
+                                       Foreground="#79C9C5"
+                                       VerticalAlignment="Bottom"
+                                       Margin="0,0,4,2"/>
                             <TextBlock Text="{Binding DisplayPlayTime}"
-                           FontSize="14"
-                           Foreground="{StaticResource SubTextBrush}"
-                           VerticalAlignment="Center"/>
+                                       FontSize="14"
+                                       Foreground="{StaticResource SubTextBrush}"
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
                         <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Right"
-                    Background="#3291B6" Click="EditGame_Click" VerticalAlignment="Center">
+                                Background="#3291B6" Click="EditGame_Click" VerticalAlignment="Center">
                             <Image Source="/Assets/Info.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                     </Grid>

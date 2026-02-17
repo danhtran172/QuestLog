@@ -47,7 +47,6 @@ namespace MasterPlay.Models
             {
                 var response = await client.GetFromJsonAsync<RawgResponse>(url);
 
-                // Lấy ảnh của kết quả đầu tiên nếu có
                 if (response?.Results != null && response.Results.Count > 0)
                 {
                     return response.Results[0].Name;

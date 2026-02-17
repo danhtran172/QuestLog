@@ -8,14 +8,6 @@ using System.Threading.Tasks;
 
 namespace MasterPlay.Models
 {
-    public class Config
-    {
-        public string BackupRootPath { get; set; } = string.Empty;
-        public string ConfigFilePath { get; set; } = string.Empty;
-        public string DataFilePath { get; set; } = string.Empty;
-        public string GameLibraryPath { get; set; } = string.Empty;
-        public string AvailableGamesPath { get; set; } = string.Empty;
-    }
 
     public static class Data
     {
@@ -30,15 +22,25 @@ namespace MasterPlay.Models
             return Path.Combine(GetConfigDirectory(), "config.json");
         }
 
-        public static string GetGameLibraryPath()
+        public static List<string> GetGameLibraryPath()
         {
             var config = LoadConfig();
-            if (string.IsNullOrEmpty(config.GameLibraryPath))
+            if (config.GameLibraryPath.Count() == 0)
             {
-                config.GameLibraryPath = Path.Combine(config.BackupRootPath, "GameLibrary");
+                config.GameLibraryPath.Add(Path.Combine(GetConfigDirectory(), "GameLibrary"));
                 SaveConfig(config);
             }
             return config.GameLibraryPath;
+        }
+        public static string GetBackupRootPath()
+        {
+            var config = LoadConfig();
+            if (string.IsNullOrEmpty(config.BackupRootPath))
+            {
+                config.BackupRootPath = Path.Combine(GetConfigDirectory(), "BackUp");
+                SaveConfig(config);
+            }
+            return config.BackupRootPath;
         }
 
         public static string GetGameDataPath()
@@ -69,24 +71,41 @@ namespace MasterPlay.Models
             return fallback;
         }
 
+        public static string GetMetaDataPath()
+        {
+            var config = LoadConfig();
+            if (!string.IsNullOrEmpty(config.MetaDataPath))
+            {
+                return config.MetaDataPath;
+            }
+
+            string fallback = Path.Combine(GetConfigDirectory(), "game_metaData.json");
+            config.MetaDataPath = fallback;
+            SaveConfig(config);
+            return fallback;
+        }
+
         // CONFIG
         public static Config LoadConfig()
         {
             string configPath = GetConfigPath();
             string dir = Path.GetDirectoryName(configPath) ?? GetConfigDirectory();
-
+            var libraries = new List<string>();
             Directory.CreateDirectory(dir);
 
             if (!File.Exists(configPath))
             {
+                libraries.Add(@"D:\Games");
+                
                 var defaultConfig = new Config
+                
                 {
                     ConfigFilePath = configPath,
                     DataFilePath = Path.Combine(dir, "gameData.json"),
                     BackupRootPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                         "Backups"),
-                    GameLibraryPath = @"D:\Games",
+                    GameLibraryPath = libraries,
                     AvailableGamesPath = Path.Combine(dir, "availableGames.json")
                 };
                 SaveConfig(defaultConfig);
@@ -210,7 +229,7 @@ namespace MasterPlay.Models
                 string gameName,
                 double minSimilarity = 0.6)
             {
-            var jsonFilePath = "D:\\Apps\\[AppData]\\MasterPlay\\game_metaData.json";
+            var jsonFilePath = GetMetaDataPath();
 
 
                 if (string.IsNullOrWhiteSpace(gameName))
@@ -222,7 +241,7 @@ namespace MasterPlay.Models
                 try
                 {
                     string jsonContent = await File.ReadAllTextAsync(jsonFilePath);
-                    var games = JsonConvert.DeserializeObject<List<GameEntry>>(jsonContent);
+                    var games = JsonConvert.DeserializeObject<List<GameInfo>>(jsonContent);
 
                     if (games == null || games.Count == 0)
                         return "N/A";

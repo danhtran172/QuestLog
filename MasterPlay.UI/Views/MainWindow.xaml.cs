@@ -13,25 +13,18 @@ namespace MasterPlay.UI
     public partial class MainWindow : Window
     {
         public ObservableCollection<GameViewModel> Games { get; } = new ObservableCollection<GameViewModel>();
-        public ObservableCollection<GameViewModel> FilteredGames { get; } = new ObservableCollection<GameViewModel>();
-
         private string _searchText = string.Empty;
-
-        public ICommand RefreshCommand { get; }
 
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
-            RefreshCommand = new RelayCommand(LoadGamesData);
             LoadGamesData();
         }
 
         public void LoadGamesData()
         {
             Games.Clear();
-            FilteredGames.Clear();
-
             Data.SortGames();
             Data.SyncReadyGames();
 
@@ -44,8 +37,6 @@ namespace MasterPlay.UI
             {
                 var vm = new GameViewModel(game);
                 Games.Add(vm);
-                FilteredGames.Add(vm);
-                
             }
 
             ApplyFilterAndSort();
@@ -54,6 +45,15 @@ namespace MasterPlay.UI
             {
                 MessageBox.Show("There are no active games.",
                                 "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5)
+            {
+                LoadGamesData();
+                e.Handled = true;
             }
         }
 
@@ -77,38 +77,33 @@ namespace MasterPlay.UI
 
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                query = query.Where(vm =>
-                    vm.Game.Name.ToLowerInvariant().Contains(_searchText) == true);
+                query = query.Where(vm => vm.Game.Name.ToLowerInvariant().Contains(_searchText));
             }
 
             int sortIndex = SortComboBox?.SelectedIndex ?? 0;
             switch (sortIndex)
             {
-
-
-                case 0: // Playable First (Ready = true trước)
+                case 0:
                     query = query.OrderByDescending(vm => vm.Game.Ready)
-                                 
                                  .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
                                  .ThenBy(vm => vm.Game.Name);
                     break;
-                case 1: // Playable First (Ready = true trước)
+                case 1:
                     query = query.OrderByDescending(vm => vm.Game.Ready);
                     break;
-                case 2: // Name (A-Z)
+                case 2:
                     query = query.OrderBy(vm => vm.Game.Name);
                     break;
-                case 3: // Play Time (descending)
+                case 3:
                     query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds);
                     break;
             }
 
             var result = query.ToList();
-
-            FilteredGames.Clear();
+            Games.Clear();
             foreach (var vm in result)
             {
-                FilteredGames.Add(vm);
+                Games.Add(vm);
             }
         }
 
@@ -142,14 +137,10 @@ namespace MasterPlay.UI
                 try
                 {
                     if (gameVm.Game == null) return;
-
                     var editWindow = new EditGameWindow(gameVm.Game);
                     editWindow.Owner = this;
-
-                    if (editWindow.ShowDialog() == true)
-                    {
-                        LoadGamesData();
-                    }
+                    editWindow.ShowDialog();
+                    LoadGamesData();
                 }
                 catch (Exception ex)
                 {
@@ -164,7 +155,7 @@ namespace MasterPlay.UI
             {
                 try
                 {
-                    string processPath = vm.getProcessPath();
+                    string processPath = vm.GetProcessPath();  // Gọi từ ViewModel
                     if (!string.IsNullOrEmpty(processPath))
                     {
                         FileHelper.RunProcess(processPath);
@@ -182,7 +173,6 @@ namespace MasterPlay.UI
         }
     }
 
-    // RelayCommand đơn giản
     public class RelayCommand : ICommand
     {
         private readonly Action _execute;

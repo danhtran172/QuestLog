@@ -9,10 +9,11 @@ namespace MasterPlay.UI
         {
             InitializeComponent();
             
-            var vm = (SettingsViewModel)DataContext;
-            vm.RequestClose += res =>
+            var viewModel = (SettingsViewModel)DataContext;
+            DataContext = viewModel;
+            viewModel.RequestClose += result =>
             {
-                DialogResult = res;
+                DialogResult = result;
                 Close();
             };
         }

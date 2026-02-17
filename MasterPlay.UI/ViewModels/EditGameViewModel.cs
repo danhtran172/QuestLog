@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MasterPlay.Models;
 using MasterPlay.Helpers;
+using MasterPlay.Models;
 using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 using System.Windows;
 using System.Linq;
+using System.Windows.Threading;
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -34,7 +35,7 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private bool backupFolderAccessible;
 
-        // Play time properties - PascalCase để binding đúng
+        // Play time properties
         [ObservableProperty]
         private int playTimeHours;
 
@@ -46,10 +47,33 @@ namespace MasterPlay.UI.ViewModels
 
         public event Action<bool>? RequestClose;
 
+        // Timer để tự động xóa StatusMessage sau 3 giây
+        private readonly DispatcherTimer _statusTimer;
+
         public EditGameViewModel(Game selectedGame)
         {
             Game = selectedGame ?? new Game();
-            ReloadGameFromConfig(); // Load ban đầu
+            ReloadGameFromConfig();
+
+            _statusTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(3)
+            };
+            _statusTimer.Tick += (s, e) =>
+            {
+                StatusMessage = string.Empty;
+                _statusTimer.Stop();
+            };
+        }
+
+        // Khi StatusMessage thay đổi → tự động chạy timer 3s để xóa
+        partial void OnStatusMessageChanged(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                _statusTimer.Stop(); // Dừng timer cũ nếu đang chạy
+                _statusTimer.Start(); // Bắt đầu lại 3 giây
+            }
         }
 
         // --- Folder handling ---
@@ -83,13 +107,11 @@ namespace MasterPlay.UI.ViewModels
         private void InputFormater()
         {
             if (Game == null) return;
-
             if (string.IsNullOrWhiteSpace(Game.Name))
             {
                 var original = Data.LoadGames().FirstOrDefault(g => g.Id == Game.Id);
                 Game.Name = original?.Name ?? "Unknown Game";
             }
-
             if (!string.IsNullOrWhiteSpace(Game.ExeName))
             {
                 string trimmed = Game.ExeName.Trim();
@@ -98,7 +120,6 @@ namespace MasterPlay.UI.ViewModels
                     Game.ExeName = trimmed[..^4].Trim();
                 }
             }
-
             Game.SaveFolderPath = Game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.BackupFolderPath = Game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             Game.ImagePath = Game.ImagePath?.Trim('"').Trim() ?? string.Empty;
@@ -109,6 +130,11 @@ namespace MasterPlay.UI.ViewModels
         {
             try
             {
+                if (!string.IsNullOrWhiteSpace(Game.Name))
+                {
+                    UpdateBackupFolderPath(Game.Name);
+                }
+
                 var games = Data.LoadGames();
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
@@ -127,14 +153,18 @@ namespace MasterPlay.UI.ViewModels
                     games[index] = Game;
                     Data.SaveGamesData(games);
                     ReloadGameFromConfig();
+
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
+
+                    // KHÔNG gọi RequestClose ở đây nữa → giữ window mở, chỉ quay về view mode
                 }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error: {ex.Message}";
                 MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Nếu lỗi, có thể đóng hoặc không, tùy bạn (ở đây giữ mở để xem lỗi)
             }
         }
 
@@ -154,6 +184,8 @@ namespace MasterPlay.UI.ViewModels
                         gameToDisable.IsDisabled = true;
                         Data.SaveGamesData(games);
                         StatusMessage = $"{gameToDisable.Name} is Disabled!";
+
+                        // Add! Vì delete thì nên đóng window sau khi thông báo
                         RequestClose?.Invoke(true);
                     }
                 }
@@ -202,6 +234,42 @@ namespace MasterPlay.UI.ViewModels
         partial void OnGameChanged(Game value)
         {
             LoadPreviewImage(value?.ImagePath);
+            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
+            {
+                UpdateBackupFolderPath(value.Name);
+            }
+        }
+
+        private void UpdateBackupFolderPath(string newGameName)
+        {
+            if (string.IsNullOrWhiteSpace(newGameName)) return;
+
+            string backupRoot = Data.GetBackupRootPath(); // Giả sử hàm này tồn tại
+            string validFolderName = AddGameViewModel.ValidFolderName(newGameName); // Giả sử hàm này tồn tại
+            string newBackupFolder = Path.Combine(backupRoot, validFolderName);
+
+            if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) &&
+                Directory.Exists(Game.BackupFolderPath) &&
+                Game.BackupFolderPath != newBackupFolder)
+            {
+                try
+                {
+                    Directory.Move(Game.BackupFolderPath, newBackupFolder);
+                    StatusMessage = $"Backup folder renamed to: {validFolderName}";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"Failed to rename backup folder: {ex.Message}";
+                }
+            }
+            else if (!Directory.Exists(newBackupFolder))
+            {
+                Directory.CreateDirectory(newBackupFolder);
+            }
+
+            Game.BackupFolderPath = newBackupFolder;
+            string infoFilePath = Path.Combine(newBackupFolder, "save_location.txt");
+            File.WriteAllText(infoFilePath, Game.SaveFolderPath);
         }
 
         private void ReloadGameFromConfig()
@@ -213,7 +281,6 @@ namespace MasterPlay.UI.ViewModels
                 Game = reloaded;
                 BackupFolderPath = Game.BackupFolderPath;
                 LoadPreviewImage(Game.ImagePath);
-
                 if (IsReadOnly)
                 {
                     SaveFolderAccessible = FileHelper.FileCheck(Game.SaveFolderPath);
@@ -276,7 +343,6 @@ namespace MasterPlay.UI.ViewModels
                 StatusMessage = "No image URL provided.";
                 return;
             }
-
             try
             {
                 LoadPreviewImage(Game.ImagePath);
@@ -296,7 +362,6 @@ namespace MasterPlay.UI.ViewModels
                 StatusMessage = "Please enter a positive number of minutes.";
                 return;
             }
-
             Game.TotalPlayTimeSeconds += AdjustMinutes * 60L;
             UpdatePlayTimeFieldsFromSeconds();
             StatusMessage = $"Added {AdjustMinutes} minutes to play time.";
@@ -311,7 +376,6 @@ namespace MasterPlay.UI.ViewModels
                 StatusMessage = "Please enter a positive number of minutes.";
                 return;
             }
-
             long newSeconds = Game.TotalPlayTimeSeconds - (AdjustMinutes * 60L);
             if (newSeconds < 0)
             {
@@ -323,12 +387,10 @@ namespace MasterPlay.UI.ViewModels
                 Game.TotalPlayTimeSeconds = newSeconds;
                 StatusMessage = $"Subtracted {AdjustMinutes} minutes from play time.";
             }
-
             UpdatePlayTimeFieldsFromSeconds();
             AdjustMinutes = 0;
         }
 
-        // Dùng cho view mode hiển thị
         public string DisplayPlayTime
         {
             get

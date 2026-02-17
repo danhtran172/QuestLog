@@ -1,132 +1,102 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MasterPlay.Helpers;
 using MasterPlay.Models;
 using Microsoft.Win32;
 using System;
-using System.IO;
-using System.Windows;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows.Threading;
 
 namespace MasterPlay.UI.ViewModels
 {
+    public partial class LibraryPathItem : ObservableObject
+    {
+        [ObservableProperty] private string value = string.Empty;
+        [ObservableProperty] private bool isReadOnly = true;
+
+        [RelayCommand]
+        private void Edit()
+        {
+            var dialog = new OpenFolderDialog { Title = "Select Game Library Folder" };
+            if (dialog.ShowDialog() == true)
+            {
+                Value = dialog.FolderName;
+                IsReadOnly = true;
+            }
+            else IsReadOnly = false;
+        }
+    }
+
     public partial class SettingsViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private string backupRootPath;
+        [ObservableProperty] private string backupRootPath = string.Empty;
+        [ObservableProperty] private string configPath = string.Empty;
+        [ObservableProperty] private string gameDataPath = string.Empty;
+        [ObservableProperty] private string metaDataPath = string.Empty;
+        [ObservableProperty] private ObservableCollection<LibraryPathItem> libraryPaths = new();
 
-        [ObservableProperty]
-        private string configPath;
+        [ObservableProperty] private bool isBackupReadOnly = true;
+        [ObservableProperty] private bool isConfigReadOnly = true;
+        [ObservableProperty] private bool isGameDataReadOnly = true;
+        [ObservableProperty] private bool isMetaDataReadOnly = true;
 
-        [ObservableProperty]
-        private string gameDataPath;  // MỚI: Game Data File Path
-
-        [ObservableProperty]
-        private bool isBackupReadOnly = true;
-
-        [ObservableProperty]
-        private bool isConfigReadOnly = true;
-
-        [ObservableProperty]
-        private bool isGameDataReadOnly = true;  // MỚI
-
-        [ObservableProperty]
-        private string statusMessage = string.Empty;
-
-        // Lưu giá trị gốc để Cancel
-        private readonly string _originalBackupPath;
-        private readonly string _originalConfigPath;
-        private readonly string _originalGameDataPath;  
+        [ObservableProperty] private string statusMessage = string.Empty;
+        private readonly DispatcherTimer _statusTimer;
 
         public SettingsViewModel()
         {
+            // Khởi tạo timer cho Status Message
+            _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            _statusTimer.Tick += (s, e) => { StatusMessage = string.Empty; _statusTimer.Stop(); };
+
+            LoadSettings();
+        }
+
+        // Tự động chạy timer khi StatusMessage có nội dung mới
+        partial void OnStatusMessageChanged(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                _statusTimer.Stop();
+                _statusTimer.Start();
+            }
+        }
+
+        private void LoadSettings()
+        {
             var config = Data.LoadConfig();
-
-            BackupRootPath = config.BackupRootPath;
-            ConfigPath = config.ConfigFilePath;
-            gameDataPath = config.DataFilePath;  
-
-            _originalBackupPath = BackupRootPath;
-            _originalConfigPath = ConfigPath;
-            _originalGameDataPath = gameDataPath;  
-
-            // Nếu DataFilePath trống, fallback ngay
-            if (string.IsNullOrEmpty(gameDataPath))
+            if (config != null)
             {
-                gameDataPath = Path.Combine(
-                    Path.GetDirectoryName(ConfigPath) ?? Data.GetConfigDirectory(),
-                    "gameData.json");
+                BackupRootPath = config.BackupRootPath ?? "";
+                ConfigPath = config.ConfigFilePath ?? "";
+                GameDataPath = config.DataFilePath ?? "";
+                MetaDataPath = config.MetaDataPath ?? "";
+
+                LibraryPaths.Clear();
+                if (config.GameLibraryPath != null)
+                {
+                    foreach (var path in config.GameLibraryPath)
+                        LibraryPaths.Add(new LibraryPathItem { Value = path, IsReadOnly = true });
+                }
             }
         }
 
         [RelayCommand]
-        private void EditBackup() => IsBackupReadOnly = false;
+        private void EditBackup() { var d = new OpenFolderDialog(); if (d.ShowDialog() == true) BackupRootPath = d.FolderName; }
+        [RelayCommand]
+        private void EditConfig() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) ConfigPath = d.FileName; }
+        [RelayCommand]
+        private void EditGameData() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) GameDataPath = d.FileName; }
+        [RelayCommand]
+        private void EditMetaData() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) MetaDataPath = d.FileName; }
 
         [RelayCommand]
-        private void EditConfig() => IsConfigReadOnly = false;
+        private void AddLibrary() => LibraryPaths.Add(new LibraryPathItem { Value = "", IsReadOnly = false });
 
         [RelayCommand]
-        private void EditGameData() => IsGameDataReadOnly = false; 
-
-        [RelayCommand]
-        private void BrowseBackup()
-        {
-            var dialog = new Microsoft.Win32.OpenFolderDialog
-            {
-                InitialDirectory = !string.IsNullOrWhiteSpace(BackupRootPath)
-                    ? Path.GetDirectoryName(BackupRootPath)
-                    : @"D:\\",
-                FolderName = !string.IsNullOrWhiteSpace(BackupRootPath)
-                    ? Path.GetFileName(BackupRootPath)
-                    : string.Empty,
-                Title = "Select Backup Root Folder"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                BackupRootPath = dialog.FolderName;
-            }
-        }
-
-        [RelayCommand]
-        private void BrowseConfig()
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                Title = "Select Config File Location",
-                FileName = "config.json"
-            };
-
-            if (!string.IsNullOrEmpty(ConfigPath))
-            {
-                dialog.InitialDirectory = Path.GetDirectoryName(ConfigPath);
-            }
-
-            if (dialog.ShowDialog() == true)
-            {
-                ConfigPath = dialog.FileName;
-            }
-        }
-
-        [RelayCommand]
-        private void BrowseGameData()
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                Title = "Select Game Data File Location",
-                FileName = "gameData.json"
-            };
-
-            if (!string.IsNullOrEmpty(gameDataPath))
-            {
-                dialog.InitialDirectory = Path.GetDirectoryName(gameDataPath);
-            }
-
-            if (dialog.ShowDialog() == true)
-            {
-                gameDataPath = dialog.FileName;
-            }
-        }
+        private void RemoveLibrary(LibraryPathItem item) { if (item != null) LibraryPaths.Remove(item); }
 
         [RelayCommand]
         private void Save()
@@ -134,45 +104,22 @@ namespace MasterPlay.UI.ViewModels
             try
             {
                 var config = Data.LoadConfig();
-
                 config.BackupRootPath = BackupRootPath;
                 config.ConfigFilePath = ConfigPath;
-                config.DataFilePath = gameDataPath;
+                config.DataFilePath = GameDataPath;
+                config.MetaDataPath = MetaDataPath;
+                config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
 
                 Data.SaveConfig(config);
-
-                StatusMessage = "Save Succesfully!";
-                MessageBox.Show("Save success!", "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                // Reset read-only
-                IsBackupReadOnly = true;
-                IsConfigReadOnly = true;
-                IsGameDataReadOnly = true;
-
-                RequestClose?.Invoke(true);
+                StatusMessage = "Settings saved successfully!";
+                IsBackupReadOnly = IsConfigReadOnly = IsGameDataReadOnly = IsMetaDataReadOnly = true;
+                foreach (var item in LibraryPaths) item.IsReadOnly = true;
             }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Save error: {ex.Message}";
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch (Exception ex) { StatusMessage = "Error: " + ex.Message; }
         }
 
         [RelayCommand]
-        private void Cancel()
-        {
-            BackupRootPath = _originalBackupPath;
-            ConfigPath = _originalConfigPath;
-            gameDataPath = _originalGameDataPath;  // MỚI
-
-            IsBackupReadOnly = true;
-            IsConfigReadOnly = true;
-            IsGameDataReadOnly = true;
-
-            StatusMessage = string.Empty;
-            RequestClose?.Invoke(false);
-        }
-
+        private void Cancel() => RequestClose?.Invoke(false);
         public event Action<bool>? RequestClose;
     }
 }

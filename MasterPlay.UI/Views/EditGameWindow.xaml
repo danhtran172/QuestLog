@@ -122,12 +122,29 @@
 
             <!-- Game Name -->
             <TextBlock Grid.Row="1" Grid.Column="0" Text="GAME NAME"
-                       Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
-                       Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,20"
-                     Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}"
-                     Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
+           Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"
+           Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}"/>
 
+            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,20" 
+      Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+             Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <Button Grid.Column="1"
+            Style="{StaticResource IconButtonStyle}"
+            Background="#6FA4AF"
+            Margin="15,0,0,0"
+            Command="{Binding SyncGameNameCommand}"
+            ToolTip="Refresh game name">
+                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
             <!-- Process Name -->
             <TextBlock Grid.Row="2" Grid.Column="0" Text="PROCESS NAME"
                        Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,20"/>
@@ -244,7 +261,7 @@
 
                 <!-- Adjust: - [TextBox] + -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource IconButtonStyle}" Background="#BF3131" Margin="0,0,4,0"
+                    <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
                             Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
                             Width="20" Height="20">
                         <Image Source="/Assets/Minus.png" Width="14" Height="14"
@@ -253,7 +270,7 @@
 
                     <TextBox Width="70" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
 
-                    <Button Style="{StaticResource IconButtonStyle}" Background="#90D26D" Margin="4,0,0,0"
+                    <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
                             Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
                             Width="20" Height="20">
                         <Image Source="/Assets/Plus.png" Width="14" Height="14"

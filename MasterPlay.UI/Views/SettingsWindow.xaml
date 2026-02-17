@@ -3,15 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
-        Title="Settings" Height="480" Width="650"  
-    WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Title="Settings" Height="680" Width="650"  
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White" FontFamily="Segoe UI">
 
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
-
-        <!-- Style cho TextBox hiện đại -->
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="BorderBrush" Value="#DDDDDD"/>
@@ -49,146 +47,136 @@
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Title -->
             <RowDefinition Height="Auto"/>
-            <!-- Backup Root Path -->
             <RowDefinition Height="Auto"/>
-            <!-- Config File Path -->
             <RowDefinition Height="Auto"/>
-            <!-- Game Data File Path -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <!-- Khoảng trống để đẩy footer xuống dưới -->
             <RowDefinition Height="Auto"/>
-            <!-- Status Message -->
             <RowDefinition Height="Auto"/>
-            <!-- Footer -->
         </Grid.RowDefinitions>
 
-        <!-- Tiêu đề -->
-        <TextBlock Grid.Row="0" Text="APPLICATION SETTINGS"
-                   FontSize="18" FontWeight="Bold" Foreground="#A1BC98"
-                   Margin="0,0,0,25"/>
+        <TextBlock Grid.Row="0" Text="APPLICATION SETTINGS" FontSize="18" FontWeight="Bold" Foreground="#A1BC98" Margin="0,0,0,25"/>
 
-        <!-- Backup Root Path -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,20">
-            <TextBlock Text="Backup Root Path" FontWeight="SemiBold"
-                       Foreground="#555555" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+            <TextBlock Text="Backup Root Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding BackupRootPath}"
-                         IsReadOnly="{Binding IsBackupReadOnly}"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#3291B6"
-                            Command="{Binding EditBackupCommand}"
-                            Visibility="{Binding IsBackupReadOnly, Converter={StaticResource BoolToVis}}"
-                            ToolTip="Edit">
-                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#FADA7A"
-                            Command="{Binding BrowseBackupCommand}"
-                            Visibility="{Binding IsBackupReadOnly, Converter={StaticResource InverseBoolToVis}}"
-                            ToolTip="Browse Folder"
-                            Margin="10,0,0,0">
-                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                </StackPanel>
+                <TextBox Text="{Binding BackupRootPath}" IsReadOnly="{Binding IsBackupReadOnly}"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditBackupCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
             </Grid>
         </StackPanel>
 
-        <!-- Config File Path -->
-        <StackPanel Grid.Row="2" Margin="0,0,0,20">
-            <!-- Thêm Margin bottom 20 để đều -->
-            <TextBlock Text="Config File Path" FontWeight="SemiBold"
-                       Foreground="#555555" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="2" Margin="0,0,0,15">
+            <TextBlock Text="Config File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding ConfigPath}"
-                         IsReadOnly="{Binding IsConfigReadOnly}"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#3291B6"
-                            Command="{Binding EditConfigCommand}"
-                            Visibility="{Binding IsConfigReadOnly, Converter={StaticResource BoolToVis}}"
-                            ToolTip="Edit">
-                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#FADA7A"
-                            Command="{Binding BrowseConfigCommand}"
-                            Visibility="{Binding IsConfigReadOnly, Converter={StaticResource InverseBoolToVis}}"
-                            ToolTip="Browse File"
-                            Margin="10,0,0,0">
-                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                </StackPanel>
+                <TextBox Text="{Binding ConfigPath}" IsReadOnly="{Binding IsConfigReadOnly}"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditConfigCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
             </Grid>
         </StackPanel>
 
-        <!-- Game Data File Path -->
-        <StackPanel Grid.Row="3" Margin="0,0,0,20">
-            <!-- Margin bottom 20 để giãn cách đều -->
-            <TextBlock Text="Game Data File Path" FontWeight="SemiBold"
-                       Foreground="#555555" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="3" Margin="0,0,0,15">
+            <TextBlock Text="Game Data File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding GameDataPath}"
-                         IsReadOnly="{Binding IsGameDataReadOnly}"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#3291B6"
-                            Command="{Binding EditGameDataCommand}"
-                            Visibility="{Binding IsGameDataReadOnly, Converter={StaticResource BoolToVis}}"
-                            ToolTip="Edit">
-                        <Image Source="/Assets/Edit.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                    <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#FADA7A"
-                            Command="{Binding BrowseGameDataCommand}"
-                            Visibility="{Binding IsGameDataReadOnly, Converter={StaticResource InverseBoolToVis}}"
-                            ToolTip="Browse File"
-                            Margin="10,0,0,0">
-                        <Image Source="/Assets/OpenFolder.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                    </Button>
-                </StackPanel>
+                <TextBox Text="{Binding GameDataPath}" IsReadOnly="{Binding IsGameDataReadOnly}"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditGameDataCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
             </Grid>
         </StackPanel>
 
-        <!-- Status Message -->
-        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}"
-                   Foreground="#E74C3C" FontStyle="Italic" FontSize="12"
-                   TextWrapping="Wrap" Margin="0,15,0,0"/>
+        <StackPanel Grid.Row="4" Margin="0,0,0,15">
+            <TextBlock Text="Meta Data File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding MetaDataPath}" IsReadOnly="{Binding IsMetaDataReadOnly}"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditMetaDataCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
+        </StackPanel>
 
-        <!-- Footer: Cancel và Save Settings -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal"
-                    HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Style="{StaticResource IconButtonStyle}"
-                    Background="#708A58"
-                    Command="{Binding SaveCommand}">
-                <Image Source="/Assets/Save.png" Width="20" Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+        <Grid Grid.Row="5" Margin="0,0,0,10">
+            <TextBlock Text="Game Library Paths" FontWeight="SemiBold" Foreground="#555555" VerticalAlignment="Center"/>
+            <Button Command="{Binding AddLibraryCommand}" HorizontalAlignment="Right" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="#A2D5C6" CornerRadius="15" Padding="12,5">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Assets/Add.png" Width="16" Height="16" Margin="0,0,8,0" 
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <TextBlock Text="Add Library" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#82A066"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#5F754B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
             </Button>
-            <Button Style="{StaticResource IconButtonStyle}"
-                    Command="{Binding CancelCommand}"
-                    Margin="12,0,0,0">
-                <Image Source="/Assets/Close.png" Width="20" Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+        </Grid>
+
+        <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Auto" Margin="0,0,-10,0">
+            <ItemsControl ItemsSource="{Binding LibraryPaths}" Margin="0,0,10,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Style="{StaticResource IconButtonStyle}" Background="#E74C3C" 
+                                    Command="{Binding DataContext.RemoveLibraryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}" Margin="0,0,10,0">
+                                <Image Source="/Assets/Close.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+
+                            <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsReadOnly}"/>
+
+                            <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#3291B6" 
+                                    Command="{Binding EditCommand}" Margin="10,0,0,0">
+                                <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="7" Text="{Binding StatusMessage}" Foreground="#E74C3C" FontStyle="Italic" FontSize="12" Margin="0,15,0,0"/>
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" Command="{Binding SaveCommand}">
+                <Image Source="/Assets/Save.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
+            <Button Style="{StaticResource IconButtonStyle}" Command="{Binding CancelCommand}" Margin="12,0,0,0">
+                <Image Source="/Assets/Close.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
             </Button>
         </StackPanel>
     </Grid>

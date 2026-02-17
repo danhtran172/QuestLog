@@ -35,36 +35,38 @@ namespace MasterPlay.Service.Services
                 Data.SortGames();
 
                 var config = Data.LoadConfig();
-                var library = config.GameLibraryPath;
-                if (string.IsNullOrEmpty(library) || !Directory.Exists(library))
+                var libraries = config.GameLibraryPath;
+                foreach (var library in libraries)
                 {
-                    _logger.LogWarning("LibraryPath not found or invalid: {path}", library);
-                    return;
-                }
-
-                _logger.LogInformation("Scanning library for .exe files in: {path}", library);
-
-                // 1. Tìm tất cả file .exe (quét cả thư mục con)
-                var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
-
-                var existingGames = Data.LoadAvailableGames();
-                var newList = new List<DetectedGame>();
-
-                foreach (var file in exeFiles)
-                {
-                    string fileName = Path.GetFileName(file);
-                    var existing = existingGames.FirstOrDefault(g => g.FullPath.Equals(file, StringComparison.OrdinalIgnoreCase));
-
-                    newList.Add(new DetectedGame
+                    if (string.IsNullOrEmpty(library) || !Directory.Exists(library))
                     {
-                        ExeName = fileName,
-                        FullPath = file,
-                    });
-                }
+                        _logger.LogWarning("LibraryPath not found or invalid: {path}", library);
+                        return;
+                    }
 
-                // 3. Lưu lại vào availableGames.json
-                Data.SaveAvailableGames(newList);
-                _logger.LogInformation("Library scan completed. Found {count} process.", newList.Count);
+                    _logger.LogInformation("Scanning library for .exe files in: {path}", library);
+
+                    var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
+
+                    var existingGames = Data.LoadAvailableGames();
+                    var newList = new List<DetectedGame>();
+
+                    foreach (var file in exeFiles)
+                    {
+                        string fileName = Path.GetFileName(file);
+                        var existing = existingGames.FirstOrDefault(g => g.FullPath.Equals(file, StringComparison.OrdinalIgnoreCase));
+
+                        newList.Add(new DetectedGame
+                        {
+                            ExeName = fileName,
+                            FullPath = file,
+                        });
+                    }
+
+                    // 3. Lưu lại vào availableGames.json
+                    Data.SaveAvailableGames(newList);
+                    _logger.LogInformation("Library scan completed. Found {count} process.", newList.Count);
+                }
             }
             catch (Exception ex)
             {

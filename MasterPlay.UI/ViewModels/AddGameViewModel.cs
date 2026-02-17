@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using System.Xml.Linq;
+using System.Windows.Threading; // Add! Để dùng DispatcherTimer
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -40,27 +40,52 @@ namespace MasterPlay.UI.ViewModels
 
         public event Action<bool>? RequestClose;
 
+        // Add! Timer để tự động xóa StatusMessage sau 3 giây
+        private readonly DispatcherTimer _statusTimer;
+
         public AddGameViewModel()
         {
-            // Can load defaults if needed
+            // Khởi tạo timer một lần
+            _statusTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(3)
+            };
+            _statusTimer.Tick += (s, e) =>
+            {
+                StatusMessage = string.Empty;
+                _statusTimer.Stop();
+            };
+        }
+
+        // Add! Khi StatusMessage thay đổi → tự động chạy timer để xóa sau 3s
+        partial void OnStatusMessageChanged(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                _statusTimer.Stop(); // Dừng timer cũ nếu đang chạy
+                _statusTimer.Start(); // Bắt đầu lại 3 giây
+            }
         }
 
         [RelayCommand]
         private async Task Sync()
         {
             if (string.IsNullOrWhiteSpace(GameName)) return;
-            isBusy = true;
+            IsBusy = true;
             try
-            {   
+            {
                 GameName = await ApiHelper.GetGameFormatedNameAsync(GameName);
-                
-                ExeName = await Data.FindClosestGameExeAsync(GameName)?? "Not Found";
+                ExeName = await Data.FindClosestGameExeAsync(GameName) ?? "Not Found";
                 ImagePath = await ApiHelper.GetGameImageUrlAsync(GameName);
-
+                StatusMessage = "Sync completed!"; // Add! Message khi sync thành công
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Sync failed: {ex.Message}";
             }
             finally
             {
-                isBusy = false;
+                IsBusy = false;
             }
         }
 
@@ -75,7 +100,6 @@ namespace MasterPlay.UI.ViewModels
             }
             string saveLoc = SaveLocation?.Trim('"').Trim() ?? string.Empty;
 
-
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(saveLoc))
             {
                 StatusMessage = "All required fields must be filled.";
@@ -85,7 +109,6 @@ namespace MasterPlay.UI.ViewModels
             try
             {
                 var games = Data.LoadGames();
-
                 // Check duplicate name (case insensitive)
                 if (games.Exists(g => g.Name.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
@@ -95,7 +118,6 @@ namespace MasterPlay.UI.ViewModels
 
                 var config = Data.LoadConfig();
                 string backupRoot = config.BackupRootPath;
-
                 if (string.IsNullOrEmpty(backupRoot))
                 {
                     StatusMessage = "Backup root path is not set in config.";
@@ -112,19 +134,14 @@ namespace MasterPlay.UI.ViewModels
                     IsDisabled = false,
                 };
 
-
-                string gameFolder = Path.Combine(backupRoot, ValidFolderName(gameName));
-                newGame.BackupFolderPath = gameFolder;
+                string backupFolder = Path.Combine(backupRoot, ValidFolderName(name));
+                newGame.BackupFolderPath = backupFolder;
 
                 var game = InputFormater(newGame);
-
-
                 games.Add(game);
                 Data.SaveGamesData(games);
-
-                Directory.CreateDirectory(gameFolder);
-
-                string txtPath = Path.Combine(gameFolder, "SaveFileLocation.txt");
+                Directory.CreateDirectory(backupFolder);
+                string txtPath = Path.Combine(backupFolder, "SaveFileLocation.txt");
                 File.WriteAllText(txtPath, newGame.SaveFolderPath);
 
                 StatusMessage = "Game added successfully!";
@@ -149,7 +166,6 @@ namespace MasterPlay.UI.ViewModels
                 PreviewImage = null;
                 return;
             }
-
             try
             {
                 var bitmap = new BitmapImage();
@@ -169,18 +185,15 @@ namespace MasterPlay.UI.ViewModels
         {
             LoadpreviewImage(value);
         }
-   
 
-    private Game? InputFormater(Game game)
+        private Game? InputFormater(Game game)
         {
-         
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(game.Name))
             {
                 var original = Data.LoadGames().FirstOrDefault(g => g.Id == game.Id);
                 game.Name = original?.Name ?? "Unknown Game";
             }
-
             // 2. ExeName: Tự xóa đuôi .exe
             if (!string.IsNullOrWhiteSpace(game.ExeName))
             {
@@ -193,17 +206,14 @@ namespace MasterPlay.UI.ViewModels
             game.SaveFolderPath = game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
-
             return game;
-        } 
+        }
 
-    private string ValidFolderName(string GameName)
+        public static string ValidFolderName(string GameName)
         {
             char[] invalid = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
             string result = new string(GameName.Select(c => invalid.Contains(c) ? '-' : c).ToArray());
-
             result = Regex.Replace(result, "-+", "-").Trim('-', ' ');
-
             if (result.Length > 200) result = result.Substring(0, 200).TrimEnd('-');
             return result;
         }

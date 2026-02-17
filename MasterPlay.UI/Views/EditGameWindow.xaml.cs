@@ -15,13 +15,6 @@ namespace MasterPlay.UI
 
             viewModel.RequestClose += result =>
             {
-                if (result == true) // Chỉ reload khi Save/Delete thành công
-                {
-                    if (Owner is MainWindow mainWindow)
-                    {
-                        mainWindow.LoadGamesData();
-                    }
-                }
                 DialogResult = result;
                 Close();
             };

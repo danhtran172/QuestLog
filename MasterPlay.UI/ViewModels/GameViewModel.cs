@@ -4,9 +4,8 @@ using MasterPlay.Models;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
-using System.Windows;
 using System.Linq;
-
+using System.Windows;
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -18,8 +17,12 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private bool hasPlayableExe;
-        public bool ShowFolderWarning => !checkFolderWarning();
-        public bool IsGameRunning =>  CheckRunningGame();
+
+        // Tất cả logic chuyển về đây
+        public bool ShowFolderWarning => !CheckFolderWarning();
+
+        public bool IsGameRunning => CheckRunningGame();
+
         public string DisplayPlayTime
         {
             get
@@ -29,16 +32,15 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        public string getProcessPath()
+        public string GetProcessPath()
         {
             var available = Data.LoadAvailableGames();
             try
-            {               
+            {
                 var processName = Game.ExeName + ".exe";
-
                 string fullPath = available.FirstOrDefault(a =>
                     string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
-                return fullPath;
+                return fullPath ?? string.Empty;
             }
             catch
             {
@@ -46,34 +48,32 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        public bool checkFolderWarning()
+        public bool CheckFolderWarning()
         {
             return FileHelper.FileCheck(Game.SaveFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath);
         }
-        public GameViewModel(Game game)
-        {
-            Game = game;
-            hasPlayableExe = game.Ready;
-        }
-
 
         public bool CheckRunningGame()
-            
-            {
-                if (Game.Ready)
-                {
-                    var processName = Game?.ExeName;
-                    // Loại bỏ đuôi .exe nếu người dùng lỡ nhập vào
-                    if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    {
-                        processName = processName.Substring(0, processName.Length - 4);
-                    }
+        {
+            if (!Game.Ready) return false;
 
-                    Process[] processes = Process.GetProcessesByName(processName);
-                    return processes.Length > 0;
-                }
-                return false;
+            var processName = Game?.ExeName;
+            if (string.IsNullOrEmpty(processName)) return false;
+
+            // Loại bỏ đuôi .exe nếu có
+            if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                processName = processName.Substring(0, processName.Length - 4);
             }
 
-}
+            Process[] processes = Process.GetProcessesByName(processName);
+            return processes.Length > 0;
+        }
+
+        public GameViewModel(Game game)
+        {
+            Game = game ?? throw new ArgumentNullException(nameof(game));
+            HasPlayableExe = game.Ready;
+        }
+    }
 }
