@@ -46,16 +46,18 @@ namespace MasterPlay.Service.Services
             {
                 DataHelper.SyncReadyGames();
 
-                var games = DataHelper.LoadGames().Where(x => x.Ready).ToList();
+                var games = DataHelper.LoadGames().ToList();
+                //var games = DataHelper.LoadGames().Where(x => x.Ready).ToList();
                 bool dataChanged = false;
 
                 foreach (var game in games)
                 {
-                    if (game.IsDisabled || string.IsNullOrEmpty(game.ExeName)) continue;
+                    if (game.IsDisabled || string.IsNullOrEmpty(game.ExeName) || !game.Ready) continue;
 
                     string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
                     var processes = Process.GetProcessesByName(processName);
                     if (processes.Length == 0) continue;
+
                     if (processes.Length > 0) _logger.LogInformation(game.Name + " is running");
 
 

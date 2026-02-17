@@ -172,8 +172,9 @@ namespace MasterPlay.Models
         {
             var games = LoadGames();
             var availables = LoadAvailableGames();
-
             if (games == null || games.Count == 0) return;
+
+            bool dataChanged = false;
 
             foreach (var game in games)
             {
@@ -185,11 +186,29 @@ namespace MasterPlay.Models
                     var match = availables.FirstOrDefault(a =>
                         string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase));
 
-                    game.Ready = match != null && FileHelper.FileCheck(match.FullPath);
+                    bool newReady = match != null && FileHelper.FileCheck(match.FullPath);
+
+                    if (game.Ready != newReady)
+                    {
+                        game.Ready = newReady;
+                        dataChanged = true;
+                    }
                 }
-                catch { game.Ready = false; }
+                catch (Exception ex)
+                {
+                    if (game.Ready)
+                    {
+                        game.Ready = false;
+                        dataChanged = true;
+                    }
+                }
             }
-            SaveGamesData(games);
+
+            // Chỉ save nếu có thay đổi thực sự
+            if (dataChanged)
+            {
+                SaveGamesData(games);
+            }
         }
         #endregion
 
