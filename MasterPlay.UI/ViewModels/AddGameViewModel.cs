@@ -24,6 +24,15 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string saveLocation = string.Empty;
         [ObservableProperty]
+        private string genre = string.Empty;
+        [ObservableProperty]
+        private DateOnly? releaseDate = null;
+        [ObservableProperty]
+        private string developer = string.Empty;
+        [ObservableProperty]
+        private string publisher = string.Empty;
+
+        [ObservableProperty]
         private string imagePath = string.Empty;
         [ObservableProperty]
         private BitmapImage? previewImage;
@@ -31,6 +40,15 @@ namespace MasterPlay.UI.ViewModels
         private bool isSyncing = false;
         [ObservableProperty]
         private bool isBusy;
+        [ObservableProperty]
+        private Selections selections = LoadSelections();
+
+        private static Selections LoadSelections()
+        {
+            MessageBox.Show("ss");
+            return DataService.LoadSelection();
+
+        }
 
         // --- Constructors and Initialization ---
         public AddGameViewModel()
@@ -45,11 +63,23 @@ namespace MasterPlay.UI.ViewModels
             IsBusy = true;
             try
             {
-                GameName = await ApiHelper.GetGameFormatedNameAsync(GameName);
-                var metaData = await DataHelper.FindGameMetaData(GameName);
+                var rawgGame = await ApiService.GetGameDetails(GameName);
+             
+
+                if (rawgGame != null)
+                {
+                    GameName = rawgGame.Name;
+                    ImagePath = rawgGame.Background_Image;
+
+                    Genre = rawgGame.Genres;
+                    ReleaseDate = ApiService.ParseDate(rawgGame.ReleaseDate);
+                    developer = rawgGame.Developers;
+                    Publisher = rawgGame.Publishers;
+
+                }
+                var metaData = await DataService.FindGameMetaData(GameName);
                 ExeName = metaData.Exe;
                 SaveLocation = metaData.SaveFolder;
-                ImagePath = await ApiHelper.GetGameImageUrlAsync(GameName);
                 StatusMessage = "Sync completed!";
             }
             catch (Exception ex)
@@ -79,14 +109,14 @@ namespace MasterPlay.UI.ViewModels
             }
             try
             {
-                var games = DataHelper.LoadGames();
+                var games = DataService.LoadGames();
                 // Check duplicate name (case insensitive)
                 if (games.Exists(g => g.Name.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
                     StatusMessage = "This Game name already exists.";
                     return;
                 }
-                var config = DataHelper.LoadConfig();
+                var config = DataService.LoadConfig();
                 string backupRoot = config.BackupRootPath;
                 if (string.IsNullOrEmpty(backupRoot))
                 {
@@ -106,7 +136,7 @@ namespace MasterPlay.UI.ViewModels
                 newGame.BackupFolderPath = backupFolder;
                 ViewModelHelpers.InputFormatter(newGame);
                 games.Add(newGame);
-                DataHelper.SaveGamesData(games);
+                DataService.SaveGamesData(games);
                 Directory.CreateDirectory(backupFolder);
                 string txtPath = Path.Combine(backupFolder, "SaveFileLocation.txt");
                 File.WriteAllText(txtPath, newGame.SaveFolderPath);

@@ -8,12 +8,19 @@
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
     <converters:BoolToOpacityConverter x:Key="BoolToOpacity"/>
     <converters:BooleanInverseConverter x:Key="BoolInverse"/>
+    <converters:SelectionColorConverter x:Key="SelectionColorConverter"/>
     <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#555555"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Margin" Value="0,0,0,5"/>
         <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style x:Key="ValueTextStyleNormal" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="#2C3E50"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="RequiredStarStyle" TargetType="Run">
         <Setter Property="Foreground" Value="#E74C3C"/>

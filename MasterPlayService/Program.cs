@@ -16,7 +16,7 @@ namespace MasterPlay.Service
                     .WriteTo.Console()
                     .WriteTo.File(logPath,
                         rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 7)
+                        retainedFileCountLimit: 3)
                     .CreateLogger();
             try
             {

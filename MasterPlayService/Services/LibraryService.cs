@@ -30,10 +30,10 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                DataHelper.SyncReadyGames();
-                DataHelper.SortGames();
+                DataService.SyncReadyGames();
+                DataService.SortGames();
 
-                var config = DataHelper.LoadConfig();
+                var config = DataService.LoadConfig();
                 var libraries = config.GameLibraryPath;
                 foreach (var library in libraries)
                 {
@@ -46,7 +46,7 @@ namespace MasterPlay.Service.Services
                     _logger.LogInformation("Scanning library: {path}", library);
 
                     var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
-                    var existingGames = DataHelper.LoadAvailableGames();
+                    var existingGames = DataService.LoadAvailableGames();
                     var newList = new List<DetectedGame>();
 
                     foreach (var file in exeFiles)
@@ -59,7 +59,7 @@ namespace MasterPlay.Service.Services
                         });
                     }
 
-                    DataHelper.SaveAvailableGames(newList);
+                    DataService.SaveAvailableGames(newList);
                     _logger.LogInformation("Library scan completed. Found {count} executables.", newList.Count);
                 }
             }

@@ -14,5 +14,6 @@ namespace MasterPlay.Models.Models
         public List<string> GameLibraryPath { get; set; } = new List<string>();
         public string AvailableGamesPath { get; set; } = string.Empty;
         public string MetaDataPath { get; set; } = string.Empty;
+        public string SelectionPath { get; set; } = string.Empty;
     }
 }

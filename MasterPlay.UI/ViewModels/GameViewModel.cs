@@ -41,7 +41,7 @@ namespace MasterPlay.UI.ViewModels
         // --- Private Methods: Path and Status Checks ---
         public string GetProcessPath()
         {
-            var available = DataHelper.LoadAvailableGames();
+            var available = DataService.LoadAvailableGames();
             try
             {
                 var processName = Game.ExeName + ".exe";

@@ -5,7 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-MasterPlayService-ba176a43-a317-4b55-9e3f-c551e84e97a0</UserSecretsId>
+    <ApplicationIcon>MasterPlayIcon.ico</ApplicationIcon>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="MasterPlayIcon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />

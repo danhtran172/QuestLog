@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GenerativeAI;
+using GenerativeAI.Types;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
@@ -8,8 +10,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media.Imaging;
+using System.Xml.Linq;
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -21,6 +26,27 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string backupFolderPath = string.Empty;
         [ObservableProperty]
+        private string publisher = string.Empty;
+
+        [ObservableProperty]
+        private string developer = string.Empty;
+
+        [ObservableProperty]
+        private string series = string.Empty;
+
+        [ObservableProperty]
+        private string genre = string.Empty;
+
+        [ObservableProperty]
+        private string theme = string.Empty;
+        [ObservableProperty]
+        private DateOnly? publishDate = null;
+
+        [ObservableProperty]
+        private bool isBusy;
+
+
+        [ObservableProperty]
         private BitmapImage? previewImage;
         [ObservableProperty]
         private bool isReadOnly = true;
@@ -28,6 +54,7 @@ namespace MasterPlay.UI.ViewModels
         private bool saveFolderAccessible;
         [ObservableProperty]
         private bool backupFolderAccessible;
+        
         // Play time properties
         [ObservableProperty]
         private int playTimeHours;
@@ -35,12 +62,23 @@ namespace MasterPlay.UI.ViewModels
         private int playTimeMinutes;
         [ObservableProperty]
         private int adjustMinutes;
+        [ObservableProperty]
+        private Selections selections = LoadSelections();
+        [ObservableProperty]
+        private bool hasScore;
+        public static Dictionary<string, string> ProgressColorMap { get; private set; } = new Dictionary<string, string>();
+        public static Dictionary<string, string> OwnershipColorMap { get; private set; } = new Dictionary<string, string>();
+        private static Selections LoadSelections()
+        {
+            return DataService.LoadSelection();
 
+        }
         // --- Constructors and Initialization ---
         public EditGameViewModel(Game selectedGame)
         {
             Game = selectedGame ?? new Game();
             ReloadGameFromConfig();
+            DataService.AssignDefaultColors();
         }
 
         // --- Commands: Mode Toggling and Saving ---
@@ -52,6 +90,110 @@ namespace MasterPlay.UI.ViewModels
             if (IsReadOnly) StatusMessage = string.Empty;
         }
 
+        partial void OnGameChanged(Game? value)
+        {
+            PreviewImage = ViewModelHelpers.LoadPreviewImage(value?.ImagePath);
+            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
+            {
+                UpdateBackupFolderPath(value.Name);
+            }
+            if (value == null)
+            {
+                publisher = string.Empty;
+                developer = string.Empty;
+                series = string.Empty;
+                genre = string.Empty;
+                theme = string.Empty;
+                publishDate = null;
+            }
+            else
+            {
+                publisher = value.Publisher ?? "N/A";
+                developer = value.Developer ?? "N/A";
+                series = value.Series ?? "N/A";
+                genre = value.Genre ?? "N/A";
+                theme = value.Theme ?? "N/A";
+                publishDate = value.PublishDate;
+            }
+
+            HasScore = value?.Score != null && value.Score != 0f;
+        }
+       
+       
+        [RelayCommand]
+        private async Task Sync()
+        {
+            // Kiểm tra điều kiện cơ bản
+            if (string.IsNullOrWhiteSpace(Game.Name))
+            {
+                StatusMessage = "Game name is empty. Please enter a name first.";
+                return;
+            }
+
+            IsBusy = true;
+            StatusMessage = "Syncing...";
+
+            try
+            {
+                // Gọi API
+                var rawgGame = await ApiService.GetGameDetails(Game.Name);
+
+                if (rawgGame != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(rawgGame.Name))
+                        Game.Name = rawgGame.Name;
+
+                    if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
+                    {
+                        Game.ImagePath = rawgGame.Background_Image;
+                        PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
+                        OnPropertyChanged(nameof(PreviewImage)); // đảm bảo ảnh update
+                    }
+
+                    Publisher = rawgGame.Publishers ?? "N/A";
+                    Developer = rawgGame.Developers ?? "N/A";
+                    Genre = rawgGame.Genres ?? "N/A";
+                    if (rawgGame.ReleaseDate != null)
+                    {
+                        PublishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
+                    }
+                    else
+                    {
+                        PublishDate = null;
+                    }
+
+                    Game.Publisher = Publisher;
+                    Game.Developer = Developer;
+                    Game.Genre = Genre;
+                    Game.PublishDate = PublishDate;
+
+                    StatusMessage = "Đồng bộ thành công từ RAWG!";
+                }
+                else
+                {
+                    StatusMessage = $"Không tìm thấy thông tin cho game '{Game.Name}' trên RAWG.";
+                }
+
+                var metaData = await DataService.FindGameMetaData(Game.Name);
+                if (metaData != null)
+                {
+                    Game.ExeName = metaData.Exe;
+                    Game.SaveFolderPath = metaData.SaveFolder;
+                    StatusMessage += " Đã cập nhật thêm thông tin local.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Lỗi đồng bộ: {ex.Message}";
+                // Có thể log chi tiết hơn nếu cần
+                Console.WriteLine($"Sync error: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         [RelayCommand]
         private void Save()
         {
@@ -61,7 +203,7 @@ namespace MasterPlay.UI.ViewModels
                 {
                     UpdateBackupFolderPath(Game.Name);
                 }
-                var games = DataHelper.LoadGames();
+                var games = DataService.LoadGames();
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
                 {
@@ -76,7 +218,7 @@ namespace MasterPlay.UI.ViewModels
                     }
                     ViewModelHelpers.InputFormatter(Game);
                     games[index] = Game;
-                    DataHelper.SaveGamesData(games);
+                    DataService.SaveGamesData(games);
                     ReloadGameFromConfig();
                     StatusMessage = "Data Saved Successfully!";
                     IsReadOnly = true;
@@ -88,6 +230,31 @@ namespace MasterPlay.UI.ViewModels
                 MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        [RelayCommand]
+        private void FinishGame()
+        {
+            // Hiện popup nhập Score
+            var inputWindow = new InputScoreWindow(Game.Name);  // Tạo window mới
+            Game.Progress = "Done";  // Tự động set Progress thành Done
+            Game.FinishedIn = DateTime.Now.Year.ToString();  // Optional: lưu năm hoàn thành
+            if (inputWindow.ShowDialog() == true)
+            {
+                if (float.TryParse(inputWindow.ScoreInput, out float newScore))
+                {
+                    Game.Score = newScore;
+           
+
+                    
+
+                    StatusMessage = $"{Game.Name} đã hoàn thành với Score: {newScore}!";
+                }
+                else
+                {
+                    StatusMessage = "Điểm nhập không hợp lệ!";
+                }
+            }
+            Save();  // Lưu luôn vào data
+        }
 
         [RelayCommand]
         private void DeleteGame()
@@ -98,12 +265,12 @@ namespace MasterPlay.UI.ViewModels
             {
                 try
                 {
-                    var games = DataHelper.LoadGames();
+                    var games = DataService.LoadGames();
                     var gameToDisable = games.FirstOrDefault(g => g.Id == Game.Id);
                     if (gameToDisable != null)
                     {
                         gameToDisable.IsDisabled = true;
-                        DataHelper.SaveGamesData(games);
+                        DataService.SaveGamesData(games);
                         StatusMessage = $"{gameToDisable.Name} is Disabled!";
                         RaiseRequestClose(true);
                     }
@@ -119,7 +286,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel()
         {
-            var games = DataHelper.LoadGames();
+            var games = DataService.LoadGames();
             var originalGame = games.FirstOrDefault(g => g.Id == Game.Id);
             if (originalGame != null)
             {
@@ -216,7 +383,7 @@ namespace MasterPlay.UI.ViewModels
         // --- Private Methods: Data Loading and Updating ---
         private void ReloadGameFromConfig()
         {
-            var games = DataHelper.LoadGames();
+            var games = DataService.LoadGames();
             var reloaded = games.FirstOrDefault(g => g.Id == Game.Id);
             if (reloaded != null)
             {
@@ -240,7 +407,7 @@ namespace MasterPlay.UI.ViewModels
         private void UpdateBackupFolderPath(string newGameName)
         {
             if (string.IsNullOrWhiteSpace(newGameName)) return;
-            string backupRoot = DataHelper.GetBackupRootPath();
+            string backupRoot = DataService.GetBackupRootPath();
             string validFolderName = ViewModelHelpers.ValidFolderName(newGameName);
             string newBackupFolder = Path.Combine(backupRoot, validFolderName);
             if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) &&
@@ -280,14 +447,6 @@ namespace MasterPlay.UI.ViewModels
         }
 
         // --- Partial Methods: Property Changed Handlers ---
-        partial void OnGameChanged(Game value)
-        {
-            PreviewImage = ViewModelHelpers.LoadPreviewImage(value?.ImagePath);
-            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
-            {
-                UpdateBackupFolderPath(value.Name);
-            }
-        }
 
         partial void OnIsReadOnlyChanged(bool value)
         {
@@ -322,6 +481,35 @@ namespace MasterPlay.UI.ViewModels
                 var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
                 return $"{(int)ts.TotalHours}h {ts.Minutes}m";
             }
+        }
+        partial void OnPublisherChanged(string value)
+        {
+            Game.Publisher = value;
+        }
+
+        partial void OnDeveloperChanged(string value)
+        {
+            Game.Developer = value;
+        }
+
+        partial void OnGenreChanged(string value)
+        {
+            Game.Genre = value;
+        }
+
+        partial void OnThemeChanged(string value)
+        {
+            Game.Theme = value;
+        }
+
+        partial void OnSeriesChanged(string value)
+        {
+            Game.Series = value;
+        }
+
+        partial void OnPublishDateChanged(DateOnly? value)
+        {
+            Game.PublishDate = value;
         }
     }
 }

@@ -25,10 +25,10 @@ namespace MasterPlay.UI
         public void LoadGamesData()
         {
             Games.Clear();
-            DataHelper.SortGames();
-            DataHelper.SyncReadyGames();
+            DataService.SortGames();
+            DataService.SyncReadyGames();
 
-            var activeGames = DataHelper.LoadGames()
+            var activeGames = DataService.LoadGames()
                                  .Where(g => !g.IsDisabled)
                                  .OrderBy(g => g.Ready)
                                  .ToList();

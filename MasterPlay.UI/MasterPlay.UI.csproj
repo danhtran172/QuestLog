@@ -19,11 +19,14 @@
     <None Remove="Assets\Danger.png" />
     <None Remove="Assets\Danger1.png" />
     <None Remove="Assets\Delete.png" />
+    <None Remove="Assets\Done.png" />
+    <None Remove="Assets\Edit Folder.png" />
     <None Remove="Assets\Edit.png" />
     <None Remove="Assets\Edit2.png" />
     <None Remove="Assets\EditFolder.png" />
     <None Remove="Assets\Filter.png" />
     <None Remove="Assets\Filter2.png" />
+    <None Remove="Assets\Finish.png" />
     <None Remove="Assets\Info.png" />
     <None Remove="Assets\Info2.png" />
     <None Remove="Assets\MasterplayLogo.png" />
@@ -47,6 +50,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\Danger1.png" />
+    <Resource Include="Assets\Done.png" />
+    <Resource Include="Assets\Edit Folder.png" />
     <Resource Include="Assets\Edit.png" />
   </ItemGroup>
 
@@ -54,6 +59,7 @@
     <Resource Include="Assets\Cheking.png" />
     <Resource Include="Assets\Edit4.png" />
     <Resource Include="Assets\Edit3.png" />
+    <Resource Include="Assets\Finish.png" />
     <Resource Include="Assets\MasterPlayIcon.ico" />
   </ItemGroup>
 

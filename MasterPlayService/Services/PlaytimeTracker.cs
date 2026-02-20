@@ -44,9 +44,9 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                DataHelper.SyncReadyGames();
+                DataService.SyncReadyGames();
 
-                var games = DataHelper.LoadGames().ToList();
+                var games = DataService.LoadGames().ToList();
                 //var games = DataHelper.LoadGames().Where(x => x.Ready).ToList();
                 bool dataChanged = false;
 
@@ -88,7 +88,7 @@ namespace MasterPlay.Service.Services
 
                 if (dataChanged)
                 {
-                    DataHelper.SaveGamesData(games);
+                    DataService.SaveGamesData(games);
                 }
             }
             catch (Exception ex)

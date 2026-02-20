@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MasterPlay.Models
 {
-    public static class DataHelper
+    public static class DataService
     {
         private static readonly object _fileLock = new object();
 
@@ -26,6 +26,16 @@ namespace MasterPlay.Models
                 SaveConfig(config);
             }
             return config.GameLibraryPath;
+        }
+        public static string GetSelectionPath()
+        {
+            var config = LoadConfig();
+            if (config.SelectionPath == null || !config.SelectionPath.Any())
+            {
+                config.SelectionPath = Path.Combine(GetConfigDirectory(), "selections");
+                SaveConfig(config);
+            }
+            return config.SelectionPath;
         }
 
         public static string GetBackupRootPath()
@@ -240,5 +250,60 @@ namespace MasterPlay.Models
             });
         }
         #endregion
+
+
+        public static Selections LoadSelection()
+{
+    string path = GetSelectionPath();
+    lock (_fileLock)
+    {
+        Selections selections;
+
+        if (!File.Exists(path))
+        {
+            selections = new Selections();  // hoặc CreateDefault...
+        }
+        else
+        {
+            try
+            {
+                string content = File.ReadAllText(path);
+                selections = JsonConvert.DeserializeObject<Selections>(content) ?? new Selections();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading selections: {ex.Message}");
+                selections = new Selections();
+            }
+        }
+
+        return selections;
+    }
+}
+        public static Dictionary<string, string> Progress { get; private set; } = new();
+        public static Dictionary<string, string> Ownership { get; private set; } = new();
+
+        public static void AssignDefaultColors()
+        {
+            Progress = new Dictionary<string, string>
+            {
+                { "Done", "#6DC3BB" },
+                { "Playing", "#5EABD6" },
+                { "Nextplay", "#FF8FB7" },
+                { "Unfinished", "#AE75DA" },
+                { "Intedned", "#E67514" },
+                { "Pending", "#D7D7D7" }
+            };
+
+            Ownership = new Dictionary<string, string>
+            {
+                { "Ready", "#A2D5C6" },
+                { "Pirated", "#FFAB5B" },
+                { "GamePass", "#2DAA9E" },
+                { "Not Owned", "#D7D7D7" },
+                { "PS Required", "#C62E2E" }
+            };
+        }
+
     }
 }

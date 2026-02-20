@@ -17,7 +17,7 @@ namespace MasterPlay.UI.ViewModels.Generral
             // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(game.Name))
             {
-                var original = DataHelper.LoadGames().FirstOrDefault(g => g.Id == game.Id);
+                var original = DataService.LoadGames().FirstOrDefault(g => g.Id == game.Id);
                 game.Name = original?.Name ?? "Unknown Game";
             }
 
@@ -31,9 +31,43 @@ namespace MasterPlay.UI.ViewModels.Generral
                 }
             }
 
+            // 3. Trim các đường dẫn
             game.SaveFolderPath = game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
+
+            // 4. Validate Score: chỉ 1-10 hoặc 999
+            if (game.Score != 999)
+            {
+                if (game.Score < 1 || game.Score > 10)
+                {
+                    game.Score = 0; // Reset về 0 nếu không hợp lệ
+                                    // Có thể throw exception hoặc log nếu cần
+                                    // throw new ArgumentException("Score phải từ 1-10 hoặc 999.");
+                }
+            }
+
+            // 5. Validate Excited: chỉ 1-10 hoặc 999
+            if (game.Excited != 999)
+            {
+                if (game.Excited < 1 || game.Excited > 10)
+                {
+                    game.Excited = 0; // Reset về 0 nếu không hợp lệ
+                                      // throw new ArgumentException("Excited phải từ 1-10 hoặc 999.");
+                }
+            }
+
+            // 6. Validate FinishedIn: phải là năm hợp lệ (1900 đến năm hiện tại + 1)
+            //if (game.FinishedIn != null)
+            //{
+            //    string year = game.FinishedIn.to;
+            //    string currentYear = DateTime.Now.ToString("yyyy");
+            //    if (year < 2003 || year > currentYear + 1)
+            //    {
+            //        game.FinishedIn = null; // Reset nếu không hợp lệ
+            //                                // throw new ArgumentException("Finished In phải là năm hợp lệ (1900 đến hiện tại + 1).");
+            //    }
+            //}
         }
 
         // --- Folder Name Validation ---

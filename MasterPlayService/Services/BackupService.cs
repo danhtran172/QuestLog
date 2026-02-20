@@ -37,8 +37,8 @@ namespace MasterPlay.Service.Services
             try
             {
                 _isBackupRunning = true;
-                var config = DataHelper.LoadConfig();
-                var games = DataHelper.LoadGames();
+                var config = DataService.LoadConfig();
+                var games = DataService.LoadGames();
 
                 if (string.IsNullOrEmpty(config.BackupRootPath))
                 {

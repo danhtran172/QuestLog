@@ -75,13 +75,13 @@ namespace MasterPlay.UI.ViewModels
         {
             try
             {
-                var config = DataHelper.LoadConfig();
+                var config = DataService.LoadConfig();
                 config.BackupRootPath = BackupRootPath;
                 config.ConfigFilePath = ConfigPath;
                 config.DataFilePath = GameDataPath;
                 config.MetaDataPath = MetaDataPath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
-                DataHelper.SaveConfig(config);
+                DataService.SaveConfig(config);
                 StatusMessage = "Settings saved successfully!";
                 IsBackupReadOnly = IsConfigReadOnly = IsGameDataReadOnly = IsMetaDataReadOnly = true;
                 foreach (var item in LibraryPaths) item.IsReadOnly = true;
@@ -95,7 +95,7 @@ namespace MasterPlay.UI.ViewModels
         // --- Private Methods: Data Loading ---
         private void LoadSettings()
         {
-            var config = DataHelper.LoadConfig();
+            var config = DataService.LoadConfig();
             if (config != null)
             {
                 BackupRootPath = config.BackupRootPath ?? "";

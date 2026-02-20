@@ -13,5 +13,24 @@ namespace MasterPlay.Models.Models
         public string ImagePath { get; set; } = string.Empty;
         public bool IsDisabled { get; set; } = false;
         public bool Ready { get; set; } = false;
+        public string Publisher { get; set; } = string.Empty;
+        public string Developer { get; set; } = string.Empty;
+        public DateOnly? PublishDate { get; set; }
+
+        public string Series { get; set; } = string.Empty;
+
+        public string Genre { get; set; } = string.Empty ;
+        public string Theme { get; set; } = string.Empty;
+
+        public float Score { get; set; } 
+        public float Excited { get; set; }
+        public string Ownership { get; set; } = string.Empty;
+
+        public string Progress { get; set; }
+
+        public long RunTime { get; set; }
+
+        public string FinishedIn { get; set; } = string.Empty;
+
     }
 }
