@@ -22,7 +22,7 @@ namespace MasterPlay.Models
             var config = LoadConfig();
             if (config.GameLibraryPath == null || !config.GameLibraryPath.Any())
             {
-                config.GameLibraryPath = new List<string> { Path.Combine(GetConfigDirectory(), "GameLibrary") };
+                config.GameLibraryPath = new List<string> { Path.Combine(GetConfigDirectory(), "gellery_data.json") };
                 SaveConfig(config);
             }
             return config.GameLibraryPath;

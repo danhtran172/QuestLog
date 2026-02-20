@@ -14,12 +14,15 @@ namespace MasterPlay.UI
     {
         public ObservableCollection<GameViewModel> Games { get; } = new ObservableCollection<GameViewModel>();
         private string _searchText = string.Empty;
+        private string _viewMode = "All";
 
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             LoadGamesData();
+            SearchByComboBox.SelectionChanged += SearchByComboBox_SelectionChanged;
+            ViewModeComboBox.SelectionChanged += ViewModeComboBox_SelectionChanged;
         }
 
         public void LoadGamesData()
@@ -65,40 +68,131 @@ namespace MasterPlay.UI
                 ApplyFilterAndSort();
             }
         }
+        private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                _viewMode = selectedItem.Content.ToString();
+                ApplyFilterAndSort();
+            }
+        }
 
         private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ApplyFilterAndSort();
         }
 
+        private string _searchBy = "All"; // Default là All
+
+        private void SearchByComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                _searchBy = selectedItem.Content.ToString();
+                ApplyFilterAndSort();
+            }
+        }
+
         private void ApplyFilterAndSort()
         {
             var query = Games.AsQueryable();
 
+            // 1. Lọc theo View Mode
+            switch (_viewMode)
+            {
+                case "All":
+                    // Không lọc gì, hiển thị tất cả
+                    break;
+
+                case "Plan":
+                    // Ẩn game có Progress = "Done" (giả sử Progress là string "Done")
+                    query = query.Where(vm => vm.Game.Progress != "Done");
+                    break;
+
+                case "Finish":
+                    // Chỉ lấy game có Progress = "Done"
+                    query = query.Where(vm => vm.Game.Progress == "Done");
+                    break;
+            }
+
+            // 2. Lọc theo Search Text (giữ nguyên logic cũ của bạn)
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                query = query.Where(vm => vm.Game.Name.ToLowerInvariant().Contains(_searchText));
+                string searchLower = _searchText.ToLowerInvariant();
+
+                switch (_searchBy)
+                {
+                    case "All":
+                    case "Name":
+                        query = query.Where(vm => vm.Game.Name.ToLowerInvariant().Contains(searchLower));
+                        break;
+
+                    case "Series":
+                        query = query.Where(vm => vm.Game.Series.ToLowerInvariant().Contains(searchLower) == true);
+                        break;
+
+                    case "Publisher":
+                        query = query.Where(vm => vm.Game.Publisher.ToLowerInvariant().Contains(searchLower) == true);
+                        break;
+
+                    case "Developer":
+                        query = query.Where(vm => vm.Game.Developer.ToLowerInvariant().Contains(searchLower) == true);
+                        break;
+
+                    case "Publish Date (Year)":
+                        if (int.TryParse(_searchText, out int year))
+                        {
+                            query = query.Where(vm => vm.Game.PublishDate.GetValueOrDefault().Year == year);
+                        }
+                        else
+                        {
+                            query = query.Where(vm => false);
+                        }
+                        break;
+                }
             }
 
-            int sortIndex = SortComboBox?.SelectedIndex ?? 0;
-            switch (sortIndex)
+            // 3. Sort theo View Mode + Sort Combo (ưu tiên View Mode sort trước)
+            switch (_viewMode)
             {
-                case 0:
-                    query = query.OrderByDescending(vm => vm.Game.Ready)
-                                 .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
+                case "Plan":
+                    // Plan: sort Progress → Excited → Avg Runtime → Name
+                    query = query.OrderBy(vm => vm.Game.Progress)           // Progress đầu tiên
+                                 .ThenByDescending(vm => vm.Game.Excited)   // Excited giảm dần
+                                 .ThenBy(vm => vm.Game.AvgPlayTime)             // Runtime tăng dần (Avg Runtime giả sử là RunTime)
                                  .ThenBy(vm => vm.Game.Name);
                     break;
-                case 1:
-                    query = query.OrderByDescending(vm => vm.Game.Ready);
+
+                case "Finish":
+                    // Finish: sort Score → FinishIn → PublishDate
+                    query = query.OrderByDescending(vm => vm.Game.Score)    // Score giảm dần
+                                 .ThenByDescending(vm => vm.Game.FinishedIn) // FinishIn giảm dần (mới xong trước)
+                                 .ThenByDescending(vm => vm.Game.PublishDate); // PublishDate giảm dần
                     break;
-                case 2:
-                    query = query.OrderBy(vm => vm.Game.Name);
-                    break;
-                case 3:
-                    query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds);
+
+                default: // All hoặc các mode khác: dùng SortComboBox
+                    int sortIndex = SortComboBox?.SelectedIndex ?? 0;
+                    switch (sortIndex)
+                    {
+                        case 0:
+                            query = query.OrderByDescending(vm => vm.Game.Ready)
+                                         .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
+                                         .ThenBy(vm => vm.Game.Name);
+                            break;
+                        case 1:
+                            query = query.OrderByDescending(vm => vm.Game.Ready);
+                            break;
+                        case 2:
+                            query = query.OrderBy(vm => vm.Game.Name);
+                            break;
+                        case 3:
+                            query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds);
+                            break;
+                    }
                     break;
             }
 
+            // 4. Áp dụng kết quả (giữ nguyên cách cũ của bạn)
             var result = query.ToList();
             Games.Clear();
             foreach (var vm in result)

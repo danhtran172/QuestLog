@@ -45,9 +45,7 @@ namespace MasterPlay.UI.ViewModels
 
         private static Selections LoadSelections()
         {
-            MessageBox.Show("ss");
             return DataService.LoadSelection();
-
         }
 
         // --- Constructors and Initialization ---
@@ -63,7 +61,7 @@ namespace MasterPlay.UI.ViewModels
             IsBusy = true;
             try
             {
-                var rawgGame = await ApiService.GetGameDetails(GameName);
+                var rawgGame = await ApiService.GetMetadata_Rawg(GameName);
              
 
                 if (rawgGame != null)

@@ -15,131 +15,58 @@ namespace MasterPlay.Models
         private const string geminiApiKey = "AIzaSyAtWwdGUXOIBNQhTjhm74DJV4wlEbP7Pb8";
         private static readonly HttpClient client = new HttpClient();
 
-        //public static async Task<string> GetGameImageUrl(string gameName)
-        //{
-        //    // RAWG yêu cầu slug hoặc tìm kiếm qua tham số 'search'
-        //    string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
 
-        //    using HttpClient client = new HttpClient();
-        //    try
-        //    {
-        //        var response = await client.GetFromJsonAsync<RawgSearchResponse>(url);
+        public static async Task<string> GetGameFormatedName(string gameName)
+        {
 
-        //        // Lấy ảnh của kết quả đầu tiên nếu có
-        //        if (response?.Results != null && response.Results.Count > 0)
-        //        {
-        //            return response.Results[0].Background_Image;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"RAWG API Error: {ex.Message}");
-        //    }
+            string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
 
-        //    return "https://via.placeholder.com/600x400?text=No+Image+Found";
-        //}
-        //public static async Task<string> GetGameFormatedName(string gameName)
-        //{
+            using HttpClient client = new HttpClient();
+            try
+            {
+                var response = await client.GetFromJsonAsync<RawgResponse>(url);
 
-        //    // RAWG yêu cầu slug hoặc tìm kiếm qua tham số 'search'
-        //    string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
+                if (response?.Results != null && response.Results.Count > 0)
+                {
+                    return response.Results[0].Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RAWG API Error: {ex.Message}");
+            }
 
-        //    using HttpClient client = new HttpClient();
-        //    try
-        //    {
-        //        var response = await client.GetFromJsonAsync<RawgSearchResponse>(url);
-
-        //        if (response?.Results != null && response.Results.Count > 0)
-        //        {
-        //            return response.Results[0].Name;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"RAWG API Error: {ex.Message}");
-        //    }
-
-        //    return gameName;
-        //}
-        //public static async Task<string> GetGameGenre(string gameName)
-        //{
-        //    string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
-        //    using HttpClient client = new HttpClient();
-        //    try
-        //    {
-        //        var response = await client.GetFromJsonAsync<RawgSearchResponse>(url);
-        //        var game = response?.Results?.FirstOrDefault();
-        //        if (game?.Genres != null)
-        //        {
-        //            return string.Join(", ", game.Genres.Select(g => g.Name));
-        //        }
-        //    }
-        //    catch (Exception ex) { Console.WriteLine($"Error: {ex.Message}"); }
-        //    return "Unknown Genre";
-        //}
-
-        //public static async Task<string> GetGameReleaseDate(string gameName)
-        //{
-        //    string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
-        //    using HttpClient client = new HttpClient();
-        //    try
-        //    {
-        //        var response = await client.GetFromJsonAsync<RawgSearchResponse>(url);
-        //        return response?.Results?.FirstOrDefault()?.Released ?? "Unknown Date";
-        //    }
-        //    catch (Exception ex) { Console.WriteLine($"Error: {ex.Message}"); }
-        //    return "N/A";
-        //}
-
-        //public static async Task<string> GetGameDeveloper(string gameName)
-        //{
-        //    string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
-        //    using HttpClient client = new HttpClient();
-        //    try
-        //    {
-        //        var response = await client.GetFromJsonAsync<RawgSearchResponse>(url);
-
-        //        return "Contacting API Detail recommended for Developer info";
-        //    }
-        //    catch { return "Unknown Developer"; }
-        //}
-        //public static async Task<string> GetGamePublisher(string gameName)
-        //{
-        //    // Tương tự Developer, Publisher thường nằm trong endpoint: /games/{id}
-        //    // Dưới đây là cách gọi nếu bạn đã có ID từ hàm Search trước đó
-        //    return "Publisher info usually requires Game ID";
-        //}
-
-        public static async Task<RawgGame> GetGameDetails(string gameName)
+            return gameName;
+        }
+       
+        public static async Task<GameMetadata> GetMetadata_Rawg(string gameName)
         {
             using HttpClient client = new HttpClient();
             try
             {
-                // Bước 1: Tìm kiếm game để lấy ID/Slug chính xác nhất
                 string searchUrl = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
                 var searchResponse = await client.GetFromJsonAsync<RawgResponse>(searchUrl);
 
                 if (searchResponse?.Results == null || searchResponse.Results.Count == 0)
                     return null;
 
-                var briefInfo = searchResponse.Results[0];
+                var gameId = searchResponse.Results[0].Id;
 
-                // Bước 2: Gọi API chi tiết để lấy đầy đủ Developers và Publishers
-                string detailUrl = $"https://api.rawg.io/api/games/{briefInfo.Id}?key={rawgApiKey}";
-                var detail = await client.GetFromJsonAsync<RawgGameDetail>(detailUrl);
+                string detailUrl = $"https://api.rawg.io/api/games/{gameId}?key={rawgApiKey}";
+                var raw = await client.GetFromJsonAsync<RawgData>(detailUrl);
 
-                if (detail == null) return null;
+                if (raw == null) return null;
 
-                // Trả về object theo format bạn yêu cầu
-                return new RawgGame
+                return new GameMetadata
                 {
-                    Name = detail.Name,
-                    Background_Image = detail.Background_Image,
-                    ReleaseDate = detail.Released,
-                    // Kết hợp các list thành chuỗi phân cách bằng dấu phẩy
-                    Genres = string.Join(", ", detail.Genres.Select(g => g.Name)),
-                    Developers = string.Join(", ", detail.Developers?.Select(d => d.Name) ?? Enumerable.Empty<string>()),
-                    Publishers = string.Join(", ", detail.Publishers?.Select(p => p.Name) ?? Enumerable.Empty<string>())
+                    Name = raw.Name,
+                    Background_Image = raw.Background_Image,
+                    ReleaseDate = raw.Released,
+                    MetaScore = (raw.Metacritic != null) ? int.Parse(raw.Metacritic.ToString()) : 0,
+                    AvgPlaytime = raw.Playtime,
+                    Genres = string.Join(", ", raw.Genres.Select(g => g.Name)),
+                    Developers = string.Join(", ", raw.Developers?.Select(d => d.Name) ?? Enumerable.Empty<string>()),
+                    Publishers = string.Join(", ", raw.Publishers?.Select(p => p.Name) ?? Enumerable.Empty<string>())
                 };
             }
             catch (Exception ex)
@@ -170,5 +97,13 @@ namespace MasterPlay.Models
 
             return null;
         }
+
+    }
+}
+public static class DateExtensions
+{
+    public static string DateDisplay(this DateOnly date)
+    {
+        return date.ToString("dd-MM-yyyy");
     }
 }

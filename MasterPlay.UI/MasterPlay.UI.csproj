@@ -60,6 +60,7 @@
     <Resource Include="Assets\Edit4.png" />
     <Resource Include="Assets\Edit3.png" />
     <Resource Include="Assets\Finish.png" />
+    <Resource Include="Assets\Finish2.png" />
     <Resource Include="Assets\MasterPlayIcon.ico" />
   </ItemGroup>
 

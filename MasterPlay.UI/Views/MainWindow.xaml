@@ -15,18 +15,43 @@
         <Grid Grid.Row="0" Margin="0,0,0,20">
             <Image Source="/Assets/MasterplayLogo.png" HorizontalAlignment="Left" Width="140" RenderOptions.BitmapScalingMode="HighQuality"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <!-- Search By (đã có) -->
+                <ComboBox x:Name="SearchByComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}"
+                  SelectedIndex="0" Margin="0,0,10,0">
+                    <ComboBoxItem Content="All"/>
+                    <ComboBoxItem Content="Name"/>
+                    <ComboBoxItem Content="Series"/>
+                    <ComboBoxItem Content="Publisher"/>
+                    <ComboBoxItem Content="Developer"/>
+                    <ComboBoxItem Content="Publish Date (Year)"/>
+                </ComboBox>
+
+                <!-- Search Text -->
                 <TextBox x:Name="SearchBox" Width="200" Style="{StaticResource ModernSearchBox}"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         TextChanged="SearchBox_TextChanged"
-                         Margin="0,0,10,0"/>
+                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                 TextChanged="SearchBox_TextChanged"
+                 Margin="0,0,10,0"/>
+
+                <!-- View Mode (mới) -->
+                <ComboBox x:Name="ViewModeComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}"
+                  SelectionChanged="ViewModeComboBox_SelectionChanged"
+                  SelectedIndex="0" Margin="0,0,10,0">
+                    <ComboBoxItem Content="All"/>
+                    <ComboBoxItem Content="Plan"/>
+                    <ComboBoxItem Content="Finish"/>
+                </ComboBox>
+
+                <!-- Sort ComboBox -->
                 <ComboBox x:Name="SortComboBox" Width="105" Style="{StaticResource ModernComboBoxStyle}"
-                          SelectionChanged="SortComboBox_SelectionChanged"
-                          SelectedIndex="0" Margin="0,0,20,0">
+                  SelectionChanged="SortComboBox_SelectionChanged"
+                  SelectedIndex="0" Margin="0,0,20,0">
                     <ComboBoxItem Content="Filter"/>
                     <ComboBoxItem Content="Status"/>
                     <ComboBoxItem Content="Name"/>
                     <ComboBoxItem Content="Playtime"/>
                 </ComboBox>
+
+                <!-- Nút Add và Settings -->
                 <Button Style="{StaticResource IconButtonStyle}" Background="#A1BC98" Click="AddGameButton_Click">
                     <Image Source="/Assets/Add.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>

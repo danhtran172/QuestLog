@@ -22,13 +22,14 @@ namespace MasterPlay.Models.Models
         public string Genre { get; set; } = string.Empty ;
         public string Theme { get; set; } = string.Empty;
 
-        public float Score { get; set; } 
+        public int Score { get; set; } 
+        public int MetaScore { get; set; } 
         public float Excited { get; set; }
         public string Ownership { get; set; } = string.Empty;
 
         public string Progress { get; set; }
 
-        public long RunTime { get; set; }
+        public long AvgPlayTime { get; set; }
 
         public string FinishedIn { get; set; } = string.Empty;
 

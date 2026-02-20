@@ -18,7 +18,7 @@ namespace MasterPlay.UI.ViewModels
 
         // --- Commands ---
         [RelayCommand]
-        private void Edit()
+        private void EditLibrary()
         {
             var dialog = new OpenFolderDialog { Title = "Select Game Library Folder" };
             if (dialog.ShowDialog() == true)

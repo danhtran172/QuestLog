@@ -29,8 +29,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding BackupRootPath}" IsReadOnly="{Binding IsBackupReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditBackupCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditBackupCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
         </StackPanel>
@@ -42,8 +42,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding ConfigPath}" IsReadOnly="{Binding IsConfigReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditConfigCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditConfigCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
         </StackPanel>
@@ -55,8 +55,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding GameDataPath}" IsReadOnly="{Binding IsGameDataReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditGameDataCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditGameDataCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
         </StackPanel>
@@ -68,8 +68,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding MetaDataPath}" IsReadOnly="{Binding IsMetaDataReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#3291B6" Command="{Binding EditMetaDataCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditMetaDataCommand}" Margin="10,0,0,0">
+                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
         </StackPanel>
@@ -113,9 +113,9 @@
                                 <Image Source="/Assets/Close.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Button>
                             <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsReadOnly}"/>
-                            <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#3291B6"
-                                    Command="{Binding EditCommand}" Margin="10,0,0,0">
-                                <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A"
+                                    Command="{Binding EditLibraryCommand}" Margin="10,0,0,0">
+                                <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Button>
                         </Grid>
                     </DataTemplate>
