@@ -12,192 +12,142 @@ namespace MasterPlay.UI
 {
     public partial class MainWindow : Window
     {
+        // ==================== PROPERTIES ====================
         public ObservableCollection<GameViewModel> Games { get; } = new ObservableCollection<GameViewModel>();
+
         private string _searchText = string.Empty;
         private string _viewMode = "All";
+        private string _searchBy = "All";
 
+        // ==================== CONSTRUCTOR ====================
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             LoadGamesData();
-            SearchByComboBox.SelectionChanged += SearchByComboBox_SelectionChanged;
-            ViewModeComboBox.SelectionChanged += ViewModeComboBox_SelectionChanged;
         }
 
+        // ==================== DATA LOADING ====================
         public void LoadGamesData()
         {
-            Games.Clear();
             DataService.SortGames();
             DataService.SyncReadyGames();
-
-            var activeGames = DataService.LoadGames()
-                                 .Where(g => !g.IsDisabled)
-                                 .OrderBy(g => g.Ready)
-                                 .ToList();
-
-            foreach (var game in activeGames)
-            {
-                var vm = new GameViewModel(game);
-                Games.Add(vm);
-            }
-
             ApplyFilterAndSort();
+        }
 
-            if (activeGames.Count == 0)
+        // ==================== FILTERING & SORTING ====================
+        private void ApplyFilterAndSort()
+        {
+            // Always load from original data source to avoid losing data during filtering
+            var allData = DataService.LoadGames()
+                                     .Where(g => !g.IsDisabled)
+                                     .Select(g => new GameViewModel(g))
+                                     .AsQueryable();
+
+            // 1. Filter by View Mode
+            if (_viewMode == "Plan") allData = allData.Where(vm => vm.Game.Progress != "Done");
+            else if (_viewMode == "Finish") allData = allData.Where(vm => vm.Game.Progress == "Done");
+
+            // 2. Filter by Search Text
+            if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                MessageBox.Show("There are no active games.",
-                                "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
+                string s = _searchText.ToLower();
+                switch (_searchBy)
+                {
+                    case "Name":
+                        allData = allData.Where(vm => vm.Game.Name.ToLower().Contains(s));
+                        break;
+                    case "Series":
+                        allData = allData.Where(vm => (vm.Game.Series ?? "").ToLower().Contains(s));
+                        break;
+                    case "Publisher":
+                        allData = allData.Where(vm => (vm.Game.Publisher ?? "").ToLower().Contains(s));
+                        break;
+                    case "Developer":
+                        allData = allData.Where(vm => (vm.Game.Developer ?? "").ToLower().Contains(s));
+                        break;
+                    case "Release":
+                        if (int.TryParse(s, out int y))
+                            allData = allData.Where(vm => vm.Game.PublishDate.HasValue && vm.Game.PublishDate.Value.Year == y);
+                        break;
+                    default:
+                        allData = allData.Where(vm => vm.Game.Name.ToLower().Contains(s) ||
+                                                      (vm.Game.Series ?? "").ToLower().Contains(s));
+                        break;
+                }
             }
+
+            // 3. Sorting
+            int sortIndex = SortComboBox?.SelectedIndex ?? 0;
+            allData = sortIndex switch
+            {
+                1 => allData.OrderByDescending(vm => vm.Game.Ready),
+                2 => allData.OrderBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.TotalPlayTimeSeconds),
+                3 => allData.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name),
+                _ => allData.OrderByDescending(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
+            };
+
+            // 4. Update UI immediately
+            Games.Clear();
+            foreach (var item in allData.ToList())
+            {
+                Games.Add(item);
+            }
+        }
+        // ==================== UI RESET ====================
+        private void ResetUIState()
+        {
+            _searchText = string.Empty;
+            _viewMode = "All";
+            _searchBy = "All";
+
+            if (SearchBox != null)
+                SearchBox.Text = string.Empty;
+
+            if (SearchByComboBox != null)
+                SearchByComboBox.SelectedIndex = 0;
+
+            if (ViewModeComboBox != null)
+                ViewModeComboBox.SelectedIndex = 0;
+
+            if (SortComboBox != null)
+                SortComboBox.SelectedIndex = 0;
+        }
+
+        // ==================== EVENT HANDLERS ====================
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _searchText = (sender as TextBox)?.Text ?? "";
+            ApplyFilterAndSort();
+        }
+
+        private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _viewMode = (ViewModeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "All";
+            ApplyFilterAndSort();
+        }
+
+        private void SearchByComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _searchBy = (SearchByComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "All";
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                ApplyFilterAndSort();
+            }
+         
+        }
+
+        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (IsLoaded) ApplyFilterAndSort();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.F5)
             {
+                ResetUIState();
                 LoadGamesData();
-                e.Handled = true;
-            }
-        }
-
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (sender is TextBox textBox)
-            {
-                _searchText = textBox.Text?.Trim().ToLowerInvariant() ?? string.Empty;
-                ApplyFilterAndSort();
-            }
-        }
-        private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                _viewMode = selectedItem.Content.ToString();
-                ApplyFilterAndSort();
-            }
-        }
-
-        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ApplyFilterAndSort();
-        }
-
-        private string _searchBy = "All"; // Default là All
-
-        private void SearchByComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                _searchBy = selectedItem.Content.ToString();
-                ApplyFilterAndSort();
-            }
-        }
-
-        private void ApplyFilterAndSort()
-        {
-            var query = Games.AsQueryable();
-
-            // 1. Lọc theo View Mode
-            switch (_viewMode)
-            {
-                case "All":
-                    // Không lọc gì, hiển thị tất cả
-                    break;
-
-                case "Plan":
-                    // Ẩn game có Progress = "Done" (giả sử Progress là string "Done")
-                    query = query.Where(vm => vm.Game.Progress != "Done");
-                    break;
-
-                case "Finish":
-                    // Chỉ lấy game có Progress = "Done"
-                    query = query.Where(vm => vm.Game.Progress == "Done");
-                    break;
-            }
-
-            // 2. Lọc theo Search Text (giữ nguyên logic cũ của bạn)
-            if (!string.IsNullOrWhiteSpace(_searchText))
-            {
-                string searchLower = _searchText.ToLowerInvariant();
-
-                switch (_searchBy)
-                {
-                    case "All":
-                    case "Name":
-                        query = query.Where(vm => vm.Game.Name.ToLowerInvariant().Contains(searchLower));
-                        break;
-
-                    case "Series":
-                        query = query.Where(vm => vm.Game.Series.ToLowerInvariant().Contains(searchLower) == true);
-                        break;
-
-                    case "Publisher":
-                        query = query.Where(vm => vm.Game.Publisher.ToLowerInvariant().Contains(searchLower) == true);
-                        break;
-
-                    case "Developer":
-                        query = query.Where(vm => vm.Game.Developer.ToLowerInvariant().Contains(searchLower) == true);
-                        break;
-
-                    case "Publish Date (Year)":
-                        if (int.TryParse(_searchText, out int year))
-                        {
-                            query = query.Where(vm => vm.Game.PublishDate.GetValueOrDefault().Year == year);
-                        }
-                        else
-                        {
-                            query = query.Where(vm => false);
-                        }
-                        break;
-                }
-            }
-
-            // 3. Sort theo View Mode + Sort Combo (ưu tiên View Mode sort trước)
-            switch (_viewMode)
-            {
-                case "Plan":
-                    // Plan: sort Progress → Excited → Avg Runtime → Name
-                    query = query.OrderBy(vm => vm.Game.Progress)           // Progress đầu tiên
-                                 .ThenByDescending(vm => vm.Game.Excited)   // Excited giảm dần
-                                 .ThenBy(vm => vm.Game.AvgPlayTime)             // Runtime tăng dần (Avg Runtime giả sử là RunTime)
-                                 .ThenBy(vm => vm.Game.Name);
-                    break;
-
-                case "Finish":
-                    // Finish: sort Score → FinishIn → PublishDate
-                    query = query.OrderByDescending(vm => vm.Game.Score)    // Score giảm dần
-                                 .ThenByDescending(vm => vm.Game.FinishedIn) // FinishIn giảm dần (mới xong trước)
-                                 .ThenByDescending(vm => vm.Game.PublishDate); // PublishDate giảm dần
-                    break;
-
-                default: // All hoặc các mode khác: dùng SortComboBox
-                    int sortIndex = SortComboBox?.SelectedIndex ?? 0;
-                    switch (sortIndex)
-                    {
-                        case 0:
-                            query = query.OrderByDescending(vm => vm.Game.Ready)
-                                         .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
-                                         .ThenBy(vm => vm.Game.Name);
-                            break;
-                        case 1:
-                            query = query.OrderByDescending(vm => vm.Game.Ready);
-                            break;
-                        case 2:
-                            query = query.OrderBy(vm => vm.Game.Name);
-                            break;
-                        case 3:
-                            query = query.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds);
-                            break;
-                    }
-                    break;
-            }
-
-            // 4. Áp dụng kết quả (giữ nguyên cách cũ của bạn)
-            var result = query.ToList();
-            Games.Clear();
-            foreach (var vm in result)
-            {
-                Games.Add(vm);
             }
         }
 
@@ -238,7 +188,7 @@ namespace MasterPlay.UI
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Lỗi khi mở chỉnh sửa: {ex.Message}", "Notification");
+                    MessageBox.Show($"Error opening edit window: {ex.Message}", "Notification");
                 }
             }
         }
@@ -249,7 +199,7 @@ namespace MasterPlay.UI
             {
                 try
                 {
-                    string processPath = vm.GetProcessPath();  // Gọi từ ViewModel
+                    string processPath = vm.GetProcessPath();
                     if (!string.IsNullOrEmpty(processPath))
                     {
                         FileHelper.RunProcess(processPath);
@@ -257,23 +207,14 @@ namespace MasterPlay.UI
                     }
                     else
                     {
-                        MessageBox.Show("Không tìm thấy đường dẫn thực thi của game.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Game executable path not found.", "Notification", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Không thể chạy game: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to launch game: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
-    }
-
-    public class RelayCommand : ICommand
-    {
-        private readonly Action _execute;
-        public RelayCommand(Action execute) => _execute = execute;
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute?.Invoke();
-        public event EventHandler? CanExecuteChanged;
     }
 }

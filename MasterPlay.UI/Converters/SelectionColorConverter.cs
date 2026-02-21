@@ -7,28 +7,31 @@ namespace MasterPlay.UI.Converters
 {
     public class SelectionColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        if (value is string selectionName)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            Dictionary<string, string>? colors = null;
-
-            if (parameter as string == "Progress")
-                colors = DataService.Progress;  // hoặc static class
-            else if (parameter as string == "Ownership")
-                colors = DataService.Ownership;
-
-            if (colors != null && colors.TryGetValue(selectionName, out var hex))
+            if (value is string selectionName && selectionName != "--")
             {
-                try
-                {
-                    return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-                }
-                catch { }
-            }
-        }
-        return Brushes.Gray;  // Default nếu không tìm thấy
-    }
+                Dictionary<string, string>? colors = null;
+                if (parameter as string == "Progress")
+                    colors = DataService.Progress;
+                else if (parameter as string == "Ownership")
+                    colors = DataService.Ownership;
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
-}}
+                if (colors != null && colors.TryGetValue(selectionName, out var hex))
+                {
+                    try
+                    {
+                        return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+                    }
+                    catch { }
+                }
+            }
+            return Brushes.Transparent; // Không màu nếu null hoặc "--"
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

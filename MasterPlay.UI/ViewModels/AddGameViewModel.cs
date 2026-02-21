@@ -1,88 +1,183 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GenerativeAI.Types;
+using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace MasterPlay.UI.ViewModels
 {
     public partial class AddGameViewModel : BaseViewModel
     {
-        // --- Properties ---
+        // Token dùng để hủy việc xóa message nếu có message mới đè lên
+        private CancellationTokenSource? _msgCts;
+
+        // ==================== PROPERTIES ====================
         [ObservableProperty]
         private string gameName = string.Empty;
+
         [ObservableProperty]
         private string exeName = string.Empty;
+
+        [ObservableProperty]
+        private string initExeName = string.Empty;
+
         [ObservableProperty]
         private string saveLocation = string.Empty;
+
         [ObservableProperty]
-        private string genre = string.Empty;
+        private string backupFolderPath = string.Empty;
+
         [ObservableProperty]
-        private DateOnly? releaseDate = null;
+        private string imagePath = string.Empty;
+
         [ObservableProperty]
-        private string developer = string.Empty;
+        private BitmapImage? previewImage;
+
+        [ObservableProperty]
+        private DateOnly? releaseDate;
+
         [ObservableProperty]
         private string publisher = string.Empty;
 
         [ObservableProperty]
-        private string imagePath = string.Empty;
+        private string developer = string.Empty;
+
         [ObservableProperty]
-        private BitmapImage? previewImage;
+        private string series = string.Empty;
+
         [ObservableProperty]
-        private bool isSyncing = false;
+        private string genre = string.Empty;
+
         [ObservableProperty]
-        private bool isBusy;
+        private string theme = string.Empty;
+
+        [ObservableProperty]
+        private float score;
+
+        [ObservableProperty]
+        private int playTimeHours;
+
+        [ObservableProperty]
+        private int playTimeMinutes;
+
+        [ObservableProperty]
+        private int adjustMinutes;
+
+        [ObservableProperty]
+        private long avgPlaytime;
+
+        [ObservableProperty]
+        private int metaScore;
+
+        [ObservableProperty]
+        private float excited;
+
+        [ObservableProperty]
+        private string ownership = string.Empty;
+
+        [ObservableProperty]
+        private string progress = string.Empty;
+
+        [ObservableProperty]
+        private string finishedIn = string.Empty;
+
         [ObservableProperty]
         private Selections selections = LoadSelections();
+
+        [ObservableProperty]
+        private string statusMessage = string.Empty;
+
+        [ObservableProperty]
+        private bool isBusy;
 
         private static Selections LoadSelections()
         {
             return DataService.LoadSelection();
         }
 
-        // --- Constructors and Initialization ---
+        // ==================== CONSTRUCTOR ====================
         public AddGameViewModel()
         {
+            // Thiết lập giá trị mặc định
+            Ownership = "Not Owned";
+            Progress = "Pending";
+
+            var defaultOwnership = selections.Ownership?.FirstOrDefault(x => x.Equals("Not Owned", StringComparison.OrdinalIgnoreCase));
+            if (defaultOwnership != null) Ownership = defaultOwnership;
+
+            var defaultProgress = selections.Progress?.FirstOrDefault(x => x.Equals("Pending", StringComparison.OrdinalIgnoreCase));
+            if (defaultProgress != null) Progress = defaultProgress;
         }
 
-        // --- Commands ---
+        // ==================== HELPERS ====================
+
+        private async Task ShowStatus(string message, int delayMs = 3000)
+        {
+            _msgCts?.Cancel();
+            _msgCts = new CancellationTokenSource();
+            var token = _msgCts.Token;
+
+            StatusMessage = message;
+
+            try
+            {
+                await Task.Delay(delayMs, token);
+                if (!token.IsCancellationRequested)
+                {
+                    StatusMessage = string.Empty;
+                }
+            }
+            catch (TaskCanceledException) { }
+        }
+
+        // ==================== COMMANDS ====================
         [RelayCommand]
         private async Task Sync()
         {
-            if (string.IsNullOrWhiteSpace(GameName)) return;
+            if (string.IsNullOrWhiteSpace(GameName))
+            {
+                await ShowStatus("Game name is required.");
+                return;
+            }
+
             IsBusy = true;
+            StatusMessage = "Syncing...";
+
             try
             {
                 var rawgGame = await ApiService.GetMetadata_Rawg(GameName);
-             
 
                 if (rawgGame != null)
                 {
-                    GameName = rawgGame.Name;
-                    ImagePath = rawgGame.Background_Image;
+                    GameName = rawgGame.Name ?? GameName;
+                    ImagePath = rawgGame.Background_Image ?? ImagePath;
+                    PreviewImage = ViewModelHelpers.LoadPreviewImage(ImagePath);
 
-                    Genre = rawgGame.Genres;
+                    Publisher = rawgGame.Publishers ?? string.Empty;
+                    Developer = rawgGame.Developers ?? string.Empty;
+                    Genre = rawgGame.Genres ?? string.Empty;
+
                     ReleaseDate = ApiService.ParseDate(rawgGame.ReleaseDate);
-                    developer = rawgGame.Developers;
-                    Publisher = rawgGame.Publishers;
+                    MetaScore = rawgGame.MetaScore;
 
+                    await ShowStatus("Sync successful!");
                 }
-                var metaData = await DataService.FindGameMetaData(GameName);
-                ExeName = metaData.Exe;
-                SaveLocation = metaData.SaveFolder;
-                StatusMessage = "Sync completed!";
+                else
+                {
+                    await ShowStatus("No data found for this game.");
+                }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Sync failed: {ex.Message}";
+                await ShowStatus($"Sync failed: {ex.Message}");
             }
             finally
             {
@@ -91,72 +186,174 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void AddGame()
+        private async Task SyncImage()
         {
-            string name = GameName.Trim();
-            string exe = ExeName.Trim();
-            if (exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(ImagePath))
             {
-                exe = exe[..^4].Trim();
-            }
-            string saveLoc = SaveLocation?.Trim('"').Trim() ?? string.Empty;
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(saveLoc))
-            {
-                StatusMessage = "All required fields must be filled.";
+                PreviewImage = null;
+                await ShowStatus("No image URL provided.");
                 return;
             }
+
             try
             {
-                var games = DataService.LoadGames();
-                // Check duplicate name (case insensitive)
-                if (games.Exists(g => g.Name.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)))
-                {
-                    StatusMessage = "This Game name already exists.";
-                    return;
-                }
-                var config = DataService.LoadConfig();
-                string backupRoot = config.BackupRootPath;
-                if (string.IsNullOrEmpty(backupRoot))
-                {
-                    StatusMessage = "Backup root path is not set in config.";
-                    return;
-                }
-                var newGame = new Game
-                {
-                    Name = name,
-                    ExeName = exe,
-                    SaveFolderPath = saveLoc,
-                    ImagePath = ImagePath.Trim(),
-                    TotalPlayTimeSeconds = 0,
-                    IsDisabled = false,
-                };
-                string backupFolder = Path.Combine(backupRoot, ViewModelHelpers.ValidFolderName(name));
-                newGame.BackupFolderPath = backupFolder;
-                ViewModelHelpers.InputFormatter(newGame);
-                games.Add(newGame);
-                DataService.SaveGamesData(games);
-                Directory.CreateDirectory(backupFolder);
-                string txtPath = Path.Combine(backupFolder, "SaveFileLocation.txt");
-                File.WriteAllText(txtPath, newGame.SaveFolderPath);
-                StatusMessage = "Game added successfully!";
-                RaiseRequestClose(true); // Success → close window
+                PreviewImage = ViewModelHelpers.LoadPreviewImage(ImagePath);
+                await ShowStatus("Image preview updated.");
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error: {ex.Message}";
+                await ShowStatus($"Failed to load image: {ex.Message}");
             }
         }
 
         [RelayCommand]
-        private void Cancel()
+        private void EditSaveFolder()
         {
-            RaiseRequestClose(false);
+            var dialog = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Save Folder",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                SaveLocation = dialog.FolderName;
+            }
         }
 
-        // --- Private Methods: Image Handling ---
+        [RelayCommand]
+        private void EditBackupFolder()
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Backup Folder",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                BackupFolderPath = dialog.FolderName;
+            }
+        }
+
+
+        [RelayCommand]
+        private async Task CheckPlayTime()
+        {
+            if (string.IsNullOrWhiteSpace(GameName)) return;
+
+            string url = "https://howlongtobeat.com/?q=" + Uri.EscapeDataString(GameName);
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                await ShowStatus($"Cannot open browser: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private async Task AddGame()
+        {
+            if (string.IsNullOrWhiteSpace(GameName))
+            {
+                await ShowStatus("Game Name is Required");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(ImagePath))
+            {
+                await ShowStatus("Game Cover is Required");
+                return;
+            }
+
+            try
+            {
+                var games = DataService.LoadGames();
+
+                if (games.Exists(g => g.Name.Trim().Equals(GameName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                {
+                    await ShowStatus("Game name already exists.");
+                    return;
+                }
+
+                var config = DataService.LoadConfig();
+                if (string.IsNullOrEmpty(config.BackupRootPath))
+                {
+                    await ShowStatus("Backup root path not set.");
+                    return;
+                }
+
+                var newGame = new Game
+                {
+                    Name = GameName.Trim(),
+                    ExeName = ExeName.Trim(),
+                    InitExeName = InitExeName?.Trim() ?? ExeName.Trim(),
+                    SaveFolderPath = SaveLocation.Trim(),
+                    ImagePath = ImagePath.Trim(),
+                    PublishDate = ReleaseDate,
+                    Publisher = Publisher.Trim(),
+                    Developer = Developer.Trim(),
+                    Series = Series.Trim(),
+                    Genre = Genre.Trim(),
+                    Theme = Theme.Trim(),
+                    Score = Score,
+                    TotalPlayTimeSeconds = (long)(PlayTimeHours * 3600 + PlayTimeMinutes * 60),
+                    MetaScore = MetaScore,
+                    AvgPlayTime = AvgPlaytime,
+                    Excited = Excited,
+                    Ownership = Ownership,
+                    Progress = Progress,
+                    FinishedIn = FinishedIn,
+                    IsDisabled = false
+                };
+                newGame = ViewModelHelpers.InputFormatter(newGame);
+                string validFolderName = ViewModelHelpers.ValidFolderName(newGame.Name);
+                string backupFolder = Path.Combine(config.BackupRootPath, validFolderName);
+                Directory.CreateDirectory(backupFolder);
+                newGame.BackupFolderPath = backupFolder;
+
+                string txtPath = Path.Combine(backupFolder, "save_location.txt");
+                File.WriteAllText(txtPath, newGame.SaveFolderPath);
+
+                games.Add(newGame);
+                DataService.SaveGamesData(games);
+
+                // Ở đây không dùng ShowStatus vì window sẽ đóng ngay lập tức
+                RaiseRequestClose(true);
+            }
+            catch (Exception ex)
+            {
+                await ShowStatus($"Error: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private void Cancel() => RaiseRequestClose(false);
+
+        // ==================== PARTIAL CHANGE HANDLERS ====================
         partial void OnImagePathChanged(string value)
         {
             PreviewImage = ViewModelHelpers.LoadPreviewImage(value);
+        }
+
+        partial void OnPlayTimeHoursChanged(int value)
+        {
+            if (value < 0) PlayTimeHours = 0;
+        }
+
+        partial void OnPlayTimeMinutesChanged(int value)
+        {
+            if (value < 0) PlayTimeMinutes = 0;
+            if (value >= 60)
+            {
+                PlayTimeHours += value / 60;
+                PlayTimeMinutes = value % 60;
+            }
         }
     }
 }

@@ -41,11 +41,11 @@ namespace MasterPlay.UI.ViewModels
         // --- Private Methods: Path and Status Checks ---
         public string GetProcessPath()
         {
-            var available = DataService.LoadAvailableGames();
+            var detectedProcesses = DataService.LoadDetectedProcesses();
             try
             {
-                var processName = Game.ExeName + ".exe";
-                string fullPath = available.FirstOrDefault(a =>
+                var processName = Game.InitExeName + ".exe";
+                string fullPath = detectedProcesses.FirstOrDefault(a =>
                     string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;
                 return fullPath ?? string.Empty;
             }

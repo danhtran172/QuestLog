@@ -37,11 +37,13 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty] private string configPath = string.Empty;
         [ObservableProperty] private string gameDataPath = string.Empty;
         [ObservableProperty] private string metaDataPath = string.Empty;
+        [ObservableProperty] private string galleryFilePath = string.Empty;
         [ObservableProperty] private ObservableCollection<LibraryPathItem> libraryPaths = new();
         [ObservableProperty] private bool isBackupReadOnly = true;
         [ObservableProperty] private bool isConfigReadOnly = true;
         [ObservableProperty] private bool isGameDataReadOnly = true;
         [ObservableProperty] private bool isMetaDataReadOnly = true;
+        [ObservableProperty] private bool isGalleryReadOnly = true;
 
         // --- Constructors and Initialization ---
         public SettingsViewModel()
@@ -61,6 +63,8 @@ namespace MasterPlay.UI.ViewModels
 
         [RelayCommand]
         private void EditMetaData() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) MetaDataPath = d.FileName; }
+        [RelayCommand]
+        private void EditGallery() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) galleryFilePath = d.FileName; }
 
         // --- Commands: Library Management ---
         [RelayCommand]
@@ -80,6 +84,7 @@ namespace MasterPlay.UI.ViewModels
                 config.ConfigFilePath = ConfigPath;
                 config.DataFilePath = GameDataPath;
                 config.MetaDataPath = MetaDataPath;
+                config.SelectionPath = galleryFilePath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
                 DataService.SaveConfig(config);
                 StatusMessage = "Settings saved successfully!";
@@ -102,6 +107,7 @@ namespace MasterPlay.UI.ViewModels
                 ConfigPath = config.ConfigFilePath ?? "";
                 GameDataPath = config.DataFilePath ?? "";
                 MetaDataPath = config.MetaDataPath ?? "";
+                galleryFilePath = config.SelectionPath ?? "";
                 LibraryPaths.Clear();
                 if (config.GameLibraryPath != null)
                 {

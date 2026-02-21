@@ -8,6 +8,7 @@ using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -107,13 +108,15 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private bool hasScore;
+        
+        //private bool DifInit => CheckInitProcess();
 
         // =====================================================================
         // Display Properties (for View - null/empty/0 handling)
         // =====================================================================
 
-        public string DisplayPublishDate => publishDate?.ToString("dd-MM-yyyy") ?? "--";
-
+        //public string DisplayPublishDate => publishDate?.ToString("dd-MM-yyyy") ?? "--";
+        public string DisplayPublishDate => publishDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "--";
         public string DisplayPublisher => string.IsNullOrWhiteSpace(publisher) ? "--" : publisher;
 
         public string DisplayDeveloper => string.IsNullOrWhiteSpace(developer) ? "--" : developer;
@@ -128,7 +131,7 @@ namespace MasterPlay.UI.ViewModels
 
         public string DisplayExcited => Game.Excited > 0 ? Game.Excited.ToString("F0") : "--";
 
-        public string DisplayAvgPlayTime => avgPlaytime > 0 ? avgPlaytime.ToString() : "--";
+        public string DisplayAvgPlayTime => avgPlaytime > 0 ? avgPlaytime.ToString() + "h" : "--";
 
         public string DisplayFinishedIn => string.IsNullOrWhiteSpace(finishedIn) ? "Not Finished" : finishedIn;
 
@@ -150,7 +153,7 @@ namespace MasterPlay.UI.ViewModels
             {
                 if (Game.TotalPlayTimeSeconds <= 0) return "--";
                 var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
-                return $"{(int)ts.TotalHours}h {ts.Minutes:D2}m";
+                return $"{(int)ts.TotalHours}h{ts.Minutes:D2}m";
             }
         }
 
@@ -181,17 +184,10 @@ namespace MasterPlay.UI.ViewModels
             try
             {
                 var rawgGame = await ApiService.GetMetadata_Rawg(Game.Name);
-                
+
                 if (rawgGame != null)
                 {
-                    //var gameId = rawgGame.RawgId; 
-                    //var processName = await ApiService.GetProcessName(gameId);
-
-                    //if (!string.IsNullOrWhiteSpace(processName))
-                    //{
-                    //    Game.ExeName = processName;
-                    //}
-
+                    // ── Core updates ───────────────────────────────────────────────
                     if (!string.IsNullOrWhiteSpace(rawgGame.Name))
                         Game.Name = rawgGame.Name;
 
@@ -202,9 +198,19 @@ namespace MasterPlay.UI.ViewModels
                         OnPropertyChanged(nameof(PreviewImage));
                     }
 
+                    // ── Update ViewModel wrapper properties ────────────────────────
                     Publisher = rawgGame.Publishers ?? string.Empty;
                     Developer = rawgGame.Developers ?? string.Empty;
                     Genre = rawgGame.Genres ?? string.Empty;
+                 
+
+                    // ── Update Game model properties (để binding trong Edit mode hoạt động) ──
+                    Game.Publisher = Publisher;
+                    Game.Developer = Developer;
+                    Game.Genre = Genre;
+                    Game.Series = Series;
+                    Game.Theme = Theme;
+
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
 
@@ -216,36 +222,38 @@ namespace MasterPlay.UI.ViewModels
                     {
                         PublishDate = null;
                     }
-
-                    Game.Publisher = Publisher;
-                    Game.Developer = Developer;
-                    Game.Genre = Genre;
                     Game.PublishDate = PublishDate;
                     Game.MetaScore = metaScore;
-                    Game.AvgPlayTime = avgPlaytime;
+                    // Game.AvgPlayTime = avgPlaytime;   // nếu bạn dùng field này
+
+                    // ── Force UI refresh cho tất cả các trường liên quan ───────────
+                    OnPropertyChanged(nameof(Game));                    // quan trọng nhất
+                    OnPropertyChanged(nameof(Game.Name));
+                    OnPropertyChanged(nameof(Game.Publisher));
+                    OnPropertyChanged(nameof(Game.Developer));
+                    OnPropertyChanged(nameof(Game.Genre));
+                    OnPropertyChanged(nameof(Game.Series));
+                    OnPropertyChanged(nameof(Game.Theme));
+                    OnPropertyChanged(nameof(Game.PublishDate));
+                    OnPropertyChanged(nameof(Game.MetaScore));
+                    // OnPropertyChanged(nameof(Game.AvgPlayTime));     // nếu cần
+
+                    // Refresh các Display properties
+                    OnPropertyChanged(nameof(DisplayPublisher));
+                    OnPropertyChanged(nameof(DisplayDeveloper));
+                    OnPropertyChanged(nameof(DisplaySeries));
+                    OnPropertyChanged(nameof(DisplayGenre));
+                    OnPropertyChanged(nameof(DisplayTheme));
+                    OnPropertyChanged(nameof(DisplayMetaScore));
+                    OnPropertyChanged(nameof(DisplayAvgPlayTime));
+                    OnPropertyChanged(nameof(DisplayPublishDate));
 
                     StatusMessage = "Sync Successful!";
                 }
                 else
                 {
-                    StatusMessage = $"Cannot find game info '{Game.Name}'";
+                    StatusMessage = $"Cannot find game info for '{Game.Name}'";
                 }
-
-                //var metaData = await DataService.FindGameMetaData(Game.Name);
-                //if (metaData != null)
-                //{
-                //    Game.ExeName = metaData.Exe;
-                //    Game.SaveFolderPath = metaData.SaveFolder;
-                //    StatusMessage += " Local info updated";
-                //}
-
-                // Notify UI update after sync
-                OnPropertyChanged(nameof(DisplayPublisher));
-                OnPropertyChanged(nameof(DisplayDeveloper));
-                OnPropertyChanged(nameof(DisplayGenre));
-                OnPropertyChanged(nameof(DisplayMetaScore));
-                OnPropertyChanged(nameof(DisplayAvgPlayTime));
-                OnPropertyChanged(nameof(DisplayPublishDate));
             }
             catch (Exception ex)
             {
@@ -282,7 +290,7 @@ namespace MasterPlay.UI.ViewModels
                         File.WriteAllText(infoFilePath, Game.SaveFolderPath);
                     }
 
-                    ViewModelHelpers.InputFormatter(Game);
+                    Game = ViewModelHelpers.InputFormatter(Game);
                     games[index] = Game;
                     DataService.SaveGamesData(games);
 
@@ -322,6 +330,26 @@ namespace MasterPlay.UI.ViewModels
             Save();
         }
 
+        [RelayCommand]
+        private void CheckPlayTime()
+        {
+            if (string.IsNullOrWhiteSpace(Game.Name)) return;
+
+            string url = "https://howlongtobeat.com/?q=" + Uri.EscapeDataString(game.Name);
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Không thể mở trình duyệt: {ex.Message}");
+            }
+        }
         [RelayCommand]
         private void DeleteGame()
         {
@@ -474,6 +502,10 @@ namespace MasterPlay.UI.ViewModels
         // Private Helpers
         // =====================================================================
 
+        private bool CheckInitProcess()
+        {
+            return string.Equals(Game.ExeName.ToLower(), Game.InitExeName.ToLower());
+        }
         private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
         {
             if (!FileHelper.TryOpenLocations(out var errors, locations))
@@ -697,5 +729,6 @@ namespace MasterPlay.UI.ViewModels
             Game.AvgPlayTime = value;
             OnPropertyChanged(nameof(DisplayAvgPlayTime));
         }
+   
     }
 }

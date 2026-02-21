@@ -16,7 +16,7 @@ namespace MasterPlay.Models.Models
         public string Slug { get; set; }
         public string Background_Image { get; set; }
         public string Released { get; set; }
-        public string Metacritic { get; set; }
+        public int? Metacritic { get; set; }
         public long Playtime { get; set; }
         public List<GenreItem> Genres { get; set; }
         public List<DeveloperItem> Developers { get; set; }

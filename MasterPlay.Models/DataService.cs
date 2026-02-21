@@ -141,17 +141,17 @@ namespace MasterPlay.Models
         #endregion
 
         #region AVAILABLE GAMES (CORE IO)
-        public static List<DetectedGame> LoadAvailableGames()
+        public static List<DetectedProcess> LoadDetectedProcesses()
         {
             string path = GetAvailableGamesPath();
             lock (_fileLock)
             {
-                if (!File.Exists(path)) return new List<DetectedGame>();
-                return JsonConvert.DeserializeObject<List<DetectedGame>>(File.ReadAllText(path)) ?? new List<DetectedGame>();
+                if (!File.Exists(path)) return new List<DetectedProcess>();
+                return JsonConvert.DeserializeObject<List<DetectedProcess>>(File.ReadAllText(path)) ?? new List<DetectedProcess>();
             }
         }
 
-        public static void SaveAvailableGames(List<DetectedGame> games)
+        public static void SaveAvailableGames(List<DetectedProcess> games)
         {
             string path = GetAvailableGamesPath();
             lock (_fileLock)
@@ -181,7 +181,7 @@ namespace MasterPlay.Models
         public static void SyncReadyGames()
         {
             var games = LoadGames();
-            var availables = LoadAvailableGames();
+            var availables = LoadDetectedProcesses();
             if (games == null || games.Count == 0) return;
 
             bool dataChanged = false;

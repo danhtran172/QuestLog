@@ -46,13 +46,13 @@ namespace MasterPlay.Service.Services
                     _logger.LogInformation("Scanning library: {path}", library);
 
                     var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
-                    var existingGames = DataService.LoadAvailableGames();
-                    var newList = new List<DetectedGame>();
+                    var existingGames = DataService.LoadDetectedProcesses();
+                    var newList = new List<DetectedProcess>();
 
                     foreach (var file in exeFiles)
                     {
                         string fileName = Path.GetFileName(file);
-                        newList.Add(new DetectedGame
+                        newList.Add(new DetectedProcess
                         {
                             ExeName = fileName,
                             FullPath = file,

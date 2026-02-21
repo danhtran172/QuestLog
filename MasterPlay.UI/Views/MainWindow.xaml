@@ -5,132 +5,134 @@
         Title="MasterPlay" Height="600" Width="900" WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
-    <Grid Margin="25">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <Image Source="/Assets/MasterplayLogo.png" HorizontalAlignment="Left" Width="140" RenderOptions.BitmapScalingMode="HighQuality"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <!-- Search By (đã có) -->
-                <ComboBox x:Name="SearchByComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}"
-                  SelectedIndex="0" Margin="0,0,10,0">
-                    <ComboBoxItem Content="All"/>
-                    <ComboBoxItem Content="Name"/>
-                    <ComboBoxItem Content="Series"/>
-                    <ComboBoxItem Content="Publisher"/>
-                    <ComboBoxItem Content="Developer"/>
-                    <ComboBoxItem Content="Publish Date (Year)"/>
-                </ComboBox>
+        <!-- ==================== HEADER ==================== -->
+        <Border Grid.Row="0" Background="White">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+            </Border.Effect>
+            <Grid Margin="25,20">
+                <Image Source="/Assets/MasterplayLogo.png" HorizontalAlignment="Left" Width="140" RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                <!-- Search Text -->
-                <TextBox x:Name="SearchBox" Width="200" Style="{StaticResource ModernSearchBox}"
-                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                 TextChanged="SearchBox_TextChanged"
-                 Margin="0,0,10,0"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Search box + dropdown -->
+                    <Border Width="250" Height="40" Background="Transparent" CornerRadius="20">
+                        <Grid>
+                            <TextBox x:Name="SearchBox"
+                             Style="{StaticResource ModernSearchBox}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             TextChanged="SearchBox_TextChanged"
+                             BorderThickness="0" Background="Transparent"
+                             VerticalContentAlignment="Center"
+                             Padding="0,0,100,0"
+                             Margin="0"/>
 
-                <!-- View Mode (mới) -->
-                <ComboBox x:Name="ViewModeComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}"
-                  SelectionChanged="ViewModeComboBox_SelectionChanged"
-                  SelectedIndex="0" Margin="0,0,10,0">
-                    <ComboBoxItem Content="All"/>
-                    <ComboBoxItem Content="Plan"/>
-                    <ComboBoxItem Content="Finish"/>
-                </ComboBox>
+                            <!-- Search By -->
+                            <Border HorizontalAlignment="Right" Width="94" Height="40" Margin="0,0,1.5,0" Background="Transparent" >
+                                <ComboBox x:Name="SearchByComboBox"
+                                  Style="{StaticResource ModernComboBoxStyle}"
+                                  SelectedIndex="0"
+                                  BorderThickness="0" Background="Transparent"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalContentAlignment="Center"
+                                  Padding="0"
+                                  
+                                  SelectionChanged="SearchByComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="All"/>
+                                    <ComboBoxItem Content="Name"/>
+                                    <ComboBoxItem Content="Series"/>
+                                    <ComboBoxItem Content="Publisher"/>
+                                    <ComboBoxItem Content="Developer"/>
+                                    <ComboBoxItem Content="Release"/>
+                                </ComboBox>
+                            </Border>
+                        </Grid>
+                    </Border>
 
-                <!-- Sort ComboBox -->
-                <ComboBox x:Name="SortComboBox" Width="105" Style="{StaticResource ModernComboBoxStyle}"
-                  SelectionChanged="SortComboBox_SelectionChanged"
-                  SelectedIndex="0" Margin="0,0,20,0">
-                    <ComboBoxItem Content="Filter"/>
-                    <ComboBoxItem Content="Status"/>
-                    <ComboBoxItem Content="Name"/>
-                    <ComboBoxItem Content="Playtime"/>
-                </ComboBox>
+                    <!-- View Mode -->
+                    <ComboBox x:Name="ViewModeComboBox" Width="100" Style="{StaticResource ModernComboBoxStyle}"
+                      SelectionChanged="ViewModeComboBox_SelectionChanged"
+                      Tag="/Assets/ViewMode2.png"
+                      SelectedIndex="0" Margin="10,0,10,0">
+                        <ComboBoxItem Content="All"/>
+                        <ComboBoxItem Content="Plan"/>
+                        <ComboBoxItem Content="Finish"/>
+                    </ComboBox>
+                    <!-- Sort -->
+                    <ComboBox x:Name="SortComboBox" Width="100" Style="{StaticResource ModernComboBoxStyle}"
+                      SelectionChanged="SortComboBox_SelectionChanged"
+                      Tag="/Assets/Sort.png"
+                      SelectedIndex="0" Margin="0,0,20,0">
+                        <ComboBoxItem Content="Default"/>
+                        <ComboBoxItem Content="Status"/>
+                        <ComboBoxItem Content="Name"/>
+                        <ComboBoxItem Content="Playtime"/>
+                    </ComboBox>
 
-                <!-- Nút Add và Settings -->
-                <Button Style="{StaticResource IconButtonStyle}" Background="#A1BC98" Click="AddGameButton_Click">
-                    <Image Source="/Assets/Add.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-                <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0" Click="SettingsButton_Click">
-                    <Image Source="/Assets/Setting.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </StackPanel>
-        </Grid>
+                    <Button Style="{StaticResource IconButtonStyle}" Background="#A1BC98" Click="AddGameButton_Click">
+                        <Image Source="/Assets/Add.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                    <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0" Click="SettingsButton_Click">
+                        <Image Source="/Assets/Setting.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <!-- Gallery -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- ==================== GALLERY ==================== -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="25">
             <ItemsControl x:Name="GamesGallery" ItemsSource="{Binding Games}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="3" 
-                                     HorizontalAlignment="Stretch"
-                                     VerticalAlignment="Top"
-                                     Margin="0,0,0,10"/>
+                        <UniformGrid Columns="3" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,10"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GameViewModel}">
-                        <Border Background="White" CornerRadius="12" BorderBrush="#F0F0F0" BorderThickness="1"
-                                Margin="8" Padding="12" MinHeight="280" ClipToBounds="True">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="Black" Direction="320" ShadowDepth="2" BlurRadius="8" Opacity="0.15"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#F8FCF9"/>
-                                            <Setter Property="BorderBrush" Value="{StaticResource PrimaryGreenBrush}"/>
-                                            <Setter Property="Effect">
-                                                <Setter.Value>
-                                                    <DropShadowEffect Color="Black" Direction="320" ShadowDepth="4" BlurRadius="12" Opacity="0.25"/>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <!-- Ảnh game 16:9 -->
-                                    <RowDefinition Height="*"/>
-                                    <!-- Phần dưới -->
-                                </Grid.RowDefinitions>
-
-                                <!-- Ảnh game: responsive 16:9, high res, CacheOption OnLoad -->
-                                <Viewbox Grid.Row="0" Stretch="Uniform" Margin="-12,-12,-12,12">
-                                    <Grid Width="320" Height="180">
-                                        <!-- Mẫu tỉ lệ 16:9 -->
-                                        <Border CornerRadius="12,12,0,0" ClipToBounds="True">
-                                            <Image Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                                                <Image.Source>
-                                                    <BitmapImage UriSource="{Binding Game.ImagePath, FallbackValue='/Assets/DefaultGameCover.png'}"
-                                                                 CacheOption="OnLoad"
-                                                                 CreateOptions="IgnoreImageCache"
-                                                                 DecodePixelWidth="640" />
-                                                    <!-- DecodePixelWidth lớn để load high-res -->
-                                                </Image.Source>
-                                            </Image>
-                                        </Border>
-                                    </Grid>
-                                </Viewbox>
-
-                                <!-- Nội dung dưới: tên, playtime, danger icon + buttons cùng hàng dưới -->
-                                <Grid Grid.Row="1" Margin="0,8,0,0">
-                                    <Grid>
-                                        <!-- Icon Danger: nhỏ, căn ngang với nút, bên trái -->
-                                        <Grid Width="18" Height="18"
-                                              HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                              Margin="0,0,0,8"
+                        <Grid Margin="8">
+                            <Border x:Name="ShadowBorder" Background="White">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Direction="320" ShadowDepth="2" BlurRadius="8" Opacity="0.15"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border x:Name="MainCardBorder" BorderBrush="#F0F0F0" BorderThickness="1"
+                                    Background="White" MinHeight="280" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" ClipToBounds="True">
+                                        <Viewbox Stretch="Uniform">
+                                            <Grid Width="320" Height="180">
+                                                <Image Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Source>
+                                                        <BitmapImage UriSource="{Binding Game.ImagePath, FallbackValue='/Assets/DefaultGameCover.png'}"
+                                                                     CacheOption="OnLoad" CreateOptions="IgnoreImageCache" DecodePixelWidth="640" />
+                                                    </Image.Source>
+                                                </Image>
+                                            </Grid>
+                                        </Viewbox>
+                                    </Border>
+                                    <Grid Grid.Row="1" Margin="12,8,12,12">
+                                        <StackPanel Margin="0,0,0,32">
+                                            <TextBlock Text="{Binding Game.Name}" FontSize="15" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Play time: " FontSize="11" Foreground="#79C9C5" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding DisplayPlayTime}" FontSize="13" FontWeight="Medium" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Grid Width="20" Height="20"
+                                              HorizontalAlignment="Left" 
+                                              VerticalAlignment="Bottom"
+                                              Margin="0,0,0,0"
                                               Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}">
                                             <Rectangle Fill="#F5AD18">
                                                 <Rectangle.OpacityMask>
@@ -140,63 +142,34 @@
                                                 </Rectangle.OpacityMask>
                                             </Rectangle>
                                         </Grid>
-
-                                        <!-- Tên + Play time -->
-                                        <StackPanel Margin="0,0,0,8">
-                                            <TextBlock Text="{Binding Game.Name}"
-                                                       FontSize="15" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource MainTextBrush}"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Margin="0,0,0,4"/>
-
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                <TextBlock Text="Play time: " FontSize="11" Foreground="#79C9C5" VerticalAlignment="Center"/>
-                                                <TextBlock Text="{Binding DisplayPlayTime}"
-                                                           FontSize="13" FontWeight="Medium"
-                                                           Foreground="{StaticResource SubTextBrush}"
-                                                           VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </StackPanel>
-
-                                        <!-- Nút Play + Edit: sát mép dưới -->
-                                        <StackPanel Orientation="Horizontal" 
-                                                    HorizontalAlignment="Right" 
-                                                    VerticalAlignment="Bottom"
-                                                    Margin="0,0,0,8">
-                                            <Button Style="{StaticResource PlayButtonStyle}"
-                                                    Width="36" Height="36"
-                                                    IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}"
-                                                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
-                                                    Click="PlayGame_Click"
-                                                    Margin="0,0,12,0">
-                                                <Image Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality">
-                                                    <Image.Style>
-                                                        <Style TargetType="Image">
-                                                            <Setter Property="Source" Value="/Assets/Play.png"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
-                                                                    <Setter Property="Source" Value="/Assets/Playing.png"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Image.Style>
-                                                </Image>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                            <Button Style="{StaticResource PlayButtonStyle}" Click="PlayGame_Click" Margin="0,0,12,0"
+                                                    Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}">
+                                                <Image Width="16" Height="16" Source="/Assets/Play.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                                             </Button>
-
-                                            <Button Style="{StaticResource IconButtonStyle}" 
-                                                    Background="#3291B6" 
-                                                    Width="36" Height="36"
-                                                    Click="EditGame_Click">
+                                            <Button Style="{StaticResource IconButtonStyle}" Background="#3291B6" Click="EditGame_Click">
                                                 <Image Source="/Assets/Info.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                                             </Button>
                                         </StackPanel>
                                     </Grid>
                                 </Grid>
-                            </Grid>
-                        </Border>
+                            </Border>
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <!-- ==================== FOOTER ==================== -->
+        <Border Grid.Row="2" Background="White">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Direction="90" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+            </Border.Effect>
+            <StackPanel Margin="25,15" Orientation="Horizontal" HorizontalAlignment="Left">
+                <TextBlock Text="MasterPlay - Vidagrr - 2026" FontSize="12" Foreground="#666666"/>
+                <TextBlock Text=" | " Margin="10,0" Foreground="#666666"/>
+                <TextBlock Text="Version 1.1" FontSize="12" Foreground="#666666"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

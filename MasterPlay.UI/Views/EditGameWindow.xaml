@@ -10,42 +10,41 @@
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="280"/>
+            <RowDefinition Height="400"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- ==================== HEADER ==================== -->
-        <Grid Grid.Row="0">
-            <Image Source="{Binding PreviewImage}"
-                   Stretch="UniformToFill"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
-            <Border Background="#A0000000">
-                <Grid Margin="30,0,30,30" VerticalAlignment="Bottom">
-                    <TextBlock Text="{Binding Game.Name}"
-                               FontSize="42"
-                               FontWeight="ExtraBold"
-                               Foreground="White"
-                               TextWrapping="Wrap"
-                               MaxWidth="750">
-                        <TextBlock.Effect>
-                            <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.7"/>
-                        </TextBlock.Effect>
-                    </TextBlock>
-                </Grid>
-            </Border>
-            <Button Style="{StaticResource IconButtonStyle}"
-                    Background="#3291B6"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="25"
-                    Command="{Binding ToggleEditModeCommand}"
-                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
-            </Button>
+<Grid Grid.Row="0">
+    <Image Source="{Binding PreviewImage}"
+           Stretch="UniformToFill"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"/>
+    <Border Background="#A0000000">
+        <Grid Margin="30,0,30,30" VerticalAlignment="Bottom">
+            <TextBlock Text="{Binding Game.Name}"
+                       FontSize="42"
+                       FontWeight="ExtraBold"
+                       Foreground="White"
+                       TextWrapping="Wrap"
+                       MaxWidth="750">
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.7"/>
+                </TextBlock.Effect>
+            </TextBlock>
         </Grid>
-
+    </Border>
+    <Button Style="{StaticResource IconButtonStyle}"
+            Background="#3291B6"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Margin="25"
+            Command="{Binding ToggleEditModeCommand}"
+            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+        <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+    </Button>
+</Grid>
         <!-- ==================== MAIN CONTENT ==================== -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="24,16,24,40">
@@ -55,20 +54,41 @@
 
                     <!-- [View Mode] Khung Basic -->
                     <Grid Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
-                                    Visibility="{Binding HasScore, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Score" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Score bên trái -->
+                            <ColumnDefinition Width="*"/>
+                            <!-- Khoảng trống giữa -->
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Playtime bên phải -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Score (bên trái) -->
+                        <StackPanel Grid.Column="0"
+                Orientation="Horizontal"
+                VerticalAlignment="Center"
+                Visibility="{Binding HasScore, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Score"
+                   FontSize="18"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding DisplayScore}"
-                                       FontSize="18"
-                                       FontWeight="Normal"
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"/>
+                   FontSize="18"
+                   FontWeight="Normal"
+                   Margin="8,0,0,0"
+                   VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="Playtime" 
-                   Style="{StaticResource FieldLabelStyle}" 
-                   />
-                          
+
+                        <!-- Playtime (bên phải, ép thẳng baseline) -->
+                        <StackPanel Grid.Column="2"
+                Orientation="Horizontal"
+                VerticalAlignment="Center">
+                            <TextBlock Text="Playtime"
+                   Style="{StaticResource FieldLabelStyle}"
+                   VerticalAlignment="Center"
+                   Margin="0,1,0,0"/>
+                            <!-- +1px nếu label Playtime thấp hơn Score -->
+
                             <TextBlock Text="{Binding DisplayPlayTime}"
                    Style="{StaticResource ValueTextStyleNormal}"
                    Margin="8,0,8,0"
@@ -76,14 +96,6 @@
                    FontWeight="Normal"
                    Foreground="#2C3E50"
                    VerticalAlignment="Center"/>
-                            <Button Style="{StaticResource IconButtonStyle}"
-                                    Background="#DDAED3"
-                                    Width="36" Height="36"
-                                    Command="{Binding FinishGameCommand}"
-                                    ToolTip="Mark as Finished">
-                                
-                                <Image Source="/Assets/Finish.png" Width="20" Height="20" Margin="0,2,2,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            </Button>
                         </StackPanel>
                     </Grid>
 
@@ -175,7 +187,50 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayMetaScore}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <Border Grid.Column="1"
+                                    Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                    CornerRadius="4"
+                                    Padding="6,2"
+                                    HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding DisplayMetaScore}"
+                                   Foreground="#2C3E50"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   TextAlignment="Left"
+                                   Padding="4,0"
+                                   Background="Transparent"
+                                   FontWeight="Bold"/>
+                                    </Border>
+                                </Grid>
+                                <!-- Avg Playtime -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="115"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
+                                        <Button Style="{StaticResource IconButtonStyle}" 
+                                         
+                                        Command="{Binding CheckPlayTimeCommand}" 
+                                        ToolTip="Check Playtime"
+                                        Width="12" 
+                                        Height="12" 
+                                        Margin="2,-2,0,0" 
+                                        VerticalAlignment="Top">
+                                            <Image Source="/Assets/Question.png" 
+                                       Width="12" 
+                                       Height="12" 
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1" 
+                                       Text="{Binding DisplayAvgPlayTime}" 
+                                       Style="{StaticResource ValueTextStyle}" 
+                                       FontWeight="Normal" 
+                                       FontSize="13"/>
                                 </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,12">
@@ -186,7 +241,6 @@
                                     <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
                                 </Grid>
-
                                 <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
@@ -195,11 +249,17 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <Border Grid.Column="1"
-                                            Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
-                                            CornerRadius="4" Padding="8">
+                                    Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                    CornerRadius="4"
+                                    Padding="2,2"
+                                    HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayOwnership}"
-                                                   Foreground="White"
-                                                   VerticalAlignment="Center"/>
+                                   Foreground="#2C3E50"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   TextAlignment="Left"
+                                   Padding="4,0"
+                                   Background="Transparent"/>
                                     </Border>
                                 </Grid>
 
@@ -211,22 +271,20 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <Border Grid.Column="1"
-                                            Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
-                                            CornerRadius="4" Padding="8">
+                                    Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                    CornerRadius="4"
+                                    Padding="2,2"
+                                    HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayProgress}"
-                                                   Foreground="White"
-                                                   VerticalAlignment="Center"/>
+                                    Foreground="#2C3E50"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    TextAlignment="Left"
+                                    Padding="4,0"
+                                    Background="Transparent"/>
                                     </Border>
                                 </Grid>
-                                <!-- Avg Playtime -->
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="115"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
-                                </Grid>
+                                
                                 <!-- Finish Year -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -252,6 +310,16 @@
                                 <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
                             </Grid>
+                            <!-- Start Game ProcessName 
+                                <Grid Margin="0,0,0,12" Visibility="{Binding DifInit, Converter={StaticResource BoolToVis}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Game.InitExeName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                </Grid>
+                            -->
                             <!-- Save Location -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
@@ -294,7 +362,7 @@
                     <!-- [Edit Mode] Khung Basic -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,20" Padding="15">
                         <StackPanel>
-                            <!-- Game Name -->
+                            <!-- Hàng 1: Game Name -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -304,14 +372,28 @@
                                 <TextBlock Grid.Column="0" Text="Game Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Margin="10,0,0,0"
-                                        Background="#6FA4AF" Command="{Binding SyncCommand}"
-                                        ToolTip="Sync Game Data">
+                    Background="#6FA4AF" Command="{Binding SyncCommand}"
+                    ToolTip="Sync Game Data">
                                     <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
-                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
-                            <!-- PlayTime -->
-                            <Grid>
+
+                            <!-- Hàng 2: Score (đúng vị trí mày muốn) -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Score" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBox Width="80" HorizontalContentAlignment="Center" Text="{Binding Game.Score, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
+                            
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Hàng 3: Play Time -->
+                            <Grid Margin="0,0,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
@@ -328,14 +410,14 @@
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
-                                Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
-                                Width="20" Height="20">
+                            Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
+                            Width="20" Height="20">
                                             <Image Source="/Assets/Minus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                         <TextBox Width="55" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
-                                Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
-                                Width="20" Height="20">
+                            Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
+                            Width="20" Height="20">
                                             <Image Source="/Assets/Plus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
@@ -347,8 +429,8 @@
                     <!-- [Edit Mode] Khung 1 -->
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.9*"/>
+                            <ColumnDefinition Width="1.1*"/>
                         </Grid.ColumnDefinitions>
 
                         
@@ -418,7 +500,7 @@
                         </Border>
 
                         <!-- [Edit Mode] Khung 2 -->
-                        <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" Margin="10,0,0,0" BorderBrush="#E0E0E0" BorderThickness="1">
+                        <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
                             <StackPanel>
                                 <!-- MetaScore -->
                                 <Grid Margin="0,0,0,12">
@@ -430,6 +512,32 @@
                                     <TextBox Grid.Column="1" Text="{Binding Game.MetaScore, UpdateSourceTrigger=PropertyChanged}" 
                              HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
+                                <!-- Avg Runtime -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="115"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
+                                        <Button Style="{StaticResource IconButtonStyle}" 
+                 
+                Command="{Binding CheckPlayTimeCommand}" 
+                ToolTip="Check Playtime"
+                Width="12" 
+                Height="12" 
+                Margin="2,-2,0,0" 
+                VerticalAlignment="Top">
+                                            <Image Source="/Assets/Question.png" 
+               Width="12" 
+               Height="12" 
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBox Grid.Column="1" Text="{Binding AvgPlaytime, UpdateSourceTrigger=PropertyChanged}" 
+                                HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
+                                </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
@@ -438,7 +546,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Game.Excited, UpdateSourceTrigger=PropertyChanged}" 
-                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Excited_PreviewTextInput"/>
+                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
                                 </Grid>
                                 <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
@@ -446,36 +554,27 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding Selections.Ownership}"
-                                          SelectedItem="{Binding Game.Ownership}"
-                                          Style="{StaticResource SimpleSelectionBoxStyle}"
-                                          Height="28"/>
+              ItemsSource="{Binding Selections.Ownership}"
+              SelectedItem="{Binding Game.Ownership}"
+              Style="{StaticResource SimpleSelectionBoxStyle}"
+              Height="28"
+              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
                                 </Grid>
-
                                 <!-- Progress -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding Selections.Progress}"
-                                          SelectedItem="{Binding Game.Progress}"
-                                          Style="{StaticResource SimpleSelectionBoxStyle}"
-                                          Height="28"/>
-                                </Grid>
-                                <!-- Avg Runtime -->
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="115"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding AvgPlaytime, UpdateSourceTrigger=PropertyChanged}" 
-                             HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
+              ItemsSource="{Binding Selections.Progress}"
+              SelectedItem="{Binding Game.Progress}"
+              Style="{StaticResource SimpleSelectionBoxStyle}"
+              Height="28"
+              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
                                 </Grid>
                                 <!-- Finished Year -->
                                 <Grid>
@@ -502,6 +601,15 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                            </Grid>
+                            <!--Start Game Process Name -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Grid.Column="1" Text="{Binding Game.InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
                             <!-- Save Location -->
                             <Grid Margin="0,0,0,12">
@@ -556,37 +664,84 @@
         </ScrollViewer>
 
         <!-- ==================== FOOTER ==================== -->
-        <Border Grid.Row="2" Padding="20,15" BorderBrush="#F5F5F5" BorderThickness="0,1,0,0" Background="#FAFAFA">
+        <Border Grid.Row="2" 
+        Padding="20,15" 
+        BorderBrush="#F5F5F5" 
+        BorderThickness="0,1,0,0" 
+        Background="#FAFAFA">
+            <!-- Thêm DropShadowEffect nhẹ để tạo cảm giác nổi lên -->
+            <Border.Effect>
+                <DropShadowEffect Color="Black" 
+                          Direction="315" 
+                          ShadowDepth="3" 
+                          BlurRadius="8" 
+                          Opacity="0.15"/>
+            </Border.Effect>
+
             <Grid>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#E74C3C" FontStyle="Italic" FontSize="11" VerticalAlignment="Center"/>
-                <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" HorizontalAlignment="Left"
-                        Command="{Binding DeleteGameCommand}" ToolTip="Disable Game"
-                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
-                    <Image Source="/Assets/Delete.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock Text="{Binding StatusMessage}" 
+                   Foreground="#E74C3C" 
+                   FontStyle="Italic" 
+                   FontSize="11" 
+                   VerticalAlignment="Center" 
+                   Margin="50,0,0,0"/>
+
+                <Button Style="{StaticResource IconButtonStyle}" 
+                Background="#A94A4A" 
+                HorizontalAlignment="Left"
+                Command="{Binding DeleteGameCommand}" 
+                ToolTip="Disable Game"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                    <Image Source="/Assets/Delete.png" 
+                   Width="20" 
+                   Height="20" 
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+                <Button Style="{StaticResource IconButtonStyle}"
+                Background="#DDAED3" 
+                HorizontalAlignment="Left"
+                Command="{Binding FinishGameCommand}"
+                ToolTip="Mark as Finished"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                    <Image Source="/Assets/Finish.png" 
+                   Width="20" 
+                   Height="20" 
+                   Margin="0,2,2,0" 
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+
+                <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal"
-                                Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
                         <Button Style="{StaticResource IconButtonStyle}"
-                                Background="#708A58"
-                                Command="{Binding SaveCommand}">
-                            <Image Source="/Assets/Save.png" Width="20" Height="20"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        Background="#708A58"
+                        Command="{Binding SaveCommand}">
+                            <Image Source="/Assets/Save.png" 
+                           Width="20" 
+                           Height="20"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}"
-                                Margin="12,0,0,0"
-                                Command="{Binding CancelCommand}">
-                            <Image Source="/Assets/Cancel.png" Width="20" Height="20"
-                                   Margin="0,0,2.5,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        Margin="12,0,0,0"
+                        Command="{Binding CancelCommand}">
+                            <Image Source="/Assets/Back3.png" 
+                           Width="20" 
+                           Height="20"
+                           Margin="0,0,0,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                     </StackPanel>
+
                     <Button Style="{StaticResource IconButtonStyle}"
-                            Margin="12,0,0,0"
-                            Command="{Binding CloseCommand}"
-                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                        <Image Source="/Assets/Close.png" Width="20" Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    Margin="12,0,0,0"
+                    Command="{Binding CloseCommand}"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                        <Image Source="/Assets/Close.png" 
+                       Width="20" 
+                       Height="20"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>
             </Grid>

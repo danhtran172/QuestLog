@@ -2,6 +2,8 @@
 using MasterPlay.UI.ViewModels;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MasterPlay.UI
 {
@@ -20,30 +22,25 @@ namespace MasterPlay.UI
                 Close();
             };
         }
-        private void Score_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        private void Score_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            string text = e.Text;
-            if (!Regex.IsMatch(text, @"^[0-9]+$")) // Chỉ số
+            TextBox tb = sender as TextBox;
+            if (!Regex.IsMatch(e.Text, @"^[0-9.]$"))
             {
                 e.Handled = true;
                 return;
             }
-        }
 
-        private void Excited_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
-        {
-            string text = e.Text;
-            if (!Regex.IsMatch(text, @"^[0-9]+$"))
+            if (e.Text == "." && tb.Text.Contains("."))
             {
                 e.Handled = true;
-                return;
             }
         }
 
         private void FinishedIn_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             string text = e.Text;
-            if (!Regex.IsMatch(text, @"^[0-9]+$"))
+            if (!Regex.IsMatch(text, @"^[0-9,]+$"))
             {
                 e.Handled = true;
                 return;

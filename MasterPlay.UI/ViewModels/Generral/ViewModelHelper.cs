@@ -9,19 +9,16 @@ namespace MasterPlay.UI.ViewModels.Generral
 {
     public static class ViewModelHelpers
     {
-        // --- Input Formatting ---
-        public static void InputFormatter(Game game)
+        public static Game InputFormatter(Game game)
         {
-            if (game == null) return;
+            if (game == null) return game;
 
-            // 1. Xử lý Tên Game: Nếu trống thì lấy từ Config cũ
             if (string.IsNullOrWhiteSpace(game.Name))
             {
                 var original = DataService.LoadGames().FirstOrDefault(g => g.Id == game.Id);
                 game.Name = original?.Name ?? "Unknown Game";
             }
 
-            // 2. ExeName: Tự xóa đuôi .exe
             if (!string.IsNullOrWhiteSpace(game.ExeName))
             {
                 string trimmed = game.ExeName.Trim();
@@ -30,47 +27,46 @@ namespace MasterPlay.UI.ViewModels.Generral
                     game.ExeName = trimmed[..^4].Trim();
                 }
             }
-
-            // 3. Trim các đường dẫn
+            if (!string.IsNullOrWhiteSpace(game.InitExeName))
+            {
+                string trimmed = game.InitExeName.Trim();
+                if (trimmed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    game.InitExeName = trimmed[..^4].Trim();
+                }
+            }
             game.SaveFolderPath = game.SaveFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
 
-            // 4. Validate Score: chỉ 1-10 hoặc 999
             if (game.Score != 999)
             {
-                if (game.Score < 1 || game.Score > 10)
+                if (game.Score < 1 || game.Score > 100)
                 {
-                    game.Score = 0; // Reset về 0 nếu không hợp lệ
-                                    // Có thể throw exception hoặc log nếu cần
-                                    // throw new ArgumentException("Score phải từ 1-10 hoặc 999.");
+                    game.Score = 0; 
+                 
                 }
             }
-
-            // 5. Validate Excited: chỉ 1-10 hoặc 999
             if (game.Excited != 999)
             {
-                if (game.Excited < 1 || game.Excited > 10)
+                if (game.Excited < 1 || game.Excited > 100)
                 {
-                    game.Excited = 0; // Reset về 0 nếu không hợp lệ
-                                      // throw new ArgumentException("Excited phải từ 1-10 hoặc 999.");
+                    game.Excited = 0;
                 }
             }
 
-            // 6. Validate FinishedIn: phải là năm hợp lệ (1900 đến năm hiện tại + 1)
-            //if (game.FinishedIn != null)
-            //{
-            //    string year = game.FinishedIn.to;
-            //    string currentYear = DateTime.Now.ToString("yyyy");
-            //    if (year < 2003 || year > currentYear + 1)
-            //    {
-            //        game.FinishedIn = null; // Reset nếu không hợp lệ
-            //                                // throw new ArgumentException("Finished In phải là năm hợp lệ (1900 đến hiện tại + 1).");
-            //    }
-            //}
+            if (!string.IsNullOrWhiteSpace(game.FinishedIn))
+            {
+                string year = game.FinishedIn;
+                string currentYear = DateTime.Now.ToString("yyyy");
+                if (int.Parse(year) < 2003 || int.Parse(year) > (int.Parse(currentYear) + 1))
+                {
+                    game.FinishedIn = currentYear;
+                }
+            }
+            return game;
         }
 
-        // --- Folder Name Validation ---
         public static string ValidFolderName(string gameName)
         {
             char[] invalid = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };

@@ -12,6 +12,8 @@
   <ItemGroup>
     <None Remove="Assets\Add.png" />
     <None Remove="Assets\Back.png" />
+    <None Remove="Assets\Back2.png" />
+    <None Remove="Assets\Back3.png" />
     <None Remove="Assets\Cancel.png" />
     <None Remove="Assets\Cheking.png" />
     <None Remove="Assets\Close.png" />
@@ -36,12 +38,15 @@
     <None Remove="Assets\Play.png" />
     <None Remove="Assets\Playing.png" />
     <None Remove="Assets\Plus.png" />
+    <None Remove="Assets\Question.png" />
     <None Remove="Assets\Save.png" />
     <None Remove="Assets\Search.png" />
     <None Remove="Assets\Service.png" />
     <None Remove="Assets\Setting.png" />
     <None Remove="Assets\Sort.png" />
     <None Remove="Assets\Sync.png" />
+    <None Remove="Assets\ViewMode.png" />
+    <None Remove="Assets\ViewMode2.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +54,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\Back2.png" />
+    <Resource Include="Assets\Back3.png" />
     <Resource Include="Assets\Danger1.png" />
     <Resource Include="Assets\Done.png" />
     <Resource Include="Assets\Edit Folder.png" />
@@ -101,12 +108,15 @@
     <Resource Include="Assets\Play.png" />
     <Resource Include="Assets\Playing.png" />
     <Resource Include="Assets\Plus.png" />
+    <Resource Include="Assets\Question.png" />
     <Resource Include="Assets\Save.png" />
     <Resource Include="Assets\Search.png" />
     <Resource Include="Assets\Service.png" />
     <Resource Include="Assets\Setting.png" />
     <Resource Include="Assets\Sort.png" />
     <Resource Include="Assets\Sync.png" />
+    <Resource Include="Assets\ViewMode.png" />
+    <Resource Include="Assets\ViewMode2.png" />
   </ItemGroup>
 
 </Project>

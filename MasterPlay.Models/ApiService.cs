@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 
 namespace MasterPlay.Models
 {
@@ -14,7 +15,9 @@ namespace MasterPlay.Models
         private const string rawgApiKey = "cbf5c4560d9d4e388d1294afe77d574d";
         private const string geminiApiKey = "AIzaSyAtWwdGUXOIBNQhTjhm74DJV4wlEbP7Pb8";
         private static readonly HttpClient client = new HttpClient();
-
+        private static readonly string _dbPath = Path.Combine(
+                            System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
+                            @"Playnite\library\games.db");
 
         public static async Task<string> GetGameFormatedName(string gameName)
         {
@@ -37,6 +40,28 @@ namespace MasterPlay.Models
             }
 
             return gameName;
+        }
+        public static async Task<string> GetGameCover(string gameName, string oldCover)
+        {
+
+            string url = $"https://api.rawg.io/api/games?key={rawgApiKey}&search={Uri.EscapeDataString(gameName)}&page_size=1";
+
+            using HttpClient client = new HttpClient();
+            try
+            {
+                var response = await client.GetFromJsonAsync<RawgResponse>(url);
+
+                if (response?.Results != null && response.Results.Count > 0)
+                {
+                    return response.Results[0].Background_Image;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RAWG API Error: {ex.Message}");
+            }
+
+            return oldCover;
         }
        
         public static async Task<GameMetadata> GetMetadata_Rawg(string gameName)
@@ -62,7 +87,7 @@ namespace MasterPlay.Models
                     Name = raw.Name,
                     Background_Image = raw.Background_Image,
                     ReleaseDate = raw.Released,
-                    MetaScore = (raw.Metacritic != null) ? int.Parse(raw.Metacritic.ToString()) : 0,
+                    MetaScore = raw.Metacritic ?? 0,
                     AvgPlaytime = raw.Playtime,
                     Genres = string.Join(", ", raw.Genres.Select(g => g.Name)),
                     Developers = string.Join(", ", raw.Developers?.Select(d => d.Name) ?? Enumerable.Empty<string>()),
@@ -98,8 +123,84 @@ namespace MasterPlay.Models
             return null;
         }
 
+        public static string GetGameExePath(string gameName)
+        {
+            // Check if database file exists
+            if (!System.IO.File.Exists(_dbPath))
+            {
+                throw new FileNotFoundException($"Playnite database not found at: {_dbPath}");
+            }
+
+            string connectionString = $"Data Source={_dbPath};Mode=ReadOnly";
+
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                // Fetch PlayActions and InstallDirectory
+                command.CommandText = "SELECT Name, PlayActions, InstallDirectory FROM Games WHERE Name = $name LIMIT 1";
+                command.Parameters.AddWithValue("$name", gameName);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        string playActionsJson = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                        string installDir = reader.IsDBNull(2) ? "" : reader.GetString(2);
+
+                        return ExtractPath(playActionsJson, installDir, gameName);
+                    }
+                }
+            }
+
+            // If no record is found in the database
+            throw new KeyNotFoundException($"Game '{gameName}' was not found in the Playnite library.");
+        }
+
+        private static string ExtractPath(string json, string installDir, string gameName)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                throw new InvalidDataException($"No Play Actions configured for game: {gameName}");
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                foreach (var action in doc.RootElement.EnumerateArray())
+                {
+                    // Playnite stores the executable path in the "Path" property
+                    if (action.TryGetProperty("Path", out var pathProp))
+                    {
+                        string rawPath = pathProp.GetString();
+                        if (string.IsNullOrEmpty(rawPath)) continue;
+
+                        // Resolve the {InstallDir} variable
+                        string fullPath = rawPath.Replace("{InstallDir}", installDir);
+
+                        // Standardize the path
+                        string absolutePath = Path.GetFullPath(fullPath);
+
+                        if (absolutePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return absolutePath;
+                        }
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                throw new FormatException("Failed to parse PlayActions JSON data from the database.");
+            }
+
+            throw new EntryPointNotFoundException($"Could not find a valid .exe path in PlayActions for: {gameName}");
+        }
+
+
     }
 }
+
 public static class DateExtensions
 {
     public static string DateDisplay(this DateOnly date)
