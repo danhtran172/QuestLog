@@ -81,10 +81,12 @@ namespace MasterPlay.UI
             int sortIndex = SortComboBox?.SelectedIndex ?? 0;
             allData = sortIndex switch
             {
-                1 => allData.OrderByDescending(vm => vm.Game.Ready),
-                2 => allData.OrderBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.TotalPlayTimeSeconds),
-                3 => allData.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name),
-                _ => allData.OrderByDescending(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
+                0 => allData.OrderByDescending(vm => vm.Game.Ready).ThenByDescending(vm => vm.Game.PublishDate),
+                1 => allData.OrderByDescending(vm => vm.Game.Ready).ThenByDescending(vm => vm.Game.PublishDate).ThenBy(vm => vm.Game.Name),
+                2 => allData.OrderBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.TotalPlayTimeSeconds).ThenByDescending(vm => vm.Game.PublishDate),
+                3 => allData.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name).ThenByDescending(vm => vm.Game.PublishDate),
+                4 => allData.OrderByDescending(vm => vm.Game.PublishDate).ThenBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.Ready).ThenBy(vm => vm.Game.TotalPlayTimeSeconds),
+                _ => allData.OrderByDescending(vm => vm.Game.Ready).ThenBy(vm => vm.Game.Name).ThenBy(vm => vm.Game.TotalPlayTimeSeconds).ThenBy(vm => vm.Game.PublishDate)
             };
 
             // 4. Update UI immediately
