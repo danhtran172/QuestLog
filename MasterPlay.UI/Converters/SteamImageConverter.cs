@@ -12,7 +12,7 @@ namespace MasterPlay.UI.Converters
             string path = value as string;
 
             // Thay 'MasterPlay.UI' bằng đúng tên Project của bạn (nhìn ở Solution Explorer)
-            var defaultUri = new Uri("pack://application:,,,/MasterPlay.UI;component/Assets/NoImage.png", UriKind.Absolute);
+            var defaultUri = new Uri("pack://application:,,,/MasterPlay.UI;component/Assets/NoImage1.png", UriKind.Absolute);
 
             if (string.IsNullOrWhiteSpace(path))
                 return new BitmapImage(defaultUri);

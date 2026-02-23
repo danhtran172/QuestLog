@@ -119,6 +119,9 @@
     <Resource Include="Assets\Setting.png" />
     <Resource Include="Assets\Sort.png" />
     <Resource Include="Assets\Sync.png" />
+    <Resource Include="Assets\NoImage1.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\ViewMode.png" />
     <Resource Include="Assets\ViewMode2.png" />
   </ItemGroup>
