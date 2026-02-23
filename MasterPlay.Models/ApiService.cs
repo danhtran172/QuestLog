@@ -2,11 +2,12 @@
 using Google.GenAI;
 using Google.GenAI.Types;
 using MasterPlay.Models.Models;
+using Microsoft.Data.Sqlite;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Data.Sqlite;
+using System.Text.RegularExpressions;
 
 namespace MasterPlay.Models
 {
@@ -100,6 +101,45 @@ namespace MasterPlay.Models
                 return null;
             }
         }
+
+        public static async Task<string> GetGalleryImage(string gameName)
+        {
+            if (string.IsNullOrWhiteSpace(gameName))
+            {
+                return null;
+            }
+
+            var query = Uri.EscapeDataString(gameName);
+            var url = $"https://store.steampowered.com/search/?term={query}";
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
+            string html;
+            try
+            {
+                html = await client.GetStringAsync(url);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            var regex = new Regex(@"data-ds-appid=""(\d+)""", RegexOptions.IgnoreCase);
+            var match = regex.Match(html);
+
+            if (match.Success)
+            {
+                var appId = int.Parse(match.Groups[1].Value);
+                if (appId != null)
+                {
+                    string imageUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg";
+                    return imageUrl;
+                }
+            }
+
+            return null;
+        }
+
         public static DateOnly? ParseDate(string dateString)
         {
             if (string.IsNullOrWhiteSpace(dateString))
@@ -200,6 +240,7 @@ namespace MasterPlay.Models
 
     }
 }
+
 
 public static class DateExtensions
 {

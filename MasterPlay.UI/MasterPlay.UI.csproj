@@ -34,6 +34,7 @@
     <None Remove="Assets\MasterplayLogo.png" />
     <None Remove="Assets\Minus.png" />
     <None Remove="Assets\More.png" />
+    <None Remove="Assets\NoImage.png" />
     <None Remove="Assets\OpenFolder.png" />
     <None Remove="Assets\Play.png" />
     <None Remove="Assets\Playing.png" />
@@ -104,6 +105,9 @@
     <Resource Include="Assets\MasterplayLogo.png" />
     <Resource Include="Assets\Minus.png" />
     <Resource Include="Assets\More.png" />
+    <Resource Include="Assets\NoImage.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\OpenFolder.png" />
     <Resource Include="Assets\Play.png" />
     <Resource Include="Assets\Playing.png" />

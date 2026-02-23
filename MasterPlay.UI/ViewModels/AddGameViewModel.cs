@@ -4,7 +4,9 @@ using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
+using Steamworks;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -37,9 +39,12 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private string imagePath = string.Empty;
+        [ObservableProperty]
+        private string galleryImage = string.Empty;
 
         [ObservableProperty]
         private BitmapImage? previewImage;
+     
 
         [ObservableProperty]
         private DateOnly? releaseDate;
@@ -160,7 +165,7 @@ namespace MasterPlay.UI.ViewModels
                     GameName = rawgGame.Name ?? GameName;
                     ImagePath = rawgGame.Background_Image ?? ImagePath;
                     PreviewImage = ViewModelHelpers.LoadPreviewImage(ImagePath);
-
+                    GalleryImage = rawgGame.Background_Image ?? ImagePath;
                     Publisher = rawgGame.Publishers ?? string.Empty;
                     Developer = rawgGame.Developers ?? string.Empty;
                     Genre = rawgGame.Genres ?? string.Empty;
@@ -168,12 +173,21 @@ namespace MasterPlay.UI.ViewModels
                     ReleaseDate = ApiService.ParseDate(rawgGame.ReleaseDate);
                     MetaScore = rawgGame.MetaScore;
 
-                    await ShowStatus("Sync successful!");
+                    var gallerryImg = await ApiService.GetGalleryImage(GameName);
+                    
+                    if (gallerryImg != null)
+                    {
+                        GalleryImage = gallerryImg;
+                    }
+                    await ShowStatus("Sync successful");
                 }
                 else
                 {
                     await ShowStatus("No data found for this game.");
                 }
+
+
+
             }
             catch (Exception ex)
             {
@@ -292,9 +306,10 @@ namespace MasterPlay.UI.ViewModels
                 {
                     Name = GameName.Trim(),
                     ExeName = ExeName.Trim(),
-                    InitExeName = InitExeName?.Trim() ?? ExeName.Trim(),
+                    InitExeName = InitExeName?.Trim(),
                     SaveFolderPath = SaveLocation.Trim(),
                     ImagePath = ImagePath.Trim(),
+                    GImagePath = GalleryImage.Trim(),
                     PublishDate = ReleaseDate,
                     Publisher = Publisher.Trim(),
                     Developer = Developer.Trim(),
@@ -311,12 +326,18 @@ namespace MasterPlay.UI.ViewModels
                     FinishedIn = FinishedIn,
                     IsDisabled = false
                 };
-                newGame = ViewModelHelpers.InputFormatter(newGame);
+
+                
                 string validFolderName = ViewModelHelpers.ValidFolderName(newGame.Name);
                 string backupFolder = Path.Combine(config.BackupRootPath, validFolderName);
                 Directory.CreateDirectory(backupFolder);
                 newGame.BackupFolderPath = backupFolder;
+                if (string.IsNullOrWhiteSpace(initExeName))
+                {
+                    newGame.InitExeName = ExeName;
+                }
 
+                newGame = ViewModelHelpers.InputFormatter(newGame);
                 string txtPath = Path.Combine(backupFolder, "save_location.txt");
                 File.WriteAllText(txtPath, newGame.SaveFolderPath);
 

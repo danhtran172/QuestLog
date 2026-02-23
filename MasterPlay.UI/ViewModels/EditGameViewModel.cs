@@ -194,6 +194,7 @@ namespace MasterPlay.UI.ViewModels
                     if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
                     {
                         Game.ImagePath = rawgGame.Background_Image;
+                        Game.GImagePath = rawgGame.Background_Image;
                         PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
                         OnPropertyChanged(nameof(PreviewImage));
                     }
@@ -214,14 +215,14 @@ namespace MasterPlay.UI.ViewModels
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
 
-                    if (rawgGame.ReleaseDate != null)
+                    var galleryImg = await ApiService.GetGalleryImage(Game.Name);
+                    if (galleryImg != null)
                     {
-                        PublishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
+                        Game.GImagePath = galleryImg;
                     }
-                    else
-                    {
-                        PublishDate = null;
-                    }
+
+                    PublishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
+              
                     Game.PublishDate = PublishDate;
                     Game.MetaScore = metaScore;
                     // Game.AvgPlayTime = avgPlaytime;   // nếu bạn dùng field này

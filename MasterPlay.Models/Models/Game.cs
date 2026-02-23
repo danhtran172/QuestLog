@@ -12,6 +12,7 @@ namespace MasterPlay.Models.Models
         public string BackupFolderPath { get; set; } = string.Empty;
         public long TotalPlayTimeSeconds { get; set; } = 0;
         public string ImagePath { get; set; } = string.Empty;
+        public string GImagePath { get; set; } = string.Empty;
         public bool IsDisabled { get; set; } = false;
         public bool Ready { get; set; } = false;
         public string Publisher { get; set; } = string.Empty;

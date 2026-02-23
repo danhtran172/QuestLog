@@ -5,6 +5,10 @@
         Title="MasterPlay" Height="600" Width="900" WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" 
+                Command="{Binding ToggleSettingsCommand}" />
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -111,13 +115,9 @@
                                     </Grid.RowDefinitions>
                                     <Border Grid.Row="0" ClipToBounds="True">
                                         <Viewbox Stretch="Uniform">
-                                            <Grid Width="320" Height="180">
-                                                <Image Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
-                                                    <Image.Source>
-                                                        <BitmapImage UriSource="{Binding Game.ImagePath, FallbackValue='/Assets/DefaultGameCover.png'}"
-                                                                     CacheOption="OnLoad" CreateOptions="IgnoreImageCache" DecodePixelWidth="640" />
-                                                    </Image.Source>
-                                                </Image>
+                                            <Grid Width="320" Height="149.57">
+                                                <Image Source="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}" 
+                                                     RenderOptions.BitmapScalingMode="HighQuality" />
                                             </Grid>
                                         </Viewbox>
                                     </Border>

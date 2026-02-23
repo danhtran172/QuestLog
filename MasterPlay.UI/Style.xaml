@@ -16,6 +16,7 @@
     <converters:MetaScoreColorConverter x:Key="MetaScoreColorConverter"/>
     <converters:LongTextFontSizeConverter x:Key="LongTextFontSizeConverter"/>
     <converters:StringToStringConverter x:Key="StringToStringConverter"/>
+    <converters:SteamImageConverter x:Key="SteamImgConv"/>
     <!-- Field Label -->
     <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
         <Setter Property="FontWeight" Value="SemiBold"/>
