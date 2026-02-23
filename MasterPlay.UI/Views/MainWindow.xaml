@@ -145,7 +145,7 @@
 
                                     <!-- TITLE -->
                                     <TextBlock Grid.Row="0"
-                                       Text="{Binding Game.Name}"
+                                       Text="{Binding DisplayName}"
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        TextWrapping="Wrap"
@@ -153,46 +153,46 @@
 
                                     <!-- PUBLISHED -->
                                     <StackPanel Grid.Row="1"
-                                        Orientation="Horizontal"
-                                        Margin="0,0,0,10">
+                                            Orientation="Horizontal"
+                                            Margin="0,0,0,10">          
                                         <TextBlock Text="Published: "
                                            FontWeight="Bold"
                                            FontSize="12"/>
-                                        <TextBlock Text="{Binding Game.PublishDate, StringFormat={}{0:yyyy}}"
-                                           FontSize="12"/>
+                                        <TextBlock Text="{Binding DisplayPublishYear}"
+                                        FontSize="12"/>
                                     </StackPanel>
 
                                     <!-- PUBLISHER -->
                                     <StackPanel Grid.Row="2"
-                                        Orientation="Horizontal"
-                                        Margin="0,0,0,10">
+                                            Orientation="Horizontal"
+                                            Margin="0,0,0,10">
                                         <TextBlock Text="Publisher: "
                                            FontWeight="Bold"
-                                           FontSize="12"/>
-                                        <TextBlock Text="{Binding Game.Publisher}"
-                                           FontSize="12"/>
+                                           FontSize="12"/>          
+                                        <TextBlock Text="{Binding DisplayPublisher}"
+                                        FontSize="12"/>
                                     </StackPanel>
 
                                     <!-- PLAYTIME -->
                                     <StackPanel Grid.Row="3"
-                                        Orientation="Horizontal"
-                                        Margin="0,0,0,10">
+                                    Orientation="Horizontal"
+                                    Margin="0,0,0,10">
                                         <TextBlock Text="Playtime: "
                                            FontWeight="Bold"
                                            FontSize="12"/>
                                         <TextBlock Text="{Binding DisplayPlayTime}"
-                                           FontSize="12"/>
+                                            FontSize="12"/>
                                     </StackPanel>
 
                                     <!-- PROGRESS -->
                                     <StackPanel Grid.Row="4"
-                                        Orientation="Horizontal"
-                                        Margin="0,0,0,16">
-                                        <TextBlock Text="Progress: "
-                                           FontWeight="Bold"
-                                           FontSize="12"/>
-                                        <TextBlock Text="{Binding Game.Progress}"
-                                           FontSize="12"/>
+                                    Orientation="Horizontal"
+                                    Margin="0,0,0,16">
+                                    <TextBlock Text="Progress: "
+                                       FontWeight="Bold"
+                                       FontSize="12"/>
+                                    <TextBlock Text="{Binding DisplayProgress}"
+                                       FontSize="12"/>
                                     </StackPanel>
 
                                     <!-- FOOTER ROW -->
@@ -204,18 +204,16 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Folder danger -->
-                                        <Grid Width="18"
-                                      Height="18"
-                                      VerticalAlignment="Center"
-                                      Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}">
-                                            <Rectangle Fill="#F5AD18">
-                                                <Rectangle.OpacityMask>
-                                                    <ImageBrush ImageSource="/Assets/Danger.png"
-                                                        Stretch="Uniform"
-                                                        RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                </Rectangle.OpacityMask>
-                                            </Rectangle>
-                                        </Grid>
+                                        <Image Width="18"
+                                           Height="18"
+                                           VerticalAlignment="Center"
+                                           Source="/Assets/Problem.png"
+                                           Margin="2,2,2,2"
+                                           Stretch="Fill"
+                                        SnapsToDevicePixels="True"
+                                        UseLayoutRounding="True"
+                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                        RenderOptions.EdgeMode="Aliased"/>
 
                                         <!-- Buttons -->
                                         <StackPanel Grid.Column="2"
@@ -257,7 +255,6 @@
 
         </ScrollViewer>
 
-
         <!-- ==================== FOOTER ==================== -->
         <Border Grid.Row="2" Background="White">
             <Border.Effect>
@@ -268,33 +265,45 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Pagination -->
-                <StackPanel Grid.Column="0"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center">
-                    <TextBlock x:Name="PaginationSummaryTextBlock"
-                       Style="{StaticResource PaginationSummaryTextStyle}"
-                       Text="Showing 0 items"/>
+                <!-- Pagination summary -->
+                <TextBlock Grid.Column="0"
+                   x:Name="PaginationSummaryTextBlock"
+                   Text="{Binding PaginationSummaryText}"
+                   VerticalAlignment="Center"
+                   FontSize="12"
+                   Foreground="#666666"/>
 
+                <!-- Pagination controls -->
+                <StackPanel Grid.Column="1"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Margin="0,0,16,0">
                     <Button x:Name="PrevPageButton"
                     Style="{StaticResource PaginationButtonStyle}"
+                    Content="‹ Prev"
                     Click="PrevPageButton_Click"
-                    Content="Prev"/>
+                    IsEnabled="{Binding CanGoPrev}"/>
 
                     <TextBlock x:Name="PageInfoTextBlock"
-                       Style="{StaticResource PaginationPageInfoTextStyle}"
-                       Text="Page 1 / 1"/>
+                       Text="{Binding PageInfoText}"
+                       VerticalAlignment="Center"
+                       Margin="10,0"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="#555555"/>
 
                     <Button x:Name="NextPageButton"
                     Style="{StaticResource PaginationButtonStyle}"
+                    Content="Next ›"
                     Click="NextPageButton_Click"
-                    Content="Next"/>
+                    IsEnabled="{Binding CanGoNext}"/>
                 </StackPanel>
 
-                <!-- App Info -->
-                <StackPanel Grid.Column="1"
+                <!-- App info -->
+                <StackPanel Grid.Column="2"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center">
