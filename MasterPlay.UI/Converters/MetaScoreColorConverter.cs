@@ -13,8 +13,10 @@ namespace MasterPlay.UI.Converters
             if (value is int score)
             {
                 if (score >= 75) return new SolidColorBrush(Color.FromRgb(0, 206, 122));   
-                if (score >= 50) return new SolidColorBrush(Color.FromRgb(255, 189, 63));  
-                return new SolidColorBrush(Color.FromRgb(255, 104, 116));                    
+                if (score >= 50) return new SolidColorBrush(Color.FromRgb(255, 189, 63)); 
+                if (score > 0) return new SolidColorBrush(Color.FromRgb(255, 104, 116)); 
+                
+                return new SolidColorBrush(Color.FromArgb(0, 255, 189, 63));                                 
             }
             return Brushes.Gray;
         }

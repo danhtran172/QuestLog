@@ -100,7 +100,7 @@
                     </Grid>
 
                     <!-- Two-column info panels -->
-                    <Grid Margin="0,0,0,20">
+                    <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="1*"/>
@@ -301,7 +301,6 @@
                     <!-- [View Mode] Khung 3 -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
-                            <!-- ProcessName -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -310,17 +309,16 @@
                                 <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
                             </Grid>
-                            <!-- Start Game ProcessName 
-                                <Grid Margin="0,0,0,12" Visibility="{Binding DifInit, Converter={StaticResource BoolToVis}}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="160"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Game.InitExeName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
-                                </Grid>
-                            -->
-                            <!-- Save Location -->
+
+                            <Grid Margin="0,0,0,12" Visibility="{Binding DifInit, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Game.InitExeName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
+                            </Grid>
+
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -330,13 +328,13 @@
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplaySaveFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                                        Command="{Binding OpenSaveFolderCommand}"
-                                        IsEnabled="{Binding SaveFolderAccessible}"
-                                        Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                    Command="{Binding OpenSaveFolderCommand}"
+                    IsEnabled="{Binding SaveFolderAccessible}"
+                    Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
                                     <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
-                            <!-- Backup Folder -->
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -346,9 +344,9 @@
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                                        Command="{Binding OpenBackupFolderCommand}"
-                                        IsEnabled="{Binding BackupFolderAccessible}"
-                                        Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                    Command="{Binding OpenBackupFolderCommand}"
+                    IsEnabled="{Binding BackupFolderAccessible}"
+                    Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
                                     <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -427,7 +425,7 @@
                     </Border>
 
                     <!-- [Edit Mode] Khung 1 -->
-                    <Grid Margin="0,0,0,20">
+                    <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1.9*"/>
                             <ColumnDefinition Width="1.1*"/>
@@ -590,10 +588,10 @@
                         </Border>
                     </Grid>
 
-                    <!-- [Edit Mode] Khung 3 -->                   
+                    <!-- [Edit Mode] Khung 3 -->
+                    <!-- [Edit Mode] Khung 3 -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
-                            <!-- Process Name -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -602,7 +600,7 @@
                                 <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
-                            <!--Start Game Process Name -->
+
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -611,7 +609,7 @@
                                 <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
-                            <!-- Save Location -->
+
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -621,11 +619,11 @@
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                        Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
+                    Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
-                            <!-- Backup Folder -->
+
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -635,12 +633,12 @@
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                        Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
+                    Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
-                            <!-- Image Path -->
-                            <Grid>
+
+                            <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
@@ -649,13 +647,52 @@
                                 <TextBlock Text="Cover Image URL" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
-                                        Style="{StaticResource IconButtonStyle}"
-                                        Background="#6FA4AF"
-                                        Margin="15,0,0,0"
-                                        Command="{Binding SyncImageCommand}"
-                                        ToolTip="Refresh preview image">
+                    Style="{StaticResource IconButtonStyle}"
+                    Background="#6FA4AF"
+                    Margin="15,0,0,0"
+                    Command="{Binding SyncImageCommand}"
+                    ToolTip="Refresh preview image">
                                     <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Gallery Image Path" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" Text="{Binding Game.GImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <Button Grid.Column="2"
+                    Style="{StaticResource IconButtonStyle}"
+                    Background="#6FA4AF"
+                    Margin="15,0,0,0"
+                    Command="{Binding SyncImageCommand}"
+                    ToolTip="Refresh gallery preview image">
+                                    <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Button>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="1"
+                                    Width="460"
+                                    Height="215"
+                                    HorizontalAlignment="Left"
+                                    SnapsToDevicePixels="True"
+                                    RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.14"/>
+                                    </Border.Effect>
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
+                                Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
                             </Grid>
                         </StackPanel>
                     </Border>
