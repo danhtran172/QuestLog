@@ -1,6 +1,7 @@
 ﻿using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
@@ -97,5 +98,47 @@ namespace MasterPlay.UI.ViewModels.Generral
                 return null;
             }
         }
+
+public static DateOnly? StringToDateOnly(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        string value = input.Trim();
+
+        string[] formats =
+        {
+        // dd/MM/yyyy, dd/MM/yy
+        "d/M/yyyy", "dd/MM/yyyy",
+        "d/M/yy",   "dd/MM/yy",
+
+        // yy/MM/dd
+        "yy/M/d",   "yy/MM/dd",
+
+        // yyyy/MM/dd (bonus, tiện dùng)
+        "yyyy/M/d", "yyyy/MM/dd",
+
+        // dd-MM-yyyy, dd-MM-yy
+        "d-M-yyyy", "dd-MM-yyyy",
+        "d-M-yy",   "dd-MM-yy",
+
+        // yy-MM-dd
+        "yy-M-d",   "yy-MM-dd",
+
+        // yyyy-MM-dd (bonus)
+        "yyyy-M-d", "yyyy-MM-dd"
+    };
+
+        return DateOnly.TryParseExact(
+            value,
+            formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var result)
+            ? result
+            : null;
     }
+}
 }

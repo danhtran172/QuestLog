@@ -15,7 +15,6 @@ namespace MasterPlay.UI
 
             var viewModel = new EditGameViewModel(game);
             DataContext = viewModel;
-
             viewModel.RequestClose += result =>
             {
                 DialogResult = result;

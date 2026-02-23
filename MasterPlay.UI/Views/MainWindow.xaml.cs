@@ -106,6 +106,16 @@ namespace MasterPlay.UI
 
                 e.Handled = true;
             }
+            if (e.Key == Key.Oem3 && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                AddGameButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                SettingsButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
         }
 
         #endregion

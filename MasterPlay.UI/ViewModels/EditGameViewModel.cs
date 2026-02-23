@@ -50,6 +50,8 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private string publisher = string.Empty;
+        [ObservableProperty]
+        private string slugName = string.Empty;
 
         [ObservableProperty]
         private string developer = string.Empty;
@@ -157,6 +159,13 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
+        [ObservableProperty]
+        public string publishDateInput = string.Empty;
+
+        private void SyncPublishDate()
+        {
+            publishDateInput = Game.PublishDate?.ToString("dd/MM/yyyy") ?? "";
+        }
         // =====================================================================
         // Commands - Mode Toggling & CRUD
         // =====================================================================
@@ -212,6 +221,8 @@ namespace MasterPlay.UI.ViewModels
                     Game.Series = Series;
                     Game.Theme = Theme;
 
+
+                    slugName = rawgGame.SlugName;
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
 
@@ -222,10 +233,11 @@ namespace MasterPlay.UI.ViewModels
                     }
 
                     PublishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
-              
+                    
                     Game.PublishDate = PublishDate;
                     Game.MetaScore = metaScore;
-                    // Game.AvgPlayTime = avgPlaytime;   // nếu bạn dùng field này
+                    Game.SlugName = SlugName;
+                    // Game.AvgPlayTime = avgPlaytime; 
 
                     // ── Force UI refresh cho tất cả các trường liên quan ───────────
                     OnPropertyChanged(nameof(Game));                    // quan trọng nhất
@@ -278,6 +290,8 @@ namespace MasterPlay.UI.ViewModels
                 }
 
                 var games = DataService.LoadGames();
+
+                Game.PublishDate = ViewModelHelpers.StringToDateOnly(publishDateInput);
                 int index = games.FindIndex(g => g.Id == Game.Id);
                 if (index >= 0)
                 {
@@ -337,6 +351,26 @@ namespace MasterPlay.UI.ViewModels
             if (string.IsNullOrWhiteSpace(Game.Name)) return;
 
             string url = "https://howlongtobeat.com/?q=" + Uri.EscapeDataString(game.Name);
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Không thể mở trình duyệt: {ex.Message}");
+            }
+        }
+        [RelayCommand]
+        private void CheckMetaScore()
+        {
+            if (string.IsNullOrWhiteSpace(Game.SlugName)) return;
+
+            string url = "https://www.metacritic.com/game/" + Uri.EscapeDataString(game.SlugName) + "/";
 
             try
             {
@@ -502,11 +536,6 @@ namespace MasterPlay.UI.ViewModels
         // =====================================================================
         // Private Helpers
         // =====================================================================
-
-        private bool CheckInitProcess()
-        {
-            return string.Equals(Game.ExeName.ToLower(), Game.InitExeName.ToLower());
-        }
         private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
         {
             if (!FileHelper.TryOpenLocations(out var errors, locations))
@@ -596,7 +625,7 @@ namespace MasterPlay.UI.ViewModels
         partial void OnGameChanged(Game? value)
         {
             PreviewImage = ViewModelHelpers.LoadPreviewImage(value?.ImagePath);
-
+            SyncPublishDate();
             if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
             {
                 UpdateBackupFolderPath(value.Name);

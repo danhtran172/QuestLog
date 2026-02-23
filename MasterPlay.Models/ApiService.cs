@@ -86,6 +86,7 @@ namespace MasterPlay.Models
                 return new GameMetadata
                 {
                     Name = raw.Name,
+                    SlugName = raw.Slug,
                     Background_Image = raw.Background_Image,
                     ReleaseDate = raw.Released,
                     MetaScore = raw.Metacritic ?? 0,

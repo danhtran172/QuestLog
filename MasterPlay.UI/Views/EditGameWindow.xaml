@@ -186,7 +186,22 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                        <Button Style="{StaticResource IconButtonStyle}" 
+                                        Command="{Binding CheckMetaScoreCommand}" 
+                                        ToolTip="Check MetaScore"
+                                        Width="12" 
+                                        Height="12" 
+                                        Margin="2,-2,0,0" 
+                                        VerticalAlignment="Top">
+                                        <Image Source="/Assets/Question.png" 
+                                        Width="12" 
+                                        Height="12" 
+                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Button>
+                                    </StackPanel>
+
                                     <Border Grid.Column="1"
                                     Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                     CornerRadius="4"
@@ -441,7 +456,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.PublishDate, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:yyyy-MM-dd}}" 
+                                    <TextBox Grid.Column="1" Text="{Binding PublishDateInput, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:yyyy-MM-dd}}" 
                              Height="28" Padding="8,4"/>
                                 </Grid>
                                 <!-- Publisher -->
@@ -506,7 +521,21 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                        <Button Style="{StaticResource IconButtonStyle}" 
+                                        Command="{Binding CheckMetaScoreCommand}" 
+                                        ToolTip="Check MetaScore"
+                                        Width="12" 
+                                        Height="12" 
+                                        Margin="2,-2,0,0" 
+                                        VerticalAlignment="Top">
+                                         <Image Source="/Assets/Question.png" 
+                                        Width="12" 
+                                        Height="12" 
+                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Button>
+                                    </StackPanel>
                                     <TextBox Grid.Column="1" Text="{Binding Game.MetaScore, UpdateSourceTrigger=PropertyChanged}" 
                              HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
@@ -589,7 +618,6 @@
                     </Grid>
 
                     <!-- [Edit Mode] Khung 3 -->
-                    <!-- [Edit Mode] Khung 3 -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
@@ -619,7 +647,7 @@
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                    Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
+                                    Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -633,7 +661,7 @@
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                    Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
+                                    Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -675,14 +703,11 @@
                             </Grid>
 
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="1"
+                  
+                                <Border
                                     Width="460"
                                     Height="215"
-                                    HorizontalAlignment="Left"
+                                    HorizontalAlignment="Center"
                                     SnapsToDevicePixels="True"
                                     RenderOptions.BitmapScalingMode="HighQuality">
                                     <Border.Effect>

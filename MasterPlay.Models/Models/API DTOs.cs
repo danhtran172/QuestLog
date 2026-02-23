@@ -29,6 +29,7 @@ namespace MasterPlay.Models.Models
     public class GameMetadata
     {
         public string Name { get; set; }
+        public string SlugName { get; set; }
         public string Background_Image { get; set; }
         public string Genres { get; set; }
         public string ReleaseDate { get; set; }

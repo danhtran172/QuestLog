@@ -1,9 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using AngleSharp.Io;
+using CommunityToolkit.Mvvm.ComponentModel;
 using MasterPlay.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Threading;
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -339,6 +341,10 @@ namespace MasterPlay.UI.ViewModels
                            .ThenBy(vm => vm.Game.Ready)
                            .ThenBy(vm => vm.Game.TotalPlayTimeSeconds),
 
+                5 => source.OrderByDescending(vm => vm.Game.MetaScore)
+                           .ThenBy(vm => vm.Game.Name)
+                           .ThenByDescending(vm => vm.Game.PublishDate),
+
                 _ => source.OrderByDescending(vm => vm.Game.Ready)
                            .ThenBy(vm => vm.Game.Name)
                            .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
@@ -375,7 +381,7 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(PageInfoText));
             OnPropertyChanged(nameof(PaginationSummaryText));
         }
-
         #endregion
+ 
     }
 }
