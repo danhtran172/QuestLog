@@ -138,6 +138,7 @@ namespace MasterPlay.UI.ViewModels
         public string DisplayFinishedIn => string.IsNullOrWhiteSpace(finishedIn) ? "Not Finished" : finishedIn;
 
         public string DisplayProcessName => string.IsNullOrWhiteSpace(Game.ExeName) ? "--" : $"{Game.ExeName}.exe";
+        public string DisplayInitProcessName => string.IsNullOrWhiteSpace(Game.InitExeName) ? "--" : $"{Game.InitExeName}.exe";
 
         public string DisplaySaveFolderPath => string.IsNullOrWhiteSpace(Game.SaveFolderPath) ? "--" : Game.SaveFolderPath;
 

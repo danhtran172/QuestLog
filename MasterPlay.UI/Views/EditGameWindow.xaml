@@ -331,7 +331,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Game.InitExeName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayInitProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
                             </Grid>
 
                             <Grid Margin="0,0,0,12">

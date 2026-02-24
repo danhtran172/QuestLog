@@ -186,7 +186,7 @@ namespace MasterPlay.UI
 
             try
             {
-                string processPath = vm.GetProcessPath();
+                string processPath = vm.GetLaunchProcessPath();
 
                 if (!string.IsNullOrEmpty(processPath))
                 {

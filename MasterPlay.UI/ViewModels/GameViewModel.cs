@@ -148,13 +148,18 @@ namespace MasterPlay.UI.ViewModels
         // Public Methods
         // =====================================================================
 
-        public string GetProcessPath()
+        public string GetLaunchProcessPath()
         {
             var detectedProcesses = DataService.LoadDetectedProcesses();
 
             try
             {
-                string processName = $"{Game.InitExeName}.exe";
+                string processName = $"{Game.ExeName}.exe";  
+
+                if (!string.IsNullOrEmpty(Game.InitExeName))
+                {
+                    processName = $"{Game.InitExeName}.exe";
+                }
 
                 string fullPath = detectedProcesses.FirstOrDefault(a =>
                     string.Equals(a.ExeName, processName, StringComparison.OrdinalIgnoreCase))?.FullPath;

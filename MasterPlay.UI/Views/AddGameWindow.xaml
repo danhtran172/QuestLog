@@ -51,7 +51,7 @@
         <!-- ==================== MAIN CONTENT ==================== -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="24,16,24,40">
-                <!-- ==================== ADD MODE ==================== -->
+                <!-- ==================== ADD ==================== -->
                 <!-- Khung Basic -->
                 <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,20" Padding="8">
                     <StackPanel>
@@ -89,7 +89,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox Grid.Column="1" Text="{Binding ReleaseDate, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:yyyy-MM-dd}}"
+                                <TextBox Grid.Column="1" Text="{Binding PublishDateInput, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:yyyy-MM-dd}}"
                                          Height="28" Padding="8,4"/>
                             </Grid>
                             <!-- Publisher -->

@@ -24,6 +24,8 @@ namespace MasterPlay.UI.ViewModels
         // ==================== PROPERTIES ====================
         [ObservableProperty]
         private string gameName = string.Empty;
+        [ObservableProperty]
+        private string slugName = string.Empty;
 
         [ObservableProperty]
         private string exeName = string.Empty;
@@ -101,6 +103,9 @@ namespace MasterPlay.UI.ViewModels
         private string statusMessage = string.Empty;
 
         [ObservableProperty]
+        public string publishDateInput = string.Empty;
+
+        [ObservableProperty]
         private bool isBusy;
 
         private static Selections LoadSelections()
@@ -167,10 +172,11 @@ namespace MasterPlay.UI.ViewModels
                     PreviewImage = ViewModelHelpers.LoadPreviewImage(ImagePath);
                     GalleryImage = rawgGame.Background_Image ?? ImagePath;
                     Publisher = rawgGame.Publishers ?? string.Empty;
+                    SlugName = rawgGame.SlugName ?? string.Empty; 
                     Developer = rawgGame.Developers ?? string.Empty;
                     Genre = rawgGame.Genres ?? string.Empty;
 
-                    ReleaseDate = ApiService.ParseDate(rawgGame.ReleaseDate);
+                    SyncPublishDate(ApiService.ParseDate(rawgGame.ReleaseDate));
                     MetaScore = rawgGame.MetaScore;
 
                     var gallerryImg = await ApiService.GetGalleryImage(GameName);
@@ -197,6 +203,11 @@ namespace MasterPlay.UI.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        private void SyncPublishDate(DateOnly? date)
+        {
+            PublishDateInput = date?.ToString("dd/MM/yyyy") ?? "";
         }
 
         [RelayCommand]
@@ -287,7 +298,7 @@ namespace MasterPlay.UI.ViewModels
 
             try
             {
-                var games = DataService.LoadGames();
+                var games = DataService.LoadGames().Where(g => !g.IsDisabled).ToList();
 
                 if (games.Exists(g => g.Name.Trim().Equals(GameName.Trim(), StringComparison.OrdinalIgnoreCase)))
                 {
@@ -305,12 +316,13 @@ namespace MasterPlay.UI.ViewModels
                 var newGame = new Game
                 {
                     Name = GameName.Trim(),
+                    SlugName = SlugName.Trim(),
                     ExeName = ExeName.Trim(),
                     InitExeName = InitExeName?.Trim(),
                     SaveFolderPath = SaveLocation.Trim(),
                     ImagePath = ImagePath.Trim(),
                     GImagePath = GalleryImage.Trim(),
-                    PublishDate = ReleaseDate,
+                    PublishDate = ViewModelHelpers.StringToDateOnly(PublishDateInput),
                     Publisher = Publisher.Trim(),
                     Developer = Developer.Trim(),
                     Series = Series.Trim(),
@@ -325,17 +337,18 @@ namespace MasterPlay.UI.ViewModels
                     Progress = Progress,
                     FinishedIn = FinishedIn,
                     IsDisabled = false
+                  
                 };
 
-                
+                if (string.IsNullOrWhiteSpace(InitExeName))
+                {
+                    newGame.InitExeName = ExeName;
+                }
+
                 string validFolderName = ViewModelHelpers.ValidFolderName(newGame.Name);
                 string backupFolder = Path.Combine(config.BackupRootPath, validFolderName);
                 Directory.CreateDirectory(backupFolder);
                 newGame.BackupFolderPath = backupFolder;
-                if (string.IsNullOrWhiteSpace(initExeName))
-                {
-                    newGame.InitExeName = ExeName;
-                }
 
                 newGame = ViewModelHelpers.InputFormatter(newGame);
                 string txtPath = Path.Combine(backupFolder, "save_location.txt");
@@ -344,7 +357,6 @@ namespace MasterPlay.UI.ViewModels
                 games.Add(newGame);
                 DataService.SaveGamesData(games);
 
-                // Ở đây không dùng ShowStatus vì window sẽ đóng ngay lập tức
                 RaiseRequestClose(true);
             }
             catch (Exception ex)
