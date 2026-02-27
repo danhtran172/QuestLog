@@ -8,6 +8,7 @@ namespace MasterPlay.Models.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public string SlugName { get; set; } = string.Empty;
+        public DateTime? createAt { get; set; } = DateTime.Now;
 
         // Executable / Launch
         public string ExeName { get; set; } = string.Empty;

@@ -5,12 +5,10 @@ using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -19,9 +17,7 @@ namespace MasterPlay.UI.ViewModels
 {
     public partial class EditGameViewModel : BaseViewModel
     {
-        // =====================================================================
-        // Fields & Constructor
-        // =====================================================================
+        // ==================== FIELDS & CONSTRUCTOR ====================
         private static Selections LoadSelections() => DataService.LoadSelection();
 
         public EditGameViewModel() : this(new Game()) { }
@@ -33,29 +29,25 @@ namespace MasterPlay.UI.ViewModels
             DataService.AssignDefaultColors();
             InitializeMockData();
             LoadGameData();
+            hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
         }
 
-        // =====================================================================
-        // Core Properties (Giữ nguyên từ code cũ)
-        // =====================================================================
+        // ==================== CORE PROPERTIES ====================
         [ObservableProperty]
         private Game game;
 
         [ObservableProperty]
-        private string backupFolderPath = string.Empty;
-
-        [ObservableProperty]
         private string publisher = string.Empty;
-        [ObservableProperty]
-        private string slugName = string.Empty;
 
         [ObservableProperty]
         private string developer = string.Empty;
 
         [ObservableProperty]
         private string series = string.Empty;
+
         [ObservableProperty]
         private string genre = string.Empty;
+
         [ObservableProperty]
         private string theme = string.Empty;
 
@@ -91,8 +83,10 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private int playTimeHours;
+
         [ObservableProperty]
         private int playTimeMinutes;
+
         [ObservableProperty]
         private int adjustMinutes;
 
@@ -105,41 +99,52 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string publishDateInput = string.Empty;
 
-        // =====================================================================
-        // NEW: Chip-related Properties
-        // =====================================================================
+        [ObservableProperty]
+        private bool hasInitExeName;
+
+        // ==================== CHIP PROPERTIES ====================
         [ObservableProperty]
         private ObservableCollection<string> allSeries;
+
         [ObservableProperty]
         private ObservableCollection<string> allGenres;
+
         [ObservableProperty]
         private ObservableCollection<string> allThemes;
 
         [ObservableProperty]
         private string? selectedSeries;
+
         [ObservableProperty]
         private ObservableCollection<string> selectedGenres;
+
         [ObservableProperty]
         private ObservableCollection<string> selectedThemes;
 
         [ObservableProperty]
         private bool isSeriesPopupOpen;
+
         [ObservableProperty]
         private bool isGenresPopupOpen;
+
         [ObservableProperty]
         private bool isThemesPopupOpen;
 
         [ObservableProperty]
         private string seriesSearchText = string.Empty;
+
         [ObservableProperty]
         private string genresSearchText = string.Empty;
+
         [ObservableProperty]
         private string themesSearchText = string.Empty;
 
         [ObservableProperty]
         private ObservableCollection<string> filteredSeries;
+
         [ObservableProperty]
         private ObservableCollection<string> filteredGenres;
+
         [ObservableProperty]
         private ObservableCollection<string> filteredThemes;
 
@@ -147,9 +152,7 @@ namespace MasterPlay.UI.ViewModels
         public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
         public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
 
-        // =====================================================================
-        // Display Properties (Giữ nguyên)
-        // =====================================================================
+        // ==================== DISPLAY PROPERTIES ====================
         public string DisplayPublishDate => publishDate?.ToString("MMM dd, yyyy") ?? "--";
         public string DisplayPublisher => string.IsNullOrWhiteSpace(publisher) ? "--" : publisher;
         public string DisplayDeveloper => string.IsNullOrWhiteSpace(developer) ? "--" : developer;
@@ -178,9 +181,10 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // =====================================================================
-        // Commands - Mode & CRUD (Giữ nguyên logic cũ)
-        // =====================================================================
+        public bool HasSlugName => !string.IsNullOrWhiteSpace(Game?.SlugName);
+        public bool HasInitExeNameForView => !string.IsNullOrWhiteSpace(Game?.InitExeName);
+
+        // ==================== MODE & CRUD COMMANDS ====================
         [RelayCommand]
         private void ToggleEditMode()
         {
@@ -220,7 +224,7 @@ namespace MasterPlay.UI.ViewModels
 
                     publisher = rawgGame.Publishers ?? string.Empty;
                     developer = rawgGame.Developers ?? string.Empty;
-                    slugName = rawgGame.SlugName;
+                    var slug = rawgGame.SlugName; // chỉ dùng tạm
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
 
@@ -231,7 +235,7 @@ namespace MasterPlay.UI.ViewModels
                     publishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
                     Game.PublishDate = publishDate;
                     Game.MetaScore = metaScore;
-                    Game.SlugName = slugName;
+                    Game.SlugName = rawgGame.SlugName;
 
                     if (!IsReadOnly)
                         SyncSelectedChipsFromGame();
@@ -250,6 +254,7 @@ namespace MasterPlay.UI.ViewModels
                     OnPropertyChanged(nameof(DisplayMetaScore));
                     OnPropertyChanged(nameof(DisplayAvgPlayTime));
                     OnPropertyChanged(nameof(DisplayPublishDate));
+                    OnPropertyChanged(nameof(HasSlugName));
 
                     StatusMessage = "Sync Successful!";
                 }
@@ -277,7 +282,6 @@ namespace MasterPlay.UI.ViewModels
                 if (!string.IsNullOrWhiteSpace(Game.Name))
                     UpdateBackupFolderPath(Game.Name);
 
-                // Update từ chips
                 Game.Series = SelectedSeries ?? string.Empty;
                 Game.Genre = SelectedGenres != null ? string.Join(", ", SelectedGenres) : string.Empty;
                 Game.Theme = SelectedThemes != null ? string.Join(", ", SelectedThemes) : string.Empty;
@@ -398,7 +402,6 @@ namespace MasterPlay.UI.ViewModels
             if (originalGame != null)
             {
                 Game = originalGame;
-                backupFolderPath = Game.BackupFolderPath;
                 PreviewImage = LoadPreviewImage(Game.ImagePath);
                 ReloadGameFromConfig();
                 if (!IsReadOnly) SyncSelectedChipsFromGame();
@@ -407,6 +410,10 @@ namespace MasterPlay.UI.ViewModels
             StatusMessage = string.Empty;
         }
 
+        [RelayCommand]
+        private void Close() => RaiseRequestClose(false);
+
+        // ==================== FOLDER COMMANDS ====================
         [RelayCommand]
         private void EditSaveFolder()
         {
@@ -432,14 +439,12 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void Close() => RaiseRequestClose(false);
-
-        // Folder commands
-        [RelayCommand]
         private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFolderPath, "Save Folder"));
+
         [RelayCommand]
         private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
 
+        // ==================== IMAGE COMMANDS ====================
         [RelayCommand]
         private void SyncImage()
         {
@@ -460,6 +465,7 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
+        // ==================== PLAYTIME COMMANDS ====================
         [RelayCommand]
         private void AdjustPlayTimeUp()
         {
@@ -489,9 +495,7 @@ namespace MasterPlay.UI.ViewModels
             AdjustMinutes = 0;
         }
 
-        // =====================================================================
-        // Chip Commands
-        // =====================================================================
+        // ==================== CHIP COMMANDS ====================
         [RelayCommand]
         private void OpenSeriesPopup()
         {
@@ -587,9 +591,7 @@ namespace MasterPlay.UI.ViewModels
                 SelectedThemes.Remove(theme);
         }
 
-        // =====================================================================
-        // Private Helpers
-        // =====================================================================
+        // ==================== PRIVATE HELPERS ====================
         private void InitializeMockData()
         {
             AllSeries = new ObservableCollection<string>(MockData.Series);
@@ -641,6 +643,7 @@ namespace MasterPlay.UI.ViewModels
             }
             PublishDateInput = Game.PublishDate?.ToString("yyyy-MM-dd") ?? string.Empty;
             UpdatePlayTimeFieldsFromSeconds();
+            hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
         }
 
         private void UpdatePlayTimeFieldsFromSeconds()
@@ -671,7 +674,6 @@ namespace MasterPlay.UI.ViewModels
             if (reloaded != null)
             {
                 Game = reloaded;
-                backupFolderPath = Game.BackupFolderPath;
                 PreviewImage = LoadPreviewImage(Game.ImagePath);
 
                 if (IsReadOnly)
@@ -720,7 +722,9 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // Partial Methods
+        private void SyncPublishDate() => publishDateInput = Game.PublishDate?.ToString("dd/MM/yyyy") ?? "";
+
+        // ==================== PARTIAL METHODS ====================
         partial void OnGameChanged(Game? value)
         {
             PreviewImage = LoadPreviewImage(value?.ImagePath);
@@ -763,6 +767,8 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(DisplayProgress));
             OnPropertyChanged(nameof(DisplayScore));
             OnPropertyChanged(nameof(DisplayPlayTime));
+            OnPropertyChanged(nameof(HasSlugName));
+            OnPropertyChanged(nameof(HasInitExeNameForView));
         }
 
         partial void OnIsReadOnlyChanged(bool value)
@@ -794,7 +800,6 @@ namespace MasterPlay.UI.ViewModels
         partial void OnMetaScoreChanged(int value) { Game.MetaScore = value; OnPropertyChanged(nameof(DisplayMetaScore)); }
         partial void OnAvgPlaytimeChanged(long value) { Game.AvgPlayTime = value; OnPropertyChanged(nameof(DisplayAvgPlayTime)); }
 
-        // Search filter partials
         partial void OnSeriesSearchTextChanged(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -822,6 +827,13 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(CreateNewThemeText));
         }
 
-        private void SyncPublishDate() => publishDateInput = Game.PublishDate?.ToString("dd/MM/yyyy") ?? "";
+        partial void OnHasInitExeNameChanged(bool value)
+        {
+            if (!value)
+            {
+                Game.InitExeName = string.Empty;
+            }
+            OnPropertyChanged(nameof(HasInitExeNameForView));
+        }
     }
 }

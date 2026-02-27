@@ -21,6 +21,8 @@ namespace MasterPlay.UI
                 Close();
             };
         }
+
+        // ==================== INPUT VALIDATION ====================
         private void Score_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox tb = sender as TextBox;
@@ -36,21 +38,20 @@ namespace MasterPlay.UI
             }
         }
 
-        // Handler cho GotFocus của TextBox để bôi đen text
-        private void SelectAllText(object sender, RoutedEventArgs e)
+        private void FinishedIn_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (sender is TextBox textBox)
+            if (!Regex.IsMatch(e.Text, @"^[0-9,]+$"))
             {
-                textBox.SelectAll();
+                e.Handled = true;
             }
         }
 
-        // Series
+        // ==================== SERIES EVENT HANDLERS ====================
         private void SeriesItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element && element.Tag is string seriesName)
             {
-                if (DataContext is ViewModels.EditGameViewModel vm)
+                if (DataContext is EditGameViewModel vm)
                 {
                     vm.SelectSeriesCommand.Execute(seriesName);
                 }
@@ -59,18 +60,18 @@ namespace MasterPlay.UI
 
         private void CreateNewSeries_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is ViewModels.EditGameViewModel vm)
+            if (DataContext is EditGameViewModel vm)
             {
                 vm.CreateNewSeriesCommand.Execute(null);
             }
         }
 
-        // Genre
+        // ==================== GENRE EVENT HANDLERS ====================
         private void GenreItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element && element.Tag is string genreName)
             {
-                if (DataContext is ViewModels.EditGameViewModel vm)
+                if (DataContext is EditGameViewModel vm)
                 {
                     vm.SelectGenreCommand.Execute(genreName);
                 }
@@ -79,18 +80,18 @@ namespace MasterPlay.UI
 
         private void CreateNewGenre_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is ViewModels.EditGameViewModel vm)
+            if (DataContext is EditGameViewModel vm)
             {
                 vm.CreateNewGenreCommand.Execute(null);
             }
         }
 
-        // Theme
+        // ==================== THEME EVENT HANDLERS ====================
         private void ThemeItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element && element.Tag is string themeName)
             {
-                if (DataContext is ViewModels.EditGameViewModel vm)
+                if (DataContext is EditGameViewModel vm)
                 {
                     vm.SelectThemeCommand.Execute(themeName);
                 }
@@ -99,22 +100,10 @@ namespace MasterPlay.UI
 
         private void CreateNewTheme_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is ViewModels.EditGameViewModel vm)
+            if (DataContext is EditGameViewModel vm)
             {
                 vm.CreateNewThemeCommand.Execute(null);
             }
         }
-
-        private void FinishedIn_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
-        {
-            string text = e.Text;
-            if (!Regex.IsMatch(text, @"^[0-9,]+$"))
-            {
-                e.Handled = true;
-                return;
-            }
-        }
-
-        
     }
 }

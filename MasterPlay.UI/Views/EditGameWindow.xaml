@@ -53,7 +53,7 @@
                 <!-- ==================== VIEW MODE ==================== -->
                 <StackPanel Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
 
-                    <!-- [View Mode] Khung Basic -->
+                    <!-- [View Mode] Basic Info Row -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -61,7 +61,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Score (bên trái) -->
+                        <!-- Score (left) -->
                         <StackPanel Grid.Column="0"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
@@ -77,7 +77,7 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <!-- Playtime (bên phải) -->
+                        <!-- Playtime (right) -->
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center">
@@ -95,14 +95,14 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Two-column info panels -->
+                    <!-- [View Mode] Two-column Info Panels -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- [View Mode] Khung 1 -->
+                        <!-- Left Panel -->
                         <Border Grid.Column="0"
                                 Background="#F9F9F9"
                                 CornerRadius="8"
@@ -117,8 +117,8 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublishDate}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublishDate}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Publisher -->
                                 <Grid Margin="0,0,0,12">
@@ -126,8 +126,8 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Developer -->
                                 <Grid Margin="0,0,0,12">
@@ -135,8 +135,8 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayDeveloper}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayDeveloper}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Series -->
                                 <Grid Margin="0,0,0,12">
@@ -144,8 +144,8 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Genre -->
                                 <Grid Margin="0,0,0,12">
@@ -153,8 +153,8 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayGenre}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayGenre}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Theme -->
                                 <Grid>
@@ -162,13 +162,13 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayTheme}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayTheme}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- [View Mode] Khung 2 -->
+                        <!-- Right Panel -->
                         <Border Grid.Column="1"
                                 Background="#F9F9F9"
                                 CornerRadius="8"
@@ -182,15 +182,16 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
                                                 Command="{Binding CheckMetaScoreCommand}" 
                                                 ToolTip="Check MetaScore"
                                                 Width="12" 
                                                 Height="12" 
                                                 Margin="2,-2,0,0" 
-                                                VerticalAlignment="Top">
+                                                VerticalAlignment="Top"
+                                                Visibility="{Binding HasSlugName, Converter={StaticResource BoolToVis}}">
                                             <Image Source="/Assets/Question.png" 
                                                    Width="12" 
                                                    Height="12" 
@@ -204,7 +205,7 @@
                                             HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayMetaScore}"
                                                    Foreground="#2C3E50"
-                                                   VerticalAlignment="Center"
+                                                   VerticalAlignment="Top"
                                                    HorizontalAlignment="Left"
                                                    TextAlignment="Left"
                                                    Padding="4,0"
@@ -218,8 +219,8 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
                                                 Command="{Binding CheckPlayTimeCommand}" 
                                                 ToolTip="Check Playtime"
@@ -237,7 +238,9 @@
                                                Text="{Binding DisplayAvgPlayTime}" 
                                                Style="{StaticResource ValueTextStyle}" 
                                                FontWeight="Normal" 
-                                               FontSize="13"/>
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,12">
@@ -245,8 +248,8 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                                 <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
@@ -254,7 +257,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <Border Grid.Column="1"
                                             Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
                                             CornerRadius="4"
@@ -262,11 +265,12 @@
                                             HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayOwnership}"
                                                    Foreground="#2C3E50"
-                                                   VerticalAlignment="Center"
+                                                   VerticalAlignment="Top"
                                                    HorizontalAlignment="Left"
                                                    TextAlignment="Left"
                                                    Padding="4,0"
-                                                   Background="Transparent"/>
+                                                   Background="Transparent"
+                                                   TextWrapping="Wrap"/>
                                     </Border>
                                 </Grid>
                                 <!-- Play Progress -->
@@ -275,7 +279,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <Border Grid.Column="1"
                                             Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
                                             CornerRadius="4"
@@ -283,11 +287,12 @@
                                             HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayProgress}"
                                                    Foreground="#2C3E50"
-                                                   VerticalAlignment="Center"
+                                                   VerticalAlignment="Top"
                                                    HorizontalAlignment="Left"
                                                    TextAlignment="Left"
                                                    Padding="4,0"
-                                                   Background="Transparent"/>
+                                                   Background="Transparent"
+                                                   TextWrapping="Wrap"/>
                                     </Border>
                                 </Grid>
                                 <!-- Finish Year -->
@@ -296,32 +301,32 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
+                                    <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <!-- [View Mode] Khung 3 -->
+                    <!-- [View Mode] Process & Folders Panel -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
+                            <Grid Margin="0,0,0,12" Visibility="{Binding HasInitExeNameForView, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                            </Grid>
+
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"/>
-                            </Grid>
-
-                            <Grid Margin="0,0,0,12" Visibility="{Binding DifInit, Converter={StaticResource BoolToVis}}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DisplayInitProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
+                                <TextBlock Text="Launch Game Process" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayInitProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                             </Grid>
 
                             <Grid Margin="0,0,0,12">
@@ -330,8 +335,8 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DisplaySaveFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
+                                <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplaySaveFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding OpenSaveFolderCommand}"
                                         IsEnabled="{Binding SaveFolderAccessible}"
@@ -346,8 +351,8 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
+                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding OpenBackupFolderCommand}"
                                         IsEnabled="{Binding BackupFolderAccessible}"
@@ -428,7 +433,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- [Edit Mode] Khung 1 - Thông tin chính với CHIPS (đã sửa lỗi) -->
+                    <!-- [Edit Mode] Khung 1 - Thông tin chính với CHIPS -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1.9*"/>
@@ -480,11 +485,11 @@
                                     <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
-                                        x:Name="SeriesButton"
-                                        Style="{StaticResource TagInputButtonStyle}"
-                                        Command="{Binding OpenSeriesPopupCommand}"
-                                        HorizontalContentAlignment="Stretch"
-                                        HorizontalAlignment="Stretch">
+                                            x:Name="SeriesButton"
+                                            Style="{StaticResource TagInputButtonStyle}"
+                                            Command="{Binding OpenSeriesPopupCommand}"
+                                            HorizontalContentAlignment="Stretch"
+                                            HorizontalAlignment="Stretch">
                                         <WrapPanel x:Name="SeriesWrapPanel">
                                             <WrapPanel.Style>
                                                 <Style TargetType="WrapPanel">
@@ -506,9 +511,9 @@
                                     </Button>
 
                                     <Popup IsOpen="{Binding IsSeriesPopupOpen}"
-                                       PlacementTarget="{Binding ElementName=SeriesButton}"
-                                       Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
-                                       PopupAnimation="Slide" Width="320">
+                                           PlacementTarget="{Binding ElementName=SeriesButton}"
+                                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
+                                           PopupAnimation="Slide" Width="320">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -518,7 +523,6 @@
                                                     <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
-                                                <!-- Chip đã chọn - SỬA DÙNG DATATRIGGER THAY VÌ CONVERTER -->
                                                 <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedSeriesPanel">
                                                     <WrapPanel.Style>
                                                         <Style TargetType="WrapPanel">
@@ -541,20 +545,20 @@
                                                             </Grid.ColumnDefinitions>
                                                             <TextBlock Text="{Binding SelectedSeries}" Foreground="#2C3E50" FontSize="13"/>
                                                             <Button Grid.Column="1"
-                                    Style="{StaticResource TagRemoveButtonStyle}"
-                                    Command="{Binding RemoveSelectedSeriesCommand}"/>
+                                                                    Style="{StaticResource TagRemoveButtonStyle}"
+                                                                    Command="{Binding RemoveSelectedSeriesCommand}"/>
                                                         </Grid>
                                                     </Border>
                                                 </WrapPanel>
 
                                                 <TextBox Grid.Row="1" 
-                         Text="{Binding SeriesSearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource PopupSearchBoxStyle}"
-                         Margin="8,8,8,0"/>
+                                                         Text="{Binding SeriesSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource PopupSearchBoxStyle}"
+                                                         Margin="8,8,8,0"/>
 
                                                 <ScrollViewer Grid.Row="2" 
-                              Margin="8,8,8,0" 
-                              VerticalScrollBarVisibility="Auto">
+                                                              Margin="8,8,8,0" 
+                                                              VerticalScrollBarVisibility="Auto">
                                                     <ItemsControl ItemsSource="{Binding FilteredSeries}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
@@ -564,7 +568,7 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" Tag="{Binding}">
                                                                     <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
                                                                 </Border>
                                                             </DataTemplate>
@@ -572,16 +576,15 @@
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
-                                                <!-- Nút Create New - Dùng converter mới (đã sửa) -->
                                                 <Border Grid.Row="3" 
-                        Style="{StaticResource PopupCreateNewStyle}"
-                        Visibility="{Binding SeriesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
-                        MouseLeftButtonUp="CreateNewSeries_MouseLeftButtonUp">
+                                                        Style="{StaticResource PopupCreateNewStyle}"
+                                                        Visibility="{Binding SeriesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                                        MouseLeftButtonUp="CreateNewSeries_MouseLeftButtonUp">
                                                     <TextBlock Text="{Binding CreateNewSeriesText}" 
-                               FontSize="13" 
-                               Foreground="#FF88BA" 
-                               Margin="10,0" 
-                               VerticalAlignment="Center"/>
+                                                               FontSize="13" 
+                                                               Foreground="#FF88BA" 
+                                                               Margin="10,0" 
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
@@ -597,13 +600,13 @@
                                     <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
-            x:Name="GenresButton"
-            Style="{StaticResource TagInputButtonStyle}"
-            Command="{Binding OpenGenresPopupCommand}"
-            HorizontalContentAlignment="Stretch"
-            HorizontalAlignment="Stretch">
+                                            x:Name="GenresButton"
+                                            Style="{StaticResource TagInputButtonStyle}"
+                                            Command="{Binding OpenGenresPopupCommand}"
+                                            HorizontalContentAlignment="Stretch"
+                                            HorizontalAlignment="Stretch">
                                         <ItemsControl ItemsSource="{Binding SelectedGenres}"
-                      HorizontalAlignment="Stretch">
+                                                      HorizontalAlignment="Stretch">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel Orientation="Horizontal"/>
@@ -620,8 +623,8 @@
                                     </Button>
 
                                     <Popup IsOpen="{Binding IsGenresPopupOpen}"
-           PlacementTarget="{Binding ElementName=GenresButton}"
-           Placement="Bottom" StaysOpen="False" Width="320">
+                                           PlacementTarget="{Binding ElementName=GenresButton}"
+                                           Placement="Bottom" StaysOpen="False" Width="320">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -658,9 +661,9 @@
                                                                         </Grid.ColumnDefinitions>
                                                                         <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
                                                                         <Button Grid.Column="1"
-                                                Style="{StaticResource TagRemoveButtonStyle}"
-                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveGenreCommand}"
-                                                CommandParameter="{Binding}"/>
+                                                                                Style="{StaticResource TagRemoveButtonStyle}"
+                                                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveGenreCommand}"
+                                                                                CommandParameter="{Binding}"/>
                                                                     </Grid>
                                                                 </Border>
                                                             </DataTemplate>
@@ -669,13 +672,13 @@
                                                 </WrapPanel>
 
                                                 <TextBox Grid.Row="1" 
-                         Text="{Binding GenresSearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource PopupSearchBoxStyle}"
-                         Margin="8,8,8,0"/>
+                                                         Text="{Binding GenresSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource PopupSearchBoxStyle}"
+                                                         Margin="8,8,8,0"/>
 
                                                 <ScrollViewer Grid.Row="2" 
-                              Margin="8,8,8,0" 
-                              VerticalScrollBarVisibility="Auto">
+                                                              Margin="8,8,8,0" 
+                                                              VerticalScrollBarVisibility="Auto">
                                                     <ItemsControl ItemsSource="{Binding FilteredGenres}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
@@ -685,7 +688,7 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" Tag="{Binding}">
                                                                     <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
                                                                 </Border>
                                                             </DataTemplate>
@@ -693,16 +696,15 @@
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
-                                                <!-- Nút Create New - Dùng converter mới -->
                                                 <Border Grid.Row="3" 
-                        Style="{StaticResource PopupCreateNewStyle}"
-                        Visibility="{Binding GenresSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
-                        MouseLeftButtonUp="CreateNewGenre_MouseLeftButtonUp">
+                                                        Style="{StaticResource PopupCreateNewStyle}"
+                                                        Visibility="{Binding GenresSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                                        MouseLeftButtonUp="CreateNewGenre_MouseLeftButtonUp">
                                                     <TextBlock Text="{Binding CreateNewGenreText}" 
-                               FontSize="13" 
-                               Foreground="#FF88BA" 
-                               Margin="10,0" 
-                               VerticalAlignment="Center"/>
+                                                               FontSize="13" 
+                                                               Foreground="#FF88BA" 
+                                                               Margin="10,0" 
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
@@ -718,13 +720,13 @@
                                     <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
-            x:Name="ThemesButton"
-            Style="{StaticResource TagInputButtonStyle}"
-            Command="{Binding OpenThemesPopupCommand}"
-            HorizontalContentAlignment="Stretch"
-            HorizontalAlignment="Stretch">
+                                            x:Name="ThemesButton"
+                                            Style="{StaticResource TagInputButtonStyle}"
+                                            Command="{Binding OpenThemesPopupCommand}"
+                                            HorizontalContentAlignment="Stretch"
+                                            HorizontalAlignment="Stretch">
                                         <ItemsControl ItemsSource="{Binding SelectedThemes}"
-                      HorizontalAlignment="Stretch">
+                                                      HorizontalAlignment="Stretch">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel Orientation="Horizontal"/>
@@ -741,8 +743,8 @@
                                     </Button>
 
                                     <Popup IsOpen="{Binding IsThemesPopupOpen}"
-           PlacementTarget="{Binding ElementName=ThemesButton}"
-           Placement="Bottom" StaysOpen="False" Width="320">
+                                           PlacementTarget="{Binding ElementName=ThemesButton}"
+                                           Placement="Bottom" StaysOpen="False" Width="320">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -779,9 +781,9 @@
                                                                         </Grid.ColumnDefinitions>
                                                                         <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
                                                                         <Button Grid.Column="1"
-                                                Style="{StaticResource TagRemoveButtonStyle}"
-                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveThemeCommand}"
-                                                CommandParameter="{Binding}"/>
+                                                                                Style="{StaticResource TagRemoveButtonStyle}"
+                                                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveThemeCommand}"
+                                                                                CommandParameter="{Binding}"/>
                                                                     </Grid>
                                                                 </Border>
                                                             </DataTemplate>
@@ -790,13 +792,13 @@
                                                 </WrapPanel>
 
                                                 <TextBox Grid.Row="1" 
-                         Text="{Binding ThemesSearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource PopupSearchBoxStyle}"
-                         Margin="8,8,8,0"/>
+                                                         Text="{Binding ThemesSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource PopupSearchBoxStyle}"
+                                                         Margin="8,8,8,0"/>
 
                                                 <ScrollViewer Grid.Row="2" 
-                              Margin="8,8,8,0" 
-                              VerticalScrollBarVisibility="Auto">
+                                                              Margin="8,8,8,0" 
+                                                              VerticalScrollBarVisibility="Auto">
                                                     <ItemsControl ItemsSource="{Binding FilteredThemes}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
@@ -806,7 +808,7 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" Tag="{Binding}">
                                                                     <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
                                                                 </Border>
                                                             </DataTemplate>
@@ -814,22 +816,20 @@
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
-                                                <!-- Nút Create New - Dùng converter mới -->
                                                 <Border Grid.Row="3" 
-                        Style="{StaticResource PopupCreateNewStyle}"
-                        Visibility="{Binding ThemesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
-                        MouseLeftButtonUp="CreateNewTheme_MouseLeftButtonUp">
+                                                        Style="{StaticResource PopupCreateNewStyle}"
+                                                        Visibility="{Binding ThemesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                                        MouseLeftButtonUp="CreateNewTheme_MouseLeftButtonUp">
                                                     <TextBlock Text="{Binding CreateNewThemeText}" 
-                               FontSize="13" 
-                               Foreground="#FF88BA" 
-                               Margin="10,0" 
-                               VerticalAlignment="Center"/>
+                                                               FontSize="13" 
+                                                               Foreground="#FF88BA" 
+                                                               Margin="10,0" 
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                 </Grid>
-
                             </StackPanel>
                         </Border>
 
@@ -850,7 +850,8 @@
                                                 Width="12" 
                                                 Height="12" 
                                                 Margin="2,-2,0,0" 
-                                                VerticalAlignment="Top">
+                                                VerticalAlignment="Top"
+                                                Visibility="{Binding HasSlugName, Converter={StaticResource BoolToVis}}">
                                             <Image Source="/Assets/Question.png" 
                                                    Width="12" 
                                                    Height="12" 
@@ -943,17 +944,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="2" Content="Has launch process" IsChecked="{Binding HasInitExeName}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </Grid>
 
-                            <Grid Margin="0,0,0,12">
+                            <Grid Margin="0,0,0,12" Visibility="{Binding HasInitExeName, Converter={StaticResource BoolToVis}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Start Game Process" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBlock Text="Launch Game Process" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
 
