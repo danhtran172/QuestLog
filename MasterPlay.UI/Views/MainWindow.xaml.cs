@@ -71,12 +71,24 @@ namespace MasterPlay.UI
 
         private void PrevPageButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel?.GoToPreviousPage();
+            if (_viewModel == null) return;
+            _viewModel.GoToPreviousPage();
+            // Cuộn lên đầu trang
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                GamesScrollViewer?.ScrollToTop();
+            }));
         }
 
         private void NextPageButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel?.GoToNextPage();
+            if (_viewModel == null) return;
+            _viewModel.GoToNextPage();
+            // Cuộn lên đầu trang
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                GamesScrollViewer?.ScrollToTop();
+            }));
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)

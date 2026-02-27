@@ -16,35 +16,36 @@
         </Grid.RowDefinitions>
 
         <!-- ==================== HEADER ==================== -->
-<Grid Grid.Row="0">
-    <Image Source="{Binding PreviewImage}"
-           Stretch="UniformToFill"
-           HorizontalAlignment="Center"
-           VerticalAlignment="Center"/>
-    <Border Background="#A0000000">
-        <Grid Margin="30,0,30,30" VerticalAlignment="Bottom">
-            <TextBlock Text="{Binding Game.Name}"
-                       FontSize="42"
-                       FontWeight="ExtraBold"
-                       Foreground="White"
-                       TextWrapping="Wrap"
-                       MaxWidth="750">
-                <TextBlock.Effect>
-                    <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.7"/>
-                </TextBlock.Effect>
-            </TextBlock>
+        <Grid Grid.Row="0">
+            <Image Source="{Binding PreviewImage}"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+            <Border Background="#A0000000">
+                <Grid Margin="30,0,30,30" VerticalAlignment="Bottom">
+                    <TextBlock Text="{Binding Game.Name}"
+                               FontSize="42"
+                               FontWeight="ExtraBold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               MaxWidth="750">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.7"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                </Grid>
+            </Border>
+            <Button Style="{StaticResource IconButtonStyle}"
+                    Background="#3291B6"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="25"
+                    Command="{Binding ToggleEditModeCommand}"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Button>
         </Grid>
-    </Border>
-    <Button Style="{StaticResource IconButtonStyle}"
-            Background="#3291B6"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-            Margin="25"
-            Command="{Binding ToggleEditModeCommand}"
-            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-        <Image Source="/Assets/Edit.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
-    </Button>
-</Grid>
+
         <!-- ==================== MAIN CONTENT ==================== -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="24,16,24,40">
@@ -56,46 +57,41 @@
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Score bên trái -->
                             <ColumnDefinition Width="*"/>
-                            <!-- Khoảng trống giữa -->
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Playtime bên phải -->
                         </Grid.ColumnDefinitions>
 
                         <!-- Score (bên trái) -->
                         <StackPanel Grid.Column="0"
-                Orientation="Horizontal"
-                VerticalAlignment="Center"
-                Visibility="{Binding HasScore, Converter={StaticResource BoolToVis}}">
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding HasScore, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="Score"
-                   FontSize="18"
-                   FontWeight="SemiBold"
-                   VerticalAlignment="Center"/>
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding DisplayScore}"
-                   FontSize="18"
-                   FontWeight="Normal"
-                   Margin="8,0,0,0"
-                   VerticalAlignment="Center"/>
+                                       FontSize="18"
+                                       FontWeight="Normal"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <!-- Playtime (bên phải, ép thẳng baseline) -->
+                        <!-- Playtime (bên phải) -->
                         <StackPanel Grid.Column="2"
-                Orientation="Horizontal"
-                VerticalAlignment="Center">
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
                             <TextBlock Text="Playtime"
-                   Style="{StaticResource FieldLabelStyle}"
-                   VerticalAlignment="Center"
-                   Margin="0,1,0,0"/>
-                            <!-- +1px nếu label Playtime thấp hơn Score -->
-
+                                       Style="{StaticResource FieldLabelStyle}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,1,0,0"/>
                             <TextBlock Text="{Binding DisplayPlayTime}"
-                   Style="{StaticResource ValueTextStyleNormal}"
-                   Margin="8,0,8,0"
-                   FontSize="13"
-                   FontWeight="Normal"
-                   Foreground="#2C3E50"
-                   VerticalAlignment="Center"/>
+                                       Style="{StaticResource ValueTextStyleNormal}"
+                                       Margin="8,0,8,0"
+                                       FontSize="13"
+                                       FontWeight="Normal"
+                                       Foreground="#2C3E50"
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
 
@@ -189,32 +185,31 @@
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
-                                        Command="{Binding CheckMetaScoreCommand}" 
-                                        ToolTip="Check MetaScore"
-                                        Width="12" 
-                                        Height="12" 
-                                        Margin="2,-2,0,0" 
-                                        VerticalAlignment="Top">
-                                        <Image Source="/Assets/Question.png" 
-                                        Width="12" 
-                                        Height="12" 
-                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                Command="{Binding CheckMetaScoreCommand}" 
+                                                ToolTip="Check MetaScore"
+                                                Width="12" 
+                                                Height="12" 
+                                                Margin="2,-2,0,0" 
+                                                VerticalAlignment="Top">
+                                            <Image Source="/Assets/Question.png" 
+                                                   Width="12" 
+                                                   Height="12" 
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
-
                                     <Border Grid.Column="1"
-                                    Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                    CornerRadius="4"
-                                    Padding="6,2"
-                                    HorizontalAlignment="Left">
+                                            Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayMetaScore}"
-                                   Foreground="#2C3E50"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Left"
-                                   TextAlignment="Left"
-                                   Padding="4,0"
-                                   Background="Transparent"
-                                   FontWeight="Bold"/>
+                                                   Foreground="#2C3E50"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Left"
+                                                   TextAlignment="Left"
+                                                   Padding="4,0"
+                                                   Background="Transparent"
+                                                   FontWeight="Bold"/>
                                     </Border>
                                 </Grid>
                                 <!-- Avg Playtime -->
@@ -223,29 +218,26 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
-                                         
-                                        Command="{Binding CheckPlayTimeCommand}" 
-                                        ToolTip="Check Playtime"
-                                        Width="12" 
-                                        Height="12" 
-                                        Margin="2,-2,0,0" 
-                                        VerticalAlignment="Top">
+                                                Command="{Binding CheckPlayTimeCommand}" 
+                                                ToolTip="Check Playtime"
+                                                Width="12" 
+                                                Height="12" 
+                                                Margin="2,-2,0,0" 
+                                                VerticalAlignment="Top">
                                             <Image Source="/Assets/Question.png" 
-                                       Width="12" 
-                                       Height="12" 
-                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                   Width="12" 
+                                                   Height="12" 
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
-
                                     <TextBlock Grid.Column="1" 
-                                       Text="{Binding DisplayAvgPlayTime}" 
-                                       Style="{StaticResource ValueTextStyle}" 
-                                       FontWeight="Normal" 
-                                       FontSize="13"/>
+                                               Text="{Binding DisplayAvgPlayTime}" 
+                                               Style="{StaticResource ValueTextStyle}" 
+                                               FontWeight="Normal" 
+                                               FontSize="13"/>
                                 </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,12">
@@ -264,20 +256,19 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <Border Grid.Column="1"
-                                    Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
-                                    CornerRadius="4"
-                                    Padding="2,2"
-                                    HorizontalAlignment="Left">
+                                            Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                            CornerRadius="4"
+                                            Padding="2,2"
+                                            HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayOwnership}"
-                                   Foreground="#2C3E50"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Left"
-                                   TextAlignment="Left"
-                                   Padding="4,0"
-                                   Background="Transparent"/>
+                                                   Foreground="#2C3E50"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Left"
+                                                   TextAlignment="Left"
+                                                   Padding="4,0"
+                                                   Background="Transparent"/>
                                     </Border>
                                 </Grid>
-
                                 <!-- Play Progress -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
@@ -286,20 +277,19 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <Border Grid.Column="1"
-                                    Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
-                                    CornerRadius="4"
-                                    Padding="2,2"
-                                    HorizontalAlignment="Left">
+                                            Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                            CornerRadius="4"
+                                            Padding="2,2"
+                                            HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding DisplayProgress}"
-                                    Foreground="#2C3E50"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    TextAlignment="Left"
-                                    Padding="4,0"
-                                    Background="Transparent"/>
+                                                   Foreground="#2C3E50"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Left"
+                                                   TextAlignment="Left"
+                                                   Padding="4,0"
+                                                   Background="Transparent"/>
                                     </Border>
                                 </Grid>
-                                
                                 <!-- Finish Year -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -343,9 +333,9 @@
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplaySaveFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                    Command="{Binding OpenSaveFolderCommand}"
-                    IsEnabled="{Binding SaveFolderAccessible}"
-                    Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                                        Command="{Binding OpenSaveFolderCommand}"
+                                        IsEnabled="{Binding SaveFolderAccessible}"
+                                        Opacity="{Binding SaveFolderAccessible, Converter={StaticResource BoolToOpacity}}">
                                     <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -359,9 +349,9 @@
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                    Command="{Binding OpenBackupFolderCommand}"
-                    IsEnabled="{Binding BackupFolderAccessible}"
-                    Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
+                                        Command="{Binding OpenBackupFolderCommand}"
+                                        IsEnabled="{Binding BackupFolderAccessible}"
+                                        Opacity="{Binding BackupFolderAccessible, Converter={StaticResource BoolToOpacity}}">
                                     <Image Source="/Assets/OpenFolder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -385,14 +375,14 @@
                                 <TextBlock Grid.Column="0" Text="Game Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Margin="10,0,0,0"
-                    Background="#6FA4AF" Command="{Binding SyncCommand}"
-                    ToolTip="Sync Game Data">
+                                        Background="#6FA4AF" Command="{Binding SyncCommand}"
+                                        ToolTip="Sync Game Data">
                                     <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
 
-                            <!-- Hàng 2: Score (đúng vị trí mày muốn) -->
+                            <!-- Hàng 2: Score -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -401,7 +391,6 @@
                                 <TextBlock Grid.Column="0" Text="Score" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBox Width="80" HorizontalContentAlignment="Center" Text="{Binding Game.Score, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
-                            
                                 </StackPanel>
                             </Grid>
 
@@ -423,14 +412,14 @@
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
-                            Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
-                            Width="20" Height="20">
+                                                Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
+                                                Width="20" Height="20">
                                             <Image Source="/Assets/Minus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                         <TextBox Width="55" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
-                            Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
-                            Width="20" Height="20">
+                                                Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
+                                                Width="20" Height="20">
                                             <Image Source="/Assets/Plus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
@@ -439,14 +428,14 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- [Edit Mode] Khung 1 -->
+                    <!-- [Edit Mode] Khung 1 - Thông tin chính với CHIPS (đã sửa lỗi) -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1.9*"/>
                             <ColumnDefinition Width="1.1*"/>
                         </Grid.ColumnDefinitions>
 
-                        
+                        <!-- Cột trái - Thông tin cơ bản và CHIPS -->
                         <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="8" Padding="15" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
                             <StackPanel>
                                 <!-- Publish Date -->
@@ -456,9 +445,10 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding PublishDateInput, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:yyyy-MM-dd}}" 
-                             Height="28" Padding="8,4"/>
+                                    <TextBox Grid.Column="1" Text="{Binding PublishDateInput, UpdateSourceTrigger=PropertyChanged}" 
+                                             Height="28" Padding="8,4"/>
                                 </Grid>
+
                                 <!-- Publisher -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
@@ -467,8 +457,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Game.Publisher, UpdateSourceTrigger=PropertyChanged}" 
-                             Height="28" Padding="8,4"/>
+                                             Height="28" Padding="8,4"/>
                                 </Grid>
+
                                 <!-- Developer -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
@@ -477,42 +468,372 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Game.Developer, UpdateSourceTrigger=PropertyChanged}" 
-                             Height="28" Padding="8,4"/>
+                                             Height="28" Padding="8,4"/>
                                 </Grid>
-                                <!-- Series -->
+
+                                <!-- SERIES -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Series, UpdateSourceTrigger=PropertyChanged}" 
-                             Height="28" Padding="8,4"/>
+                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+
+                                    <Button Grid.Column="1"
+                                        x:Name="SeriesButton"
+                                        Style="{StaticResource TagInputButtonStyle}"
+                                        Command="{Binding OpenSeriesPopupCommand}"
+                                        HorizontalContentAlignment="Stretch"
+                                        HorizontalAlignment="Stretch">
+                                        <WrapPanel x:Name="SeriesWrapPanel">
+                                            <WrapPanel.Style>
+                                                <Style TargetType="WrapPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedSeries}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedSeries}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </WrapPanel.Style>
+                                            <Border Style="{StaticResource TagChipStyle}">
+                                                <TextBlock Text="{Binding SelectedSeries}" Foreground="#2C3E50" FontSize="13"/>
+                                            </Border>
+                                        </WrapPanel>
+                                    </Button>
+
+                                    <Popup IsOpen="{Binding IsSeriesPopupOpen}"
+                                       PlacementTarget="{Binding ElementName=SeriesButton}"
+                                       Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
+                                       PopupAnimation="Slide" Width="320">
+                                        <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
+                                            <Grid MinHeight="300" MaxHeight="400">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Chip đã chọn - SỬA DÙNG DATATRIGGER THAY VÌ CONVERTER -->
+                                                <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedSeriesPanel">
+                                                    <WrapPanel.Style>
+                                                        <Style TargetType="WrapPanel">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedSeries}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding SelectedSeries}" Value="">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </WrapPanel.Style>
+                                                    <Border Style="{StaticResource TagChipStyle}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding SelectedSeries}" Foreground="#2C3E50" FontSize="13"/>
+                                                            <Button Grid.Column="1"
+                                    Style="{StaticResource TagRemoveButtonStyle}"
+                                    Command="{Binding RemoveSelectedSeriesCommand}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </WrapPanel>
+
+                                                <TextBox Grid.Row="1" 
+                         Text="{Binding SeriesSearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource PopupSearchBoxStyle}"
+                         Margin="8,8,8,0"/>
+
+                                                <ScrollViewer Grid.Row="2" 
+                              Margin="8,8,8,0" 
+                              VerticalScrollBarVisibility="Auto">
+                                                    <ItemsControl ItemsSource="{Binding FilteredSeries}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
+                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </ScrollViewer>
+
+                                                <!-- Nút Create New - Dùng converter mới (đã sửa) -->
+                                                <Border Grid.Row="3" 
+                        Style="{StaticResource PopupCreateNewStyle}"
+                        Visibility="{Binding SeriesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                        MouseLeftButtonUp="CreateNewSeries_MouseLeftButtonUp">
+                                                    <TextBlock Text="{Binding CreateNewSeriesText}" 
+                               FontSize="13" 
+                               Foreground="#FF88BA" 
+                               Margin="10,0" 
+                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Popup>
                                 </Grid>
-                                <!-- Genre -->
+
+                                <!-- GENRE -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Genre, UpdateSourceTrigger=PropertyChanged}" 
-                             Height="28" Padding="8,4"/>
+                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+
+                                    <Button Grid.Column="1"
+            x:Name="GenresButton"
+            Style="{StaticResource TagInputButtonStyle}"
+            Command="{Binding OpenGenresPopupCommand}"
+            HorizontalContentAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+                                        <ItemsControl ItemsSource="{Binding SelectedGenres}"
+                      HorizontalAlignment="Stretch">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource TagChipStyle}">
+                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Button>
+
+                                    <Popup IsOpen="{Binding IsGenresPopupOpen}"
+           PlacementTarget="{Binding ElementName=GenresButton}"
+           Placement="Bottom" StaysOpen="False" Width="320">
+                                        <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
+                                            <Grid MinHeight="300" MaxHeight="400">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedGenresPanel">
+                                                    <WrapPanel.Style>
+                                                        <Style TargetType="WrapPanel">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedGenres.Count}" Value="0">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </WrapPanel.Style>
+                                                    <ItemsControl ItemsSource="{Binding SelectedGenres}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource TagChipStyle}">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                                        <Button Grid.Column="1"
+                                                Style="{StaticResource TagRemoveButtonStyle}"
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveGenreCommand}"
+                                                CommandParameter="{Binding}"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </WrapPanel>
+
+                                                <TextBox Grid.Row="1" 
+                         Text="{Binding GenresSearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource PopupSearchBoxStyle}"
+                         Margin="8,8,8,0"/>
+
+                                                <ScrollViewer Grid.Row="2" 
+                              Margin="8,8,8,0" 
+                              VerticalScrollBarVisibility="Auto">
+                                                    <ItemsControl ItemsSource="{Binding FilteredGenres}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
+                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </ScrollViewer>
+
+                                                <!-- Nút Create New - Dùng converter mới -->
+                                                <Border Grid.Row="3" 
+                        Style="{StaticResource PopupCreateNewStyle}"
+                        Visibility="{Binding GenresSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                        MouseLeftButtonUp="CreateNewGenre_MouseLeftButtonUp">
+                                                    <TextBlock Text="{Binding CreateNewGenreText}" 
+                               FontSize="13" 
+                               Foreground="#FF88BA" 
+                               Margin="10,0" 
+                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Popup>
                                 </Grid>
-                                <!-- Theme-->
+
+                                <!-- THEME -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Theme, UpdateSourceTrigger=PropertyChanged}" 
-                             Height="28" Padding="8,4"/>
+                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+
+                                    <Button Grid.Column="1"
+            x:Name="ThemesButton"
+            Style="{StaticResource TagInputButtonStyle}"
+            Command="{Binding OpenThemesPopupCommand}"
+            HorizontalContentAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+                                        <ItemsControl ItemsSource="{Binding SelectedThemes}"
+                      HorizontalAlignment="Stretch">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource TagChipStyle}">
+                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Button>
+
+                                    <Popup IsOpen="{Binding IsThemesPopupOpen}"
+           PlacementTarget="{Binding ElementName=ThemesButton}"
+           Placement="Bottom" StaysOpen="False" Width="320">
+                                        <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
+                                            <Grid MinHeight="300" MaxHeight="400">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedThemesPanel">
+                                                    <WrapPanel.Style>
+                                                        <Style TargetType="WrapPanel">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedThemes.Count}" Value="0">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </WrapPanel.Style>
+                                                    <ItemsControl ItemsSource="{Binding SelectedThemes}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource TagChipStyle}">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                                        <Button Grid.Column="1"
+                                                Style="{StaticResource TagRemoveButtonStyle}"
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveThemeCommand}"
+                                                CommandParameter="{Binding}"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </WrapPanel>
+
+                                                <TextBox Grid.Row="1" 
+                         Text="{Binding ThemesSearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource PopupSearchBoxStyle}"
+                         Margin="8,8,8,0"/>
+
+                                                <ScrollViewer Grid.Row="2" 
+                              Margin="8,8,8,0" 
+                              VerticalScrollBarVisibility="Auto">
+                                                    <ItemsControl ItemsSource="{Binding FilteredThemes}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
+                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" Tag="{Binding}">
+                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </ScrollViewer>
+
+                                                <!-- Nút Create New - Dùng converter mới -->
+                                                <Border Grid.Row="3" 
+                        Style="{StaticResource PopupCreateNewStyle}"
+                        Visibility="{Binding ThemesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                        MouseLeftButtonUp="CreateNewTheme_MouseLeftButtonUp">
+                                                    <TextBlock Text="{Binding CreateNewThemeText}" 
+                               FontSize="13" 
+                               Foreground="#FF88BA" 
+                               Margin="10,0" 
+                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Popup>
                                 </Grid>
+
                             </StackPanel>
                         </Border>
 
-                        <!-- [Edit Mode] Khung 2 -->
+                        <!-- [Edit Mode] Khung 2 - Giữ nguyên -->
                         <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
                             <StackPanel>
                                 <!-- MetaScore -->
@@ -524,20 +845,20 @@
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
-                                        Command="{Binding CheckMetaScoreCommand}" 
-                                        ToolTip="Check MetaScore"
-                                        Width="12" 
-                                        Height="12" 
-                                        Margin="2,-2,0,0" 
-                                        VerticalAlignment="Top">
-                                         <Image Source="/Assets/Question.png" 
-                                        Width="12" 
-                                        Height="12" 
-                                        RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                Command="{Binding CheckMetaScoreCommand}" 
+                                                ToolTip="Check MetaScore"
+                                                Width="12" 
+                                                Height="12" 
+                                                Margin="2,-2,0,0" 
+                                                VerticalAlignment="Top">
+                                            <Image Source="/Assets/Question.png" 
+                                                   Width="12" 
+                                                   Height="12" 
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
                                     <TextBox Grid.Column="1" Text="{Binding Game.MetaScore, UpdateSourceTrigger=PropertyChanged}" 
-                             HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
+                                             HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
                                 <!-- Avg Runtime -->
                                 <Grid Margin="0,0,0,12">
@@ -545,25 +866,23 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}" 
-                 
-                Command="{Binding CheckPlayTimeCommand}" 
-                ToolTip="Check Playtime"
-                Width="12" 
-                Height="12" 
-                Margin="2,-2,0,0" 
-                VerticalAlignment="Top">
+                                                Command="{Binding CheckPlayTimeCommand}" 
+                                                ToolTip="Check Playtime"
+                                                Width="12" 
+                                                Height="12" 
+                                                Margin="2,-2,0,0" 
+                                                VerticalAlignment="Top">
                                             <Image Source="/Assets/Question.png" 
-               Width="12" 
-               Height="12" 
-               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                   Width="12" 
+                                                   Height="12" 
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
                                     <TextBox Grid.Column="1" Text="{Binding AvgPlaytime, UpdateSourceTrigger=PropertyChanged}" 
-                                HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
+                                             HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,12">
@@ -573,7 +892,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Game.Excited, UpdateSourceTrigger=PropertyChanged}" 
-                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
+                                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
                                 </Grid>
                                 <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
@@ -583,11 +902,11 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-              ItemsSource="{Binding Selections.Ownership}"
-              SelectedItem="{Binding Game.Ownership}"
-              Style="{StaticResource SimpleSelectionBoxStyle}"
-              Height="28"
-              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
+                                              ItemsSource="{Binding Selections.Ownership}"
+                                              SelectedItem="{Binding Game.Ownership}"
+                                              Style="{StaticResource SimpleSelectionBoxStyle}"
+                                              Height="28"
+                                              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
                                 </Grid>
                                 <!-- Progress -->
                                 <Grid Margin="0,0,0,12">
@@ -597,11 +916,11 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-              ItemsSource="{Binding Selections.Progress}"
-              SelectedItem="{Binding Game.Progress}"
-              Style="{StaticResource SimpleSelectionBoxStyle}"
-              Height="28"
-              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
+                                              ItemsSource="{Binding Selections.Progress}"
+                                              SelectedItem="{Binding Game.Progress}"
+                                              Style="{StaticResource SimpleSelectionBoxStyle}"
+                                              Height="28"
+                                              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
                                 </Grid>
                                 <!-- Finished Year -->
                                 <Grid>
@@ -611,13 +930,13 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Game.FinishedIn, UpdateSourceTrigger=PropertyChanged}" 
-                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="FinishedIn_PreviewTextInput"/>
+                                             HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="FinishedIn_PreviewTextInput"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <!-- [Edit Mode] Khung 3 -->
+                    <!-- [Edit Mode] Khung 3 - Giữ nguyên -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
@@ -647,7 +966,7 @@
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                                    Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
+                                        Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -661,7 +980,7 @@
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
-                                    Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
+                                        Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -675,11 +994,11 @@
                                 <TextBlock Text="Cover Image URL" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
-                    Style="{StaticResource IconButtonStyle}"
-                    Background="#6FA4AF"
-                    Margin="15,0,0,0"
-                    Command="{Binding SyncImageCommand}"
-                    ToolTip="Refresh preview image">
+                                        Style="{StaticResource IconButtonStyle}"
+                                        Background="#6FA4AF"
+                                        Margin="15,0,0,0"
+                                        Command="{Binding SyncImageCommand}"
+                                        ToolTip="Refresh preview image">
                                     <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -693,29 +1012,24 @@
                                 <TextBlock Text="Gallery Image Path" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Game.GImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
-                    Style="{StaticResource IconButtonStyle}"
-                    Background="#6FA4AF"
-                    Margin="15,0,0,0"
-                    Command="{Binding SyncImageCommand}"
-                    ToolTip="Refresh gallery preview image">
+                                        Style="{StaticResource IconButtonStyle}"
+                                        Background="#6FA4AF"
+                                        Margin="15,0,0,0"
+                                        Command="{Binding SyncImageCommand}"
+                                        ToolTip="Refresh gallery preview image">
                                     <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
 
                             <Grid>
-                  
-                                <Border
-                                    Width="460"
-                                    Height="215"
-                                    HorizontalAlignment="Center"
-                                    SnapsToDevicePixels="True"
-                                    RenderOptions.BitmapScalingMode="HighQuality">
+                                <Border Width="460" Height="215" HorizontalAlignment="Center"
+                                        SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
                                     <Border.Effect>
                                         <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.14"/>
                                     </Border.Effect>
                                     <Border.Background>
                                         <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
-                                Stretch="UniformToFill"/>
+                                                    Stretch="UniformToFill"/>
                                     </Border.Background>
                                 </Border>
                             </Grid>
@@ -727,83 +1041,82 @@
 
         <!-- ==================== FOOTER ==================== -->
         <Border Grid.Row="2" 
-        Padding="20,15" 
-        BorderBrush="#F5F5F5" 
-        BorderThickness="0,1,0,0" 
-        Background="#FAFAFA">
-            <!-- Thêm DropShadowEffect nhẹ để tạo cảm giác nổi lên -->
+                Padding="20,15" 
+                BorderBrush="#F5F5F5" 
+                BorderThickness="0,1,0,0" 
+                Background="#FAFAFA">
             <Border.Effect>
                 <DropShadowEffect Color="Black" 
-                          Direction="315" 
-                          ShadowDepth="3" 
-                          BlurRadius="8" 
-                          Opacity="0.15"/>
+                                  Direction="315" 
+                                  ShadowDepth="3" 
+                                  BlurRadius="8" 
+                                  Opacity="0.15"/>
             </Border.Effect>
 
             <Grid>
                 <TextBlock Text="{Binding StatusMessage}" 
-                   Foreground="#E74C3C" 
-                   FontStyle="Italic" 
-                   FontSize="11" 
-                   VerticalAlignment="Center" 
-                   Margin="50,0,0,0"/>
+                           Foreground="#E74C3C" 
+                           FontStyle="Italic" 
+                           FontSize="11" 
+                           VerticalAlignment="Center" 
+                           Margin="50,0,0,0"/>
 
                 <Button Style="{StaticResource IconButtonStyle}" 
-                Background="#A94A4A" 
-                HorizontalAlignment="Left"
-                Command="{Binding DeleteGameCommand}" 
-                ToolTip="Disable Game"
-                Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                        Background="#A94A4A" 
+                        HorizontalAlignment="Left"
+                        Command="{Binding DeleteGameCommand}" 
+                        ToolTip="Disable Game"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
                     <Image Source="/Assets/Delete.png" 
-                   Width="20" 
-                   Height="20" 
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                           Width="20" 
+                           Height="20" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
 
                 <Button Style="{StaticResource IconButtonStyle}"
-                Background="#DDAED3" 
-                HorizontalAlignment="Left"
-                Command="{Binding FinishGameCommand}"
-                ToolTip="Mark as Finished"
-                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                        Background="#DDAED3" 
+                        HorizontalAlignment="Left"
+                        Command="{Binding FinishGameCommand}"
+                        ToolTip="Mark as Finished"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
                     <Image Source="/Assets/Finish.png" 
-                   Width="20" 
-                   Height="20" 
-                   Margin="0,2,2,0" 
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                           Width="20" 
+                           Height="20" 
+                           Margin="0,2,2,0" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
 
                 <StackPanel Orientation="Horizontal" 
-                    HorizontalAlignment="Right">
+                            HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal"
-                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
                         <Button Style="{StaticResource IconButtonStyle}"
-                        Background="#708A58"
-                        Command="{Binding SaveCommand}">
+                                Background="#708A58"
+                                Command="{Binding SaveCommand}">
                             <Image Source="/Assets/Save.png" 
-                           Width="20" 
-                           Height="20"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                   Width="20" 
+                                   Height="20"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}"
-                        Margin="12,0,0,0"
-                        Command="{Binding CancelCommand}">
+                                Margin="12,0,0,0"
+                                Command="{Binding CancelCommand}">
                             <Image Source="/Assets/Back3.png" 
-                           Width="20" 
-                           Height="20"
-                           Margin="0,0,0,0"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                   Width="20" 
+                                   Height="20"
+                                   Margin="0,0,0,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                     </StackPanel>
 
                     <Button Style="{StaticResource IconButtonStyle}"
-                    Margin="12,0,0,0"
-                    Command="{Binding CloseCommand}"
-                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
+                            Margin="12,0,0,0"
+                            Command="{Binding CloseCommand}"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
                         <Image Source="/Assets/Close.png" 
-                       Width="20" 
-                       Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                               Width="20" 
+                               Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>
             </Grid>

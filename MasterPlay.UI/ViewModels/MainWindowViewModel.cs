@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Threading;
 
 namespace MasterPlay.UI.ViewModels
 {
@@ -13,7 +12,6 @@ namespace MasterPlay.UI.ViewModels
     {
         #region Constants
 
-        // Change default items per page here
         private const int DefaultPageSize = 30;
 
         #endregion
@@ -48,6 +46,37 @@ namespace MasterPlay.UI.ViewModels
 
         #endregion
 
+        #region Mode Properties
+
+        public bool IsAllMode => string.Equals(_viewMode, "All", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsPlanMode => string.Equals(_viewMode, "Plan", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsFinishMode => string.Equals(_viewMode, "Finish", StringComparison.OrdinalIgnoreCase);
+
+        #endregion
+
+        #region Additional Info Properties
+
+        public bool ShouldShowSeries => SearchBy == "Series";
+
+        public bool ShouldShowDeveloper => SearchBy == "Developer";
+
+        public bool ShouldShowPublisher => SearchBy == "Publisher" && !IsAllMode;
+
+        public bool ShouldShowPlaytime => SortIndex == 3 && !IsAllMode;
+
+        public bool ShouldShowExcited => SortIndex == 6 && !IsPlanMode;
+
+        public bool ShouldShowScore => SortIndex == 7 && !IsFinishMode;
+
+        public bool ShouldShowOwnership => SortIndex == 8 && !IsPlanMode;
+
+        // AvgPlaytime: chỉ hiển thị khi sort theo avg playtime và không phải Finish mode (vì Finish đã có sẵn)
+        public bool ShouldShowAvgPlaytime => SortIndex == 10 && !IsFinishMode;
+
+        #endregion
+
         #region Filter Properties
 
         public string SearchText
@@ -59,19 +88,51 @@ namespace MasterPlay.UI.ViewModels
         public string ViewMode
         {
             get => _viewMode;
-            private set => SetProperty(ref _viewMode, value ?? "All");
+            private set
+            {
+                if (SetProperty(ref _viewMode, value ?? "All"))
+                {
+                    OnPropertyChanged(nameof(IsAllMode));
+                    OnPropertyChanged(nameof(IsPlanMode));
+                    OnPropertyChanged(nameof(IsFinishMode));
+                    OnPropertyChanged(nameof(ShouldShowPublisher));
+                    OnPropertyChanged(nameof(ShouldShowPlaytime));
+                    OnPropertyChanged(nameof(ShouldShowExcited));
+                    OnPropertyChanged(nameof(ShouldShowScore));
+                    OnPropertyChanged(nameof(ShouldShowOwnership));
+                    OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
+                }
+            }
         }
 
         public string SearchBy
         {
             get => _searchBy;
-            private set => SetProperty(ref _searchBy, value ?? "All");
+            private set
+            {
+                if (SetProperty(ref _searchBy, value ?? "All"))
+                {
+                    OnPropertyChanged(nameof(ShouldShowSeries));
+                    OnPropertyChanged(nameof(ShouldShowDeveloper));
+                    OnPropertyChanged(nameof(ShouldShowPublisher));
+                }
+            }
         }
 
         public int SortIndex
         {
             get => _sortIndex;
-            private set => SetProperty(ref _sortIndex, value);
+            private set
+            {
+                if (SetProperty(ref _sortIndex, value))
+                {
+                    OnPropertyChanged(nameof(ShouldShowPlaytime));
+                    OnPropertyChanged(nameof(ShouldShowExcited));
+                    OnPropertyChanged(nameof(ShouldShowScore));
+                    OnPropertyChanged(nameof(ShouldShowOwnership));
+                    OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
+                }
+            }
         }
 
         #endregion
@@ -177,6 +238,17 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(ViewMode));
             OnPropertyChanged(nameof(SearchBy));
             OnPropertyChanged(nameof(SortIndex));
+            OnPropertyChanged(nameof(IsAllMode));
+            OnPropertyChanged(nameof(IsPlanMode));
+            OnPropertyChanged(nameof(IsFinishMode));
+            OnPropertyChanged(nameof(ShouldShowSeries));
+            OnPropertyChanged(nameof(ShouldShowDeveloper));
+            OnPropertyChanged(nameof(ShouldShowPublisher));
+            OnPropertyChanged(nameof(ShouldShowPlaytime));
+            OnPropertyChanged(nameof(ShouldShowExcited));
+            OnPropertyChanged(nameof(ShouldShowScore));
+            OnPropertyChanged(nameof(ShouldShowOwnership));
+            OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
 
             NotifyPaginationStateChanged();
         }
@@ -187,14 +259,14 @@ namespace MasterPlay.UI.ViewModels
 
             if (applyImmediately)
             {
-                ApplyFilterAndSort(resetToFirstPage: true);
+                ApplyFilterAndSort(true);
             }
         }
 
         public void SetViewMode(string viewMode)
         {
             ViewMode = string.IsNullOrWhiteSpace(viewMode) ? "All" : viewMode;
-            ApplyFilterAndSort(resetToFirstPage: true);
+            ApplyFilterAndSort(true);
         }
 
         public void SetSearchBy(string searchBy)
@@ -203,7 +275,7 @@ namespace MasterPlay.UI.ViewModels
 
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                ApplyFilterAndSort(resetToFirstPage: true);
+                ApplyFilterAndSort(true);
             }
         }
 
@@ -215,7 +287,7 @@ namespace MasterPlay.UI.ViewModels
             }
 
             SortIndex = sortIndex;
-            ApplyFilterAndSort(resetToFirstPage: true);
+            ApplyFilterAndSort(true);
         }
 
         public void SetPageSize(int pageSize)
@@ -239,9 +311,7 @@ namespace MasterPlay.UI.ViewModels
         public void GoToPreviousPage()
         {
             if (!CanGoPrev)
-            {
                 return;
-            }
 
             _currentPage--;
             RefreshCurrentPageItems();
@@ -250,9 +320,7 @@ namespace MasterPlay.UI.ViewModels
         public void GoToNextPage()
         {
             if (!CanGoNext)
-            {
                 return;
-            }
 
             _currentPage++;
             RefreshCurrentPageItems();
@@ -281,38 +349,45 @@ namespace MasterPlay.UI.ViewModels
         private IQueryable<GameViewModel> ApplySearchFilter(IQueryable<GameViewModel> source)
         {
             if (string.IsNullOrWhiteSpace(_searchText))
-            {
                 return source;
-            }
 
             string s = _searchText.Trim().ToLowerInvariant();
 
             return _searchBy switch
             {
-                "Name" => source.Where(vm => (vm.Game.Name ?? string.Empty).ToLower().Contains(s)),
+                "Name" => source.Where(vm =>
+                    (vm.Game.Name ?? "").ToLower().Contains(s) ||
+                    MatchesInitials(vm.Game.Name ?? "", s)),
 
-                "Series" => source.Where(vm => (vm.Game.Series ?? string.Empty).ToLower().Contains(s)),
+                "Series" => source.Where(vm =>
+                    (vm.Game.Series ?? "").ToLower().Contains(s) ||
+                    MatchesInitials(vm.Game.Series ?? "", s)),
 
-                "Publisher" => source.Where(vm => (vm.Game.Publisher ?? string.Empty).ToLower().Contains(s)),
+                "Publisher" => source.Where(vm =>
+                    (vm.Game.Publisher ?? "").ToLower().Contains(s) ||
+                    MatchesInitials(vm.Game.Publisher ?? "", s)),
 
-                "Developer" => source.Where(vm => (vm.Game.Developer ?? string.Empty).ToLower().Contains(s)),
+                "Developer" => source.Where(vm =>
+                    (vm.Game.Developer ?? "").ToLower().Contains(s) ||
+                    MatchesInitials(vm.Game.Developer ?? "", s)),
 
                 "Release" => ApplyReleaseYearSearch(source, s),
 
                 _ => source.Where(vm =>
-                    (vm.Game.Name ?? string.Empty).ToLower().Contains(s) ||
-                    (vm.Game.Series ?? string.Empty).ToLower().Contains(s))
+                    (vm.Game.Name ?? "").ToLower().Contains(s) ||
+                    (vm.Game.Series ?? "").ToLower().Contains(s) ||
+                    MatchesInitials(vm.Game.Name ?? "", s) ||
+                    MatchesInitials(vm.Game.Series ?? "", s))
             };
         }
 
         private IQueryable<GameViewModel> ApplyReleaseYearSearch(IQueryable<GameViewModel> source, string searchValue)
         {
             if (!int.TryParse(searchValue, out int year))
-            {
                 return source.Where(_ => false);
-            }
 
-            return source.Where(vm => vm.Game.PublishDate.HasValue && vm.Game.PublishDate.Value.Year == year);
+            return source.Where(vm => vm.Game.PublishDate.HasValue &&
+                                      vm.Game.PublishDate.Value.Year == year);
         }
 
         private IQueryable<GameViewModel> ApplySorting(IQueryable<GameViewModel> source)
@@ -326,30 +401,43 @@ namespace MasterPlay.UI.ViewModels
                            .ThenByDescending(vm => vm.Game.PublishDate)
                            .ThenBy(vm => vm.Game.Name),
 
-                2 => source.OrderBy(vm => vm.Game.Name)
-                           .ThenBy(vm => vm.Game.Ready)
-                           .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
-                           .ThenByDescending(vm => vm.Game.PublishDate),
+                2 => source.OrderBy(vm => vm.Game.Name),
 
-                3 => source.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds)
-                           .ThenBy(vm => vm.Game.Ready)
-                           .ThenBy(vm => vm.Game.Name)
-                           .ThenByDescending(vm => vm.Game.PublishDate),
+                3 => source.OrderByDescending(vm => vm.Game.TotalPlayTimeSeconds),
 
-                4 => source.OrderByDescending(vm => vm.Game.PublishDate)
-                           .ThenBy(vm => vm.Game.Name)
-                           .ThenBy(vm => vm.Game.Ready)
-                           .ThenBy(vm => vm.Game.TotalPlayTimeSeconds),
+                4 => source.OrderByDescending(vm => vm.Game.PublishDate),
 
-                5 => source.OrderByDescending(vm => vm.Game.MetaScore)
-                           .ThenBy(vm => vm.Game.Name)
-                           .ThenByDescending(vm => vm.Game.PublishDate),
+                5 => source.OrderByDescending(vm => vm.Game.MetaScore),
+
+                6 => source.OrderByDescending(vm => vm.Game.Excited),
+
+                7 => source.OrderByDescending(vm => vm.Game.Score),
+
+                8 => source.OrderBy(vm => vm.Game.Ownership),
+
+                9 => source.OrderBy(vm => vm.Game.Progress),
+
+                10 => source.OrderByDescending(vm => vm.Game.AvgPlayTime),
 
                 _ => source.OrderByDescending(vm => vm.Game.Ready)
-                           .ThenBy(vm => vm.Game.Name)
-                           .ThenBy(vm => vm.Game.TotalPlayTimeSeconds)
-                           .ThenBy(vm => vm.Game.PublishDate)
             };
+        }
+
+        #endregion
+
+        #region Private Helper Methods
+
+        private bool MatchesInitials(string text, string search)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(search))
+                return false;
+
+            var words = text.Split(new[] { ' ', '-', '_', '.' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0)
+                return false;
+
+            var initials = new string(words.Select(w => char.ToLowerInvariant(w[0])).ToArray());
+            return initials.Contains(search);
         }
 
         #endregion
@@ -359,15 +447,10 @@ namespace MasterPlay.UI.ViewModels
         private void ClampCurrentPage()
         {
             if (_currentPage < 1)
-            {
                 _currentPage = 1;
-            }
 
-            int totalPages = TotalPages;
-            if (_currentPage > totalPages)
-            {
-                _currentPage = totalPages;
-            }
+            if (_currentPage > TotalPages)
+                _currentPage = TotalPages;
         }
 
         private void NotifyPaginationStateChanged()
@@ -381,7 +464,7 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(PageInfoText));
             OnPropertyChanged(nameof(PaginationSummaryText));
         }
+
         #endregion
- 
     }
 }

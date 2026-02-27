@@ -4,12 +4,17 @@
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         Title="MasterPlay" Height="700" Width="920" WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <!-- ==================== INPUT BINDINGS ==================== -->
     <Window.InputBindings>
-        <KeyBinding Key="Escape" 
+        <KeyBinding Key="Escape"
                     Command="{Binding ToggleSettingsCommand}" />
     </Window.InputBindings>
 
+    <!-- ==================== ROOT ==================== -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -88,6 +93,11 @@
                         <ComboBoxItem Content="Playtime"/>
                         <ComboBoxItem Content="Publish"/>
                         <ComboBoxItem Content="MetaScore"/>
+                        <ComboBoxItem Content="Excited"/>
+                        <ComboBoxItem Content="Score"/>
+                        <ComboBoxItem Content="Ownership"/>
+                        <ComboBoxItem Content="Progress"/>
+                        <ComboBoxItem Content="AvgPlaytime"/>
                     </ComboBox>
 
                     <Button Style="{StaticResource IconButtonStyle}"
@@ -141,6 +151,7 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
+                                <!-- ==================== CARD IMAGE ==================== -->
                                 <Border Grid.Row="0"
                                         Height="126.2"
                                         CornerRadius="14,14,0,0"
@@ -148,124 +159,592 @@
                                         SnapsToDevicePixels="True">
                                     <Border.Background>
                                         <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
-                                                    Stretch="UniformToFill"/>
+                                                    Stretch="UniformToFill"
+                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
                                     </Border.Background>
                                 </Border>
 
+                                <!-- ==================== CARD CONTENT ==================== -->
                                 <Grid Grid.Row="1" Margin="14">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <!-- Title -->
                                         <RowDefinition Height="*"/>
-                                        <!-- Spacer (khoảng trống co giãn) -->
+                                        <!-- Spacer -->
                                         <RowDefinition Height="Auto"/>
-                                        <!-- Published + MetaScore -->
+                                        <!-- Mode content (All/Plan/Finish) -->
                                         <RowDefinition Height="Auto"/>
-                                        <!-- Publisher -->
-                                        <RowDefinition Height="Auto"/>
-                                        <!-- Playtime -->
-                                        <RowDefinition Height="Auto"/>
-                                        <!-- Progress -->
-                                        <RowDefinition Height="Auto"/>
-                                        <!-- Footer -->
+                                        <!-- Card footer -->
                                     </Grid.RowDefinitions>
 
-                                    <!-- Title -->
+                                    <!-- ==================== TITLE ==================== -->
                                     <TextBlock Grid.Row="0"
-                                       Text="{Binding DisplayName}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       TextWrapping="Wrap"
-                                       VerticalAlignment="Top"
-                                       Margin="0,0,0,12"/>
+                                               Text="{Binding DisplayName}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,0,15"/>
 
+                                    <!-- ==================== MODE CONTENT ==================== -->
+                                    <Grid Grid.Row="2">
 
-                                <Grid Grid.Row="2" Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                                        <!-- ========== ALL MODE ========== -->
+                                        <StackPanel Visibility="{Binding DataContext.IsAllMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
 
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Published: "
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-                                            <TextBlock Text="{Binding DisplayPublishYear}"
-                                                       FontSize="12"/>
+                                            <!-- Published + MetaScore -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Published:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPublishYear}"
+                                                           FontSize="12"/>
+
+                                                <StackPanel Grid.Column="2"
+                                                            Orientation="Horizontal"
+                                                            VerticalAlignment="Center"
+                                                            HorizontalAlignment="Right">
+                                                    <TextBlock Text="MetaScore: "
+                                                               FontWeight="Bold"
+                                                               FontSize="12"
+                                                               Margin="0,0,6,0"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                                            CornerRadius="4"
+                                                            Padding="4,1"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DisplayMetaScore}"
+                                                                   Foreground="#2C3E50"
+                                                                   FontSize="12"
+                                                                   FontWeight="Bold"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Left"
+                                                                   Padding="2,0"
+                                                                   Background="Transparent"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Publisher -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Publisher:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPublisher}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Playtime -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Playtime:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPlayTime}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                            <!-- Series -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Developer -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Publisher bổ sung -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Playtime bổ sung -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Excited -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Score -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Ownership -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- AvgPlaytime (khi sort theo avg playtime) -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Progress (giữ nguyên margin 16) -->
+                                            <Grid Margin="0,0,0,16">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Progress:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayProgress}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Right">
-                                            <TextBlock Text="Score: "
-                                                       FontWeight="Bold"
-                                                       FontSize="12"
-                                                       Margin="0,0,6,0"/>
-                                            <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                                    CornerRadius="4"
-                                                    Padding="4,1"
-                                                    HorizontalAlignment="Left">
-                                                <TextBlock Text="{Binding DisplayMetaScore}"
-                                                           Foreground="#2C3E50"
-                                                           FontSize="12"
+                                        <!-- ========== PLAN MODE ========== -->
+                                        <StackPanel Visibility="{Binding DataContext.IsPlanMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+
+                                            <!-- Published + MetaScore -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Published:"
                                                            FontWeight="Bold"
-                                                           VerticalAlignment="Center"
-                                                           HorizontalAlignment="Left"
-                                                           TextAlignment="Left"
-                                                           Padding="2,0"
-                                                           Background="Transparent"/>
-                                            </Border>
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPublishYear}"
+                                                           FontSize="12"/>
+
+                                                <StackPanel Grid.Column="2"
+                                                            Orientation="Horizontal"
+                                                            VerticalAlignment="Center"
+                                                            HorizontalAlignment="Right">
+                                                    <TextBlock Text="MetaScore: "
+                                                               FontWeight="Bold"
+                                                               FontSize="12"
+                                                               Margin="0,0,6,0"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                                            CornerRadius="4"
+                                                            Padding="4,1"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DisplayMetaScore}"
+                                                                   Foreground="#2C3E50"
+                                                                   FontSize="12"
+                                                                   FontWeight="Bold"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Left"
+                                                                   Padding="2,0"
+                                                                   Background="Transparent"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Excited -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Excited:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayExcited}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Avg Playtime -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Avg Play:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayAvgPlayTime}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Ownership -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Ownership:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayOwnership}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                            <!-- Series -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Developer -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Publisher -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Playtime -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Score -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- AvgPlaytime (khi sort theo avg playtime) - nếu cần hiện thêm (nhưng trong Plan đã có sẵn, nên có thể ẩn) -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Progress (giữ nguyên margin 16) -->
+                                            <Grid Margin="0,0,0,16">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Progress:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayProgress}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                        </StackPanel>
+
+                                        <!-- ========== FINISH MODE ========== -->
+                                        <StackPanel Visibility="{Binding DataContext.IsFinishMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+
+                                            <!-- Score + MetaScore -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Score:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayScore}"
+                                                           FontSize="12"/>
+
+                                                <StackPanel Grid.Column="2"
+                                                            Orientation="Horizontal"
+                                                            VerticalAlignment="Center"
+                                                            HorizontalAlignment="Right">
+                                                    <TextBlock Text="MetaScore: "
+                                                               FontWeight="Bold"
+                                                               FontSize="12"
+                                                               Margin="0,0,6,0"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                                            CornerRadius="4"
+                                                            Padding="4,1"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DisplayMetaScore}"
+                                                                   Foreground="#2C3E50"
+                                                                   FontSize="12"
+                                                                   FontWeight="Bold"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Left"
+                                                                   Padding="2,0"
+                                                                   Background="Transparent"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Finished In -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Finished In:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayFinishedIn}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Playtime (mặc định) -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Playtime:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPlayTime}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Avg Playtime (mặc định) -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Avg Play:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayAvgPlayTime}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                            <!-- Series -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Developer -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Publisher -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Playtime bổ sung (khi sort) - đã có mặc định nên không cần -->
+                                            <!-- Excited -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- Ownership -->
+                                            <Grid Margin="0,0,0,10"
+                                                  Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" FontSize="12"/>
+                                            </Grid>
+
+                                            <!-- AvgPlaytime bổ sung (khi sort) - đã có mặc định nên không cần, có thể bỏ qua -->
+
+                                            <!-- Published (giữ nguyên margin 16) -->
+                                            <Grid Margin="0,0,0,16">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="Published:"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DisplayPublishYear}"
+                                                           FontSize="12"/>
+                                            </Grid>
+
                                         </StackPanel>
                                     </Grid>
 
-                                    <StackPanel Grid.Row="3"
-                                                Orientation="Horizontal"
-                                                Margin="0,0,0,10">
-                                        <TextBlock Text="Publisher: "
-                                                   FontWeight="Bold"
-                                                   FontSize="12"/>
-                                        <TextBlock Text="{Binding DisplayPublisher}"
-                                                   FontSize="12"/>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Row="4"
-                                                Orientation="Horizontal"
-                                                Margin="0,0,0,10">
-                                        <TextBlock Text="Playtime: "
-                                                   FontWeight="Bold"
-                                                   FontSize="12"/>
-                                        <TextBlock Text="{Binding DisplayPlayTime}"
-                                                   FontSize="12"/>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Row="5"
-                                                Orientation="Horizontal"
-                                                Margin="0,0,0,16">
-                                        <TextBlock Text="Progress: "
-                                                   FontWeight="Bold"
-                                                   FontSize="12"/>
-                                        <TextBlock Text="{Binding DisplayProgress}"
-                                                   FontSize="12"/>
-                                    </StackPanel>
-
-                                    <Grid Grid.Row="6">
+                                    <!-- ==================== CARD FOOTER ==================== -->
+                                    <Grid Grid.Row="3">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <Image Width="18"
-                                               Height="18"
-                                               VerticalAlignment="Center"
-                                               Source="/Assets/Problem.png"
-                                               Margin="2,2,2,2"
-                                               Stretch="Fill"
-                                               SnapsToDevicePixels="True"
-                                               UseLayoutRounding="True"
-                                               RenderOptions.BitmapScalingMode="HighQuality"
-                                               RenderOptions.EdgeMode="Aliased"/>
+                                        <!-- Folder warning: chỉ hiện ở Default mode -->
+                                        <Grid Grid.Column="0"
+                                              Visibility="{Binding DataContext.IsAllMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                            <Image Width="18"
+                                                   Height="18"
+                                                   VerticalAlignment="Center"
+                                                   Source="/Assets/Problem.png"
+                                                   Margin="2,2,2,2"
+                                                   Stretch="Fill"
+                                                   SnapsToDevicePixels="True"
+                                                   UseLayoutRounding="True"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                   RenderOptions.EdgeMode="Aliased"
+                                                   Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}"/>
+                                        </Grid>
 
                                         <StackPanel Grid.Column="2"
                                                     Orientation="Horizontal">
@@ -307,9 +786,10 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
+                <!-- LEFT -->
                 <TextBlock Grid.Column="0"
                            x:Name="PaginationSummaryTextBlock"
                            Text="{Binding PaginationSummaryText}"
@@ -317,10 +797,11 @@
                            FontSize="12"
                            Foreground="#666666"/>
 
+                <!-- CENTER PAGINATION -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="Center"
                             Margin="0,0,16,0">
                     <Button x:Name="PrevPageButton"
                             Style="{StaticResource PaginationButtonStyle}"
@@ -343,6 +824,7 @@
                             IsEnabled="{Binding CanGoNext}"/>
                 </StackPanel>
 
+                <!-- RIGHT -->
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"

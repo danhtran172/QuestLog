@@ -36,6 +36,75 @@ namespace MasterPlay.UI
             }
         }
 
+        // Handler cho GotFocus của TextBox để bôi đen text
+        private void SelectAllText(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                textBox.SelectAll();
+            }
+        }
+
+        // Series
+        private void SeriesItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string seriesName)
+            {
+                if (DataContext is ViewModels.EditGameViewModel vm)
+                {
+                    vm.SelectSeriesCommand.Execute(seriesName);
+                }
+            }
+        }
+
+        private void CreateNewSeries_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is ViewModels.EditGameViewModel vm)
+            {
+                vm.CreateNewSeriesCommand.Execute(null);
+            }
+        }
+
+        // Genre
+        private void GenreItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string genreName)
+            {
+                if (DataContext is ViewModels.EditGameViewModel vm)
+                {
+                    vm.SelectGenreCommand.Execute(genreName);
+                }
+            }
+        }
+
+        private void CreateNewGenre_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is ViewModels.EditGameViewModel vm)
+            {
+                vm.CreateNewGenreCommand.Execute(null);
+            }
+        }
+
+        // Theme
+        private void ThemeItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string themeName)
+            {
+                if (DataContext is ViewModels.EditGameViewModel vm)
+                {
+                    vm.SelectThemeCommand.Execute(themeName);
+                }
+            }
+        }
+
+        private void CreateNewTheme_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is ViewModels.EditGameViewModel vm)
+            {
+                vm.CreateNewThemeCommand.Execute(null);
+            }
+        }
+
         private void FinishedIn_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             string text = e.Text;
@@ -45,5 +114,7 @@ namespace MasterPlay.UI
                 return;
             }
         }
+
+        
     }
 }
