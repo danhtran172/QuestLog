@@ -141,7 +141,7 @@ namespace MasterPlay.Models
             return null;
         }
 
-        public static DateOnly? ParseDate(string dateString)
+        public static DateOnly? StringtoDate(string dateString)
         {
             if (string.IsNullOrWhiteSpace(dateString))
                 return null;

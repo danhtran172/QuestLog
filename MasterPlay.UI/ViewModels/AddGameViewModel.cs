@@ -176,7 +176,7 @@ namespace MasterPlay.UI.ViewModels
                     Developer = rawgGame.Developers ?? string.Empty;
                     Genre = rawgGame.Genres ?? string.Empty;
 
-                    SyncPublishDate(ApiService.ParseDate(rawgGame.ReleaseDate));
+                    SyncPublishDate(ApiService.StringtoDate(rawgGame.ReleaseDate));
                     MetaScore = rawgGame.MetaScore;
 
                     var gallerryImg = await ApiService.GetGalleryImage(GameName);

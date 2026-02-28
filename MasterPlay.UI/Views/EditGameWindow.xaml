@@ -833,7 +833,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- [Edit Mode] Khung 2 - Giữ nguyên -->
+                        <!-- [Edit Mode] Khung 2 - Có chip màu trong dropdown -->
                         <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
                             <StackPanel>
                                 <!-- MetaScore -->
@@ -895,33 +895,227 @@
                                     <TextBox Grid.Column="1" Text="{Binding Game.Excited, UpdateSourceTrigger=PropertyChanged}" 
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
                                 </Grid>
-                                <!-- Ownership -->
+                                <!-- Ownership - với chip màu cả trên ô chọn và dropdown -->
                                 <Grid Margin="0,0,0,12">
+                                    <Grid.Resources>
+                                        <!-- Style tạm thời cho ComboBox hiển thị chip màu -->
+                                        <Style x:Key="ChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
+                                            <Setter Property="ItemTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <Border CornerRadius="4"
+                                Padding="8,2"
+                                Background="{Binding Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                HorizontalAlignment="Left"
+                                Margin="2">
+                                                            <TextBlock Text="{Binding}" 
+                                       Foreground="#2C3E50" 
+                                       FontSize="13"
+                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBox">
+                                                        <Border x:Name="border"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                SnapsToDevicePixels="True">
+                                                            <Grid>
+                                                                <!-- Hiển thị chip cho item được chọn -->
+                                                                <Border x:Name="SelectedChip"
+                                        CornerRadius="4"
+                                        Padding="8,2"
+                                        Background="{Binding SelectedItem, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership, RelativeSource={RelativeSource TemplatedParent}}"
+                                        HorizontalAlignment="Left"
+                                        Margin="2"
+                                        Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
+                                                                    <TextBlock Text="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}}" 
+                                               Foreground="#2C3E50" 
+                                               FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <!-- Nút mở dropdown -->
+                                                                <ToggleButton x:Name="ToggleButton"
+                                              Background="Transparent" BorderThickness="0"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Focusable="False"
+                                              HorizontalAlignment="Right"
+                                              Width="20"
+                                              Margin="0,0,4,0">
+                                                                    <ToggleButton.Template>
+                                                                        <ControlTemplate TargetType="ToggleButton">
+                                                                            <Border Background="Transparent">
+                                                                                <Path Data="M 0 0 L 5 5 L 10 0 Z"
+                                                      Fill="#555555"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      Width="10" Height="5"/>
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </ToggleButton.Template>
+                                                                </ToggleButton>
+                                                                <!-- Popup dropdown -->
+                                                                <Popup x:Name="Popup"
+                                       Placement="Bottom"
+                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       AllowsTransparency="True"
+                                       PopupAnimation="Slide"
+                                       Focusable="False">
+                                                                    <Border Background="White"
+                                            BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="5"
+                                            Margin="0,2,0,0" MinWidth="{TemplateBinding ActualWidth}">
+                                                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                                                            <ItemsPresenter SnapsToDevicePixels="True"/>
+                                                                        </ScrollViewer>
+                                                                    </Border>
+                                                                </Popup>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsFocused" Value="True">
+                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsEnabled" Value="False">
+                                                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                                                            </Trigger>
+                                                            <!-- Ẩn chip nếu không có SelectedItem -->
+                                                            <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                                                                <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-                                              ItemsSource="{Binding Selections.Ownership}"
-                                              SelectedItem="{Binding Game.Ownership}"
-                                              Style="{StaticResource SimpleSelectionBoxStyle}"
-                                              Height="28"
-                                              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
+              ItemsSource="{Binding Selections.Ownership}"
+              SelectedItem="{Binding Game.Ownership}"
+              Style="{StaticResource ChipComboBoxStyle}"
+              Height="28"/>
                                 </Grid>
-                                <!-- Progress -->
+
+                                <!-- Progress - với chip màu cả trên ô chọn và dropdown -->
                                 <Grid Margin="0,0,0,12">
+                                    <Grid.Resources>
+                                        <Style x:Key="ChipComboBoxStyleProgress" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
+                                            <Setter Property="ItemTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <Border CornerRadius="4"
+                                Padding="8,2"
+                                Background="{Binding Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                HorizontalAlignment="Left"
+                                Margin="2">
+                                                            <TextBlock Text="{Binding}" 
+                                       Foreground="#2C3E50" 
+                                       FontSize="13"
+                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBox">
+                                                        <Border x:Name="border"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                SnapsToDevicePixels="True">
+                                                            <Grid>
+                                                                <Border x:Name="SelectedChip"
+                                        CornerRadius="4"
+                                        Padding="8,2"
+                                        Background="{Binding SelectedItem, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress, RelativeSource={RelativeSource TemplatedParent}}"
+                                        HorizontalAlignment="Left"
+                                        Margin="2"
+                                        Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
+                                                                    <TextBlock Text="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}}" 
+                                               Foreground="#2C3E50" 
+                                               FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <ToggleButton x:Name="ToggleButton"
+                                              Background="Transparent" BorderThickness="0"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Focusable="False"
+                                              HorizontalAlignment="Right"
+                                              Width="20"
+                                              Margin="0,0,4,0">
+                                                                    <ToggleButton.Template>
+                                                                        <ControlTemplate TargetType="ToggleButton">
+                                                                            <Border Background="Transparent">
+                                                                                <Path Data="M 0 0 L 5 5 L 10 0 Z"
+                                                      Fill="#555555"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      Width="10" Height="5"/>
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </ToggleButton.Template>
+                                                                </ToggleButton>
+                                                                <Popup x:Name="Popup"
+                                       Placement="Bottom"
+                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       AllowsTransparency="True"
+                                       PopupAnimation="Slide"
+                                       Focusable="False">
+                                                                    <Border Background="White"
+                                            BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="5"
+                                            Margin="0,2,0,0" MinWidth="{TemplateBinding ActualWidth}">
+                                                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                                                            <ItemsPresenter SnapsToDevicePixels="True"/>
+                                                                        </ScrollViewer>
+                                                                    </Border>
+                                                                </Popup>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsFocused" Value="True">
+                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsEnabled" Value="False">
+                                                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                                                                <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-                                              ItemsSource="{Binding Selections.Progress}"
-                                              SelectedItem="{Binding Game.Progress}"
-                                              Style="{StaticResource SimpleSelectionBoxStyle}"
-                                              Height="28"
-                                              ItemContainerStyle="{StaticResource {x:Type ComboBoxItem}}"/>
+              ItemsSource="{Binding Selections.Progress}"
+              SelectedItem="{Binding Game.Progress}"
+              Style="{StaticResource ChipComboBoxStyleProgress}"
+              Height="28"/>
                                 </Grid>
                                 <!-- Finished Year -->
                                 <Grid>

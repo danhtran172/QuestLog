@@ -128,7 +128,9 @@ public static DateOnly? StringToDateOnly(string? input)
         "yy-M-d",   "yy-MM-dd",
 
         // yyyy-MM-dd (bonus)
-        "yyyy-M-d", "yyyy-MM-dd"
+        "yyyy-M-d", "yyyy-MM-dd",
+
+        "ddMMyyyy", "ddMMyy"
     };
 
         return DateOnly.TryParseExact(

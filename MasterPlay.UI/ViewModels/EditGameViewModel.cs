@@ -38,6 +38,8 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private string publisher = string.Empty;
+        [ObservableProperty]
+        private string slugName = string.Empty;
 
         [ObservableProperty]
         private string developer = string.Empty;
@@ -206,11 +208,14 @@ namespace MasterPlay.UI.ViewModels
 
             IsBusy = true;
             StatusMessage = "Syncing...";
+
             try
             {
                 var rawgGame = await ApiService.GetMetadata_Rawg(Game.Name);
+
                 if (rawgGame != null)
                 {
+                    // ── Core updates ───────────────────────────────────────────────
                     if (!string.IsNullOrWhiteSpace(rawgGame.Name))
                         Game.Name = rawgGame.Name;
 
@@ -218,34 +223,53 @@ namespace MasterPlay.UI.ViewModels
                     {
                         Game.ImagePath = rawgGame.Background_Image;
                         Game.GImagePath = rawgGame.Background_Image;
-                        PreviewImage = LoadPreviewImage(Game.ImagePath);
+                        PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
                         OnPropertyChanged(nameof(PreviewImage));
                     }
 
-                    publisher = rawgGame.Publishers ?? string.Empty;
-                    developer = rawgGame.Developers ?? string.Empty;
-                    var slug = rawgGame.SlugName; // chỉ dùng tạm
+                    // ── Update ViewModel wrapper properties ────────────────────────
+                    Publisher = rawgGame.Publishers ?? string.Empty;
+                    Developer = rawgGame.Developers ?? string.Empty;
+                    Genre = rawgGame.Genres ?? string.Empty;
+
+
+                    // ── Update Game model properties (để binding trong Edit mode hoạt động) ──
+                    Game.Publisher = Publisher;
+                    Game.Developer = Developer;
+                    //Game.Genre = Genre;
+                    //Game.Series = Series;
+                    Game.Theme = Theme;
+
+                    slugName = rawgGame.SlugName;
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
 
                     var galleryImg = await ApiService.GetGalleryImage(Game.Name);
                     if (galleryImg != null)
+                    {
                         Game.GImagePath = galleryImg;
+                    }
 
-                    publishDate = ApiService.ParseDate(rawgGame.ReleaseDate);
-                    Game.PublishDate = publishDate;
+                    PublishDate = ApiService.StringtoDate(rawgGame.ReleaseDate);
+
+                    Game.PublishDate = PublishDate;
                     Game.MetaScore = metaScore;
-                    Game.SlugName = rawgGame.SlugName;
+                    Game.SlugName = slugName;
+                    // Game.AvgPlayTime = avgPlaytime; 
 
-                    if (!IsReadOnly)
-                        SyncSelectedChipsFromGame();
-
-                    OnPropertyChanged(nameof(Game));
+                    // ── Force UI refresh cho tất cả các trường liên quan ───────────
+                    OnPropertyChanged(nameof(Game));                    // quan trọng nhất
                     OnPropertyChanged(nameof(Game.Name));
                     OnPropertyChanged(nameof(Game.Publisher));
                     OnPropertyChanged(nameof(Game.Developer));
+                    OnPropertyChanged(nameof(Game.Genre));
+                    OnPropertyChanged(nameof(Game.Series));
+                    OnPropertyChanged(nameof(Game.Theme));
                     OnPropertyChanged(nameof(Game.PublishDate));
                     OnPropertyChanged(nameof(Game.MetaScore));
+                    // OnPropertyChanged(nameof(Game.AvgPlayTime));     // nếu cần
+
+                    // Refresh các Display properties
                     OnPropertyChanged(nameof(DisplayPublisher));
                     OnPropertyChanged(nameof(DisplayDeveloper));
                     OnPropertyChanged(nameof(DisplaySeries));
@@ -254,7 +278,7 @@ namespace MasterPlay.UI.ViewModels
                     OnPropertyChanged(nameof(DisplayMetaScore));
                     OnPropertyChanged(nameof(DisplayAvgPlayTime));
                     OnPropertyChanged(nameof(DisplayPublishDate));
-                    OnPropertyChanged(nameof(HasSlugName));
+                    OnPropertyChanged(nameof(PublishDateInput));
 
                     StatusMessage = "Sync Successful!";
                 }
@@ -641,7 +665,7 @@ namespace MasterPlay.UI.ViewModels
                                         .Select(t => t.Trim());
                 foreach (var t in themes) if (!string.IsNullOrWhiteSpace(t)) SelectedThemes.Add(t);
             }
-            PublishDateInput = Game.PublishDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            PublishDateInput = Game.PublishDate?.ToString("dd-MM-yyyy") ?? string.Empty;
             UpdatePlayTimeFieldsFromSeconds();
             hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
         }
