@@ -250,7 +250,7 @@ namespace MasterPlay.UI.ViewModels
                         Game.GImagePath = galleryImg;
                     }
 
-                    PublishDate = ApiService.StringtoDate(rawgGame.ReleaseDate);
+                    PublishDate = ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate);
 
                     Game.PublishDate = PublishDate;
                     Game.MetaScore = metaScore;

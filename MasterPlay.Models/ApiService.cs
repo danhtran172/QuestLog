@@ -141,64 +141,6 @@ namespace MasterPlay.Models
             return null;
         }
 
-        public static DateOnly? StringtoDate(string dateString)
-        {
-            if (string.IsNullOrWhiteSpace(dateString))
-                return null;
-
-            string[] formats = {
-            "dd/MM/yyyy", "d/m/yyyy",
-            "dd-MM-yyyy", "d-m-yyyy",
-            "yyyy-MM-dd", "yyyy/MM/dd"
-        };
-
-            if (DateOnly.TryParseExact(dateString,
-                                       formats,
-                                       CultureInfo.InvariantCulture,
-                                       DateTimeStyles.None,
-                                       out DateOnly result))
-            {
-                return result;
-            }
-
-            return null;
-        }
-
-        public static string GetGameExePath(string gameName)
-        {
-            // Check if database file exists
-            if (!System.IO.File.Exists(_dbPath))
-            {
-                throw new FileNotFoundException($"Playnite database not found at: {_dbPath}");
-            }
-
-            string connectionString = $"Data Source={_dbPath};Mode=ReadOnly";
-
-            using (var connection = new SqliteConnection(connectionString))
-            {
-                connection.Open();
-
-                var command = connection.CreateCommand();
-                // Fetch PlayActions and InstallDirectory
-                command.CommandText = "SELECT Name, PlayActions, InstallDirectory FROM Games WHERE Name = $name LIMIT 1";
-                command.Parameters.AddWithValue("$name", gameName);
-
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        string playActionsJson = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                        string installDir = reader.IsDBNull(2) ? "" : reader.GetString(2);
-
-                        return ExtractPath(playActionsJson, installDir, gameName);
-                    }
-                }
-            }
-
-            // If no record is found in the database
-            throw new KeyNotFoundException($"Game '{gameName}' was not found in the Playnite library.");
-        }
-
         private static string ExtractPath(string json, string installDir, string gameName)
         {
             if (string.IsNullOrWhiteSpace(json))
