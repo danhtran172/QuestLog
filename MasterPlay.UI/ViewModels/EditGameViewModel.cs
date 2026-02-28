@@ -231,6 +231,7 @@ namespace MasterPlay.UI.ViewModels
                     Publisher = rawgGame.Publishers ?? string.Empty;
                     Developer = rawgGame.Developers ?? string.Empty;
                     Genre = rawgGame.Genres ?? string.Empty;
+                    SyncPublishDate(ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate));
 
 
                     // ── Update Game model properties (để binding trong Edit mode hoạt động) ──
@@ -243,6 +244,8 @@ namespace MasterPlay.UI.ViewModels
                     slugName = rawgGame.SlugName;
                     metaScore = rawgGame.MetaScore;
                     avgPlaytime = rawgGame.AvgPlaytime;
+
+
 
                     var galleryImg = await ApiService.GetGalleryImage(Game.Name);
                     if (galleryImg != null)
@@ -296,6 +299,11 @@ namespace MasterPlay.UI.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        private void SyncPublishDate(DateOnly? date)
+        {
+            PublishDateInput = date?.ToString("dd/MM/yyyy") ?? string.Empty;
         }
 
         [RelayCommand]
@@ -665,7 +673,7 @@ namespace MasterPlay.UI.ViewModels
                                         .Select(t => t.Trim());
                 foreach (var t in themes) if (!string.IsNullOrWhiteSpace(t)) SelectedThemes.Add(t);
             }
-            PublishDateInput = Game.PublishDate?.ToString("dd-MM-yyyy") ?? string.Empty;
+            SyncPublishDate(Game.PublishDate);
             UpdatePlayTimeFieldsFromSeconds();
             hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
         }
@@ -752,7 +760,7 @@ namespace MasterPlay.UI.ViewModels
         partial void OnGameChanged(Game? value)
         {
             PreviewImage = LoadPreviewImage(value?.ImagePath);
-            SyncPublishDate();
+            //SyncPublishDate();
             if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
                 UpdateBackupFolderPath(value.Name);
             if (value == null)
