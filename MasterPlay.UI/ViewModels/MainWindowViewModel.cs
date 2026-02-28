@@ -53,6 +53,7 @@ namespace MasterPlay.UI.ViewModels
         public bool IsPlanMode => string.Equals(_viewMode, "Plan", StringComparison.OrdinalIgnoreCase);
 
         public bool IsFinishMode => string.Equals(_viewMode, "Finish", StringComparison.OrdinalIgnoreCase);
+        public bool IsPlayQueueMode => string.Equals(_viewMode, "PlayQueue", StringComparison.OrdinalIgnoreCase);
 
         #endregion
 
@@ -95,6 +96,7 @@ namespace MasterPlay.UI.ViewModels
                     OnPropertyChanged(nameof(IsAllMode));
                     OnPropertyChanged(nameof(IsPlanMode));
                     OnPropertyChanged(nameof(IsFinishMode));
+                    OnPropertyChanged(nameof(IsPlayQueueMode));
                     OnPropertyChanged(nameof(ShouldShowPublisher));
                     OnPropertyChanged(nameof(ShouldShowPlaytime));
                     OnPropertyChanged(nameof(ShouldShowExcited));
@@ -342,6 +344,7 @@ namespace MasterPlay.UI.ViewModels
             {
                 "Plan" => source.Where(vm => !string.Equals(vm.Game.Progress, "Done", StringComparison.OrdinalIgnoreCase)),
                 "Finish" => source.Where(vm => string.Equals(vm.Game.Progress, "Done", StringComparison.OrdinalIgnoreCase)),
+                "PlayQueue" => source.Where(vm => !string.Equals(vm.Game.Progress, "Done", StringComparison.OrdinalIgnoreCase)),
                 _ => source
             };
         }

@@ -1,5 +1,6 @@
 ﻿using MasterPlay.Helpers;
 using MasterPlay.UI.ViewModels;
+using MasterPlay.UI.Views;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -65,9 +66,22 @@ namespace MasterPlay.UI
             if (_viewModel == null) return;
             _viewModel.GoToPreviousPage();
             // Cuộn lên đầu trang
+            //Dispatcher.BeginInvoke(new Action(() =>
+            //{
+            //    GamesScrollViewer?.ScrollToTop();
+            //}));
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                GamesScrollViewer?.ScrollToTop();
+                if (_viewModel.IsPlayQueueMode)
+                {
+                    // Tìm QueueView và cuộn lên đầu
+                    var queueView = ListBorder?.Child as QueueView;
+                    queueView?.ScrollToTop();
+                }
+                else
+                {
+                    CardScrollViewer?.ScrollToTop();
+                }
             }));
         }
 
@@ -76,9 +90,22 @@ namespace MasterPlay.UI
             if (_viewModel == null) return;
             _viewModel.GoToNextPage();
             // Cuộn lên đầu trang
+            //Dispatcher.BeginInvoke(new Action(() =>
+            //{
+            //    GamesScrollViewer?.ScrollToTop();
+            //}));
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                GamesScrollViewer?.ScrollToTop();
+                if (_viewModel.IsPlayQueueMode)
+                {
+                    // Tìm QueueView và cuộn lên đầu
+                    var queueView = ListBorder?.Child as QueueView;
+                    queueView?.ScrollToTop();
+                }
+                else
+                {
+                    CardScrollViewer?.ScrollToTop();
+                }
             }));
         }
 
@@ -120,19 +147,41 @@ namespace MasterPlay.UI
                 SettingsButton_Click(this, new RoutedEventArgs());
                 e.Handled = true;
             }
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.D1:
+                        AllButton_Click(this, new RoutedEventArgs());
+                        e.Handled = true;
+                        break;
+                    case Key.D2:
+                        PlanButton_Click(this, new RoutedEventArgs());
+                        e.Handled = true;
+                        break;
+                    case Key.D3:
+                        FinishButton_Click(this, new RoutedEventArgs());
+                        e.Handled = true;
+                        break;
+                    case Key.D4:
+                        PlayQueueButton_Click(this, new RoutedEventArgs());
+                        e.Handled = true;
+                        break;
+                }
+            }
         }
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (e.NewSize.Width < 1000)
-            {
-                LogoImage.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                LogoImage.Visibility = Visibility.Visible;
-            }
-        }
+        //private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        //{
+        //    if (e.NewSize.Width < 1000)
+        //    {
+        //        LogoImage.Visibility = Visibility.Collapsed;
+        //    }
+        //    else
+        //    {
+        //        LogoImage.Visibility = Visibility.Visible;
+        //    }
+        //}
 
         #endregion
 
@@ -238,6 +287,11 @@ namespace MasterPlay.UI
         {
             if (DataContext is MainWindowViewModel vm)
                 vm.SetViewMode("Finish");
+        }
+        private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+                vm.SetViewMode("PlayQueue");
         }
     }
 }

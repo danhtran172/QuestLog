@@ -328,7 +328,7 @@
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
                 <Style TargetType="ComboBoxItem">
-                    <Setter Property="Margin" Value="1,2,1,2">
+                    <Setter Property="Margin" Value="1,2,1,2"/>
                 </Style>
             </Setter.Value>
         </Setter>
@@ -559,7 +559,7 @@
         <Setter Property="Foreground" Value="#555555"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Padding" Value="15,0,15,1"/>
-        <Setter Property="Height" Value="20"/>
+        <Setter Property="Height" Value="22"/>
         <Setter Property="MinWidth" Value="70"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -586,5 +586,30 @@
         </Setter>
     </Style>
 
+    <!-- ListViewItem Style (dùng cho QueueView) -->
+    <Style x:Key="ListViewItemStyle" TargetType="ListViewItem">
+        <Setter Property="Height" Value="65"/>
+        <Setter Property="BorderBrush" Value="#E4E4E4"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Background="{TemplateBinding Background}"
+                        SnapsToDevicePixels="True">
+                        <GridViewRowPresenter Content="{TemplateBinding Content}"
+                                          Margin="0"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>
     
