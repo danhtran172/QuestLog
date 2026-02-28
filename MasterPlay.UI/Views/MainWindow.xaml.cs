@@ -43,15 +43,6 @@ namespace MasterPlay.UI
             _viewModel.SetSearchText((sender as TextBox)?.Text ?? string.Empty, applyImmediately: true);
         }
 
-        private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isInitializing || _viewModel == null)
-                return;
-
-            string viewMode = (ViewModeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
-            _viewModel.SetViewMode(viewMode);
-        }
-
         private void SearchByComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isInitializing || _viewModel == null)
@@ -102,7 +93,8 @@ namespace MasterPlay.UI
 
                 if (SearchBox != null) SearchBox.Text = string.Empty;
                 if (SearchByComboBox != null) SearchByComboBox.SelectedIndex = 0;
-                if (ViewModeComboBox != null) ViewModeComboBox.SelectedIndex = 0;
+                //if (ViewModeComboBox != null) ViewModeComboBox.SelectedIndex = 0;
+                _viewModel.SetViewMode("All");
                 if (SortComboBox != null) SortComboBox.SelectedIndex = 0;
 
                 _viewModel.LoadGamesData();
@@ -127,6 +119,18 @@ namespace MasterPlay.UI
             {
                 SettingsButton_Click(this, new RoutedEventArgs());
                 e.Handled = true;
+            }
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (e.NewSize.Width < 1000)
+            {
+                LogoImage.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                LogoImage.Visibility = Visibility.Visible;
             }
         }
 
@@ -217,5 +221,23 @@ namespace MasterPlay.UI
         }
 
         #endregion
+
+        private void AllButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+                vm.SetViewMode("All");
+        }
+
+        private void PlanButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+                vm.SetViewMode("Plan");
+        }
+
+        private void FinishButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+                vm.SetViewMode("Finish");
+        }
     }
 }

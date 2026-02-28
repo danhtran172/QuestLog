@@ -5,6 +5,7 @@
         Title="MasterPlay" Height="700" Width="920" WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI"
         KeyDown="Window_KeyDown"
+        SizeChanged="Window_SizeChanged"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
@@ -28,35 +29,99 @@
                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
             </Border.Effect>
 
-            <Grid Margin="25,12">
-                <Image Source="/Assets/MasterplayLogo.png"
-                       HorizontalAlignment="Left"
-                       Width="140"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            <Grid Margin="20,0,20,0" Height="50">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Border Width="250" Height="40" Background="Transparent" CornerRadius="20">
+
+                <!-- Cột trái: Logo và tab-->
+                <Grid Grid.Column="0" VerticalAlignment="Stretch">
+                    <!-- Logo
+                    <Image x:Name="LogoImage"
+                   Source="/Assets/MasterplayLogo.png"
+                   Width="140"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"/>
+                    -->
+                    <!-- Tab buttons (sát đáy) -->
+                    <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Bottom" 
+                        HorizontalAlignment="Left"
+                        >
+                        <!-- -1 để viền dưới chạm đáy -->
+                        <Button Content="Default" Click="AllButton_Click" MinWidth="70">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAllMode}" Value="True">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="Foreground" Value="#2C3E50"/>
+                                            <Setter Property="BorderBrush" Value="#A1BC98"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="Planing" Click="PlanButton_Click" MinWidth="70">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPlanMode}" Value="True">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="Foreground" Value="#2C3E50"/>
+                                            <Setter Property="BorderBrush" Value="#A1BC98"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="Finished" Click="FinishButton_Click" MinWidth="70">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFinishMode}" Value="True">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="Foreground" Value="#2C3E50"/>
+                                            <Setter Property="BorderBrush" Value="#A1BC98"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Cột phải: các nút chức năng -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Search box, sort, filter, add, settings (giữ nguyên) -->
+                    <Border Width="220" Height="30" Background="Transparent" CornerRadius="20">
                         <Grid>
                             <TextBox x:Name="SearchBox"
-                                     Style="{StaticResource ModernSearchBox}"
-                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     TextChanged="SearchBox_TextChanged"
-                                     BorderThickness="0"
-                                     Background="Transparent"
-                                     VerticalContentAlignment="Center"
-                                     Padding="0,0,100,0"
-                                     Margin="0"/>
-
-                            <Border HorizontalAlignment="Right" Width="94" Height="40" Margin="0,0,1.5,0" Background="Transparent">
+                             Style="{StaticResource ModernSearchBox}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             TextChanged="SearchBox_TextChanged"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             VerticalContentAlignment="Center"
+                             Padding="0,0,100,0"
+                             Margin="0"/>
+                            <Border HorizontalAlignment="Right" Width="94" Height="28" Margin="0,0,1,0" Background="Transparent">
                                 <ComboBox x:Name="SearchByComboBox"
-                                          Style="{StaticResource ModernComboBoxStyle}"
-                                          SelectedIndex="0"
-                                          BorderThickness="0"
-                                          Background="Transparent"
-                                          VerticalContentAlignment="Center"
-                                          HorizontalContentAlignment="Center"
-                                          Padding="0"
-                                          SelectionChanged="SearchByComboBox_SelectionChanged">
+                                  Style="{StaticResource ModernComboBoxStyle}"
+                                  SelectedIndex="0"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalContentAlignment="Center"
+                                  Padding="0"
+                                  SelectionChanged="SearchByComboBox_SelectionChanged">
                                     <ComboBoxItem Content="All"/>
                                     <ComboBoxItem Content="Name"/>
                                     <ComboBoxItem Content="Series"/>
@@ -68,25 +133,13 @@
                         </Grid>
                     </Border>
 
-                    <ComboBox x:Name="ViewModeComboBox"
-                              Width="100"
-                              Style="{StaticResource ModernComboBoxStyle}"
-                              SelectionChanged="ViewModeComboBox_SelectionChanged"
-                              Tag="/Assets/ViewMode2.png"
-                              SelectedIndex="0"
-                              Margin="10,0,10,0">
-                        <ComboBoxItem Content="All"/>
-                        <ComboBoxItem Content="Plan"/>
-                        <ComboBoxItem Content="Finish"/>
-                    </ComboBox>
-
                     <ComboBox x:Name="SortComboBox"
-                              Width="115"
-                              Style="{StaticResource ModernComboBoxStyle}"
-                              SelectionChanged="SortComboBox_SelectionChanged"
-                              Tag="/Assets/Sort.png"
-                              SelectedIndex="0"
-                              Margin="0,0,20,0">
+                      Width="115"
+                      Style="{StaticResource ModernComboBoxStyle}"
+                      SelectionChanged="SortComboBox_SelectionChanged"
+                      Tag="/Assets/Sort.png"
+                      SelectedIndex="0"
+                      Margin="10,0,20,0">
                         <ComboBoxItem Content="Default"/>
                         <ComboBoxItem Content="Status"/>
                         <ComboBoxItem Content="Name"/>
@@ -100,28 +153,37 @@
                         <ComboBoxItem Content="AvgPlaytime"/>
                     </ComboBox>
 
+                    <ToggleButton x:Name="FilterToggleButton"
+                          Style="{StaticResource FilterButtonStyle}"
+                          Background="#7F8C8D"
+                          Margin="0,0,10,0"/>
+
                     <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#A1BC98"
-                            Click="AddGameButton_Click">
+                    Background="#A1BC98"
+                    Click="AddGameButton_Click">
                         <Image Source="/Assets/Add.png"
-                               Width="20"
-                               Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                       Width="20"
+                       Height="20"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
 
                     <Button Style="{StaticResource IconButtonStyle}"
-                            Background="#7F8C8D"
-                            Margin="10,0,0,0"
-                            Click="SettingsButton_Click">
+                    Background="#7F8C8D"
+                    Margin="10,0,0,0"
+                    Click="SettingsButton_Click">
                         <Image Source="/Assets/Setting.png"
-                               Width="20"
-                               Height="20"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                       Width="20"
+                       Height="20"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
+        <!-- Popup Filter (giữa màn hình) -->
+        <Popup x:Name="FilterPopup"
+       Style="{StaticResource FilterPopupStyle}"
+       IsOpen="{Binding IsChecked, ElementName=FilterToggleButton}"/>
         <!-- ==================== GALLERY ==================== -->
         <ScrollViewer x:Name="GamesScrollViewer"
                       Grid.Row="1"

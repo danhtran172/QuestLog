@@ -1,0 +1,230 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Filter Button Style (ToggleButton) -->
+    <Style x:Key="FilterButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="35"/>
+        <Setter Property="Height" Value="35"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <Ellipse x:Name="circle" Fill="{TemplateBinding Background}"/>
+                        <Image Source="/Assets/Filter.png"
+                           Width="18"
+                           Height="18"
+                           Margin="0,2,0,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="circle" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="circle" Property="Fill" Value="#7EACB5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Popup Border Style -->
+    <Style x:Key="FilterPopupBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Column Header Style -->
+    <Style x:Key="FilterColumnHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#2C3E50"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+
+    <!-- Filter CheckBox Style -->
+    <Style x:Key="FilterCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Margin" Value="0,4,0,4"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#555555"/>
+    </Style>
+
+    <!-- ==================== FILTER POPUP STYLE ==================== -->
+    <Style x:Key="FilterPopupStyle" TargetType="Popup">
+        <Setter Property="Placement" Value="Center"/>
+        <Setter Property="StaysOpen" Value="False"/>
+        <Setter Property="PopupAnimation" Value="Slide"/>
+        <Setter Property="AllowsTransparency" Value="True"/>
+        <Setter Property="Child">
+            <Setter.Value>
+                <Border Style="{StaticResource FilterPopupBorderStyle}" Width="700">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header: Title và Reverse checkbox -->
+                        <Grid Grid.Row="0" Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Filter" FontSize="18" FontWeight="SemiBold" Foreground="#A1BC98"/>
+                            <CheckBox Grid.Column="1" Content="Reverse filter" Style="{StaticResource FilterCheckBoxStyle}" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Number Filters: chia 2 cột -->
+                        <Grid Grid.Row="1" Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Cột trái: Finish và Excited -->
+                            <StackPanel Grid.Column="0">
+                                <!-- Finish -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
+                                        <ComboBoxItem Content=">"/>
+                                
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="lt"/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                </Grid>
+                                <!-- Excited -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;"/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content=">"/>
+                                        <ComboBoxItem Content=">="/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Cột phải: Score và PlayTime -->
+                            <StackPanel Grid.Column="2">
+                                <!-- Score -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;"/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content=">"/>
+                                        <ComboBoxItem Content=">="/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                </Grid>
+                                <!-- PlayTime -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;"/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content=">"/>
+                                        <ComboBoxItem Content=">="/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 4 cột checkbox: Avg Play, Progress, Ownership, MetaScore -->
+                        <Grid Grid.Row="2" Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Avg Play -->
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Text="Avg Play" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="Very Long" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Long" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Medium" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Short" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Very Short" Style="{StaticResource FilterCheckBoxStyle}"/>
+                            </StackPanel>
+
+                            <!-- Progress -->
+                            <StackPanel Grid.Column="1" Margin="8,0">
+                                <TextBlock Text="Progress" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="NextPlay" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Done" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Playing" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Intended" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Pending" Style="{StaticResource FilterCheckBoxStyle}"/>
+                            </StackPanel>
+
+                            <!-- Ownership -->
+                            <StackPanel Grid.Column="2" Margin="8,0">
+                                <TextBlock Text="Ownership" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="Ready" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Painted" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="GamePass" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="PlayStation" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Not Owned" Style="{StaticResource FilterCheckBoxStyle}"/>
+                            </StackPanel>
+
+                            <!-- MetaScore -->
+                            <StackPanel Grid.Column="3" Margin="8,0,0,0">
+                                <TextBlock Text="MetaScore" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="Very High" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="High" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Medium" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Low" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="Very Low" Style="{StaticResource FilterCheckBoxStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Apply button -->
+                        <Button Grid.Row="3" Content="Apply" HorizontalAlignment="Right" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}"/>
+                    </Grid>
+                </Border>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
