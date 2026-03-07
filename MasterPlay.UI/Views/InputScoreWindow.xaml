@@ -17,12 +17,11 @@
 
         <Border Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="6">
             <TextBox Text="{Binding ScoreInput, UpdateSourceTrigger=PropertyChanged}"
-                     FontSize="32" 
-                     Width="120" Height="60"
+                     FontSize="32" Height="60"
                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                      Padding="12" 
                      BorderThickness="0" Background="Transparent"
-                     PreviewTextInput="NumberValidationTextBox"/>
+                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Margin="-1,0,-1,0"/>
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">

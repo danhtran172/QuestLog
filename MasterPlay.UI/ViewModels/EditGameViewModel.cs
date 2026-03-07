@@ -6,6 +6,7 @@ using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,8 +18,8 @@ namespace MasterPlay.UI.ViewModels
 {
     public partial class EditGameViewModel : BaseViewModel
     {
-        // ==================== FIELDS & CONSTRUCTOR ====================
-        private static Selections LoadSelections() => DataService.LoadSelection();
+        private CancellationTokenSource? _msgCts;
+        public CategoryManager CategoryManager { get; } = new CategoryManager();
 
         public EditGameViewModel() : this(new Game()) { }
 
@@ -26,47 +27,70 @@ namespace MasterPlay.UI.ViewModels
         {
             Game = selectedGame ?? new Game();
             ReloadGameFromConfig();
-            DataService.AssignDefaultColors();
-            InitializeMockData();
+            LoadLists();
             LoadGameData();
-            hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
-        }
+            HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
 
-        // ==================== CORE PROPERTIES ====================
+            // Đăng ký sự kiện cho SelectedGenres và SelectedThemes để cập nhật DisplayGenres/Themes
+            SelectedGenres.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DisplayGenres));
+            SelectedThemes.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DisplayThemes));
+        }
+        private int? _originalProgressId;
+
         [ObservableProperty]
         private Game game;
 
+        // ==================== PROPERTIES TRUNG GIAN CHO TẤT CẢ FIELD ====================
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayName))]
+        private string name = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayPublisher))]
         private string publisher = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayDeveloper))]
+        private string developer = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayExcited))]
+        private double? excited;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayFinishedIn))]
+        private string finishedIn = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayAvgPlayTime))]
+        private int? avgPlaytime;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayMetaScore))]
+        private int? metaScore;
+
         [ObservableProperty]
         private string slugName = string.Empty;
 
         [ObservableProperty]
-        private string developer = string.Empty;
+        private string exeName = string.Empty;
 
         [ObservableProperty]
-        private string series = string.Empty;
+        [NotifyPropertyChangedFor(nameof(DisplayInitProcessName))]
+        [NotifyPropertyChangedFor(nameof(HasInitExeNameForView))]
+        private string initExeName = string.Empty;
 
         [ObservableProperty]
-        private string genre = string.Empty;
+        private string saveFolderPath = string.Empty;
 
         [ObservableProperty]
-        private string theme = string.Empty;
+        private string backupFolderPath = string.Empty;
 
         [ObservableProperty]
-        private float excited;
+        private string imagePath = string.Empty;
 
         [ObservableProperty]
-        private string finishedIn = string.Empty;
-
-        [ObservableProperty]
-        private long avgPlaytime;
-
-        [ObservableProperty]
-        private int metaScore;
-
-        [ObservableProperty]
-        private DateOnly? publishDate;
+        private string gImagePath = string.Empty;
 
         [ObservableProperty]
         private bool isBusy;
@@ -92,11 +116,8 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private int adjustMinutes;
 
-        [ObservableProperty]
-        private Selections selections = LoadSelections();
-
-        [ObservableProperty]
-        private bool hasScore;
+        // HasScore trở thành computed property
+        public bool HasScore => (Score ?? 0) > 0;
 
         [ObservableProperty]
         private string publishDateInput = string.Empty;
@@ -104,24 +125,42 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private bool hasInitExeName;
 
-        // ==================== CHIP PROPERTIES ====================
         [ObservableProperty]
-        private ObservableCollection<string> allSeries;
+        private string statusMessage = string.Empty;
+
+        // Selection properties
+        [ObservableProperty]
+        private ObservableCollection<Series> allSeries = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> allGenres;
+        private ObservableCollection<Genre> allGenres = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> allThemes;
+        private ObservableCollection<Theme> allThemes = new();
 
         [ObservableProperty]
-        private string? selectedSeries;
+        private ObservableCollection<OwnershipStatus> allOwnerships = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> selectedGenres;
+        private ObservableCollection<ProgressStatus> allProgresses = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> selectedThemes;
+        [NotifyPropertyChangedFor(nameof(DisplaySeries))]
+        private Series? selectedSeries;
+
+        [ObservableProperty]
+        private ObservableCollection<Genre> selectedGenres = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Theme> selectedThemes = new();
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayOwnership))]
+        private OwnershipStatus? selectedOwnership;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayProgress))]
+        private ProgressStatus? selectedProgress;
 
         [ObservableProperty]
         private bool isSeriesPopupOpen;
@@ -142,51 +181,64 @@ namespace MasterPlay.UI.ViewModels
         private string themesSearchText = string.Empty;
 
         [ObservableProperty]
-        private ObservableCollection<string> filteredSeries;
+        private ObservableCollection<Series> filteredSeries = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> filteredGenres;
+        private ObservableCollection<Genre> filteredGenres = new();
 
         [ObservableProperty]
-        private ObservableCollection<string> filteredThemes;
+        private ObservableCollection<Theme> filteredThemes = new();
 
         public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : $"Create \"{SeriesSearchText}\"";
         public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
         public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
 
-        // ==================== DISPLAY PROPERTIES ====================
-        public string DisplayPublishDate => publishDate?.ToString("MMM dd, yyyy") ?? "--";
-        public string DisplayPublisher => string.IsNullOrWhiteSpace(publisher) ? "--" : publisher;
-        public string DisplayDeveloper => string.IsNullOrWhiteSpace(developer) ? "--" : developer;
-        public string DisplaySeries => string.IsNullOrWhiteSpace(series) ? "--" : series;
-        public string DisplayGenre => string.IsNullOrWhiteSpace(genre) ? "--" : genre;
-        public string DisplayTheme => string.IsNullOrWhiteSpace(theme) ? "--" : theme;
-        public string DisplayMetaScore => metaScore > 0 ? metaScore.ToString("F0") : "--";
-        public string DisplayExcited => Game.Excited > 0 ? Game.Excited.ToString("F0") : "--";
-        public string DisplayAvgPlayTime => avgPlaytime > 0 ? avgPlaytime.ToString() + "h" : "--";
-        public string DisplayFinishedIn => string.IsNullOrWhiteSpace(finishedIn) ? "Not Finished" : finishedIn;
-        public string DisplayProcessName => string.IsNullOrWhiteSpace(Game.ExeName) ? "--" : $"{Game.ExeName}.exe";
-        public string DisplayInitProcessName => string.IsNullOrWhiteSpace(Game.InitExeName) ? "--" : $"{Game.InitExeName}.exe";
-        public string DisplaySaveFolderPath => string.IsNullOrWhiteSpace(Game.SaveFolderPath) ? "--" : Game.SaveFolderPath;
-        public string DisplayBackupFolderPath => string.IsNullOrWhiteSpace(Game.BackupFolderPath) ? "--" : Game.BackupFolderPath;
-        public string DisplayOwnership => string.IsNullOrWhiteSpace(Game.Ownership) ? "--" : Game.Ownership;
-        public string DisplayProgress => string.IsNullOrWhiteSpace(Game.Progress) ? "--" : Game.Progress;
-        public string DisplayScore => Game.Score > 0 ? Game.Score.ToString("F1") : "--";
-
+        // Display properties
+        public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "--" : Name;
+        public string DisplayPublishDate => Game.PublishDate?.ToString("MMM dd, yyyy") ?? "--";
+        public string DisplayPublisher => string.IsNullOrWhiteSpace(Publisher) ? "--" : Publisher;
+        public string DisplayDeveloper => string.IsNullOrWhiteSpace(Developer) ? "--" : Developer;
+        public string DisplaySeries => SelectedSeries?.Name ?? "--";
+        public string DisplayGenres => SelectedGenres.Any() ? string.Join(", ", SelectedGenres.Select(g => g.Name)) : "--";
+        public string DisplayThemes => SelectedThemes.Any() ? string.Join(", ", SelectedThemes.Select(t => t.Name)) : "--";
+        public string DisplayMetaScore => (MetaScore ?? 0) > 0 ? MetaScore.ToString() : "--";
+        public string DisplayExcited => Excited switch
+        {
+            null => "--",
+            <= 0 => "--",
+            999 => "10🔥",
+            _ => Excited.Value.ToString()
+        };
+        public string DisplayAvgPlayTime => (AvgPlaytime ?? 0) > 0 ? AvgPlaytime.ToString() + "h" : "--";
+        public string DisplayFinishedIn => string.IsNullOrWhiteSpace(FinishedIn) ? "Not Finished" : FinishedIn;
+        public string DisplayProcessName => string.IsNullOrWhiteSpace(ExeName) ? "--" : $"{ExeName}.exe";
+        public string DisplayInitProcessName => string.IsNullOrWhiteSpace(InitExeName) ? "--" : $"{InitExeName}.exe";
+        public string DisplaySaveFolderPath => string.IsNullOrWhiteSpace(SaveFolderPath) ? "--" : SaveFolderPath;
+        public string DisplayBackupFolderPath => string.IsNullOrWhiteSpace(BackupFolderPath) ? "--" : BackupFolderPath;
+        public string DisplayOwnership => SelectedOwnership?.Name ?? "--";
+        public string DisplayProgress => SelectedProgress?.Name ?? "--";
+        public string DisplayScore => Score switch
+        {
+            null => "--",
+            <= 0 => "--",
+            999 => "10🔥",
+            _ => Score.Value.ToString()
+        };
         public string DisplayPlayTime
         {
             get
             {
-                if (Game.TotalPlayTimeSeconds <= 0) return "--";
-                var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+                if ((Game.TotalPlayTimeSeconds ?? 0) <= 0) return "--";
+                var ts = TimeSpan.FromSeconds((double)Game.TotalPlayTimeSeconds);
                 return $"{(int)ts.TotalHours}h{ts.Minutes:D2}m";
             }
         }
 
-        public bool HasSlugName => !string.IsNullOrWhiteSpace(Game?.SlugName);
-        public bool HasInitExeNameForView => !string.IsNullOrWhiteSpace(Game?.InitExeName);
+        public bool HasSlugName => !string.IsNullOrWhiteSpace(SlugName);
+        public bool HasInitExeNameForView => !string.IsNullOrWhiteSpace(InitExeName);
 
-        // ==================== MODE & CRUD COMMANDS ====================
+        // ==================== COMMANDS ====================
+
         [RelayCommand]
         private void ToggleEditMode()
         {
@@ -202,98 +254,128 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Game.Name))
             {
-                StatusMessage = "Game name is empty. Please enter a name first.";
+                await ShowStatus("Game name is empty. Please enter a name first.");
                 return;
             }
 
             IsBusy = true;
-            StatusMessage = "Syncing...";
+            await ShowStatus("Syncing...", 0);
 
             try
             {
-                var rawgGame = await ApiService.GetMetadata_Rawg(Game.Name);
+                var rawgGame = await RawgService.GetMetadata_Rawg(Game.Name);
 
                 if (rawgGame != null)
                 {
-                    // ── Core updates ───────────────────────────────────────────────
-                    if (!string.IsNullOrWhiteSpace(rawgGame.Name))
-                        Game.Name = rawgGame.Name;
-
-                    if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
-                    {
-                        Game.ImagePath = rawgGame.Background_Image;
-                        Game.GImagePath = rawgGame.Background_Image;
-                        PreviewImage = ViewModelHelpers.LoadPreviewImage(Game.ImagePath);
-                        OnPropertyChanged(nameof(PreviewImage));
-                    }
-
-                    // ── Update ViewModel wrapper properties ────────────────────────
+                    // Cập nhật các property trung gian (UI sẽ tự cập nhật)
+                    Name = rawgGame.Name ?? Name;
                     Publisher = rawgGame.Publishers ?? string.Empty;
                     Developer = rawgGame.Developers ?? string.Empty;
-                    Genre = rawgGame.Genres ?? string.Empty;
+                    SlugName = rawgGame.SlugName ?? string.Empty;
+                    MetaScore = rawgGame.MetaScore;
+                    AvgPlaytime = rawgGame.AvgPlaytime;
+
+                    // KHÔNG cập nhật ảnh ở đây nữa
+                    // if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
+                    // {
+                    //     ImagePath = rawgGame.Background_Image;
+                    //     GImagePath = rawgGame.Background_Image;
+                    //     PreviewImage = LoadPreviewImage(ImagePath);
+                    // }
+                    // var galleryImg = await ApiService.GetGalleryImage(Name);
+                    // if (galleryImg != null)
+                    // {
+                    //     GImagePath = galleryImg;
+                    // }
+
                     SyncPublishDate(ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate));
 
-
-                    // ── Update Game model properties (để binding trong Edit mode hoạt động) ──
-                    Game.Publisher = Publisher;
-                    Game.Developer = Developer;
-                    //Game.Genre = Genre;
-                    //Game.Series = Series;
-                    Game.Theme = Theme;
-
-                    slugName = rawgGame.SlugName;
-                    metaScore = rawgGame.MetaScore;
-                    avgPlaytime = rawgGame.AvgPlaytime;
+                    //var avgPlay = await HowLongToBeatService.GetPlayTimeAsync(SlugName);
+                    //if (avgPlay != null)
+                    //{
+                    //    AvgPlaytime = (int?)avgPlay;
+                    //}
 
 
-
-                    var galleryImg = await ApiService.GetGalleryImage(Game.Name);
-                    if (galleryImg != null)
-                    {
-                        Game.GImagePath = galleryImg;
-                    }
-
-                    PublishDate = ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate);
-
-                    Game.PublishDate = PublishDate;
-                    Game.MetaScore = metaScore;
-                    Game.SlugName = slugName;
-                    // Game.AvgPlayTime = avgPlaytime; 
-
-                    // ── Force UI refresh cho tất cả các trường liên quan ───────────
-                    OnPropertyChanged(nameof(Game));                    // quan trọng nhất
-                    OnPropertyChanged(nameof(Game.Name));
-                    OnPropertyChanged(nameof(Game.Publisher));
-                    OnPropertyChanged(nameof(Game.Developer));
-                    OnPropertyChanged(nameof(Game.Genre));
-                    OnPropertyChanged(nameof(Game.Series));
-                    OnPropertyChanged(nameof(Game.Theme));
-                    OnPropertyChanged(nameof(Game.PublishDate));
-                    OnPropertyChanged(nameof(Game.MetaScore));
-                    // OnPropertyChanged(nameof(Game.AvgPlayTime));     // nếu cần
-
-                    // Refresh các Display properties
-                    OnPropertyChanged(nameof(DisplayPublisher));
-                    OnPropertyChanged(nameof(DisplayDeveloper));
-                    OnPropertyChanged(nameof(DisplaySeries));
-                    OnPropertyChanged(nameof(DisplayGenre));
-                    OnPropertyChanged(nameof(DisplayTheme));
-                    OnPropertyChanged(nameof(DisplayMetaScore));
-                    OnPropertyChanged(nameof(DisplayAvgPlayTime));
-                    OnPropertyChanged(nameof(DisplayPublishDate));
-                    OnPropertyChanged(nameof(PublishDateInput));
-
-                    StatusMessage = "Sync Successful!";
+                    await ShowStatus("Sync Successful!");
                 }
                 else
                 {
-                    StatusMessage = $"Cannot find game info for '{Game.Name}'";
+                    await ShowStatus($"Cannot find game info for '{Game.Name}'");
                 }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Sync Error: {ex.Message}";
-                Console.WriteLine($"Sync error: {ex}");
+                await ShowStatus($"Sync Error: {ex.Message}");
+                Debug.WriteLine($"Sync error: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task SyncCover()
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                await ShowStatus("Game name is empty.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                var metadata = await RawgService.GetMetadata_Rawg(Name);
+                if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Background_Image))
+                {
+                    ImagePath = metadata.Background_Image;
+                    // Refresh preview
+                    SyncImageCommand.Execute(null);
+                    await ShowStatus("Cover image updated!");
+                }
+                else
+                {
+                    await ShowStatus("No cover image found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowStatus($"Error: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task SyncGallery()
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                await ShowStatus("Game name is empty.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                var galleryUrl = await RawgService.GetGalleryImage(Name);
+                if (!string.IsNullOrWhiteSpace(galleryUrl))
+                {
+                    GImagePath = galleryUrl;
+                    await ShowStatus("Gallery image updated!");
+                }
+                else
+                {
+                    await ShowStatus("No gallery image found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowStatus($"Error: {ex.Message}");
             }
             finally
             {
@@ -304,148 +386,212 @@ namespace MasterPlay.UI.ViewModels
         private void SyncPublishDate(DateOnly? date)
         {
             PublishDateInput = date?.ToString("dd/MM/yyyy") ?? string.Empty;
+            Game.PublishDate = date;
         }
 
+        // Trong EditGameViewModel.cs
+
+        [RelayCommand]
+        private async Task GenerateBackupFolder()
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                await ShowStatus("Game name is empty.");
+                return;
+            }
+
+            IsBusy = true;
+            bool result = DataService.CreateBackupFolder(Game);
+            if (result)
+            {
+                // Cập nhật lại property BackupFolderPath từ Game (vì có thể đã thay đổi)
+                BackupFolderPath = Game.BackupFolderPath;
+                await ShowStatus("Backup folder created successfully!");
+            }
+            else
+            {
+                await ShowStatus("Failed to create backup folder. Please check backup root path in settings.");
+            }
+            IsBusy = false;
+        }
+
+        private void UpdateBackupFolderPath(string newGameName)
+        {
+            if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) && Directory.Exists(Game.BackupFolderPath))
+            {
+                bool renamed = DataService.RenameBackupFolder(Game, newGameName);
+                if (renamed)
+                {
+                    BackupFolderPath = Game.BackupFolderPath;
+                }
+                else
+                {
+                    StatusMessage = "Could not rename backup folder.";
+                }
+            }
+        }
+
+        //SaveGame
         [RelayCommand]
         private void Save()
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(Game.Name))
-                    UpdateBackupFolderPath(Game.Name);
-
-                Game.Series = SelectedSeries ?? string.Empty;
-                Game.Genre = SelectedGenres != null ? string.Join(", ", SelectedGenres) : string.Empty;
-                Game.Theme = SelectedThemes != null ? string.Join(", ", SelectedThemes) : string.Empty;
-
-                Game.PublishDate = ViewModelHelpers.StringToDateOnly(publishDateInput);
-                var games = DataService.LoadGames();
-                int index = games.FindIndex(g => g.Id == Game.Id);
-                if (index >= 0)
+                if (!string.IsNullOrWhiteSpace(Name) && Name != Game.Name)
                 {
-                    if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath))
-                    {
-                        if (!Directory.Exists(Game.BackupFolderPath))
-                            Directory.CreateDirectory(Game.BackupFolderPath);
-                        string infoFilePath = Path.Combine(Game.BackupFolderPath, "save_location.txt");
-                        File.WriteAllText(infoFilePath, Game.SaveFolderPath);
-                    }
-
-                    Game = ViewModelHelpers.InputFormatter(Game);
-                    games[index] = Game;
-                    DataService.SaveGamesData(games);
-
-                    series = Game.Series;
-                    genre = Game.Genre;
-                    theme = Game.Theme;
-
-                    ReloadGameFromConfig();
-                    StatusMessage = "Data Saved Successfully!";
-                    IsReadOnly = true;
+                    UpdateBackupFolderPath(Name);
                 }
+
+                Game.SeriesId = SelectedSeries?.Id;
+                Game.OwnershipId = SelectedOwnership?.Id;
+                Game.ProgressId = SelectedProgress?.Id;
+
+                if (SelectedProgress?.Id == 3 && _originalProgressId != 3)
+                {
+                    DataService.ReorderOnPromoteToNextPlay(Game);
+                }
+
+                // Xử lý GameGenres
+                if (Game.GameGenres == null)
+                    Game.GameGenres = new List<GameGenre>();
+                Game.GameGenres.Clear();
+                foreach (var genre in SelectedGenres)
+                {
+                    Game.GameGenres.Add(new GameGenre { GameId = Game.Id, GenreId = genre.Id });
+                }
+
+                // Xử lý GameThemes
+                if (Game.GameThemes == null)
+                    Game.GameThemes = new List<GameTheme>();
+                Game.GameThemes.Clear();
+                foreach (var theme in SelectedThemes)
+                {
+                    Game.GameThemes.Add(new GameTheme { GameId = Game.Id, ThemeId = theme.Id });
+                }
+
+                Game.Name = Name;
+                Game.Publisher = Publisher;
+                Game.Developer = Developer;
+                Game.Excited = Excited;
+                Game.FinishedIn = FinishedIn;
+                Game.MetaScore = MetaScore;
+                Game.AvgPlayTime = AvgPlaytime;
+                Game.SlugName = SlugName;
+                Game.ExeName = ExeName;
+                Game.InitExeName = InitExeName;
+                Game.SaveFolderPath = SaveFolderPath;
+                Game.BackupFolderPath = BackupFolderPath;
+                Game.ImagePath = ImagePath;
+                Game.GImagePath = GImagePath;
+                Game.Score = Score;
+
+                Game = ViewModelHelpers.InputFormatter(Game);
+
+                DataService.UpdateGame(Game);
+
+                if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath))
+                {
+                    DataService.UpdateSaveLocationFile(Game);
+                }
+
+                IsReadOnly = true;
+                ReloadGameFromConfig();
+
+                ShowStatus("Data Saved Successfully!");
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error: {ex.Message}";
+                ShowStatus($"Error: {ex.Message}");
                 MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        [RelayCommand]
-        private void FinishGame()
-        {
-            var inputWindow = new InputScoreWindow(Game.Name);
-            Game.Progress = "Done";
-            Game.FinishedIn = DateTime.Now.Year.ToString();
-
-            if (inputWindow.ShowDialog() == true)
-            {
-                if (int.TryParse(inputWindow.ScoreInput, out int newScore))
-                {
-                    Game.Score = newScore;
-                    hasScore = newScore > 0;
-                    OnPropertyChanged(nameof(DisplayScore));
-                    StatusMessage = $"{Game.Name} has been finished with Score: {newScore}!";
-                }
-                else
-                {
-                    StatusMessage = "Invalid score input!";
-                }
-            }
-            Save();
-        }
-
-        [RelayCommand]
-        private void CheckPlayTime()
-        {
-            if (string.IsNullOrWhiteSpace(Game.Name)) return;
-            string url = "https://howlongtobeat.com/?q=" + Uri.EscapeDataString(Game.Name);
-            try
-            {
-                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
-            }
-            catch (Exception ex) { Console.WriteLine($"Không thể mở trình duyệt: {ex.Message}"); }
-        }
-
-        [RelayCommand]
-        private void CheckMetaScore()
-        {
-            if (string.IsNullOrWhiteSpace(Game.SlugName)) return;
-            string url = "https://www.metacritic.com/game/" + Uri.EscapeDataString(Game.SlugName) + "/";
-            try
-            {
-                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
-            }
-            catch (Exception ex) { Console.WriteLine($"Không thể mở trình duyệt: {ex.Message}"); }
-        }
-
-        [RelayCommand]
-        private void DeleteGame()
-        {
-            var result = MessageBox.Show($"Are you sure to Disable '{Game.Name}'?\n(Game will be hidden but data remains.)",
-                "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result == MessageBoxResult.Yes)
-            {
-                try
-                {
-                    var games = DataService.LoadGames();
-                    var gameToDisable = games.FirstOrDefault(g => g.Id == Game.Id);
-                    if (gameToDisable != null)
-                    {
-                        gameToDisable.IsDisabled = true;
-                        DataService.SaveGamesData(games);
-                        StatusMessage = $"{gameToDisable.Name} is Disabled!";
-                        RaiseRequestClose(true);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Error: {ex.Message}";
-                    MessageBox.Show(StatusMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
             }
         }
 
         [RelayCommand]
         private void Cancel()
         {
-            var games = DataService.LoadGames();
-            var originalGame = games.FirstOrDefault(g => g.Id == Game.Id);
-            if (originalGame != null)
-            {
-                Game = originalGame;
-                PreviewImage = LoadPreviewImage(Game.ImagePath);
-                ReloadGameFromConfig();
-                if (!IsReadOnly) SyncSelectedChipsFromGame();
-            }
+            // SỬA: Đặt IsReadOnly = true trước khi Reload
             IsReadOnly = true;
+            ReloadGameFromConfig();
             StatusMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        private void FinishGame()
+        {
+            try
+            {
+                FinishScoreInput = string.Empty;
+                IsFinishPopupOpen = true;
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Error: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private void FinishSave()
+        {
+            try
+            {
+                if (double.TryParse(FinishScoreInput, out double newScore))
+                {
+                    // Validate: chỉ cho phép số từ 0-100 hoặc 999 (special)
+                    if (newScore < 0 || newScore > 100 && newScore != 999)
+                    {
+                        ShowStatus("Score must be between 0-100 or 999 for 10🔥");
+                        return;
+                    }
+
+                    Score = newScore;
+                    SelectedProgress = allProgresses.FirstOrDefault(p => p.Name == "Done") ?? allProgresses.FirstOrDefault();
+                    FinishedIn = DateTime.Now.Year.ToString();
+                    Save(); // Lưu tất cả thay đổi
+                    IsFinishPopupOpen = false;
+                    ShowStatus($"{Name} has been finished with Score: {newScore}!");
+                }
+                else
+                {
+                    ShowStatus("Invalid score input!");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Error: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private void FinishCancel()
+        {
+            IsFinishPopupOpen = false;
+        }
+
+        [RelayCommand]
+        private void DeleteGame()
+        {
+            var result = MessageBox.Show($"Are you sure to Disable '{Name}'?\n(Game will be hidden but data remains.)",
+                "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    Game.IsDisabled = true;
+                    DataService.UpdateGame(Game);
+                    ShowStatus($"{Name} is Disabled!");
+                    RaiseRequestClose(true);
+                }
+                catch (Exception ex)
+                {
+                    ShowStatus($"Error: {ex.Message}");
+                    MessageBox.Show(StatusMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         [RelayCommand]
         private void Close() => RaiseRequestClose(false);
 
-        // ==================== FOLDER COMMANDS ====================
         [RelayCommand]
         private void EditSaveFolder()
         {
@@ -455,7 +601,7 @@ namespace MasterPlay.UI.ViewModels
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (d.ShowDialog() == true)
-                Game.SaveFolderPath = d.FolderName;
+                SaveFolderPath = d.FolderName;
         }
 
         [RelayCommand]
@@ -467,48 +613,46 @@ namespace MasterPlay.UI.ViewModels
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (d.ShowDialog() == true)
-                Game.BackupFolderPath = d.FolderName;
+                BackupFolderPath = d.FolderName;
         }
 
         [RelayCommand]
-        private void OpenSaveFolder() => HandleFolderOpening((Game.SaveFolderPath, "Save Folder"));
+        private void OpenSaveFolder() => HandleFolderOpening((SaveFolderPath, "Save Folder"));
 
         [RelayCommand]
-        private void OpenBackupFolder() => HandleFolderOpening((Game.BackupFolderPath, "Backup Folder"));
+        private void OpenBackupFolder() => HandleFolderOpening((BackupFolderPath, "Backup Folder"));
 
-        // ==================== IMAGE COMMANDS ====================
         [RelayCommand]
         private void SyncImage()
         {
-            if (string.IsNullOrWhiteSpace(Game.ImagePath))
+            if (string.IsNullOrWhiteSpace(ImagePath))
             {
                 PreviewImage = null;
-                StatusMessage = "No image URL provided.";
+                ShowStatus("No image URL provided.");
                 return;
             }
             try
             {
-                PreviewImage = LoadPreviewImage(Game.ImagePath);
-                StatusMessage = "Image preview updated successfully.";
+                PreviewImage = LoadPreviewImage(ImagePath);
+                ShowStatus("Image preview updated successfully.");
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Failed to load image: {ex.Message}";
+                ShowStatus($"Failed to load image: {ex.Message}");
             }
         }
 
-        // ==================== PLAYTIME COMMANDS ====================
         [RelayCommand]
         private void AdjustPlayTimeUp()
         {
             if (AdjustMinutes <= 0)
             {
-                StatusMessage = "Please enter a positive number of minutes.";
+                ShowStatus("Please enter a positive number of minutes.");
                 return;
             }
-            Game.TotalPlayTimeSeconds += AdjustMinutes * 60L;
+            Game.TotalPlayTimeSeconds = (Game.TotalPlayTimeSeconds ?? 0) + AdjustMinutes * 60;
             UpdatePlayTimeFieldsFromSeconds();
-            StatusMessage = $"Added {AdjustMinutes} minutes to play time.";
+            ShowStatus($"Added {AdjustMinutes} minutes to play time.");
             AdjustMinutes = 0;
         }
 
@@ -517,170 +661,224 @@ namespace MasterPlay.UI.ViewModels
         {
             if (AdjustMinutes <= 0)
             {
-                StatusMessage = "Please enter a positive number of minutes.";
+                ShowStatus("Please enter a positive number of minutes.");
                 return;
             }
-            long newSeconds = Game.TotalPlayTimeSeconds - (AdjustMinutes * 60L);
-            Game.TotalPlayTimeSeconds = newSeconds < 0 ? 0 : newSeconds;
+            long newSeconds = (Game.TotalPlayTimeSeconds ?? 0) - AdjustMinutes * 60;
+            Game.TotalPlayTimeSeconds = newSeconds < 0 ? 0 : (int)newSeconds;
             UpdatePlayTimeFieldsFromSeconds();
-            StatusMessage = $"Subtracted {AdjustMinutes} minutes from play time.";
+            ShowStatus($"Subtracted {AdjustMinutes} minutes from play time.");
             AdjustMinutes = 0;
         }
 
+        [RelayCommand]
+        private void CheckPlayTime()
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return;
+            string url = "https://howlongtobeat.com/?q=" + Uri.EscapeDataString(Name);
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch (Exception ex) { Debug.WriteLine($"Cannot open browser: {ex.Message}"); }
+        }
+
+        [RelayCommand]
+        private void CheckMetaScore()
+        {
+            if (string.IsNullOrWhiteSpace(SlugName)) return;
+            string url = "https://www.metacritic.com/game/" + Uri.EscapeDataString(SlugName) + "/";
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch (Exception ex) { Debug.WriteLine($"Cannot open browser: {ex.Message}"); }
+        }
+
         // ==================== CHIP COMMANDS ====================
+
         [RelayCommand]
         private void OpenSeriesPopup()
         {
             SeriesSearchText = string.Empty;
-            FilteredSeries = new ObservableCollection<string>(AllSeries);
+            FilteredSeries = new ObservableCollection<Series>(AllSeries);
             IsSeriesPopupOpen = true;
         }
 
         [RelayCommand]
-        private void SelectSeries(string seriesName)
+        private void SelectSeries(Series series)
         {
-            SelectedSeries = seriesName;
+            SelectedSeries = series;
             IsSeriesPopupOpen = false;
+            OnPropertyChanged(nameof(DisplaySeries));
         }
 
         [RelayCommand]
         private void CreateNewSeries()
         {
-            if (!string.IsNullOrWhiteSpace(SeriesSearchText) && !AllSeries.Contains(SeriesSearchText))
+            if (!string.IsNullOrWhiteSpace(SeriesSearchText))
             {
-                AllSeries.Add(SeriesSearchText);
-                SelectedSeries = SeriesSearchText;
+                var series = DataService.AddSeries(SeriesSearchText);
+                if (!AllSeries.Any(s => s.Id == series.Id))
+                    AllSeries.Add(series);
+                SelectedSeries = series;
+                OnPropertyChanged(nameof(DisplaySeries));
             }
             IsSeriesPopupOpen = false;
         }
 
         [RelayCommand]
-        private void RemoveSelectedSeries() => SelectedSeries = null;
+        private void RemoveSelectedSeries()
+        {
+            SelectedSeries = null;
+            OnPropertyChanged(nameof(DisplaySeries));
+        }
 
         [RelayCommand]
         private void OpenGenresPopup()
         {
             GenresSearchText = string.Empty;
-            FilteredGenres = new ObservableCollection<string>(AllGenres);
+            FilteredGenres = new ObservableCollection<Genre>(AllGenres);
             IsGenresPopupOpen = true;
         }
 
         [RelayCommand]
-        private void SelectGenre(string genreName)
+        private void SelectGenre(Genre genre)
         {
-            if (!SelectedGenres.Contains(genreName))
-                SelectedGenres.Add(genreName);
+            if (!SelectedGenres.Any(g => g.Id == genre.Id))
+                SelectedGenres.Add(genre);
+            OnPropertyChanged(nameof(DisplayGenres));
         }
 
         [RelayCommand]
         private void CreateNewGenre()
         {
-            if (!string.IsNullOrWhiteSpace(GenresSearchText) && !AllGenres.Contains(GenresSearchText))
+            if (!string.IsNullOrWhiteSpace(GenresSearchText))
             {
-                AllGenres.Add(GenresSearchText);
-                if (!SelectedGenres.Contains(GenresSearchText))
-                    SelectedGenres.Add(GenresSearchText);
+                var genre = DataService.AddGenre(GenresSearchText);
+                if (!AllGenres.Any(g => g.Id == genre.Id))
+                    AllGenres.Add(genre);
+                if (!SelectedGenres.Any(g => g.Id == genre.Id))
+                    SelectedGenres.Add(genre);
+                OnPropertyChanged(nameof(DisplayGenres));
             }
         }
 
         [RelayCommand]
-        private void RemoveGenre(string genre)
+        private void RemoveGenre(Genre genre)
         {
             if (SelectedGenres.Contains(genre))
                 SelectedGenres.Remove(genre);
+            OnPropertyChanged(nameof(DisplayGenres));
         }
 
         [RelayCommand]
         private void OpenThemesPopup()
         {
             ThemesSearchText = string.Empty;
-            FilteredThemes = new ObservableCollection<string>(AllThemes);
+            FilteredThemes = new ObservableCollection<Theme>(AllThemes);
             IsThemesPopupOpen = true;
         }
 
         [RelayCommand]
-        private void SelectTheme(string themeName)
+        private void SelectTheme(Theme theme)
         {
-            if (!SelectedThemes.Contains(themeName))
-                SelectedThemes.Add(themeName);
+            if (!SelectedThemes.Any(t => t.Id == theme.Id))
+                SelectedThemes.Add(theme);
+            OnPropertyChanged(nameof(DisplayThemes));
         }
 
         [RelayCommand]
         private void CreateNewTheme()
         {
-            if (!string.IsNullOrWhiteSpace(ThemesSearchText) && !AllThemes.Contains(ThemesSearchText))
+            if (!string.IsNullOrWhiteSpace(ThemesSearchText))
             {
-                AllThemes.Add(ThemesSearchText);
-                if (!SelectedThemes.Contains(ThemesSearchText))
-                    SelectedThemes.Add(ThemesSearchText);
+                var theme = DataService.AddTheme(ThemesSearchText);
+                if (!AllThemes.Any(t => t.Id == theme.Id))
+                    AllThemes.Add(theme);
+                if (!SelectedThemes.Any(t => t.Id == theme.Id))
+                    SelectedThemes.Add(theme);
+                OnPropertyChanged(nameof(DisplayThemes));
             }
         }
 
         [RelayCommand]
-        private void RemoveTheme(string theme)
+        private void RemoveTheme(Theme theme)
         {
             if (SelectedThemes.Contains(theme))
                 SelectedThemes.Remove(theme);
+            OnPropertyChanged(nameof(DisplayThemes));
         }
 
         // ==================== PRIVATE HELPERS ====================
-        private void InitializeMockData()
-        {
-            AllSeries = new ObservableCollection<string>(MockData.Series);
-            AllGenres = new ObservableCollection<string>(MockData.Genres);
-            AllThemes = new ObservableCollection<string>(MockData.Themes);
 
-            SelectedGenres = new ObservableCollection<string>();
-            SelectedThemes = new ObservableCollection<string>();
-            FilteredSeries = new ObservableCollection<string>();
-            FilteredGenres = new ObservableCollection<string>();
-            FilteredThemes = new ObservableCollection<string>();
-        }
-
-        private void SyncSelectedChipsFromGame()
+        private void LoadLists()
         {
-            SelectedSeries = Game.Series;
-            SelectedGenres.Clear();
-            if (!string.IsNullOrWhiteSpace(Game.Genre))
-            {
-                var genres = Game.Genre.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(g => g.Trim());
-                foreach (var g in genres) if (!string.IsNullOrWhiteSpace(g)) SelectedGenres.Add(g);
-            }
-            SelectedThemes.Clear();
-            if (!string.IsNullOrWhiteSpace(Game.Theme))
-            {
-                var themes = Game.Theme.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(t => t.Trim());
-                foreach (var t in themes) if (!string.IsNullOrWhiteSpace(t)) SelectedThemes.Add(t);
-            }
+            AllSeries = new ObservableCollection<Series>(DataService.LoadSeriesList());
+            AllGenres = new ObservableCollection<Genre>(DataService.LoadGenresList());
+            AllThemes = new ObservableCollection<Theme>(DataService.LoadThemesList());
+            AllOwnerships = new ObservableCollection<OwnershipStatus>(DataService.LoadOwnershipList());
+            AllProgresses = new ObservableCollection<ProgressStatus>(DataService.LoadProgressList());
         }
 
         private void LoadGameData()
         {
-            SelectedSeries = Game.Series;
+            SelectedSeries = AllSeries.FirstOrDefault(s => s.Id == Game.SeriesId);
+            OnPropertyChanged(nameof(DisplaySeries));
+
             SelectedGenres.Clear();
-            if (!string.IsNullOrWhiteSpace(Game.Genre))
+            if (Game.GameGenres != null)
             {
-                var genres = Game.Genre.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(g => g.Trim());
-                foreach (var g in genres) if (!string.IsNullOrWhiteSpace(g)) SelectedGenres.Add(g);
+                foreach (var gg in Game.GameGenres)
+                {
+                    var genre = AllGenres.FirstOrDefault(g => g.Id == gg.GenreId);
+                    if (genre != null) SelectedGenres.Add(genre);
+                }
             }
+            OnPropertyChanged(nameof(DisplayGenres));
+
             SelectedThemes.Clear();
-            if (!string.IsNullOrWhiteSpace(Game.Theme))
+            if (Game.GameThemes != null)
             {
-                var themes = Game.Theme.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(t => t.Trim());
-                foreach (var t in themes) if (!string.IsNullOrWhiteSpace(t)) SelectedThemes.Add(t);
+                foreach (var gt in Game.GameThemes)
+                {
+                    var theme = AllThemes.FirstOrDefault(t => t.Id == gt.ThemeId);
+                    if (theme != null) SelectedThemes.Add(theme);
+                }
             }
+            OnPropertyChanged(nameof(DisplayThemes));
+
+            SelectedOwnership = AllOwnerships.FirstOrDefault(o => o.Id == Game.OwnershipId);
+            OnPropertyChanged(nameof(DisplayOwnership));
+            SelectedProgress = AllProgresses.FirstOrDefault(p => p.Id == Game.ProgressId);
+            OnPropertyChanged(nameof(DisplayProgress));
+
+            _originalProgressId = Game.ProgressId;
+
+            // Gán từ Game vào property trung gian
+            Name = Game.Name ?? string.Empty;
+            Publisher = Game.Publisher ?? string.Empty;
+            Developer = Game.Developer ?? string.Empty;
+            Excited = Game.Excited;
+            FinishedIn = Game.FinishedIn ?? string.Empty;
+            AvgPlaytime = Game.AvgPlayTime;
+            MetaScore = Game.MetaScore;
+            SlugName = Game.SlugName ?? string.Empty;
+            ExeName = Game.ExeName ?? string.Empty;
+            InitExeName = Game.InitExeName ?? string.Empty;
+            SaveFolderPath = Game.SaveFolderPath ?? string.Empty;
+            BackupFolderPath = Game.BackupFolderPath ?? string.Empty;
+            ImagePath = Game.ImagePath ?? string.Empty;
+            GImagePath = Game.GImagePath ?? string.Empty;
+            Score = Game.Score;
             SyncPublishDate(Game.PublishDate);
             UpdatePlayTimeFieldsFromSeconds();
-            hasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
+            HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
         }
 
         private void UpdatePlayTimeFieldsFromSeconds()
         {
-            var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+            var ts = TimeSpan.FromSeconds((double)(Game.TotalPlayTimeSeconds ?? 0));
             PlayTimeHours = (int)ts.TotalHours;
             PlayTimeMinutes = ts.Minutes;
             OnPropertyChanged(nameof(DisplayPlayTime));
@@ -688,7 +886,7 @@ namespace MasterPlay.UI.ViewModels
 
         private void UpdateTotalPlayTimeFromFields()
         {
-            Game.TotalPlayTimeSeconds = (PlayTimeHours * 3600L) + (PlayTimeMinutes * 60L);
+            Game.TotalPlayTimeSeconds = (int)(PlayTimeHours * 3600L + PlayTimeMinutes * 60L);
             OnPropertyChanged(nameof(DisplayPlayTime));
         }
 
@@ -717,29 +915,11 @@ namespace MasterPlay.UI.ViewModels
                 {
                     SaveFolderAccessible = true;
                     BackupFolderAccessible = true;
-                    UpdatePlayTimeFieldsFromSeconds();
                 }
+
+                // Cập nhật lại các property trung gian và UI
+                LoadGameData();
             }
-        }
-
-        private void UpdateBackupFolderPath(string newGameName)
-        {
-            if (string.IsNullOrWhiteSpace(newGameName)) return;
-            string backupRoot = DataService.GetBackupRootPath();
-            string validFolderName = ViewModelHelpers.ValidFolderName(newGameName);
-            string newBackupFolder = Path.Combine(backupRoot, validFolderName);
-
-            if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) &&
-                Directory.Exists(Game.BackupFolderPath) &&
-                Game.BackupFolderPath != newBackupFolder)
-            {
-                try { Directory.Move(Game.BackupFolderPath, newBackupFolder); }
-                catch (Exception ex) { StatusMessage = $"Failed to rename backup folder: {ex.Message}"; }
-            }
-            else if (!Directory.Exists(newBackupFolder))
-                Directory.CreateDirectory(newBackupFolder);
-
-            Game.BackupFolderPath = newBackupFolder;
         }
 
         private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
@@ -754,53 +934,31 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        private void SyncPublishDate() => publishDateInput = Game.PublishDate?.ToString("dd/MM/yyyy") ?? "";
+        private async Task ShowStatus(string message, int delayMs = 3000)
+        {
+            _msgCts?.Cancel();
+            _msgCts = new CancellationTokenSource();
+            var token = _msgCts.Token;
+
+            StatusMessage = message;
+
+            if (delayMs > 0)
+            {
+                try
+                {
+                    await Task.Delay(delayMs, token);
+                    if (!token.IsCancellationRequested)
+                        StatusMessage = string.Empty;
+                }
+                catch (TaskCanceledException) { }
+            }
+        }
 
         // ==================== PARTIAL METHODS ====================
+
         partial void OnGameChanged(Game? value)
         {
             PreviewImage = LoadPreviewImage(value?.ImagePath);
-            //SyncPublishDate();
-            if (!IsReadOnly && !string.IsNullOrWhiteSpace(value?.Name))
-                UpdateBackupFolderPath(value.Name);
-            if (value == null)
-            {
-                publisher = developer = series = genre = theme = finishedIn = string.Empty;
-                publishDate = null; metaScore = 0; excited = 0f; avgPlaytime = 0L; hasScore = false;
-            }
-            else
-            {
-                publisher = value.Publisher ?? string.Empty;
-                developer = value.Developer ?? string.Empty;
-                series = value.Series ?? string.Empty;
-                genre = value.Genre ?? string.Empty;
-                theme = value.Theme ?? string.Empty;
-                excited = value.Excited;
-                finishedIn = value.FinishedIn ?? string.Empty;
-                publishDate = value.PublishDate;
-                metaScore = value.MetaScore;
-                avgPlaytime = value.AvgPlayTime;
-                hasScore = value.Score > 0f;
-            }
-            OnPropertyChanged(nameof(DisplayPublisher));
-            OnPropertyChanged(nameof(DisplayDeveloper));
-            OnPropertyChanged(nameof(DisplaySeries));
-            OnPropertyChanged(nameof(DisplayGenre));
-            OnPropertyChanged(nameof(DisplayTheme));
-            OnPropertyChanged(nameof(DisplayExcited));
-            OnPropertyChanged(nameof(DisplayFinishedIn));
-            OnPropertyChanged(nameof(DisplayPublishDate));
-            OnPropertyChanged(nameof(DisplayMetaScore));
-            OnPropertyChanged(nameof(DisplayAvgPlayTime));
-            OnPropertyChanged(nameof(DisplayProcessName));
-            OnPropertyChanged(nameof(DisplaySaveFolderPath));
-            OnPropertyChanged(nameof(DisplayBackupFolderPath));
-            OnPropertyChanged(nameof(DisplayOwnership));
-            OnPropertyChanged(nameof(DisplayProgress));
-            OnPropertyChanged(nameof(DisplayScore));
-            OnPropertyChanged(nameof(DisplayPlayTime));
-            OnPropertyChanged(nameof(HasSlugName));
-            OnPropertyChanged(nameof(HasInitExeNameForView));
         }
 
         partial void OnIsReadOnlyChanged(bool value)
@@ -821,51 +979,83 @@ namespace MasterPlay.UI.ViewModels
             UpdateTotalPlayTimeFromFields();
         }
 
-        partial void OnPublisherChanged(string value) { Game.Publisher = value; OnPropertyChanged(nameof(DisplayPublisher)); }
-        partial void OnDeveloperChanged(string value) { Game.Developer = value; OnPropertyChanged(nameof(DisplayDeveloper)); }
-        partial void OnSeriesChanged(string value) { Game.Series = value; OnPropertyChanged(nameof(DisplaySeries)); }
-        partial void OnGenreChanged(string value) { Game.Genre = value; OnPropertyChanged(nameof(DisplayGenre)); }
-        partial void OnThemeChanged(string value) { Game.Theme = value; OnPropertyChanged(nameof(DisplayTheme)); }
-        partial void OnExcitedChanged(float value) { Game.Excited = value; OnPropertyChanged(nameof(DisplayExcited)); }
-        partial void OnFinishedInChanged(string value) { Game.FinishedIn = value; OnPropertyChanged(nameof(DisplayFinishedIn)); }
-        partial void OnPublishDateChanged(DateOnly? value) { Game.PublishDate = value; OnPropertyChanged(nameof(DisplayPublishDate)); }
-        partial void OnMetaScoreChanged(int value) { Game.MetaScore = value; OnPropertyChanged(nameof(DisplayMetaScore)); }
-        partial void OnAvgPlaytimeChanged(long value) { Game.AvgPlayTime = value; OnPropertyChanged(nameof(DisplayAvgPlayTime)); }
+        // Khi property trung gian thay đổi, tự động cập nhật Game (để đồng bộ)
+        partial void OnNameChanged(string value) => Game.Name = value;
+        partial void OnPublisherChanged(string value) => Game.Publisher = value;
+        partial void OnDeveloperChanged(string value) => Game.Developer = value;
+        partial void OnExcitedChanged(double? value) => Game.Excited = value;
+        partial void OnFinishedInChanged(string value) => Game.FinishedIn = value;
+        partial void OnAvgPlaytimeChanged(int? value) => Game.AvgPlayTime = value;
+        partial void OnMetaScoreChanged(int? value) => Game.MetaScore = value;
+        partial void OnExeNameChanged(string value) => Game.ExeName = value;
+
+        partial void OnSaveFolderPathChanged(string value) => Game.SaveFolderPath = value;
+        partial void OnBackupFolderPathChanged(string value) => Game.BackupFolderPath = value;
+        partial void OnImagePathChanged(string value)
+        {
+            Game.ImagePath = value;
+            PreviewImage = LoadPreviewImage(value);
+        }
+        partial void OnGImagePathChanged(string value) => Game.GImagePath = value;
+
+        // Thêm property Score
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasScore))]
+        [NotifyPropertyChangedFor(nameof(DisplayScore))]
+        private double? score;
+
+        partial void OnScoreChanged(double? value)
+        {
+            Game.Score = value;
+        }
 
         partial void OnSeriesSearchTextChanged(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                FilteredSeries = new ObservableCollection<string>(AllSeries);
+                FilteredSeries = new ObservableCollection<Series>(AllSeries);
             else
-                FilteredSeries = new ObservableCollection<string>(AllSeries.Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase)));
+                FilteredSeries = new ObservableCollection<Series>(
+                    AllSeries.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
             OnPropertyChanged(nameof(CreateNewSeriesText));
         }
 
         partial void OnGenresSearchTextChanged(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                FilteredGenres = new ObservableCollection<string>(AllGenres);
+                FilteredGenres = new ObservableCollection<Genre>(AllGenres);
             else
-                FilteredGenres = new ObservableCollection<string>(AllGenres.Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase)));
+                FilteredGenres = new ObservableCollection<Genre>(
+                    AllGenres.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
             OnPropertyChanged(nameof(CreateNewGenreText));
         }
 
         partial void OnThemesSearchTextChanged(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                FilteredThemes = new ObservableCollection<string>(AllThemes);
+                FilteredThemes = new ObservableCollection<Theme>(AllThemes);
             else
-                FilteredThemes = new ObservableCollection<string>(AllThemes.Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase)));
+                FilteredThemes = new ObservableCollection<Theme>(
+                    AllThemes.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
             OnPropertyChanged(nameof(CreateNewThemeText));
+        }
+
+        partial void OnInitExeNameChanged(string value)
+        {
+            Game.InitExeName = value;
+            OnPropertyChanged(nameof(HasInitExeNameForView));
         }
 
         partial void OnHasInitExeNameChanged(bool value)
         {
-            if (!value)
-            {
-                Game.InitExeName = string.Empty;
-            }
+            if (!value) InitExeName = string.Empty;
             OnPropertyChanged(nameof(HasInitExeNameForView));
         }
+
+        // ==================== FINISH POPUP PROPERTIES ====================
+        [ObservableProperty]
+        private bool isFinishPopupOpen;
+
+        [ObservableProperty]
+        private string finishScoreInput = string.Empty;
     }
 }

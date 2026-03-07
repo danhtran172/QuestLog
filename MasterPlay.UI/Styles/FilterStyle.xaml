@@ -1,28 +1,120 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Filter Button Style (ToggleButton) -->
+    <!-- Style ComboBox đơn giản, hoạt động tốt trong Popup -->
+    <Style x:Key="FilterComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#DDDDDD"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Foreground" Value="#2C3E50"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="IsEditable" Value="False"/>
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton x:Name="ToggleButton"
+                                      Grid.Column="2"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      IsHitTestVisible="True"
+                                      Focusable="False">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="border"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            CornerRadius="4">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ContentPresenter Grid.Column="0"
+                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              VerticalAlignment="Center"
+                                                              HorizontalAlignment="Center"
+                                                              Margin="4,0,0,0"/>
+                                            <Path Grid.Column="1"
+                                                  Data="M0,0 L4,4 L8,0 Z"
+                                                  Fill="#666"
+                                                  Width="8"
+                                                  Height="4"
+                                                  Margin="0,0,8,0"
+                                                  VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <Popup x:Name="Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide">
+                            <Border Background="White"
+                                    BorderBrush="#DDDDDD"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="0,2,0,0"
+                                    MaxHeight="200"
+                                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                <ScrollViewer>
+                                    <ItemsPresenter x:Name="ItemsPresenter"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ToggleButton" Property="BorderBrush" Value="#A1BC98"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Filter Button Style (ToggleButton) - KHÔNG BACKGROUND, chỉ icon -->
     <Style x:Key="FilterButtonStyle" TargetType="ToggleButton">
         <Setter Property="Width" Value="35"/>
         <Setter Property="Height" Value="35"/>
+        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Grid>
-                        <Ellipse x:Name="circle" Fill="{TemplateBinding Background}"/>
-                        <Image Source="/Assets/Filter.png"
-                           Width="18"
-                           Height="18"
-                           Margin="0,2,0,0"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <!-- Không có ellipse, chỉ có image -->
+                        <Image x:Name="FilterImage"
+                               Source="/Assets/Filter.png"
+                               Width="18"
+                               Height="18"
+                               Margin="0,2,0,0"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="circle" Property="Opacity" Value="0.8"/>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="circle" Property="Fill" Value="#7EACB5"/>
-                        </Trigger>
+                        <!-- DataTrigger thay đổi icon khi có filter active -->
+                        <DataTrigger Binding="{Binding DataContext.HasActiveFilter, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter TargetName="FilterImage" Property="Source" Value="/Assets/Filtering.png"/>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -85,7 +177,7 @@
                             <CheckBox Grid.Column="1" Content="Reverse filter" Style="{StaticResource FilterCheckBoxStyle}" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Number Filters: chia 2 cột -->
+                        <!-- Number Filters: chia 2 cột - mỗi mục gồm ComboBox (toán tử) và TextBox (giá trị) -->
                         <Grid Grid.Row="1" Margin="0,0,0,20">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -96,75 +188,100 @@
                             <!-- Cột trái: Finish và Excited -->
                             <StackPanel Grid.Column="0">
                                 <!-- Finish -->
-                                <Grid Margin="0,0,0,10">
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="60"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center"/>
-                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
-                                        <ComboBoxItem Content=">"/>
-                                
-                                        <ComboBoxItem Content="="/>
-                                        <ComboBoxItem Content="lt"/>
-                                    </ComboBox>
-                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
-                                </Grid>
-                                <!-- Excited -->
-                                <Grid Margin="0,0,0,10">
-                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="55"/>
                                         <ColumnDefinition Width="60"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center"/>
-                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
-                                        <ComboBoxItem Content="="/>
-                                        <ComboBoxItem Content="&lt;"/>
-                                        <ComboBoxItem Content="&lt;="/>
+                                    <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center" FontSize="12"/>
+                                    <ComboBox Grid.Column="1" 
+                                              Style="{StaticResource FilterComboBoxStyle}" 
+                                              Margin="0,0,3,0" 
+                                              SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
-                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                    <TextBox Grid.Column="2" 
+                                             Style="{StaticResource BaseTextBoxStyle}" 
+                                             Height="28" 
+                                             Padding="6,2"/>
+                                </Grid>
+                                <!-- Excited -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="55"/>
+                                        <ColumnDefinition Width="60"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center" FontSize="12"/>
+                                    <ComboBox Grid.Column="1" 
+                                              Style="{StaticResource FilterComboBoxStyle}" 
+                                              Margin="0,0,3,0" 
+                                              SelectedIndex="0">
+                                        <ComboBoxItem Content=">"/>
+                                        <ComboBoxItem Content=">="/>
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content="&lt;"/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="2" 
+                                             Style="{StaticResource BaseTextBoxStyle}" 
+                                             Height="28" 
+                                             Padding="6,2"/>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Cột phải: Score và PlayTime -->
                             <StackPanel Grid.Column="2">
                                 <!-- Score -->
-                                <Grid Margin="0,0,0,10">
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="60"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="55"/>
+                                        <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center"/>
-                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
-                                        <ComboBoxItem Content="="/>
-                                        <ComboBoxItem Content="&lt;"/>
-                                        <ComboBoxItem Content="&lt;="/>
+                                    <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center" FontSize="12"/>
+                                    <ComboBox Grid.Column="1" 
+                                              Style="{StaticResource FilterComboBoxStyle}" 
+                                              Margin="0,0,3,0" 
+                                              SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
-                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                    <TextBox Grid.Column="2" 
+                                             Style="{StaticResource BaseTextBoxStyle}" 
+                                             Height="28" 
+                                             Padding="6,2"/>
                                 </Grid>
                                 <!-- PlayTime -->
-                                <Grid Margin="0,0,0,10">
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="60"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="55"/>
+                                        <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center"/>
-                                    <ComboBox Grid.Column="1" Style="{StaticResource ModernSelectionBoxStyle}" Margin="5,0">
-                                        <ComboBoxItem Content="="/>
-                                        <ComboBoxItem Content="&lt;"/>
-                                        <ComboBoxItem Content="&lt;="/>
+                                    <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center" FontSize="12"/>
+                                    <ComboBox Grid.Column="1" 
+                                              Style="{StaticResource FilterComboBoxStyle}" 
+                                              Margin="0,0,3,0" 
+                                              SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
+                                        <ComboBoxItem Content="="/>
+                                        <ComboBoxItem Content="&lt;="/>
+                                        <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
-                                    <TextBox Grid.Column="2" Style="{StaticResource BaseTextBoxStyle}" Margin="5,0"/>
+                                    <TextBox Grid.Column="2" 
+                                             Style="{StaticResource BaseTextBoxStyle}" 
+                                             Height="28" 
+                                             Padding="6,2"/>
                                 </Grid>
                             </StackPanel>
                         </Grid>
@@ -219,8 +336,19 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Apply button -->
-                        <Button Grid.Row="3" Content="Apply" HorizontalAlignment="Right" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}"/>
+                        <!-- Hàng nút: Clear Filter, Apply, Cancel -->
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <!-- Clear Filter button -->
+                            <Button Content="Clear Filter" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ClearFilterCommand}"/>
+
+                            <!-- Apply button -->
+                            <Button Content="Apply" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ApplyFilterCommand}"/>
+
+                            <!-- Cancel button with icon Back3 - không command, popup tự đóng nhờ StaysOpen=False -->
+                            <Button Width="32" Height="32" Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" ToolTip="Cancel">
+                                <Image Source="/Assets/Back3.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
             </Setter.Value>

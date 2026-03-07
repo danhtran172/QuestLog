@@ -16,7 +16,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -55,53 +54,23 @@
             </Grid>
         </StackPanel>
 
-        <!-- ==================== GAME DATA FILE PATH ==================== -->
+        <!-- ==================== DATABASE PATH ==================== -->
         <StackPanel Grid.Row="3" Margin="0,0,0,15">
-            <TextBlock Text="Game Data File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
+            <TextBlock Text="Database Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding GameDataPath}" IsReadOnly="{Binding IsGameDataReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditGameDataCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-        </StackPanel>
-
-        <!-- ==================== META DATA FILE PATH ==================== -->
-        <StackPanel Grid.Row="4" Margin="0,0,0,15">
-            <TextBlock Text="Meta Data File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding MetaDataPath}" IsReadOnly="{Binding IsMetaDataReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditMetaDataCommand}" Margin="10,0,0,0">
-                    <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Button>
-            </Grid>
-        </StackPanel>
-
-        <!-- ==================== GALLERY FILE PATH ==================== -->
-        <StackPanel Grid.Row="5" Margin="0,0,0,15">
-            <TextBlock Text="Gallery File Path" FontWeight="SemiBold" Foreground="#555555" Margin="0,0,0,8"/>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding GalleryFilePath}" IsReadOnly="{Binding IsGalleryReadOnly}"/>
-                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditGalleryCommand}" Margin="10,0,0,0">
+                <TextBox Text="{Binding DatabasePath}" IsReadOnly="{Binding IsDatabaseReadOnly}"/>
+                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Command="{Binding EditDatabaseCommand}" Margin="10,0,0,0">
                     <Image Source="/Assets/Edit Folder.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
             </Grid>
         </StackPanel>
 
         <!-- ==================== GAME LIBRARY PATHS ==================== -->
-        <Grid Grid.Row="6" Margin="0,0,0,10">
+        <Grid Grid.Row="4" Margin="0,0,0,10">
             <TextBlock Text="Game Library Paths" FontWeight="SemiBold" Foreground="#555555" VerticalAlignment="Center"/>
             <Button Command="{Binding AddLibraryCommand}" HorizontalAlignment="Right" Cursor="Hand">
                 <Button.Template>
@@ -127,7 +96,7 @@
         </Grid>
 
         <!-- ==================== LIBRARY LIST ==================== -->
-        <ScrollViewer Grid.Row="7" VerticalScrollBarVisibility="Auto" Margin="0,0,-10,0">
+        <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto" Margin="0,0,-10,0">
             <ItemsControl ItemsSource="{Binding LibraryPaths}" Margin="0,0,10,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -138,23 +107,21 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- TextBox library path - chiếm hết chiều rộng -->
+                            <!-- TextBox library path -->
                             <TextBox Grid.Column="0" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsReadOnly}"/>
 
-                            <!-- Nút edit folder - bên phải text box -->
+                            <!-- Nút edit folder -->
                             <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Background="#FADA7A"
                                     Command="{Binding EditLibraryCommand}" Margin="10,0,5,0">
                                 <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Button>
 
-                            <!-- Nút xóa library - vòng tròn đen, nằm cuối text box (bên phải nút edit) -->
-
+                            <!-- Nút xóa library -->
                             <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#BFC9D1"
-                                        Command="{Binding DataContext.RemoveLibraryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}" Padding="0">
-                                    <Image Source="/Assets/Close.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                </Button>
-            
+                                    Command="{Binding DataContext.RemoveLibraryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}" Padding="0">
+                                <Image Source="/Assets/Close.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -162,9 +129,9 @@
         </ScrollViewer>
 
         <!-- ==================== STATUS & BUTTONS ==================== -->
-        <TextBlock Grid.Row="8" Text="{Binding StatusMessage}" Foreground="#E74C3C" FontStyle="Italic" FontSize="12" Margin="0,15,0,0"/>
+        <TextBlock Grid.Row="6" Text="{Binding StatusMessage}" Foreground="#E74C3C" FontStyle="Italic" FontSize="12" Margin="0,15,0,0"/>
 
-        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" Command="{Binding SaveCommand}">
                 <Image Source="/Assets/Save.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
             </Button>

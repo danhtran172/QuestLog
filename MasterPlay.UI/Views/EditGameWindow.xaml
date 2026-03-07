@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         Title="Game Details" Height="780" Width="820"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White" FontFamily="Segoe UI">
@@ -23,7 +24,7 @@
                    VerticalAlignment="Center"/>
             <Border Background="#A0000000">
                 <Grid Margin="30,0,30,30" VerticalAlignment="Bottom">
-                    <TextBlock Text="{Binding Game.Name}"
+                    <TextBlock Text="{Binding DisplayName}"
                                FontSize="42"
                                FontWeight="ExtraBold"
                                Foreground="White"
@@ -50,10 +51,10 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="24,16,24,40">
 
-                <!-- ==================== VIEW MODE ==================== -->
+                <!-- ==================== VIEW MODE (ReadOnly) ==================== -->
                 <StackPanel Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
 
-                    <!-- [View Mode] Basic Info Row -->
+                    <!-- View_BasicInfoRow -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -61,7 +62,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Score (left) -->
+                        <!-- Score -->
                         <StackPanel Grid.Column="0"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
@@ -70,14 +71,15 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding DisplayScore}"
+                            <emoji:TextBlock Text="{Binding DisplayScore}"
                                        FontSize="18"
                                        FontWeight="Normal"
                                        Margin="8,0,0,0"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe UI Emoji"/>
                         </StackPanel>
 
-                        <!-- Playtime (right) -->
+                        <!-- Playtime -->
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center">
@@ -95,14 +97,14 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- [View Mode] Two-column Info Panels -->
+                    <!-- View_TwoColumnInfo -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Left Panel -->
+                        <!-- LeftPanel -->
                         <Border Grid.Column="0"
                                 Background="#F9F9F9"
                                 CornerRadius="8"
@@ -111,7 +113,7 @@
                                 BorderBrush="#E0E0E0"
                                 BorderThickness="1">
                             <StackPanel>
-                                <!-- Publish Date -->
+                                <!-- PublishDate -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
@@ -154,7 +156,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayGenre}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayGenres}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI Emoji"/>
                                 </Grid>
                                 <!-- Theme -->
                                 <Grid>
@@ -163,12 +165,12 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayTheme}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayThemes}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI Emoji"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- Right Panel -->
+                        <!-- RightPanel -->
                         <Border Grid.Column="1"
                                 Background="#F9F9F9"
                                 CornerRadius="8"
@@ -198,22 +200,24 @@
                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
-                                    <Border Grid.Column="1"
-                                            Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                            CornerRadius="4"
-                                            Padding="6,2"
-                                            HorizontalAlignment="Left">
+
+                                    <Border Grid.Column="1" 
+                                        Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
+                                             CornerRadius="4"
+                                             Padding="4,1"
+                                             HorizontalAlignment="Left"
+                                             VerticalAlignment="Center">
                                         <TextBlock Text="{Binding DisplayMetaScore}"
-                                                   Foreground="#2C3E50"
-                                                   VerticalAlignment="Top"
-                                                   HorizontalAlignment="Left"
-                                                   TextAlignment="Left"
-                                                   Padding="4,0"
-                                                   Background="Transparent"
-                                                   FontWeight="Bold"/>
+                                            Foreground="#2C3E50"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Left"
+                                            Padding="2,0"
+                                            Background="Transparent"/>
                                     </Border>
                                 </Grid>
-                                <!-- Avg Playtime -->
+                                <!-- AvgPlaytime -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
@@ -249,7 +253,13 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" 
+                                               Style="{StaticResource ValueTextStyle}" 
+                                               FontWeight="Normal" 
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"
+                                               FontFamily="Segoe UI Emoji"/>
                                 </Grid>
                                 <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
@@ -258,44 +268,34 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <Border Grid.Column="1"
-                                            Background="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
-                                            CornerRadius="4"
-                                            Padding="2,2"
-                                            HorizontalAlignment="Left">
-                                        <TextBlock Text="{Binding DisplayOwnership}"
-                                                   Foreground="#2C3E50"
-                                                   VerticalAlignment="Top"
-                                                   HorizontalAlignment="Left"
-                                                   TextAlignment="Left"
-                                                   Padding="4,0"
-                                                   Background="Transparent"
-                                                   TextWrapping="Wrap"/>
-                                    </Border>
+                                    <emoji:TextBlock Grid.Column="1" 
+                                               Text="{Binding DisplayOwnership}"
+                                               Foreground="{Binding SelectedOwnership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                               Style="{StaticResource ValueTextStyle}"
+                                               FontWeight="Normal"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"
+                                               FontFamily="Segoe UI Emoji"/>
                                 </Grid>
-                                <!-- Play Progress -->
+                                <!-- Progress -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <Border Grid.Column="1"
-                                            Background="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
-                                            CornerRadius="4"
-                                            Padding="2,2"
-                                            HorizontalAlignment="Left">
-                                        <TextBlock Text="{Binding DisplayProgress}"
-                                                   Foreground="#2C3E50"
-                                                   VerticalAlignment="Top"
-                                                   HorizontalAlignment="Left"
-                                                   TextAlignment="Left"
-                                                   Padding="4,0"
-                                                   Background="Transparent"
-                                                   TextWrapping="Wrap"/>
-                                    </Border>
+                                    <emoji:TextBlock Grid.Column="1" 
+                                               Text="{Binding DisplayProgress}"
+                                               Foreground="{Binding SelectedProgress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                               Style="{StaticResource ValueTextStyle}"
+                                               FontWeight="Normal"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"
+                                               FontFamily="Segoe UI Emoji"/>
                                 </Grid>
-                                <!-- Finish Year -->
+                                <!-- FinishedIn -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
@@ -308,10 +308,11 @@
                         </Border>
                     </Grid>
 
-                    <!-- [View Mode] Process & Folders Panel -->
+                    <!-- ProcessFoldersPanel (ViewMode) -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
-                            <Grid Margin="0,0,0,12" Visibility="{Binding HasInitExeNameForView, Converter={StaticResource BoolToVis}}">
+                            <!-- ProcessName -->
+                            <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
@@ -320,7 +321,9 @@
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                             </Grid>
 
-                            <Grid Margin="0,0,0,12">
+                            <!-- LaunchProcess -->
+                            <Grid Margin="0,0,0,12" 
+                                  Visibility="{Binding HasInitExeNameForView, Converter={StaticResource BoolToVis}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
@@ -329,6 +332,7 @@
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayInitProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                             </Grid>
 
+                            <!-- SaveLocation (ViewMode) -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -345,14 +349,17 @@
                                 </Button>
                             </Grid>
 
-                            <Grid>
+                            <!-- BackupFolder (ViewMode - có nút Open) -->
+                            <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}" 
+                                           Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" 
+                                           TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding OpenBackupFolderCommand}"
                                         IsEnabled="{Binding BackupFolderAccessible}"
@@ -367,10 +374,10 @@
                 <!-- ==================== EDIT MODE ==================== -->
                 <StackPanel Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBoolToVis}}">
 
-                    <!-- [Edit Mode] Khung Basic -->
+                    <!-- Edit_BasicInfo -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,20" Padding="15">
                         <StackPanel>
-                            <!-- Hàng 1: Game Name -->
+                            <!-- GameName -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -378,7 +385,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Game Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.Name, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Margin="10,0,0,0"
                                         Background="#6FA4AF" Command="{Binding SyncCommand}"
                                         ToolTip="Sync Game Data">
@@ -387,7 +394,7 @@
                                 </Button>
                             </Grid>
 
-                            <!-- Hàng 2: Score -->
+                            <!-- Score -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -395,11 +402,13 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Score" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBox Width="80" HorizontalContentAlignment="Center" Text="{Binding Game.Score, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
+                                    <TextBox Width="80" HorizontalContentAlignment="Center" 
+                                             Text="{Binding Score, TargetNullValue='', UpdateSourceTrigger=LostFocus}" 
+                                             Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Hàng 3: Play Time -->
+                            <!-- PlayTime -->
                             <Grid Margin="0,0,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -433,17 +442,17 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- [Edit Mode] Khung 1 - Thông tin chính với CHIPS -->
+                    <!-- Edit_InfoWithChips -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1.9*"/>
                             <ColumnDefinition Width="1.1*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Cột trái - Thông tin cơ bản và CHIPS -->
+                        <!-- LeftColumn -->
                         <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="8" Padding="15" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
                             <StackPanel>
-                                <!-- Publish Date -->
+                                <!-- PublishDate -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
@@ -461,7 +470,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Publisher, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" 
                                              Height="28" Padding="8,4"/>
                                 </Grid>
 
@@ -472,11 +481,11 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Developer, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" Text="{Binding Developer, UpdateSourceTrigger=PropertyChanged}" 
                                              Height="28" Padding="8,4"/>
                                 </Grid>
 
-                                <!-- SERIES -->
+                                <!-- SeriesChip -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
@@ -498,14 +507,11 @@
                                                         <DataTrigger Binding="{Binding SelectedSeries}" Value="{x:Null}">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding SelectedSeries}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </WrapPanel.Style>
                                             <Border Style="{StaticResource TagChipStyle}">
-                                                <TextBlock Text="{Binding SelectedSeries}" Foreground="#2C3E50" FontSize="13"/>
+                                                <TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13"/>
                                             </Border>
                                         </WrapPanel>
                                     </Button>
@@ -523,15 +529,13 @@
                                                     <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
+                                                <!-- Selected chip panel -->
                                                 <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedSeriesPanel">
                                                     <WrapPanel.Style>
                                                         <Style TargetType="WrapPanel">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding SelectedSeries}" Value="{x:Null}">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding SelectedSeries}" Value="">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -543,7 +547,7 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock Text="{Binding SelectedSeries}" Foreground="#2C3E50" FontSize="13"/>
+                                                            <TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13"/>
                                                             <Button Grid.Column="1"
                                                                     Style="{StaticResource TagRemoveButtonStyle}"
                                                                     Command="{Binding RemoveSelectedSeriesCommand}"/>
@@ -551,11 +555,13 @@
                                                     </Border>
                                                 </WrapPanel>
 
+                                                <!-- Search box -->
                                                 <TextBox Grid.Row="1" 
                                                          Text="{Binding SeriesSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource PopupSearchBoxStyle}"
                                                          Margin="8,8,8,0"/>
 
+                                                <!-- List of series items -->
                                                 <ScrollViewer Grid.Row="2" 
                                                               Margin="8,8,8,0" 
                                                               VerticalScrollBarVisibility="Auto">
@@ -568,30 +574,33 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" Tag="{Binding}">
-                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" FontFamily="Segoe UI Emoji"/>
                                                                 </Border>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
+                                                <!-- Create new item -->
                                                 <Border Grid.Row="3" 
                                                         Style="{StaticResource PopupCreateNewStyle}"
                                                         Visibility="{Binding SeriesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                         MouseLeftButtonUp="CreateNewSeries_MouseLeftButtonUp">
-                                                    <TextBlock Text="{Binding CreateNewSeriesText}" 
+                                                    <emoji:TextBlock Text="{Binding CreateNewSeriesText}" 
                                                                FontSize="13" 
                                                                Foreground="#FF88BA" 
                                                                Margin="10,0" 
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe UI Emoji"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                 </Grid>
 
-                                <!-- GENRE -->
+                                <!-- GenreChip -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
@@ -605,8 +614,7 @@
                                             Command="{Binding OpenGenresPopupCommand}"
                                             HorizontalContentAlignment="Stretch"
                                             HorizontalAlignment="Stretch">
-                                        <ItemsControl ItemsSource="{Binding SelectedGenres}"
-                                                      HorizontalAlignment="Stretch">
+                                        <ItemsControl ItemsSource="{Binding SelectedGenres}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel Orientation="Horizontal"/>
@@ -615,7 +623,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Style="{StaticResource TagChipStyle}">
-                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                        <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -634,6 +642,7 @@
                                                     <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
+                                                <!-- Selected chips panel -->
                                                 <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedGenresPanel">
                                                     <WrapPanel.Style>
                                                         <Style TargetType="WrapPanel">
@@ -659,10 +668,10 @@
                                                                             <ColumnDefinition Width="Auto"/>
                                                                             <ColumnDefinition Width="Auto"/>
                                                                         </Grid.ColumnDefinitions>
-                                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                                        <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                                         <Button Grid.Column="1"
                                                                                 Style="{StaticResource TagRemoveButtonStyle}"
-                                                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveGenreCommand}"
+                                                                                Command="{Binding DataContext.RemoveGenreCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                                 CommandParameter="{Binding}"/>
                                                                     </Grid>
                                                                 </Border>
@@ -671,11 +680,13 @@
                                                     </ItemsControl>
                                                 </WrapPanel>
 
+                                                <!-- Search box -->
                                                 <TextBox Grid.Row="1" 
                                                          Text="{Binding GenresSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource PopupSearchBoxStyle}"
                                                          Margin="8,8,8,0"/>
 
+                                                <!-- List of genre items -->
                                                 <ScrollViewer Grid.Row="2" 
                                                               Margin="8,8,8,0" 
                                                               VerticalScrollBarVisibility="Auto">
@@ -688,31 +699,34 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" Tag="{Binding}">
-                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
                                                                 </Border>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
+                                                <!-- Create new item -->
                                                 <Border Grid.Row="3" 
                                                         Style="{StaticResource PopupCreateNewStyle}"
                                                         Visibility="{Binding GenresSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                         MouseLeftButtonUp="CreateNewGenre_MouseLeftButtonUp">
-                                                    <TextBlock Text="{Binding CreateNewGenreText}" 
+                                                    <emoji:TextBlock Text="{Binding CreateNewGenreText}" 
                                                                FontSize="13" 
                                                                Foreground="#FF88BA" 
                                                                Margin="10,0" 
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe UI Emoji"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                 </Grid>
 
-                                <!-- THEME -->
-                                <Grid>
+                                <!-- ThemeChip -->
+                                <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
@@ -725,8 +739,7 @@
                                             Command="{Binding OpenThemesPopupCommand}"
                                             HorizontalContentAlignment="Stretch"
                                             HorizontalAlignment="Stretch">
-                                        <ItemsControl ItemsSource="{Binding SelectedThemes}"
-                                                      HorizontalAlignment="Stretch">
+                                        <ItemsControl ItemsSource="{Binding SelectedThemes}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel Orientation="Horizontal"/>
@@ -735,7 +748,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Style="{StaticResource TagChipStyle}">
-                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                        <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -754,6 +767,7 @@
                                                     <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
+                                                <!-- Selected chips panel -->
                                                 <WrapPanel Grid.Row="0" Margin="8,8,8,0" x:Name="SelectedThemesPanel">
                                                     <WrapPanel.Style>
                                                         <Style TargetType="WrapPanel">
@@ -779,10 +793,10 @@
                                                                             <ColumnDefinition Width="Auto"/>
                                                                             <ColumnDefinition Width="Auto"/>
                                                                         </Grid.ColumnDefinitions>
-                                                                        <TextBlock Text="{Binding}" Foreground="#2C3E50" FontSize="13"/>
+                                                                        <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                                         <Button Grid.Column="1"
                                                                                 Style="{StaticResource TagRemoveButtonStyle}"
-                                                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveThemeCommand}"
+                                                                                Command="{Binding DataContext.RemoveThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                                 CommandParameter="{Binding}"/>
                                                                     </Grid>
                                                                 </Border>
@@ -791,11 +805,13 @@
                                                     </ItemsControl>
                                                 </WrapPanel>
 
+                                                <!-- Search box -->
                                                 <TextBox Grid.Row="1" 
                                                          Text="{Binding ThemesSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource PopupSearchBoxStyle}"
                                                          Margin="8,8,8,0"/>
 
+                                                <!-- List of theme items -->
                                                 <ScrollViewer Grid.Row="2" 
                                                               Margin="8,8,8,0" 
                                                               VerticalScrollBarVisibility="Auto">
@@ -808,33 +824,268 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" Tag="{Binding}">
-                                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#2C3E50"/>
+                                                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
                                                                 </Border>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                 </ScrollViewer>
 
+                                                <!-- Create new item -->
                                                 <Border Grid.Row="3" 
                                                         Style="{StaticResource PopupCreateNewStyle}"
                                                         Visibility="{Binding ThemesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                         MouseLeftButtonUp="CreateNewTheme_MouseLeftButtonUp">
-                                                    <TextBlock Text="{Binding CreateNewThemeText}" 
+                                                    <emoji:TextBlock Text="{Binding CreateNewThemeText}" 
                                                                FontSize="13" 
                                                                Foreground="#FF88BA" 
                                                                Margin="10,0" 
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe UI Emoji"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                 </Grid>
+
                             </StackPanel>
                         </Border>
 
-                        <!-- [Edit Mode] Khung 2 - Có chip màu trong dropdown -->
+                        <!-- RightColumn -->
                         <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
+                            <!-- Đặt Resources ở đây để tránh lỗi -->
+                            <Border.Resources>
+                                <!-- Style dành cho Ownership - đã sửa để click toàn vùng mở dropdown -->
+                                <Style x:Key="ChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Height" Value="28"/>
+                                    <Setter Property="ItemTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4"
+                                                        Padding="8,2"
+                                                        Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Ownership}"
+                                                        HorizontalAlignment="Center"
+                                                        Margin="2">
+                                                    <emoji:TextBlock Text="{Binding Name}" 
+                                                               Foreground="#2C3E50" 
+                                                               FontSize="13"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe UI Emoji"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBox">
+                                                <Border x:Name="border"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        SnapsToDevicePixels="True">
+                                                    <Grid>
+                                                        <!-- Selected chip - không nhận sự kiện chuột -->
+                                                        <Border x:Name="SelectedChip"
+                                                                CornerRadius="4"
+                                                                Padding="8,2"
+                                                                Background="{Binding SelectedItem, Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Ownership, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                HorizontalAlignment="Left"
+                                                                Margin="2"
+                                                                Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                IsHitTestVisible="False">
+                                                            <emoji:TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                                       Foreground="#2C3E50" 
+                                                                       FontSize="13"
+                                                                       VerticalAlignment="Center"
+                                                                       FontFamily="Segoe UI Emoji"/>
+                                                        </Border>
+
+                                                        <!-- Mũi tên - không nhận sự kiện chuột -->
+                                                        <Path Data="M 0 0 L 5 5 L 10 0 Z"
+                                                              Fill="#555555"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,8,0"
+                                                              Width="10"
+                                                              Height="5"
+                                                              Opacity="0.8"
+                                                              IsHitTestVisible="False"/>
+
+                                                        <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
+                                                        <ToggleButton x:Name="ToggleButton"
+                                                                      Background="Transparent"
+                                                                      BorderThickness="0"
+                                                                      HorizontalAlignment="Stretch"
+                                                                      VerticalAlignment="Stretch"
+                                                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                      Focusable="False">
+                                                            <ToggleButton.Template>
+                                                                <ControlTemplate TargetType="ToggleButton">
+                                                                    <Border Background="Transparent"/>
+                                                                </ControlTemplate>
+                                                            </ToggleButton.Template>
+                                                        </ToggleButton>
+
+                                                        <!-- Popup -->
+                                                        <Popup x:Name="Popup"
+                                                               Placement="Bottom"
+                                                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                               AllowsTransparency="True"
+                                                               PopupAnimation="Slide"
+                                                               Focusable="False">
+                                                            <Border Background="White"
+                                                                    BorderBrush="#DDDDDD"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="5"
+                                                                    Margin="0,2,0,0"
+                                                                    MinWidth="{TemplateBinding ActualWidth}">
+                                                                <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                                                    <ItemsPresenter SnapsToDevicePixels="True"/>
+                                                                </ScrollViewer>
+                                                            </Border>
+                                                        </Popup>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsFocused" Value="True">
+                                                        <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                        <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                                                        <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+
+                                <!-- Style dành cho Progress - đã sửa để click toàn vùng mở dropdown -->
+                                <Style x:Key="ChipComboBoxStyleProgress" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Height" Value="28"/>
+                                    <Setter Property="ItemTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4"
+                                                        Padding="8,2"
+                                                        Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Progress}"
+                                                        HorizontalAlignment="Center"
+                                                        Margin="2">
+                                                    <emoji:TextBlock Text="{Binding Name}" 
+                                                               Foreground="#2C3E50" 
+                                                               FontSize="13"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe UI Emoji"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBox">
+                                                <Border x:Name="border"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="5"
+                                                        SnapsToDevicePixels="True">
+                                                    <Grid>
+                                                        <!-- Selected chip - không nhận sự kiện chuột -->
+                                                        <Border x:Name="SelectedChip"
+                                                                CornerRadius="4"
+                                                                Padding="8,2"
+                                                                Background="{Binding SelectedItem, Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Progress, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                HorizontalAlignment="Left"
+                                                                Margin="2"
+                                                                Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                IsHitTestVisible="False">
+                                                            <emoji:TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                                       Foreground="#2C3E50" 
+                                                                       FontSize="13"
+                                                                       VerticalAlignment="Center"
+                                                                       FontFamily="Segoe UI Emoji"/>
+                                                        </Border>
+
+                                                        <!-- Mũi tên - không nhận sự kiện chuột -->
+                                                        <Path Data="M 0 0 L 5 5 L 10 0 Z"
+                                                              Fill="#555555"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,8,0"
+                                                              Width="10"
+                                                              Height="5"
+                                                              Opacity="0.8"
+                                                              IsHitTestVisible="False"/>
+
+                                                        <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
+                                                        <ToggleButton x:Name="ToggleButton"
+                                                                      Background="Transparent"
+                                                                      BorderThickness="0"
+                                                                      HorizontalAlignment="Stretch"
+                                                                      VerticalAlignment="Stretch"
+                                                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                      Focusable="False">
+                                                            <ToggleButton.Template>
+                                                                <ControlTemplate TargetType="ToggleButton">
+                                                                    <Border Background="Transparent"/>
+                                                                </ControlTemplate>
+                                                            </ToggleButton.Template>
+                                                        </ToggleButton>
+
+                                                        <!-- Popup -->
+                                                        <Popup x:Name="Popup"
+                                                               Placement="Bottom"
+                                                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                               AllowsTransparency="True"
+                                                               PopupAnimation="Slide"
+                                                               Focusable="False">
+                                                            <Border Background="White"
+                                                                    BorderBrush="#DDDDDD"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="5"
+                                                                    Margin="0,2,0,0"
+                                                                    MinWidth="{TemplateBinding ActualWidth}">
+                                                                <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                                                    <ItemsPresenter SnapsToDevicePixels="True"/>
+                                                                </ScrollViewer>
+                                                            </Border>
+                                                        </Popup>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsFocused" Value="True">
+                                                        <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                        <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                                                        <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Border.Resources>
+
                             <StackPanel>
                                 <!-- MetaScore -->
                                 <Grid Margin="0,0,0,12">
@@ -858,10 +1109,11 @@
                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.MetaScore, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" 
+                                             Text="{Binding MetaScore, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" 
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
-                                <!-- Avg Runtime -->
+                                <!-- AvgPlaytime -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
@@ -882,7 +1134,8 @@
                                                    RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                     </StackPanel>
-                                    <TextBox Grid.Column="1" Text="{Binding AvgPlaytime, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" 
+                                             Text="{Binding AvgPlaytime, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" 
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                 </Grid>
                                 <!-- Excited -->
@@ -892,248 +1145,55 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.Excited, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" 
+                                             Text="{Binding Excited, TargetNullValue='', UpdateSourceTrigger=LostFocus}" 
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
                                 </Grid>
-                                <!-- Ownership - với chip màu cả trên ô chọn và dropdown -->
+                                <!-- Ownership -->
                                 <Grid Margin="0,0,0,12">
-                                    <Grid.Resources>
-                                        <!-- Style tạm thời cho ComboBox hiển thị chip màu -->
-                                        <Style x:Key="ChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
-                                            <Setter Property="ItemTemplate">
-                                                <Setter.Value>
-                                                    <DataTemplate>
-                                                        <Border CornerRadius="4"
-                                Padding="8,2"
-                                Background="{Binding Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
-                                HorizontalAlignment="Left"
-                                Margin="2">
-                                                            <TextBlock Text="{Binding}" 
-                                       Foreground="#2C3E50" 
-                                       FontSize="13"
-                                       VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="ComboBox">
-                                                        <Border x:Name="border"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="5"
-                                SnapsToDevicePixels="True">
-                                                            <Grid>
-                                                                <!-- Hiển thị chip cho item được chọn -->
-                                                                <Border x:Name="SelectedChip"
-                                        CornerRadius="4"
-                                        Padding="8,2"
-                                        Background="{Binding SelectedItem, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership, RelativeSource={RelativeSource TemplatedParent}}"
-                                        HorizontalAlignment="Left"
-                                        Margin="2"
-                                        Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
-                                                                    <TextBlock Text="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}}" 
-                                               Foreground="#2C3E50" 
-                                               FontSize="13"
-                                               VerticalAlignment="Center"/>
-                                                                </Border>
-                                                                <!-- Nút mở dropdown -->
-                                                                <ToggleButton x:Name="ToggleButton"
-                                              Background="Transparent" BorderThickness="0"
-                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Focusable="False"
-                                              HorizontalAlignment="Right"
-                                              Width="20"
-                                              Margin="0,0,4,0">
-                                                                    <ToggleButton.Template>
-                                                                        <ControlTemplate TargetType="ToggleButton">
-                                                                            <Border Background="Transparent">
-                                                                                <Path Data="M 0 0 L 5 5 L 10 0 Z"
-                                                      Fill="#555555"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                      Width="10" Height="5"/>
-                                                                            </Border>
-                                                                        </ControlTemplate>
-                                                                    </ToggleButton.Template>
-                                                                </ToggleButton>
-                                                                <!-- Popup dropdown -->
-                                                                <Popup x:Name="Popup"
-                                       Placement="Bottom"
-                                       IsOpen="{TemplateBinding IsDropDownOpen}"
-                                       AllowsTransparency="True"
-                                       PopupAnimation="Slide"
-                                       Focusable="False">
-                                                                    <Border Background="White"
-                                            BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="5"
-                                            Margin="0,2,0,0" MinWidth="{TemplateBinding ActualWidth}">
-                                                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
-                                                                            <ItemsPresenter SnapsToDevicePixels="True"/>
-                                                                        </ScrollViewer>
-                                                                    </Border>
-                                                                </Popup>
-                                                            </Grid>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsFocused" Value="True">
-                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
-                                                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsEnabled" Value="False">
-                                                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
-                                                            </Trigger>
-                                                            <!-- Ẩn chip nếu không có SelectedItem -->
-                                                            <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
-                                                                <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
-                                                            </DataTrigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Grid.Resources>
-
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-              ItemsSource="{Binding Selections.Ownership}"
-              SelectedItem="{Binding Game.Ownership}"
-              Style="{StaticResource ChipComboBoxStyle}"
-              Height="28"/>
+                                              ItemsSource="{Binding AllOwnerships}"
+                                              SelectedItem="{Binding SelectedOwnership}"
+                                              Style="{StaticResource ChipComboBoxStyle}"
+                                              Height="28"/>
                                 </Grid>
 
-                                <!-- Progress - với chip màu cả trên ô chọn và dropdown -->
+                                <!-- Progress -->
                                 <Grid Margin="0,0,0,12">
-                                    <Grid.Resources>
-                                        <Style x:Key="ChipComboBoxStyleProgress" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
-                                            <Setter Property="ItemTemplate">
-                                                <Setter.Value>
-                                                    <DataTemplate>
-                                                        <Border CornerRadius="4"
-                                Padding="8,2"
-                                Background="{Binding Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
-                                HorizontalAlignment="Left"
-                                Margin="2">
-                                                            <TextBlock Text="{Binding}" 
-                                       Foreground="#2C3E50" 
-                                       FontSize="13"
-                                       VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="ComboBox">
-                                                        <Border x:Name="border"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="5"
-                                SnapsToDevicePixels="True">
-                                                            <Grid>
-                                                                <Border x:Name="SelectedChip"
-                                        CornerRadius="4"
-                                        Padding="8,2"
-                                        Background="{Binding SelectedItem, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress, RelativeSource={RelativeSource TemplatedParent}}"
-                                        HorizontalAlignment="Left"
-                                        Margin="2"
-                                        Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
-                                                                    <TextBlock Text="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}}" 
-                                               Foreground="#2C3E50" 
-                                               FontSize="13"
-                                               VerticalAlignment="Center"/>
-                                                                </Border>
-                                                                <ToggleButton x:Name="ToggleButton"
-                                              Background="Transparent" BorderThickness="0"
-                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Focusable="False"
-                                              HorizontalAlignment="Right"
-                                              Width="20"
-                                              Margin="0,0,4,0">
-                                                                    <ToggleButton.Template>
-                                                                        <ControlTemplate TargetType="ToggleButton">
-                                                                            <Border Background="Transparent">
-                                                                                <Path Data="M 0 0 L 5 5 L 10 0 Z"
-                                                      Fill="#555555"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                      Width="10" Height="5"/>
-                                                                            </Border>
-                                                                        </ControlTemplate>
-                                                                    </ToggleButton.Template>
-                                                                </ToggleButton>
-                                                                <Popup x:Name="Popup"
-                                       Placement="Bottom"
-                                       IsOpen="{TemplateBinding IsDropDownOpen}"
-                                       AllowsTransparency="True"
-                                       PopupAnimation="Slide"
-                                       Focusable="False">
-                                                                    <Border Background="White"
-                                            BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="5"
-                                            Margin="0,2,0,0" MinWidth="{TemplateBinding ActualWidth}">
-                                                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
-                                                                            <ItemsPresenter SnapsToDevicePixels="True"/>
-                                                                        </ScrollViewer>
-                                                                    </Border>
-                                                                </Popup>
-                                                            </Grid>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsFocused" Value="True">
-                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
-                                                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="border" Property="BorderBrush" Value="#A1BC98"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsEnabled" Value="False">
-                                                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
-                                                            </Trigger>
-                                                            <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
-                                                                <Setter TargetName="SelectedChip" Property="Visibility" Value="Collapsed"/>
-                                                            </DataTrigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Grid.Resources>
-
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
-              ItemsSource="{Binding Selections.Progress}"
-              SelectedItem="{Binding Game.Progress}"
-              Style="{StaticResource ChipComboBoxStyleProgress}"
-              Height="28"/>
+                                              ItemsSource="{Binding AllProgresses}"
+                                              SelectedItem="{Binding SelectedProgress}"
+                                              Style="{StaticResource ChipComboBoxStyleProgress}"
+                                              Height="28"/>
                                 </Grid>
-                                <!-- Finished Year -->
+                                <!-- FinishedIn -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Game.FinishedIn, UpdateSourceTrigger=PropertyChanged}" 
+                                    <TextBox Grid.Column="1" Text="{Binding FinishedIn, UpdateSourceTrigger=PropertyChanged}" 
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="FinishedIn_PreviewTextInput"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <!-- [Edit Mode] Khung 3 - Giữ nguyên -->
+                    <!-- Edit_ProcessFolders -->
                     <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="15">
                         <StackPanel>
+                            <!-- ProcessName -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -1141,19 +1201,21 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" Text="{Binding ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
                                 <CheckBox Grid.Column="2" Content="Has launch process" IsChecked="{Binding HasInitExeName}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </Grid>
 
+                            <!-- LaunchProcess -->
                             <Grid Margin="0,0,0,12" Visibility="{Binding HasInitExeName, Converter={StaticResource BoolToVis}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Launch Game Process" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBox Grid.Column="1" Text="{Binding InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
 
+                            <!-- SaveLocation -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -1161,27 +1223,34 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBox Grid.Column="1" Text="{Binding SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
 
+                            <!-- BackupFolder (EditMode) -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" Text="{Binding BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
+                                <Button Grid.Column="3" Style="{StaticResource IconButtonStyle}" Background="#6FA4AF" Margin="8,0,0,0"
+                                        Command="{Binding GenerateBackupFolderCommand}" ToolTip="Generate backup folder from game name">
+                                    <Image Source="/Assets/Generate.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Button>
                             </Grid>
 
+                            <!-- ImageURL -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -1189,17 +1258,18 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Cover Image URL" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBox Grid.Column="1" Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
                                         Style="{StaticResource IconButtonStyle}"
                                         Background="#6FA4AF"
                                         Margin="15,0,0,0"
-                                        Command="{Binding SyncImageCommand}"
+                                        Command="{Binding SyncCoverCommand}"
                                         ToolTip="Refresh preview image">
-                                    <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
 
+                            <!-- GalleryImage -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
@@ -1207,17 +1277,18 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Gallery Image Path" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" Text="{Binding Game.GImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
+                                <TextBox Grid.Column="1" Text="{Binding GImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
                                         Style="{StaticResource IconButtonStyle}"
                                         Background="#6FA4AF"
                                         Margin="15,0,0,0"
-                                        Command="{Binding SyncImageCommand}"
+                                        Command="{Binding SyncGalleryCommand}"
                                         ToolTip="Refresh gallery preview image">
-                                    <Image Source="/Assets/Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
 
+                            <!-- GalleryPreview -->
                             <Grid>
                                 <Border Width="460" Height="215" HorizontalAlignment="Center"
                                         SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
@@ -1225,7 +1296,7 @@
                                         <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.14"/>
                                     </Border.Effect>
                                     <Border.Background>
-                                        <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
+                                        <ImageBrush ImageSource="{Binding GImagePath, Converter={StaticResource SteamImgConv}}"
                                                     Stretch="UniformToFill"/>
                                     </Border.Background>
                                 </Border>
@@ -1251,6 +1322,7 @@
             </Border.Effect>
 
             <Grid>
+                <!-- StatusMessage -->
                 <TextBlock Text="{Binding StatusMessage}" 
                            Foreground="#E74C3C" 
                            FontStyle="Italic" 
@@ -1258,6 +1330,7 @@
                            VerticalAlignment="Center" 
                            Margin="50,0,0,0"/>
 
+                <!-- DeleteButton -->
                 <Button Style="{StaticResource IconButtonStyle}" 
                         Background="#A94A4A" 
                         HorizontalAlignment="Left"
@@ -1270,19 +1343,20 @@
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
 
+                <!-- FinishButton -->
                 <Button Style="{StaticResource IconButtonStyle}"
                         Background="#DDAED3" 
                         HorizontalAlignment="Left"
                         Command="{Binding FinishGameCommand}"
                         ToolTip="Mark as Finished"
                         Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVis}}">
-                    <Image Source="/Assets/Finish.png" 
+                    <Image Source="/Assets/Finish3.png" 
                            Width="20" 
                            Height="20" 
-                           Margin="0,2,2,0" 
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
 
+                <!-- RightButtons -->
                 <StackPanel Orientation="Horizontal" 
                             HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal"
@@ -1318,5 +1392,57 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ==================== FINISH POPUP ==================== -->
+        <Popup x:Name="FinishPopup"
+               IsOpen="{Binding IsFinishPopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="200" Height="150"
+                    CornerRadius="10"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Enter Score"
+                               HorizontalAlignment="Center"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="#2C3E50"
+                               Margin="0,0,0,10"/>
+                    <TextBox Grid.Row="1"
+                             x:Name="FinishScoreTextBox"
+                             Text="{Binding FinishScoreInput, UpdateSourceTrigger=PropertyChanged}"
+                             Width="70"
+                             Height="50"
+                             HorizontalContentAlignment="Center"
+                             VerticalContentAlignment="Center"
+                             FontSize="18"
+                             PreviewTextInput="FinishScore_PreviewTextInput"/>
+                    <StackPanel Grid.Row="2"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,15,0,0">
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                Background="#708A58"
+                                Command="{Binding FinishSaveCommand}"
+                                Margin="0,0,10,0">
+                            <Image Source="/Assets/Save.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding FinishCancelCommand}">
+                            <Image Source="/Assets/Back3.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Popup>
     </Grid>
 </Window>

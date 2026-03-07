@@ -3,6 +3,7 @@ using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -23,8 +24,8 @@ namespace MasterPlay.UI.ViewModels
         [NotifyPropertyChangedFor(nameof(DisplayPublisher))]
         [NotifyPropertyChangedFor(nameof(DisplayDeveloper))]
         [NotifyPropertyChangedFor(nameof(DisplaySeries))]
-        [NotifyPropertyChangedFor(nameof(DisplayGenre))]
-        [NotifyPropertyChangedFor(nameof(DisplayTheme))]
+        [NotifyPropertyChangedFor(nameof(DisplayGenres))]
+        [NotifyPropertyChangedFor(nameof(DisplayThemes))]
         [NotifyPropertyChangedFor(nameof(DisplayProgress))]
         [NotifyPropertyChangedFor(nameof(DisplayOwnership))]
         [NotifyPropertyChangedFor(nameof(DisplayScore))]
@@ -44,6 +45,12 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private bool hasPlayableExe;
+        [ObservableProperty]
+        private string folderWarningInfo = "";
+
+        // Thêm các property lưu danh sách genre và theme
+        private List<Genre> _gameGenres;
+        private List<Theme> _gameThemes;
 
         // =====================================================================
         // Constructor
@@ -53,6 +60,9 @@ namespace MasterPlay.UI.ViewModels
         {
             Game = game ?? throw new ArgumentNullException(nameof(game));
             HasPlayableExe = game.Ready;
+
+            _gameGenres = DataService.GetGameGenres(game.Id);
+            _gameThemes = DataService.GetGameThemes(game.Id);
         }
 
         // =====================================================================
@@ -60,7 +70,7 @@ namespace MasterPlay.UI.ViewModels
         // =====================================================================
 
         public string DisplayName =>
-            string.IsNullOrWhiteSpace(Game?.Name) ? "--" : Game.Name;
+            string.IsNullOrWhiteSpace((string?)(Game?.Name)) ? "--" : Game.Name;
 
         public string DisplayPlayTime
         {
@@ -71,7 +81,7 @@ namespace MasterPlay.UI.ViewModels
                     return "--";
                 }
 
-                var ts = TimeSpan.FromSeconds(Game.TotalPlayTimeSeconds);
+                var ts = TimeSpan.FromSeconds((double)Game.TotalPlayTimeSeconds);
                 return $"{(int)ts.TotalHours:D2}h{ts.Minutes:D2}m";
             }
         }
@@ -89,34 +99,59 @@ namespace MasterPlay.UI.ViewModels
             FormatText(Game?.Developer);
 
         public string DisplaySeries =>
-            FormatText(Game?.Series);
+            FormatText(Game?.Series?.Name);
 
-        public string DisplayGenre =>
-            FormatText(Game?.Genre);
+        // Genre và Theme từ danh sách đã load
+        public string DisplayGenres
+        {
+            get
+            {
+                if (_gameGenres == null || _gameGenres.Count == 0)
+                    return "--";
+                return string.Join(", ", _gameGenres.Select(g => g.Name));
+            }
+        }
 
-        public string DisplayTheme =>
-            FormatText(Game?.Theme);
+        public string DisplayThemes
+        {
+            get
+            {
+                if (_gameThemes == null || _gameThemes.Count == 0)
+                    return "--";
+                return string.Join(", ", _gameThemes.Select(t => t.Name));
+            }
+        }
 
         public string DisplayProgress =>
-            FormatText(Game?.Progress);
+            FormatText(Game?.Progress?.Name);
 
         public string DisplayOwnership =>
-            FormatText(Game?.Ownership);
+            FormatText(Game?.Ownership?.Name);
 
-        public string DisplayScore =>
-            (Game?.Score ?? 0) > 0 ? Game.Score.ToString("F1") : "--";
+        public string DisplayScore => Game.Score switch
+        {
+            null => "--",
+            <= 0 => "--",
+            999 => "10🔥",
+            _ => Game.Score.Value.ToString()
+        };
 
-        public string DisplayExcited =>
-            (Game?.Excited ?? 0) > 0 ? Game.Excited.ToString("F0") : "--";
+        public string DisplayExcited => Game.Excited switch
+        {
+            null => "--",
+            <= 0 => "--",
+            999 => "10🔥",
+            _ => Game.Excited.Value.ToString()
+        };
 
         public string DisplayMetaScore =>
-            (Game?.MetaScore ?? 0) > 0 ? Game.MetaScore.ToString("F0") : "--";
+            (Game?.MetaScore ?? 0) > 0 ? Game.MetaScore.ToString() : "--";
 
         public string DisplayAvgPlayTime =>
             (Game?.AvgPlayTime ?? 0) > 0 ? $"{Game.AvgPlayTime}h" : "--";
 
         public string DisplayFinishedIn =>
-            string.IsNullOrWhiteSpace(Game?.FinishedIn) ? "Not Finished" : Game.FinishedIn;
+            string.IsNullOrWhiteSpace((string?)(Game?.FinishedIn)) ? "--" : Game.FinishedIn;
 
         public string DisplayProcessName =>
             FormatExeDisplayName(Game?.ExeName);
@@ -140,7 +175,7 @@ namespace MasterPlay.UI.ViewModels
         // Public Status Properties
         // =====================================================================
 
-        public bool ShowFolderWarning => !CheckFolderWarning();
+        public bool ShowFolderWarning => CheckFolderWarning();
 
         public bool IsGameRunning => CheckRunningGame();
 
@@ -154,7 +189,7 @@ namespace MasterPlay.UI.ViewModels
 
             try
             {
-                string processName = $"{Game.ExeName}.exe";  
+                string processName = $"{Game.ExeName}.exe";
 
                 if (!string.IsNullOrEmpty(Game.InitExeName))
                 {
@@ -195,9 +230,34 @@ namespace MasterPlay.UI.ViewModels
 
         private bool CheckFolderWarning()
         {
-            return FileHelper.FileCheck(Game.SaveFolderPath) &&
-                   FileHelper.FileCheck(Game.BackupFolderPath);
+            if (!HasPlayableExe)
+            {
+                FolderWarningInfo = string.Empty;
+                return false;
+            }
+
+            bool saveMissing = !FileHelper.FileCheck(Game.SaveFolderPath);
+            bool backupMissing = !FileHelper.FileCheck(Game.BackupFolderPath);
+            bool exeMissing = string.IsNullOrEmpty(Game.ExeName);
+
+            bool showWarning = saveMissing || backupMissing || exeMissing;
+
+            if (showWarning)
+            {
+                var missingItems = new System.Collections.Generic.List<string>();
+                if (saveMissing) missingItems.Add("Save Folder");
+                if (backupMissing) missingItems.Add("Backup Folder");
+                if (exeMissing) missingItems.Add("Process Name");
+                FolderWarningInfo = "Cannot Backup: " + string.Join(", ", missingItems) + " not available!";
+            }
+            else
+            {
+                FolderWarningInfo = string.Empty;
+            }
+
+            return showWarning;
         }
+
 
         private bool CheckRunningGame()
         {
@@ -228,6 +288,15 @@ namespace MasterPlay.UI.ViewModels
         partial void OnGameChanged(Game value)
         {
             HasPlayableExe = value?.Ready ?? false;
+            // Khi game thay đổi (nếu có), reload genre và theme
+            if (value != null)
+            {
+                _gameGenres = DataService.GetGameGenres(value.Id);
+                _gameThemes = DataService.GetGameThemes(value.Id);
+                // Notify các property liên quan
+                OnPropertyChanged(nameof(DisplayGenres));
+                OnPropertyChanged(nameof(DisplayThemes));
+            }
         }
     }
 }

@@ -10,6 +10,7 @@
     <UserControl.Resources>
         <converters:SteamImageConverter x:Key="SteamImgConv"/>
         <converters:MetaScoreColorConverter x:Key="MetaScoreColorConverter"/>
+        <converters:SelectionColorConverter x:Key="SelectionColorConverter"/>
         <Style TargetType="TextBlock" x:Key="QueueTextStyle">
             <Setter Property="Foreground" Value="#2C3E50"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -35,7 +36,9 @@
               dragDrop:DragDrop.IsDragSource="True"
               dragDrop:DragDrop.IsDropTarget="True"
               dragDrop:DragDrop.UseDefaultDragAdorner="True"
-              dragDrop:DragDrop.UseDefaultEffectDataTemplate="True">
+              dragDrop:DragDrop.UseDefaultEffectDataTemplate="True"
+              dragDrop:DragDrop.DropHandler="{Binding}"
+              MouseDoubleClick="QueueListView_MouseDoubleClick">
         <ListView.View>
             <GridView ColumnHeaderContainerStyle="{StaticResource GridViewColumnHeaderStyle}">
                 <!-- Drag handle column -->
@@ -54,11 +57,9 @@
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <!-- Hiện icon khi hover vào ListViewItem -->
                                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsMouseOver}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
-                                            <!-- Hiệu ứng hover cho chính icon -->
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#F0F0F0"/>
                                             </Trigger>
@@ -73,6 +74,7 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- Image column -->
                 <GridViewColumn Width="160">
                     <GridViewColumn.Header>
@@ -92,6 +94,7 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- Name -->
                 <GridViewColumn Width="180">
                     <GridViewColumn.Header>
@@ -106,20 +109,24 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
-                <!-- Progress -->
+
+                <!-- Progress (colored text) -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Progress" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayProgress}" 
-                                       Style="{StaticResource QueueTextStyle}" 
-                                       HorizontalAlignment="Stretch"
-                                       TextAlignment="Center"/>
+                            <TextBlock Text="{Binding DisplayProgress}"
+                                       Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       TextWrapping="NoWrap"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- Excited -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
@@ -134,6 +141,7 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- Published -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
@@ -148,6 +156,7 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- MetaScore column -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
@@ -156,20 +165,21 @@
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                    CornerRadius="4"
-                    Padding="4,2"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    dragDrop:DragDrop.DragSourceIgnore="True">
+                                    CornerRadius="4"
+                                    Padding="4,2"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    dragDrop:DragDrop.DragSourceIgnore="True">
                                 <TextBlock Text="{Binding DisplayMetaScore}"
-                           Foreground="#2C3E50"
-                           FontWeight="Bold"
-                           Margin="0"
-                           HorizontalAlignment="Center"/>
+                                           Foreground="#2C3E50"
+                                           FontWeight="Bold"
+                                           Margin="0"
+                                           HorizontalAlignment="Center"/>
                             </Border>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
                 <!-- Avg Playtime -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
@@ -184,20 +194,24 @@
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
-                <!-- Ownership -->
+
+                <!-- Ownership (colored text) -->
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Ownership" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayOwnership}" 
-                                       Style="{StaticResource QueueTextStyle}" 
-                                       HorizontalAlignment="Stretch"
-                                       TextAlignment="Center"/>
+                            <TextBlock Text="{Binding DisplayOwnership}"
+                                       Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       TextWrapping="NoWrap"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
+
             </GridView>
         </ListView.View>
     </ListView>

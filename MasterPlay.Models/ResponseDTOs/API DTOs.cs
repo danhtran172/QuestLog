@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace MasterPlay.Models.Models
+namespace MasterPlay.Models.ResponseDTOs
 {
     public class RawgResponse { public List<RawgData> Results { get; set; } }
 
@@ -17,7 +17,7 @@ namespace MasterPlay.Models.Models
         public string Background_Image { get; set; }
         public string Released { get; set; }
         public int? Metacritic { get; set; }
-        public long Playtime { get; set; }
+        public long? Playtime { get; set; }
         public List<GenreItem> Genres { get; set; }
         public List<DeveloperItem> Developers { get; set; }
         public List<PublisherItem> Publishers { get; set; }
@@ -35,8 +35,8 @@ namespace MasterPlay.Models.Models
         public string ReleaseDate { get; set; }
         public string Developers { get; set; }
         public string Publishers { get; set; }
-        public int MetaScore { get; set; }
-        public long AvgPlaytime { get; set; }
+        public int? MetaScore { get; set; }
+        public int? AvgPlaytime { get; set; }
         public string Game { get; set; } 
         public string Exe { get; set; } 
         public string SaveFolder { get; set; } 

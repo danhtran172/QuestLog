@@ -43,5 +43,10 @@ namespace MasterPlay.UI
             if (!char.IsDigit(s[0]) && s != ".") e.Handled = true;
             if (s == "." && ((TextBox)sender).Text.Contains(".")) e.Handled = true;
         }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

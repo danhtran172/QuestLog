@@ -1,7 +1,7 @@
 ﻿using GenerativeAI;
 using Google.GenAI;
 using Google.GenAI.Types;
-using MasterPlay.Models.Models;
+using MasterPlay.Models.ResponseDTOs;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
 using System.Net.Http.Json;
@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace MasterPlay.Models
 {
-    public class ApiService
+    public class RawgService
     {
         private const string rawgApiKey = "cbf5c4560d9d4e388d1294afe77d574d";
         private const string geminiApiKey = "AIzaSyAtWwdGUXOIBNQhTjhm74DJV4wlEbP7Pb8";
@@ -64,7 +64,7 @@ namespace MasterPlay.Models
 
             return oldCover;
         }
-       
+
         public static async Task<GameMetadata> GetMetadata_Rawg(string gameName)
         {
             using HttpClient client = new HttpClient();
@@ -90,7 +90,7 @@ namespace MasterPlay.Models
                     Background_Image = raw.Background_Image,
                     ReleaseDate = raw.Released,
                     MetaScore = raw.Metacritic ?? 0,
-                    AvgPlaytime = raw.Playtime,
+                    AvgPlaytime = (int?)raw.Playtime,
                     Genres = string.Join(", ", raw.Genres.Select(g => g.Name)),
                     Developers = string.Join(", ", raw.Developers?.Select(d => d.Name) ?? Enumerable.Empty<string>()),
                     Publishers = string.Join(", ", raw.Publishers?.Select(p => p.Name) ?? Enumerable.Empty<string>())
@@ -140,55 +140,5 @@ namespace MasterPlay.Models
 
             return null;
         }
-
-        private static string ExtractPath(string json, string installDir, string gameName)
-        {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                throw new InvalidDataException($"No Play Actions configured for game: {gameName}");
-            }
-
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                foreach (var action in doc.RootElement.EnumerateArray())
-                {
-                    // Playnite stores the executable path in the "Path" property
-                    if (action.TryGetProperty("Path", out var pathProp))
-                    {
-                        string rawPath = pathProp.GetString();
-                        if (string.IsNullOrEmpty(rawPath)) continue;
-
-                        // Resolve the {InstallDir} variable
-                        string fullPath = rawPath.Replace("{InstallDir}", installDir);
-
-                        // Standardize the path
-                        string absolutePath = Path.GetFullPath(fullPath);
-
-                        if (absolutePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return absolutePath;
-                        }
-                    }
-                }
-            }
-            catch (JsonException)
-            {
-                throw new FormatException("Failed to parse PlayActions JSON data from the database.");
-            }
-
-            throw new EntryPointNotFoundException($"Could not find a valid .exe path in PlayActions for: {gameName}");
-        }
-
-
-    }
-}
-
-
-public static class DateExtensions
-{
-    public static string DateDisplay(this DateOnly date)
-    {
-        return date.ToString("dd-MM-yyyy");
     }
 }

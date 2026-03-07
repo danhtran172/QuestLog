@@ -1,4 +1,5 @@
 ﻿using MasterPlay.Models;
+using MasterPlay.Models.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -30,11 +31,7 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                DataService.SyncReadyGames();
-                DataService.SortGames();
-
-                var config = DataService.LoadConfig();
-                var libraries = config.GameLibraryPath;
+                var libraries = JsonService.LoadConfig().GameLibraryPath;
                 foreach (var library in libraries)
                 {
                     if (string.IsNullOrEmpty(library) || !Directory.Exists(library))
@@ -45,22 +42,38 @@ namespace MasterPlay.Service.Services
 
                     _logger.LogInformation("Scanning library: {path}", library);
 
-                    var exeFiles = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
-                    var existingGames = DataService.LoadDetectedProcesses();
-                    var newList = new List<DetectedProcess>();
+                    var detectedProcesses = Directory.GetFiles(library, "*.exe", SearchOption.AllDirectories);
+                    var newProcessesList = new List<DetectedProcess>();
 
-                    foreach (var file in exeFiles)
+                    foreach (var file in detectedProcesses)
                     {
                         string fileName = Path.GetFileName(file);
-                        newList.Add(new DetectedProcess
+                        newProcessesList.Add(new DetectedProcess
                         {
                             ExeName = fileName,
                             FullPath = file,
                         });
                     }
 
-                    DataService.SaveAvailableGames(newList);
-                    _logger.LogInformation("Library scan completed. Found {count} executables.", newList.Count);
+                    // Lấy danh sách hiện tại từ DB
+                    var currentProcesses = DataService.LoadDetectedProcesses();
+
+                    // So sánh (cần so sánh dựa trên FullPath vì nó unique)
+                    var currentSet = new HashSet<string>(currentProcesses.Select(p => p.FullPath));
+                    var newSet = new HashSet<string>(newProcessesList.Select(p => p.FullPath));
+
+                    bool hasChanges = !currentSet.SetEquals(newSet);
+
+                    if (hasChanges)
+                    {
+                        DataService.SyncDetectedProcesses(newProcessesList);
+                        DataService.SyncGameStatus();
+                        _logger.LogInformation("Library scan completed and updated. Found {count} executables.", newProcessesList.Count);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Library scan completed. No changes detected.");
+                    }
                 }
             }
             catch (Exception ex)

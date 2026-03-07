@@ -44,15 +44,10 @@ namespace MasterPlay.Service.Services
         {
             try
             {
-                DataService.SyncReadyGames();
-
-                var games = DataService.LoadGames().ToList();
-                //var games = DataHelper.LoadGames().Where(x => x.Ready).ToList();
-                bool dataChanged = false;
-
-                foreach (var game in games)
+                var gameList = DataService.LoadActiveGames();
+                foreach (var game in gameList)
                 {
-                    if (game.IsDisabled || string.IsNullOrEmpty(game.ExeName) || !game.Ready) continue;
+                    if (string.IsNullOrEmpty(game.ExeName)) continue;
 
                     string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
                     var processes = Process.GetProcessesByName(processName);
@@ -71,7 +66,7 @@ namespace MasterPlay.Service.Services
                     if (isForeground && hadInput)
                     {
                         game.TotalPlayTimeSeconds += 30;
-                        dataChanged = true;
+                        DataService.UpdateGame(game);
                         _logger.LogInformation("Updated playtime for {name}, time: {time}s", game.Name, game.TotalPlayTimeSeconds);
                     }
                      if (!isForeground)
@@ -84,11 +79,6 @@ namespace MasterPlay.Service.Services
                         _logger.LogInformation("No input");
 
                     }
-                }
-
-                if (dataChanged)
-                {
-                    DataService.SaveGamesData(games);
                 }
             }
             catch (Exception ex)

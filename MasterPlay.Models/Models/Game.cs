@@ -1,51 +1,71 @@
 ﻿using System;
+using System.Collections.Generic;
 
-namespace MasterPlay.Models.Models
+namespace MasterPlay.Models.Models;
+
+public partial class Game
 {
-    public class Game
-    {
-        // Identity / Core
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; } = string.Empty;
-        public string SlugName { get; set; } = string.Empty;
-        public DateTime? createAt { get; set; } = DateTime.Now;
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        // Executable / Launch
-        public string ExeName { get; set; } = string.Empty;
-        public string InitExeName { get; set; } = string.Empty;
-        public bool Ready { get; set; } = false;
-        public bool IsDisabled { get; set; } = false;
+    public string Name { get; set; } = null!;
 
-        // Storage / Paths
-        public string SaveFolderPath { get; set; } = string.Empty;
-        public string BackupFolderPath { get; set; } = string.Empty;
+    public string? SlugName { get; set; }
 
-        // Tracking / Runtime Data
-        public long TotalPlayTimeSeconds { get; set; } = 0;
+    public string? ExeName { get; set; }
 
-        // Media
-        public string ImagePath { get; set; } = string.Empty;
-        public string GImagePath { get; set; } = string.Empty;
+    public string? InitExeName { get; set; }
 
-        // Game Metadata (Publishing)
-        public DateOnly? PublishDate { get; set; }
-        public string Publisher { get; set; } = string.Empty;
-        public string Developer { get; set; } = string.Empty;
-        public string Series { get; set; } = string.Empty;
-        public string Genre { get; set; } = string.Empty;
-        public string Theme { get; set; } = string.Empty;
+    public bool Ready { get; set; }
 
-        // Ratings / Estimation
-        public float Score { get; set; }
-        public int MetaScore { get; set; }
-        public float Excited { get; set; }
-        public long AvgPlayTime { get; set; }
+    public bool IsDisabled { get; set; }
 
-        // Ownership / Progress
-        public string Ownership { get; set; } = string.Empty;
-        public string Progress { get; set; }
+    public string? SaveFolderPath { get; set; }
 
-        // Completion
-        public string FinishedIn { get; set; } = string.Empty;
-    }
+    public string? BackupFolderPath { get; set; }
+
+    public int? TotalPlayTimeSeconds { get; set; }
+
+    public string? ImagePath { get; set; }
+
+    public string? GImagePath { get; set; }
+
+    public DateOnly? PublishDate { get; set; }
+
+    public string? Publisher { get; set; }
+
+    public string? Developer { get; set; }
+
+    public int? SeriesId { get; set; }
+
+    public double? Score { get; set; }
+
+    public int? MetaScore { get; set; }
+
+    public double? Excited { get; set; }
+
+    public int? AvgPlayTime { get; set; }
+
+    public string? FinishedIn { get; set; }
+
+    public int? OwnershipId { get; set; }
+
+    public int? ProgressId { get; set; }
+
+    public DateTime? CreateAt { get; set; } = DateTime.Now;
+
+    public virtual ICollection<GameGenre> GameGenres { get; set; }
+    public virtual ICollection<GameTheme> GameThemes { get; set; }
+
+    public virtual GamePosition? GamePosition { get; set; }
+
+    public virtual OwnershipStatus? Ownership { get; set; }
+
+    public virtual ProgressStatus? Progress { get; set; }
+
+    public virtual Series? Series { get; set; }
+
+    public virtual ICollection<Genre> Genres { get; set; } = new List<Genre>();
+
+    public virtual ICollection<Theme> Themes { get; set; } = new List<Theme>();
+
 }

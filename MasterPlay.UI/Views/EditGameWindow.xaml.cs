@@ -26,35 +26,56 @@ namespace MasterPlay.UI
         private void Score_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox tb = sender as TextBox;
-            if (!Regex.IsMatch(e.Text, @"^[0-9.]$"))
+            // Allow digits and decimal separators (dot or comma)
+            if (!Regex.IsMatch(e.Text, @"^[0-9.,]$"))
             {
                 e.Handled = true;
                 return;
             }
 
-            if (e.Text == "." && tb.Text.Contains("."))
+            // If the input is a decimal separator, ensure only one exists in the text
+            if (e.Text == "." || e.Text == ",")
             {
-                e.Handled = true;
+                if (tb.Text.Contains(".") || tb.Text.Contains(","))
+                {
+                    e.Handled = true;
+                }
             }
         }
 
         private void FinishedIn_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (!Regex.IsMatch(e.Text, @"^[0-9,]+$"))
+            if (!Regex.IsMatch(e.Text, @"^[0-9]+$"))
             {
                 e.Handled = true;
             }
         }
 
-        // ==================== SERIES EVENT HANDLERS ====================
+        private void FinishScore_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            TextBox tb = sender as TextBox;
+            // Allow digits and decimal separators (dot or comma)
+            if (!Regex.IsMatch(e.Text, @"^[0-9.,]$"))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // If the input is a decimal separator, ensure only one exists in the text
+            if (e.Text == "." || e.Text == ",")
+            {
+                if (tb.Text.Contains(".") || tb.Text.Contains(","))
+                {
+                    e.Handled = true;
+                }
+            }
+        }
+
         private void SeriesItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.Tag is string seriesName)
+            if (sender is Border border && border.DataContext is Series series && DataContext is EditGameViewModel vm)
             {
-                if (DataContext is EditGameViewModel vm)
-                {
-                    vm.SelectSeriesCommand.Execute(seriesName);
-                }
+                vm.SelectSeriesCommand.Execute(series);
             }
         }
 
@@ -66,15 +87,11 @@ namespace MasterPlay.UI
             }
         }
 
-        // ==================== GENRE EVENT HANDLERS ====================
         private void GenreItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.Tag is string genreName)
+            if (sender is Border border && border.DataContext is Genre genre && DataContext is EditGameViewModel vm)
             {
-                if (DataContext is EditGameViewModel vm)
-                {
-                    vm.SelectGenreCommand.Execute(genreName);
-                }
+                vm.SelectGenreCommand.Execute(genre);
             }
         }
 
@@ -86,15 +103,11 @@ namespace MasterPlay.UI
             }
         }
 
-        // ==================== THEME EVENT HANDLERS ====================
         private void ThemeItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.Tag is string themeName)
+            if (sender is Border border && border.DataContext is Theme theme && DataContext is EditGameViewModel vm)
             {
-                if (DataContext is EditGameViewModel vm)
-                {
-                    vm.SelectThemeCommand.Execute(themeName);
-                }
+                vm.SelectThemeCommand.Execute(theme);
             }
         }
 

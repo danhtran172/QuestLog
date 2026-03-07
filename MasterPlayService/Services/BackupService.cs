@@ -37,8 +37,8 @@ namespace MasterPlay.Service.Services
             try
             {
                 _isBackupRunning = true;
-                var config = DataService.LoadConfig();
-                var games = DataService.LoadGames();
+                var config = JsonService.LoadConfig();
+                var games = DataService.LoadActiveGames();
 
                 if (string.IsNullOrEmpty(config.BackupRootPath))
                 {
@@ -59,24 +59,21 @@ namespace MasterPlay.Service.Services
                         continue;
                     }
 
-                    string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
+                    string processName = game.ExeName;
                     Process[] processes = Process.GetProcessesByName(processName);
 
                     bool shouldBackup = false;
 
                     if (processes.Length > 0)
                     {
-                        // Game đang chạy → backup luôn
                         shouldBackup = true;
                         _logger.LogInformation("Game {name} is running → perform backup", game.Name);
                     }
                     else
                     {
-                        // Game không chạy → kiểm tra process gần nhất có tắt trong 1 phút không
                         DateTime now = DateTime.UtcNow;
-                        bool recentProcess = false;
+                        bool recentPlay = false;
 
-                        // Tìm process có tên tương tự (để tránh miss nếu tên process thay đổi nhẹ)
                         foreach (var proc in Process.GetProcesses())
                         {
                             if (proc.ProcessName.Contains(processName, StringComparison.OrdinalIgnoreCase))
@@ -86,7 +83,7 @@ namespace MasterPlay.Service.Services
                                     DateTime startTime = proc.StartTime.ToUniversalTime();
                                     if ((now - startTime).TotalMinutes < 2)
                                     {
-                                        recentProcess = true;
+                                        recentPlay = true;
                                         break;
                                     }
                                 }
@@ -94,7 +91,7 @@ namespace MasterPlay.Service.Services
                             }
                         }
 
-                        if (recentProcess)
+                        if (recentPlay)
                         {
                             shouldBackup = true;
                             _logger.LogInformation("Game {name} just stopped within 1 minute → perform backup", game.Name);
@@ -109,7 +106,7 @@ namespace MasterPlay.Service.Services
 
                     _logger.LogInformation("Starting backup for game: {name}", game.Name);
 
-                    string backupFolder = Path.Combine(config.BackupRootPath, game.Name);
+                    string backupFolder = game.BackupFolderPath;
                     Directory.CreateDirectory(backupFolder);
 
                     string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");

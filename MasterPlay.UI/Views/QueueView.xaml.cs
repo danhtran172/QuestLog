@@ -1,5 +1,9 @@
-﻿using System.Windows;
+﻿using MasterPlay.UI.ViewModels;
+using MasterPlay.UI.Views;
+using System;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace MasterPlay.UI.Views
@@ -11,9 +15,9 @@ namespace MasterPlay.UI.Views
             InitializeComponent();
         }
 
+        // ==================== SCROLL TO TOP ====================
         public void ScrollToTop()
         {
-            // Tìm ScrollViewer bên trong ListView
             var scrollViewer = FindVisualChild<ScrollViewer>(QueueListView);
             if (scrollViewer != null)
             {
@@ -21,10 +25,10 @@ namespace MasterPlay.UI.Views
             }
             else if (QueueListView.Items.Count > 0)
             {
-                // Fallback nếu không tìm thấy ScrollViewer
                 QueueListView.ScrollIntoView(QueueListView.Items[0]);
             }
         }
+
         private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -38,6 +42,50 @@ namespace MasterPlay.UI.Views
                     return descendant;
             }
             return null;
+        }
+
+        // ==================== DOUBLE-CLICK HANDLER ====================
+        private void QueueListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var listView = sender as ListView;
+            if (listView?.SelectedItem is GameViewModel gameVm && gameVm.Game != null)
+            {
+                OpenEditWindow(gameVm);
+            }
+        }
+
+        // ==================== EDIT BUTTON CLICK (nếu có button trong tương lai) ====================
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is GameViewModel gameVm && gameVm.Game != null)
+            {
+                OpenEditWindow(gameVm);
+            }
+        }
+
+        // ==================== CHUNG: MỞ EDIT WINDOW ====================
+        private void OpenEditWindow(GameViewModel gameVm)
+        {
+            try
+            {
+                var mainWindow = Window.GetWindow(this) as MainWindow;
+                var editWindow = new EditGameWindow(gameVm.Game)
+                {
+                    Owner = mainWindow
+                };
+
+                editWindow.ShowDialog();
+
+                // Refresh data after editing
+                if (DataContext is MainWindowViewModel viewModel)
+                {
+                    viewModel.LoadGamesData();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening edit window: {ex.Message}", "Notification");
+            }
         }
     }
 }

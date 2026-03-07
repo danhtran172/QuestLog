@@ -2,8 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         Title="MasterPlay" Height="700" Width="920" WindowStartupLocation="CenterScreen"
-        Background="#F8F9FA" FontFamily="Segoe UI"
+        Background="#F8F9FA" FontFamily="Segoe UI, Segoe UI Emoji"
         KeyDown="Window_KeyDown"
         xmlns:local="clr-namespace:MasterPlay.UI.Views"
         UseLayoutRounding="True"
@@ -14,6 +15,86 @@
         <KeyBinding Key="Escape"
                     Command="{Binding ToggleSettingsCommand}" />
     </Window.InputBindings>
+
+    <Window.Resources>
+        <!-- Màu highlight vàng nhạt opacity 50% -->
+        <Color x:Key="HighlightColor">#FFFFE0</Color>
+        <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource HighlightColor}" Opacity="0.5"/>
+
+        <!-- Style cho SortComboBox với Reverse checkbox ở cuối dropdown -->
+        <Style x:Key="SortComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                  Background="{TemplateBinding Background}"
+                                  BorderBrush="#E0E0E0" BorderThickness="0"
+                                  Focusable="False"
+                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                  ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="18">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="25"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Image x:Name="Icon"
+                                               Grid.Column="0" Width="14" Height="14"
+                                               Margin="10,0,6,0" VerticalAlignment="Center"
+                                               Source="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <ContentPresenter x:Name="Content"
+                                                          Grid.Column="1"
+                                                          Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Path Grid.Column="2"
+                                              Data="M 0 0 L 3.5 3.5 L 7 0 Z"
+                                              Fill="#666" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="{x:Null}">
+                                                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+                                                <Setter TargetName="Content" Property="Grid.Column" Value="0"/>
+                                                <Setter TargetName="Content" Property="Grid.ColumnSpan" Value="3"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="Popup"
+                           Placement="Bottom"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           AllowsTransparency="True"
+                           PopupAnimation="Slide"
+                           Focusable="False">
+                                <Border Background="White"
+                                BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="12"
+                                Margin="0,5,0,0" MinWidth="{TemplateBinding ActualWidth}">
+                                    <StackPanel>
+                                        <!-- Hiển thị tất cả items, không cuộn -->
+                                        <ItemsPresenter SnapsToDevicePixels="True"/>
+                                        <!-- Reverse Checkbox với binding đúng -->
+                                        <CheckBox x:Name="ReverseCheckBox"
+                                          Content="Reverse"
+                                          Margin="8,4,8,8"
+                                          IsChecked="{Binding DataContext.IsReverseSort, RelativeSource={RelativeSource AncestorType=Window}}"
+                                          VerticalAlignment="Center"
+                                          FontSize="12"/>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <!-- ==================== ROOT ==================== -->
     <Grid>
@@ -36,23 +117,11 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-
                 <!-- Cột trái: Logo và tab-->
                 <Grid Grid.Column="0" VerticalAlignment="Stretch">
-                    <!-- Logo
-                    <Image x:Name="LogoImage"
-                   Source="/Assets/MasterplayLogo.png"
-                   Width="140"
-                   RenderOptions.BitmapScalingMode="HighQuality"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Left"/>
-                    -->
-                    <!-- Tab buttons (sát đáy) -->
                     <StackPanel Orientation="Horizontal" 
-                        VerticalAlignment="Bottom" 
-                        HorizontalAlignment="Left"
-                        >
-                        <!-- -1 để viền dưới chạm đáy -->
+                                VerticalAlignment="Bottom" 
+                                HorizontalAlignment="Left">
                         <Button Content="Default" Click="AllButton_Click" MinWidth="70">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
@@ -114,28 +183,29 @@
 
                 <!-- Cột phải: các nút chức năng -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Search box, sort, filter, add, settings (giữ nguyên) -->
-                    <Border Width="220" Height="30" Background="Transparent" CornerRadius="20">
+                    <!-- Search box, sort, filter, add, settings -->
+                    <Border Width="220" Height="30" Background="Transparent" CornerRadius="20"
+                            Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
                         <Grid>
                             <TextBox x:Name="SearchBox"
-                             Style="{StaticResource ModernSearchBox}"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             TextChanged="SearchBox_TextChanged"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             VerticalContentAlignment="Center"
-                             Padding="0,0,100,0"
-                             Margin="0"/>
+                                     Style="{StaticResource ModernSearchBox}"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     TextChanged="SearchBox_TextChanged"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalContentAlignment="Center"
+                                     Padding="0,0,100,0"
+                                     />
                             <Border HorizontalAlignment="Right" Width="94" Height="28" Margin="0,0,1,0" Background="Transparent">
                                 <ComboBox x:Name="SearchByComboBox"
-                                  Style="{StaticResource ModernComboBoxStyle}"
-                                  SelectedIndex="0"
-                                  BorderThickness="0"
-                                  Background="Transparent"
-                                  VerticalContentAlignment="Center"
-                                  HorizontalContentAlignment="Center"
-                                  Padding="0"
-                                  SelectionChanged="SearchByComboBox_SelectionChanged">
+                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          SelectedIndex="0"
+                                          BorderThickness="0"
+                                          Background="Transparent"
+                                          VerticalContentAlignment="Center"
+                                          HorizontalContentAlignment="Center"
+                                          Padding="0"
+                                          SelectionChanged="SearchByComboBox_SelectionChanged">
                                     <ComboBoxItem Content="All"/>
                                     <ComboBoxItem Content="Name"/>
                                     <ComboBoxItem Content="Series"/>
@@ -147,13 +217,15 @@
                         </Grid>
                     </Border>
 
+                    <!-- Sort ComboBox với Reverse checkbox -->
                     <ComboBox x:Name="SortComboBox"
-                      Width="115"
-                      Style="{StaticResource ModernComboBoxStyle}"
-                      SelectionChanged="SortComboBox_SelectionChanged"
-                      Tag="/Assets/Sort.png"
-                      SelectedIndex="0"
-                      Margin="10,0,20,0">
+                              Width="115"
+                              Style="{StaticResource SortComboBoxStyle}"
+                              SelectionChanged="SortComboBox_SelectionChanged"
+                              Tag="/Assets/Sort.png"
+                              SelectedIndex="0"
+                              Margin="10,0,5,0"
+                              Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
                         <ComboBoxItem Content="Default"/>
                         <ComboBoxItem Content="Status"/>
                         <ComboBoxItem Content="Name"/>
@@ -168,44 +240,271 @@
                     </ComboBox>
 
                     <ToggleButton x:Name="FilterToggleButton"
-                          Style="{StaticResource FilterButtonStyle}"
-                          Background="#7F8C8D"
-                          Margin="0,0,10,0"/>
+                                  Style="{StaticResource FilterButtonStyle}"
+                                  Background="Transparent"
+                                  Margin="0,0,5,0"
+                                  Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}"/>
 
                     <Button Style="{StaticResource IconButtonStyle}"
-                    Background="#A1BC98"
-                    Click="AddGameButton_Click">
+                            Background="#A1BC98"
+                            Click="AddGameButton_Click">
                         <Image Source="/Assets/Add.png"
-                       Width="20"
-                       Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                               Width="20"
+                               Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
 
                     <Button Style="{StaticResource IconButtonStyle}"
-                    Background="#7F8C8D"
-                    Margin="10,0,0,0"
-                    Click="SettingsButton_Click">
+                            Background="#7F8C8D"
+                            Margin="10,0,0,0"
+                            Click="SettingsButton_Click">
                         <Image Source="/Assets/Setting.png"
-                       Width="20"
-                       Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                               Width="20"
+                               Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Popup Filter (giữa màn hình) -->
+        <!-- POPUP FILTER -->
         <Popup x:Name="FilterPopup"
-       Style="{StaticResource FilterPopupStyle}"
-       IsOpen="{Binding IsChecked, ElementName=FilterToggleButton}"/>
-        <!-- ==================== GALLERY ==================== -->
+               Placement="Center"
+               StaysOpen="False"
+               PopupAnimation="Slide"
+               AllowsTransparency="True"
+               IsOpen="{Binding IsChecked, ElementName=FilterToggleButton}">
+            <Border Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20"
+                    Width="700">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header: Reverse checkbox -->
+                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Filter" FontSize="18" FontWeight="SemiBold" Foreground="#A1BC98"/>
+                        <CheckBox x:Name="ReverseCheckBox" Grid.Column="1" Content="Reverse filter" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Number Filters: 2 cột -->
+                    <Grid Grid.Row="1" Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Cột trái: Finish và Excited -->
+                        <StackPanel Grid.Column="0">
+                            <!-- Finish -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="67"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center" FontSize="12"/>
+                                <ComboBox x:Name="FinishOperator" 
+                                      Grid.Column="1" 
+                                      Height="28" 
+                                      Margin="0,0,3,0" 
+                                      SelectedIndex="2"
+                                      Style="{StaticResource SimpleSelectionBoxStyle}">
+                                    <ComboBoxItem Content=">"/>
+                                    <ComboBoxItem Content=">="/>
+                                    <ComboBoxItem Content="="/>
+                                    <ComboBoxItem Content="&lt;="/>
+                                    <ComboBoxItem Content="&lt;"/>
+                                </ComboBox>
+                                <TextBox x:Name="FinishValue" Grid.Column="2" Height="28" Padding="6,2"/>
+                            </Grid>
+                            <!-- Excited -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="67"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center" FontSize="12"/>
+                                <ComboBox x:Name="ExcitedOperator" 
+                                      Grid.Column="1" 
+                                      Height="28" 
+                                      Margin="0,0,3,0" 
+                                      SelectedIndex="2"
+                                      Style="{StaticResource SimpleSelectionBoxStyle}">
+                                    <ComboBoxItem Content=">"/>
+                                    <ComboBoxItem Content=">="/>
+                                    <ComboBoxItem Content="="/>
+                                    <ComboBoxItem Content="&lt;="/>
+                                    <ComboBoxItem Content="&lt;"/>
+                                </ComboBox>
+                                <TextBox x:Name="ExcitedValue" Grid.Column="2" Height="28" Padding="6,2"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Cột phải: Score và PlayTime -->
+                        <StackPanel Grid.Column="2">
+                            <!-- Score -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="67"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center" FontSize="12"/>
+                                <ComboBox x:Name="ScoreOperator" 
+                      Grid.Column="1" 
+                      Height="28" 
+                      Margin="0,0,3,0" 
+                      SelectedIndex="2"
+                      Style="{StaticResource SimpleSelectionBoxStyle}">
+                                    <ComboBoxItem Content=">"/>
+                                    <ComboBoxItem Content=">="/>
+                                    <ComboBoxItem Content="="/>
+                                    <ComboBoxItem Content="&lt;="/>
+                                    <ComboBoxItem Content="&lt;"/>
+                                </ComboBox>
+                                <TextBox x:Name="ScoreValue" Grid.Column="2" Height="28" Padding="6,2"/>
+                            </Grid>
+                            <!-- PlayTime -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="67"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center" FontSize="12"/>
+                                <ComboBox x:Name="PlayTimeOperator" 
+                      Grid.Column="1" 
+                      Height="28" 
+                      Margin="0,0,3,0" 
+                      SelectedIndex="2"
+                      Style="{StaticResource SimpleSelectionBoxStyle}">
+                                    <ComboBoxItem Content=">"/>
+                                    <ComboBoxItem Content=">="/>
+                                    <ComboBoxItem Content="="/>
+                                    <ComboBoxItem Content="&lt;="/>
+                                    <ComboBoxItem Content="&lt;"/>
+                                </ComboBox>
+                                <TextBox x:Name="PlayTimeValue" Grid.Column="2" Height="28" Padding="6,2"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 4 cột checkbox -->
+                    <Grid Grid.Row="2" Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Avg Play -->
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Avg Play" FontWeight="SemiBold" FontSize="13" Foreground="#2C3E50" Margin="0,0,0,12"/>
+                            <CheckBox x:Name="AvgVeryLong" Content="Very Long" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="AvgLong" Content="Long" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="AvgMedium" Content="Medium" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="AvgShort" Content="Short" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="AvgVeryShort" Content="Very Short" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="AvgNone" Content="None" Margin="0,4,0,4" FontSize="12"/>
+                        </StackPanel>
+
+                        <!-- Progress -->
+                        <StackPanel Grid.Column="1" Margin="8,0">
+                            <TextBlock Text="Progress" FontWeight="SemiBold" FontSize="13" Foreground="#2C3E50" Margin="0,0,0,12"/>
+                            <CheckBox x:Name="ProgressNextPlay" Content="NextPlay" Margin="0,4,0,4" FontSize="12" Tag="3"/>
+                            <CheckBox x:Name="ProgressDone" Content="Done" Margin="0,4,0,4" FontSize="12" Tag="1"/>
+                            <CheckBox x:Name="ProgressPlaying" Content="Playing" Margin="0,4,0,4" FontSize="12" Tag="2"/>
+                            <CheckBox x:Name="ProgressIntended" Content="Intended" Margin="0,4,0,4" FontSize="12" Tag="4"/>
+                            <CheckBox x:Name="ProgressDrop" Content="Drop" Margin="0,4,0,4" FontSize="12" Tag="5"/>
+                            <CheckBox x:Name="ProgressPending" Content="Pending" Margin="0,4,0,4" FontSize="12" Tag="6"/>
+                        </StackPanel>
+
+                        <!-- Ownership -->
+                        <StackPanel Grid.Column="2" Margin="8,0">
+                            <TextBlock Text="Ownership" FontWeight="SemiBold" FontSize="13" Foreground="#2C3E50" Margin="0,0,0,12"/>
+                            <CheckBox x:Name="OwnReady" Content="Ready" Margin="0,4,0,4" FontSize="12" Tag="1"/>
+                            <CheckBox x:Name="OwnPirated" Content="Pirated" Margin="0,4,0,4" FontSize="12" Tag="2"/>
+                            <CheckBox x:Name="OwnGamePass" Content="GamePass" Margin="0,4,0,4" FontSize="12" Tag="3"/>
+                            <CheckBox x:Name="OwnNotOwned" Content="Not Owned" Margin="0,4,0,4" FontSize="12" Tag="4"/>
+                            <CheckBox x:Name="OwnPSRequired" Content="PS Required" Margin="0,4,0,4" FontSize="12" Tag="5"/>
+                        </StackPanel>
+
+                        <!-- MetaScore -->
+                        <StackPanel Grid.Column="3" Margin="8,0,0,0">
+                            <TextBlock Text="MetaScore" FontWeight="SemiBold" FontSize="13" Foreground="#2C3E50" Margin="0,0,0,12"/>
+                            <CheckBox x:Name="MetaVeryHigh" Content="Very High" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="MetaHigh" Content="High" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="MetaMedium" Content="Medium" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="MetaLow" Content="Low" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="MetaVeryLow" Content="Very Low" Margin="0,4,0,4" FontSize="12"/>
+                            <CheckBox x:Name="MetaNone" Content="None" Margin="0,4,0,4" FontSize="12"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Buttons -->
+                    <Grid Grid.Row="3" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Clear button -->
+                        <Button Grid.Column="0" Style="{StaticResource IconButtonStyle}"
+                            x:Name="ClearFilterButton" 
+                            Background="#E0E0E0" 
+                            HorizontalAlignment="Left"
+                            Click="ClearFilterButton_Click"
+                            ToolTip="Clear">
+                            <Image Source="/Assets/Clear.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <!-- Apply và Cancel -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource IconButtonStyle}"
+                               Background="#A1BC98" 
+                               HorizontalAlignment="Right"
+                               Click="ApplyFilterButton_Click"
+                               Margin="0,0,10,0"
+                               ToolTip="Apply Filter">
+                                <Image Source="/Assets/Save.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button Style="{StaticResource IconButtonStyle}"
+                               Background="#7F8C8D" 
+                               HorizontalAlignment="Right"
+                               Click="CancelFilterButton_Click"
+                               ToolTip="Cancel">
+                                <Image Source="/Assets/Close.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Popup>
+
         <!-- ==================== GALLERY ==================== -->
         <Grid Grid.Row="1" Margin="5">
             <!-- Card view (All, Plan, Finish) -->
             <ScrollViewer x:Name="CardScrollViewer"
-                  VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
                 <ItemsControl ItemsSource="{Binding Games}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -216,32 +515,31 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:GameViewModel}">
                             <Border Width="270"
-                            Margin="6"
-                            Background="White"
-                            BorderBrush="#E4E4E4"
-                            BorderThickness="1"
-                            CornerRadius="14">
-
+                                    Margin="6"
+                                    Background="White"
+                                    BorderBrush="#E4E4E4"
+                                    BorderThickness="1"
+                                    CornerRadius="14">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- ==================== CARD IMAGE ==================== -->
+                                    <!-- Card image -->
                                     <Border Grid.Row="0"
-                                    Height="126.2"
-                                    CornerRadius="14,14,0,0"
-                                    RenderOptions.BitmapScalingMode="HighQuality"
-                                    SnapsToDevicePixels="True">
+                                            Height="126.2"
+                                            CornerRadius="14,14,0,0"
+                                            RenderOptions.BitmapScalingMode="HighQuality"
+                                            SnapsToDevicePixels="True">
                                         <Border.Background>
                                             <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
-                                                Stretch="UniformToFill"
-                                                RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        Stretch="UniformToFill"
+                                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Border.Background>
                                     </Border>
 
-                                    <!-- ==================== CARD CONTENT ==================== -->
+                                    <!-- Card content -->
                                     <Grid Grid.Row="1" Margin="14">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -249,26 +547,24 @@
                                             <RowDefinition Height="*"/>
                                             <!-- Spacer -->
                                             <RowDefinition Height="Auto"/>
-                                            <!-- Mode content (All/Plan/Finish) -->
+                                            <!-- Mode content -->
                                             <RowDefinition Height="Auto"/>
-                                            <!-- Card footer -->
+                                            <!-- Footer -->
                                         </Grid.RowDefinitions>
 
-                                        <!-- ==================== TITLE ==================== -->
+                                        <!-- Title -->
                                         <TextBlock Grid.Row="0"
-                                           Text="{Binding DisplayName}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           TextWrapping="Wrap"
-                                           VerticalAlignment="Top"
-                                           Margin="0,0,0,15"/>
+                                                   Text="{Binding DisplayName}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Top"
+                                                   Margin="0,0,0,15"/>
 
-                                        <!-- ==================== MODE CONTENT ==================== -->
+                                        <!-- Mode content -->
                                         <Grid Grid.Row="2">
-
                                             <!-- ========== ALL MODE ========== -->
                                             <StackPanel Visibility="{Binding DataContext.IsAllMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-
                                                 <!-- Published + MetaScore -->
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
@@ -276,37 +572,13 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Published:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPublishYear}"
-                                                       FontSize="12"/>
-
-                                                    <StackPanel Grid.Column="2"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: "
-                                                           FontWeight="Bold"
-                                                           FontSize="12"
-                                                           Margin="0,0,6,0"
-                                                           VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                                        CornerRadius="4"
-                                                        Padding="4,1"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}"
-                                                               Foreground="#2C3E50"
-                                                               FontSize="12"
-                                                               FontWeight="Bold"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Left"
-                                                               Padding="2,0"
-                                                               Background="Transparent"/>
+                                                                CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
@@ -317,14 +589,8 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Publisher:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPublisher}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Playtime -->
@@ -333,126 +599,192 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Playtime:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPlayTime}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                                <!-- ===== ADDITIONAL INFO ===== -->
                                                 <!-- Series -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Developer -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Publisher bổ sung -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Playtime bổ sung -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Excited -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
                                                 <!-- Score -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
                                                 <!-- Ownership -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
-                                                <!-- AvgPlaytime (khi sort theo avg playtime) -->
+                                                <!-- AvgPlaytime -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- Progress (giữ nguyên margin 16) -->
+                                                <!-- Progress -->
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Progress:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayProgress}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Progress:" FontWeight="Bold" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
-
                                             </StackPanel>
 
                                             <!-- ========== PLAN MODE ========== -->
                                             <StackPanel Visibility="{Binding DataContext.IsPlanMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-
                                                 <!-- Published + MetaScore -->
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
@@ -460,37 +792,13 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Published:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPublishYear}"
-                                                       FontSize="12"/>
-
-                                                    <StackPanel Grid.Column="2"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: "
-                                                           FontWeight="Bold"
-                                                           FontSize="12"
-                                                           Margin="0,0,6,0"
-                                                           VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                                        CornerRadius="4"
-                                                        Padding="4,1"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}"
-                                                               Foreground="#2C3E50"
-                                                               FontSize="12"
-                                                               FontWeight="Bold"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Left"
-                                                               Padding="2,0"
-                                                               Background="Transparent"/>
+                                                                CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
@@ -501,14 +809,8 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Excited:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayExcited}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
                                                 <!-- Avg Playtime -->
@@ -517,14 +819,8 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Avg Play:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayAvgPlayTime}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Ownership -->
@@ -533,104 +829,150 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Ownership:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayOwnership}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
-                                                <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                                <!-- ===== ADDITIONAL INFO ===== -->
                                                 <!-- Series -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Developer -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Publisher -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Playtime -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowPlaytime, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Score -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowScore, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
-                                                <!-- AvgPlaytime (khi sort theo avg playtime) - nếu cần hiện thêm (nhưng trong Plan đã có sẵn, nên có thể ẩn) -->
+                                                <!-- AvgPlaytime (khi sort theo avg playtime) -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowAvgPlaytime, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- Progress (giữ nguyên margin 16) -->
+                                                <!-- Progress -->
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Progress:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayProgress}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Progress:" FontWeight="Bold" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
-
                                             </StackPanel>
 
                                             <!-- ========== FINISH MODE ========== -->
                                             <StackPanel Visibility="{Binding DataContext.IsFinishMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-
                                                 <!-- Score + MetaScore -->
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
@@ -638,37 +980,13 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Score:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayScore}"
-                                                       FontSize="12"/>
-
-                                                    <StackPanel Grid.Column="2"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: "
-                                                           FontWeight="Bold"
-                                                           FontSize="12"
-                                                           Margin="0,0,6,0"
-                                                           VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
-                                                        CornerRadius="4"
-                                                        Padding="4,1"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}"
-                                                               Foreground="#2C3E50"
-                                                               FontSize="12"
-                                                               FontWeight="Bold"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Left"
-                                                               Padding="2,0"
-                                                               Background="Transparent"/>
+                                                                CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
@@ -679,127 +997,149 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Finished In:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayFinishedIn}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Finished In:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- Playtime (mặc định) -->
+                                                <!-- Playtime -->
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Playtime:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPlayTime}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- Avg Playtime (mặc định) -->
+                                                <!-- Avg Playtime -->
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Avg Play:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayAvgPlayTime}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- ===== ADDITIONAL INFO ===== (chèn vào giữa, margin 10) -->
+                                                <!-- ===== ADDITIONAL INFO ===== -->
                                                 <!-- Series -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowSeries, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Developer -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowDeveloper, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
                                                 <!-- Publisher -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowPublisher, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
-                                                <!-- Playtime bổ sung (khi sort) - đã có mặc định nên không cần -->
                                                 <!-- Excited -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowExcited, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
                                                 <!-- Ownership -->
                                                 <Grid Margin="0,0,0,10"
-                                              Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.ShouldShowOwnership, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" FontSize="12"/>
+                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
-                                                <!-- AvgPlaytime bổ sung (khi sort) - đã có mặc định nên không cần, có thể bỏ qua -->
-
-                                                <!-- Published (giữ nguyên margin 16) -->
+                                                <!-- Published -->
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <TextBlock Text="Published:"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"/>
-
-                                                    <TextBlock Grid.Column="1"
-                                                       Text="{Binding DisplayPublishYear}"
-                                                       FontSize="12"/>
+                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
-
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- ==================== CARD FOOTER ==================== -->
+                                        <!-- Card footer -->
                                         <Grid Grid.Row="3">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -807,41 +1147,20 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Folder warning: chỉ hiện ở Default mode -->
-                                            <Grid Grid.Column="0"
-                                          Visibility="{Binding DataContext.IsAllMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-                                                <Image Width="18"
-                                               Height="18"
-                                               VerticalAlignment="Center"
-                                               Source="/Assets/Problem.png"
-                                               Margin="2,2,2,2"
-                                               Stretch="Fill"
-                                               SnapsToDevicePixels="True"
-                                               UseLayoutRounding="True"
-                                               RenderOptions.BitmapScalingMode="HighQuality"
-                                               RenderOptions.EdgeMode="Aliased"
-                                               Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}"/>
+                                            <!-- Folder warning -->
+                                            <Grid Grid.Column="0" Visibility="{Binding DataContext.IsAllMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                <Image Width="18" Height="18" VerticalAlignment="Center" Source="/Assets/Problem.png" Margin="2,2,2,2" Stretch="Fill" ToolTip="{Binding FolderWarningInfo}"
+                                                       SnapsToDevicePixels="True" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" RenderOptions.EdgeMode="Aliased"
+                                                       Visibility="{Binding ShowFolderWarning, Converter={StaticResource BoolToVis}}"/>
                                             </Grid>
 
-                                            <StackPanel Grid.Column="2"
-                                                Orientation="Horizontal">
-                                                <Button Style="{StaticResource PlayButtonStyle}"
-                                                Click="PlayGame_Click"
-                                                Margin="0,0,10,0"
-                                                Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}">
-                                                    <Image Width="16"
-                                                   Height="16"
-                                                   Source="/Assets/Play.png"
-                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                <Button Style="{StaticResource PlayButtonStyle}" Click="PlayGame_Click" Margin="0,0,10,0"
+                                                        Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}">
+                                                    <Image Width="16" Height="16" Source="/Assets/Play.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Button>
-
-                                                <Button Style="{StaticResource IconButtonStyle}"
-                                                Background="#3291B6"
-                                                Click="EditGame_Click">
-                                                    <Image Source="/Assets/Info.png"
-                                                   Width="16"
-                                                   Height="16"
-                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <Button Style="{StaticResource InfoButtonStyle}" Click="EditGame_Click">
+                                                    <Image Source="/Assets/Info.png" Width="17" Height="17" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
@@ -855,9 +1174,9 @@
 
             <!-- List view (PlayQueue) -->
             <Border x:Name="ListBorder"
-        Grid.Row="1"
-        Margin="5"
-        Visibility="{Binding IsPlayQueueMode, Converter={StaticResource BoolToVis}}">
+                    Grid.Row="1"
+                    Margin="5"
+                    Visibility="{Binding IsPlayQueueMode, Converter={StaticResource BoolToVis}}">
                 <local:QueueView/>
             </Border>
         </Grid>
@@ -877,47 +1196,46 @@
 
                 <!-- LEFT -->
                 <TextBlock Grid.Column="0"
-                           x:Name="PaginationSummaryTextBlock"
-                           Text="{Binding PaginationSummaryText}"
-                           VerticalAlignment="Center"
-                           FontSize="12"
-                           Foreground="#666666"/>
+                   x:Name="PaginationSummaryTextBlock"
+                   Text="{Binding PaginationSummaryText}"
+                   VerticalAlignment="Center"
+                   FontSize="12"
+                   Foreground="#666666"/>
 
-                <!-- CENTER PAGINATION -->
+                <!-- CENTER PAGINATION (ẩn khi PlayQueue) -->
                 <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
-                            Margin="0,0,16,0">
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,16,0"
+                    Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
                     <Button x:Name="PrevPageButton"
-                            Style="{StaticResource PaginationButtonStyle}"
-                            Content="‹ Prev"
-                            Click="PrevPageButton_Click"
-                            IsEnabled="{Binding CanGoPrev}"/>
-
+                    Style="{StaticResource PaginationButtonStyle}"
+                    Content="‹ Prev"
+                    Click="PrevPageButton_Click"
+                    IsEnabled="{Binding CanGoPrev}"/>
                     <TextBlock x:Name="PageInfoTextBlock"
-                               Text="{Binding PageInfoText}"
-                               VerticalAlignment="Center"
-                               Margin="10,0"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="#555555"/>
-
+                       Text="{Binding PageInfoText}"
+                       VerticalAlignment="Center"
+                       Margin="10,0"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="#555555"/>
                     <Button x:Name="NextPageButton"
-                            Style="{StaticResource PaginationButtonStyle}"
-                            Content="Next ›"
-                            Click="NextPageButton_Click"
-                            IsEnabled="{Binding CanGoNext}"/>
+                    Style="{StaticResource PaginationButtonStyle}"
+                    Content="Next ›"
+                    Click="NextPageButton_Click"
+                    IsEnabled="{Binding CanGoNext}"/>
                 </StackPanel>
 
                 <!-- RIGHT -->
                 <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center">
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center">
                     <TextBlock Text="MasterPlay by Vidagrr @2026" FontSize="12" Foreground="#666666"/>
                     <TextBlock Text=" | " Margin="10,0" Foreground="#666666"/>
-                    <TextBlock Text="Version 1.2" FontSize="12" Foreground="#666666"/>
+                    <TextBlock Text="Version 1.3" FontSize="12" Foreground="#666666"/>
                 </StackPanel>
             </Grid>
         </Border>

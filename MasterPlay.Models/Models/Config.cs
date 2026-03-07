@@ -10,10 +10,7 @@ namespace MasterPlay.Models.Models
     {
         public string BackupRootPath { get; set; } = string.Empty;
         public string ConfigFilePath { get; set; } = string.Empty;
-        public string DataFilePath { get; set; } = string.Empty;
         public List<string> GameLibraryPath { get; set; } = new List<string>();
-        public string AvailableGamesPath { get; set; } = string.Empty;
-        public string MetaDataPath { get; set; } = string.Empty;
-        public string SelectionPath { get; set; } = string.Empty;
+        public string DatabasePath { get; set; } = string.Empty;
     }
 }

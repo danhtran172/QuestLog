@@ -40,21 +40,8 @@ namespace MasterPlay.UI.ViewModels.Generral
             game.BackupFolderPath = game.BackupFolderPath?.Trim('"').Trim() ?? string.Empty;
             game.ImagePath = game.ImagePath?.Trim('"').Trim() ?? string.Empty;
 
-            if (game.Score != 999)
-            {
-                if (game.Score < 1 || game.Score > 100)
-                {
-                    game.Score = 0; 
-                 
-                }
-            }
-            if (game.Excited != 999)
-            {
-                if (game.Excited < 1 || game.Excited > 100)
-                {
-                    game.Excited = 0;
-                }
-            }
+            game.Score = ScaleAndRound(game.Score);
+            game.Excited = ScaleAndRound(game.Excited);
 
             if (!string.IsNullOrWhiteSpace(game.FinishedIn))
             {
@@ -68,38 +55,23 @@ namespace MasterPlay.UI.ViewModels.Generral
             return game;
         }
 
-        public static string ValidFolderName(string gameName)
+        private static double? ScaleAndRound(double? value)
         {
-            char[] invalid = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
-            string result = new string(gameName.Select(c => invalid.Contains(c) ? '-' : c).ToArray());
-            result = Regex.Replace(result, "-+", "-").Trim('-', ' ');
-            if (result.Length > 200) result = result.Substring(0, 200).TrimEnd('-');
-            return result;
+            if (!value.HasValue || value.Value <= 0)
+                return null;
+
+            if ((int)value.Value == 999)
+                return value;
+
+            double score = value.Value;
+            while (score > 10)
+            {
+                score /= 10;
+            }
+            return Math.Round(score *2, MidpointRounding.AwayFromZero) /2;
         }
 
-        // --- Image Loading ---
-        public static BitmapImage? LoadPreviewImage(string? url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                return null;
-            }
-            try
-            {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(url, UriKind.Absolute);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-                return bitmap;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-public static DateOnly? StringToDateOnly(string? input)
+        public static DateOnly? StringToDateOnly(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -142,6 +114,17 @@ public static DateOnly? StringToDateOnly(string? input)
             ? result
             : null;
     }
-    
+
+        public static int GetFinishedYear(string finishedIn)
+        {
+            if (string.IsNullOrWhiteSpace(finishedIn))
+                return 0;
+            if (int.TryParse(finishedIn, out int year))
+                return year;
+            if (finishedIn.Length >= 4 && int.TryParse(finishedIn.Substring(0, 4), out year))
+                return year;
+            return 0;
+        }
+
     }
 }

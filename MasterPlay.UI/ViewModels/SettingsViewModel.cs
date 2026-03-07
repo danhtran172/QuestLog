@@ -4,7 +4,6 @@ using MasterPlay.Helpers;
 using MasterPlay.Models;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -35,15 +34,11 @@ namespace MasterPlay.UI.ViewModels
         // --- Properties ---
         [ObservableProperty] private string backupRootPath = string.Empty;
         [ObservableProperty] private string configPath = string.Empty;
-        [ObservableProperty] private string gameDataPath = string.Empty;
-        [ObservableProperty] private string metaDataPath = string.Empty;
-        [ObservableProperty] private string galleryFilePath = string.Empty;
+        [ObservableProperty] private string databasePath = string.Empty;
         [ObservableProperty] private ObservableCollection<LibraryPathItem> libraryPaths = new();
         [ObservableProperty] private bool isBackupReadOnly = true;
         [ObservableProperty] private bool isConfigReadOnly = true;
-        [ObservableProperty] private bool isGameDataReadOnly = true;
-        [ObservableProperty] private bool isMetaDataReadOnly = true;
-        [ObservableProperty] private bool isGalleryReadOnly = true;
+        [ObservableProperty] private bool isDatabaseReadOnly = true;
 
         // --- Constructors and Initialization ---
         public SettingsViewModel()
@@ -53,18 +48,33 @@ namespace MasterPlay.UI.ViewModels
 
         // --- Commands: Editing Paths ---
         [RelayCommand]
-        private void EditBackup() { var d = new OpenFolderDialog(); if (d.ShowDialog() == true) BackupRootPath = d.FolderName; }
+        private void EditBackup()
+        {
+            var d = new OpenFolderDialog { Title = "Select Backup Root Folder" };
+            if (d.ShowDialog() == true) BackupRootPath = d.FolderName;
+        }
 
         [RelayCommand]
-        private void EditConfig() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) ConfigPath = d.FileName; }
+        private void EditConfig()
+        {
+            var d = new OpenFileDialog
+            {
+                Title = "Select Config File",
+                Filter = "JSON files|*.json|All files|*.*"
+            };
+            if (d.ShowDialog() == true) ConfigPath = d.FileName;
+        }
 
         [RelayCommand]
-        private void EditGameData() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) GameDataPath = d.FileName; }
-
-        [RelayCommand]
-        private void EditMetaData() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) MetaDataPath = d.FileName; }
-        [RelayCommand]
-        private void EditGallery() { var d = new OpenFileDialog { Filter = "JSON|*.json" }; if (d.ShowDialog() == true) galleryFilePath = d.FileName; }
+        private void EditDatabase()
+        {
+            var d = new OpenFileDialog
+            {
+                Title = "Select Database File",
+                Filter = "Database files|*.db|All files|*.*"
+            };
+            if (d.ShowDialog() == true) DatabasePath = d.FileName;
+        }
 
         // --- Commands: Library Management ---
         [RelayCommand]
@@ -79,16 +89,14 @@ namespace MasterPlay.UI.ViewModels
         {
             try
             {
-                var config = DataService.LoadConfig();
+                var config = JsonService.LoadConfig();
                 config.BackupRootPath = BackupRootPath;
                 config.ConfigFilePath = ConfigPath;
-                config.DataFilePath = GameDataPath;
-                config.MetaDataPath = MetaDataPath;
-                config.SelectionPath = galleryFilePath;
+                config.DatabasePath = DatabasePath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
-                DataService.SaveConfig(config);
+                JsonService.SaveConfig(config);
                 StatusMessage = "Settings saved successfully!";
-                IsBackupReadOnly = IsConfigReadOnly = IsGameDataReadOnly = IsMetaDataReadOnly = true;
+                IsBackupReadOnly = IsConfigReadOnly = IsDatabaseReadOnly = true;
                 foreach (var item in LibraryPaths) item.IsReadOnly = true;
             }
             catch (Exception ex) { StatusMessage = "Error: " + ex.Message; }
@@ -100,14 +108,12 @@ namespace MasterPlay.UI.ViewModels
         // --- Private Methods: Data Loading ---
         private void LoadSettings()
         {
-            var config = DataService.LoadConfig();
+            var config = JsonService.LoadConfig();
             if (config != null)
             {
                 BackupRootPath = config.BackupRootPath ?? "";
                 ConfigPath = config.ConfigFilePath ?? "";
-                GameDataPath = config.DataFilePath ?? "";
-                MetaDataPath = config.MetaDataPath ?? "";
-                galleryFilePath = config.SelectionPath ?? "";
+                DatabasePath = config.DatabasePath ?? "";
                 LibraryPaths.Clear();
                 if (config.GameLibraryPath != null)
                 {
