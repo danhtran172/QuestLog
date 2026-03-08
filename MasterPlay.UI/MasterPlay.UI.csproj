@@ -62,6 +62,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\Generate.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Assets\MasterPlayIcon.ico" />
   </ItemGroup>
 
@@ -87,7 +91,7 @@
     <Resource Include="Assets\Finish.png" />
     <Resource Include="Assets\Finish2.png" />
     <Resource Include="Assets\Finish3.png" />
-    <Resource Include="Assets\Generate.png" />
+    <Resource Include="Assets\Generate2.png" />
     <Resource Include="Assets\MasterPlayIcon.ico" />
   </ItemGroup>
 
@@ -101,8 +105,11 @@
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.3" />
     <PackageReference Include="System.Net.Http.Json" Version="10.0.2" />
   </ItemGroup>
 
@@ -125,6 +132,8 @@
     <Resource Include="Assets\MasterplayLogo.png" />
     <Resource Include="Assets\Minus.png" />
     <Resource Include="Assets\More.png" />
+    <Resource Include="Assets\More2.png" />
+    <Resource Include="Assets\More1.png" />
     <Resource Include="Assets\NoImage.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -152,4 +161,10 @@
     <Resource Include="Assets\Warning4.png" />
   </ItemGroup>
 
+	<Target Name="CopyUIAssets" AfterTargets="Publish">
+		<ItemGroup>
+			<UIAssets Include="..\MasterPlay.UI\Assets\**" />
+		</ItemGroup>
+		<Copy SourceFiles="@(UIAssets)" DestinationFolder="$(PublishDir)\Assets\%(RecursiveDir)" />
+	</Target>
 </Project>

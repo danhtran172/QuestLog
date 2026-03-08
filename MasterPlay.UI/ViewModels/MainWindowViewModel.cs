@@ -453,7 +453,8 @@ namespace MasterPlay.UI.ViewModels
         if (IsAllMode)
         {
             return source
-                .OrderByDescending(vm => vm.Game.PublishDate)
+                .OrderByDescending(vm => vm.Game.Ready)
+                .ThenByDescending(vm => vm.Game.PublishDate)
                 .ThenByDescending(vm => vm.Game.Excited)
                 .ThenBy(vm => vm.Game.Name)
                 .ThenBy(vm => vm.Game.ProgressId ?? int.MaxValue)

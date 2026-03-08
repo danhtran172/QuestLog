@@ -12,7 +12,10 @@ namespace MasterPlay.Models
     {
         private static readonly object _fileLock = new object();
 
-        public static string GetConfigDirectory() => Path.Combine(@"D:\Apps\[AppData]", "MasterPlay");
+        // SỬA: Dùng AppData thay vì hardcode D:\Apps\[AppData]
+        public static string GetConfigDirectory() =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MasterPlay");
+
         public static string GetConfigPath() => Path.Combine(GetConfigDirectory(), "config.json");
 
         public static List<string> GetGameLibraryPath()
@@ -20,7 +23,10 @@ namespace MasterPlay.Models
             var config = LoadConfig();
             if (config.GameLibraryPath == null || !config.GameLibraryPath.Any())
             {
-                config.GameLibraryPath = new List<string> { Path.Combine(GetConfigDirectory(), "gellery_data.json") };
+                // Nếu chưa có, tạo mặc định là thư mục Documents hoặc một thư mục hợp lý
+                config.GameLibraryPath = new List<string> {
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Games")
+                };
                 SaveConfig(config);
             }
             return config.GameLibraryPath;
@@ -42,7 +48,8 @@ namespace MasterPlay.Models
             var config = LoadConfig();
             if (string.IsNullOrEmpty(config.BackupRootPath))
             {
-                config.BackupRootPath = Path.Combine(GetConfigDirectory(), "BackUp");
+                // Đặt backup trong AppData cho nhất quán
+                config.BackupRootPath = Path.Combine(GetConfigDirectory(), "Backups");
                 SaveConfig(config);
             }
             return config.BackupRootPath;
@@ -61,7 +68,11 @@ namespace MasterPlay.Models
                     var defaultConfig = new Config
                     {
                         ConfigFilePath = configPath,
-                        BackupRootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Backups"),
+                        BackupRootPath = Path.Combine(GetConfigDirectory(), "Backups"),
+                        DatabasePath = Path.Combine(GetConfigDirectory(), "MasterPlay.db"),
+                        GameLibraryPath = new List<string> {
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Games")
+                        }
                     };
                     File.WriteAllText(configPath, JsonConvert.SerializeObject(defaultConfig, Formatting.Indented));
                     return defaultConfig;

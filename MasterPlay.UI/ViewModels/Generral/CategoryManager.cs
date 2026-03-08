@@ -3,7 +3,6 @@ using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.Models.Repositories;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -13,7 +12,6 @@ using System.Windows.Input;
 
 namespace MasterPlay.UI.ViewModels
 {
-    // CategoryManager
     public class CategoryManager : INotifyPropertyChanged
     {
         // Fields
@@ -36,11 +34,6 @@ namespace MasterPlay.UI.ViewModels
         private int? _editingThemeId;
         private string _editingThemeName;
 
-        public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : $"Create \"{SeriesSearchText}\"";
-        public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
-        public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
-
-        // Events
         public event PropertyChangedEventHandler PropertyChanged;
 
         // Constructors
@@ -122,6 +115,7 @@ namespace MasterPlay.UI.ViewModels
                 _seriesSearchText = value;
                 OnPropertyChanged();
                 FilterSeries();
+                OnPropertyChanged(nameof(CreateNewSeriesText));
             }
         }
 
@@ -133,6 +127,7 @@ namespace MasterPlay.UI.ViewModels
                 _genresSearchText = value;
                 OnPropertyChanged();
                 FilterGenres();
+                OnPropertyChanged(nameof(CreateNewGenreText));
             }
         }
 
@@ -144,6 +139,7 @@ namespace MasterPlay.UI.ViewModels
                 _themesSearchText = value;
                 OnPropertyChanged();
                 FilterThemes();
+                OnPropertyChanged(nameof(CreateNewThemeText));
             }
         }
 
@@ -206,6 +202,10 @@ namespace MasterPlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : $"Create \"{SeriesSearchText}\"";
+        public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
+        public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
 
         // Commands
         public ICommand CreateSeriesCommand { get; private set; }

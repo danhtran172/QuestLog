@@ -1,21 +1,24 @@
 ﻿using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
-namespace MasterPlay.Service.Services
+namespace MasterPlay.TrayApp.Services
 {
+    // LibraryService
     public class LibraryService
     {
+        // Fields
         private readonly ILogger<LibraryService> _logger;
         private System.Timers.Timer? _scanTimer;
 
+        // Constructor
         public LibraryService(ILogger<LibraryService> logger)
         {
             _logger = logger;
         }
 
-        public void Start(CancellationToken stoppingToken)
+        // Public Methods
+        public void Start()
         {
             _logger.LogInformation("LIBRARY SERVICE STARTED");
 
@@ -27,6 +30,13 @@ namespace MasterPlay.Service.Services
             _scanTimer.Start();
         }
 
+        public void Stop()
+        {
+            _scanTimer?.Stop();
+            _logger.LogInformation("Library Scanner Service stopped.");
+        }
+
+        // Private Methods
         private void ScanLibrary()
         {
             try
@@ -55,10 +65,7 @@ namespace MasterPlay.Service.Services
                         });
                     }
 
-                    // Lấy danh sách hiện tại từ DB
                     var currentProcesses = DataService.LoadDetectedProcesses();
-
-                    // So sánh (cần so sánh dựa trên FullPath vì nó unique)
                     var currentSet = new HashSet<string>(currentProcesses.Select(p => p.FullPath));
                     var newSet = new HashSet<string>(newProcessesList.Select(p => p.FullPath));
 
@@ -68,6 +75,23 @@ namespace MasterPlay.Service.Services
                     {
                         DataService.SyncDetectedProcesses(newProcessesList);
                         DataService.SyncGameStatus();
+
+                        try
+                        {
+                            var games = DataService.LoadGames().Where(g => !g.IsDisabled && g.Ready).ToList();
+                            foreach (var game in games)
+                            {
+                                if (!string.IsNullOrWhiteSpace(game.BackupFolderPath) && Directory.Exists(game.BackupFolderPath))
+                                    continue;
+
+                                DataService.CreateBackupFolder(game);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error creating backup folders after library scan.");
+                        }
+
                         _logger.LogInformation("Library scan completed and updated. Found {count} executables.", newProcessesList.Count);
                     }
                     else
@@ -80,12 +104,6 @@ namespace MasterPlay.Service.Services
             {
                 _logger.LogError(ex, "Error during library scanning.");
             }
-        }
-
-        public void Stop()
-        {
-            _scanTimer?.Stop();
-            _logger.LogInformation("Library Scanner Service stopped.");
         }
     }
 }

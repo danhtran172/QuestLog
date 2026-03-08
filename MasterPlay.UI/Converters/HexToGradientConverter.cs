@@ -9,11 +9,9 @@ namespace MasterPlay.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // Nếu value đã là Brush thì trả về chính nó (hỗ trợ fallback)
             if (value is Brush existingBrush)
                 return existingBrush;
 
-            // Nếu value là string hex, chuyển thành gradient
             if (value is string hex && !string.IsNullOrWhiteSpace(hex))
             {
                 try
@@ -23,12 +21,10 @@ namespace MasterPlay.UI.Converters
                 }
                 catch
                 {
-                    // Nếu parse lỗi, trả về brush mặc định (xám trong suốt)
                     return CreateGlassGradient(Colors.Gray);
                 }
             }
 
-            // Mặc định: gradient xám
             return CreateGlassGradient(Colors.Gray);
         }
 

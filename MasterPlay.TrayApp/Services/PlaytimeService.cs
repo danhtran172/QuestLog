@@ -1,12 +1,15 @@
 ﻿using MasterPlay.Models;
+using MasterPlay.Models.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace MasterPlay.Service.Services
+namespace MasterPlay.TrayApp.Services
 {
+    // PlayTimeService
     public class PlayTimeService
     {
+        // Fields
         private readonly ILogger<PlayTimeService> _logger;
         private System.Timers.Timer? _timer;
 
@@ -26,11 +29,13 @@ namespace MasterPlay.Service.Services
             public uint dwTime;
         }
 
+        // Constructor
         public PlayTimeService(ILogger<PlayTimeService> logger)
         {
             _logger = logger;
         }
 
+        // Public Methods
         public void Start()
         {
             _logger.LogInformation("PLAYTIME SERVICE STARTED");
@@ -40,6 +45,13 @@ namespace MasterPlay.Service.Services
             _timer.Start();
         }
 
+        public void Stop()
+        {
+            _timer?.Stop();
+            _logger.LogInformation("PlayTime tracking stopped.");
+        }
+
+        // Private Methods
         private void TrackPlayTime()
         {
             try
@@ -53,8 +65,7 @@ namespace MasterPlay.Service.Services
                     var processes = Process.GetProcessesByName(processName);
                     if (processes.Length == 0) continue;
 
-                    if (processes.Length > 0) _logger.LogInformation(game.Name + " is running");
-
+                    _logger.LogInformation(game.Name + " is running");
 
                     bool isForeground = false;
                     IntPtr fgWindow = GetForegroundWindow();
@@ -65,19 +76,26 @@ namespace MasterPlay.Service.Services
 
                     if (isForeground && hadInput)
                     {
-                        game.TotalPlayTimeSeconds += 30;
-                        DataService.UpdateGame(game);
-                        _logger.LogInformation("Updated playtime for {name}, time: {time}s", game.Name, game.TotalPlayTimeSeconds);
+                        int newSeconds = (game.TotalPlayTimeSeconds ?? 0) + 30;
+
+                        using (var context = new MasterPlayContext())
+                        {
+                            var gameToUpdate = new Game { Id = game.Id };
+                            context.Games.Attach(gameToUpdate);
+                            gameToUpdate.TotalPlayTimeSeconds = newSeconds;
+                            context.Entry(gameToUpdate).Property(x => x.TotalPlayTimeSeconds).IsModified = true;
+                            context.SaveChanges();
+                        }
+
+                        _logger.LogInformation("Updated playtime for {name}, time: {time}s", game.Name, newSeconds);
                     }
-                     if (!isForeground)
+                    if (!isForeground)
                     {
                         _logger.LogInformation("No foreground");
-
                     }
-                     if (!hadInput)
+                    if (!hadInput)
                     {
                         _logger.LogInformation("No input");
-
                     }
                 }
             }
@@ -93,12 +111,6 @@ namespace MasterPlay.Service.Services
             lastInput.cbSize = (uint)Marshal.SizeOf(lastInput);
             GetLastInputInfo(ref lastInput);
             return (uint)Environment.TickCount - lastInput.dwTime;
-        }
-
-        public void Stop()
-        {
-            _timer?.Stop();
-            _logger.LogInformation("PlayTime tracking stopped.");
         }
     }
 }

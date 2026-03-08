@@ -1,6 +1,4 @@
-﻿using GenerativeAI;
-using Google.GenAI;
-using Google.GenAI.Types;
+﻿
 using MasterPlay.Models.ResponseDTOs;
 using Microsoft.Data.Sqlite;
 using System.Globalization;

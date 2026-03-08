@@ -1,7 +1,10 @@
-﻿using MasterPlay.Helpers;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using MasterPlay.Helpers;
+using MasterPlay.Models.Repositories;
 using MasterPlay.UI.ViewModels;
 using MasterPlay.UI.Views;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,12 +30,29 @@ namespace MasterPlay.UI
             InitializeComponent();
 
             DataContext = _viewModel;
+            WeakReferenceMessenger.Default.Register<RefreshUIMessage>(this, (r, m) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _viewModel.LoadGamesData();
+                });
+            });
 
             _isInitializing = false;
             _viewModel.LoadGamesData();
         }
 
         #endregion
+
+        private void OnRequestRefresh()
+        {
+            Debug.WriteLine("OnRequestRefresh called");
+            Dispatcher.Invoke(() =>
+            {
+                Debug.WriteLine("LoadGamesData on UI thread");
+                _viewModel.LoadGamesData();
+            });
+        }
 
         #region UI Event Handlers
 
@@ -278,7 +298,6 @@ namespace MasterPlay.UI
 
         private void ClearFilterButton_Click(object sender, RoutedEventArgs e)
         {
-            // Reset tất cả controls về mặc định
             ReverseCheckBox.IsChecked = false;
 
             FinishOperator.SelectedIndex = 0;
@@ -298,7 +317,7 @@ namespace MasterPlay.UI
             AvgMedium.IsChecked = false;
             AvgShort.IsChecked = false;
             AvgVeryShort.IsChecked = false;
-            AvgNone.IsChecked = false; // NEW
+            AvgNone.IsChecked = false;
 
             ProgressNextPlay.IsChecked = false;
             ProgressDone.IsChecked = false;
@@ -318,7 +337,7 @@ namespace MasterPlay.UI
             MetaMedium.IsChecked = false;
             MetaLow.IsChecked = false;
             MetaVeryLow.IsChecked = false;
-            MetaNone.IsChecked = false; // NEW
+            MetaNone.IsChecked = false;
 
             _viewModel?.ClearFilter();
             _viewModel.NotifyHasActiveFilterChanged();
@@ -330,33 +349,27 @@ namespace MasterPlay.UI
 
             var filter = _viewModel.CurrentFilter;
 
-            // Reverse
             filter.IsReverse = ReverseCheckBox.IsChecked == true;
 
-            // FINISH (FinishedIn) – nhập số giờ (double)
             filter.OperatorFinish = (FinishOperator.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "=";
             filter.ValueFinish = double.TryParse(FinishValue.Text, out double f) ? f : (double?)null;
 
-            // EXCITED (double)
             filter.OperatorExcited = (ExcitedOperator.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "=";
             filter.ValueExcited = double.TryParse(ExcitedValue.Text, out double ex) ? ex : (double?)null;
 
-            // SCORE (Game.Score – double)
             filter.OperatorScore = (ScoreOperator.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "=";
             filter.ValueScore = double.TryParse(ScoreValue.Text, out double s) ? s : (double?)null;
 
-            // PLAYTIME – nhập giờ, chuyển sang giây (int)
             filter.OperatorPlayTime = (PlayTimeOperator.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "=";
             if (double.TryParse(PlayTimeValue.Text, out double hours))
             {
-                filter.ValuePlayTime = (int)(hours * 3600); // giờ → giây
+                filter.ValuePlayTime = (int)(hours * 3600);
             }
             else
             {
                 filter.ValuePlayTime = null;
             }
 
-            // AVG PLAY
             filter.SelectedAvgPlays.Clear();
             if (AvgVeryLong.IsChecked == true) filter.SelectedAvgPlays.Add(AvgPlayLevel.VeryLong);
             if (AvgLong.IsChecked == true) filter.SelectedAvgPlays.Add(AvgPlayLevel.Long);
@@ -364,10 +377,8 @@ namespace MasterPlay.UI
             if (AvgShort.IsChecked == true) filter.SelectedAvgPlays.Add(AvgPlayLevel.Short);
             if (AvgVeryShort.IsChecked == true) filter.SelectedAvgPlays.Add(AvgPlayLevel.VeryShort);
 
-            // NEW: Avg Play None
             _viewModel.IncludeAvgPlayNone = AvgNone.IsChecked == true;
 
-            // PROGRESS
             filter.SelectedProgressIds.Clear();
             if (ProgressNextPlay.IsChecked == true) filter.SelectedProgressIds.Add(3);
             if (ProgressDone.IsChecked == true) filter.SelectedProgressIds.Add(1);
@@ -376,7 +387,6 @@ namespace MasterPlay.UI
             if (ProgressDrop.IsChecked == true) filter.SelectedProgressIds.Add(5);
             if (ProgressPending.IsChecked == true) filter.SelectedProgressIds.Add(6);
 
-            // OWNERSHIP
             filter.SelectedOwnershipIds.Clear();
             if (OwnReady.IsChecked == true) filter.SelectedOwnershipIds.Add(1);
             if (OwnPirated.IsChecked == true) filter.SelectedOwnershipIds.Add(2);
@@ -384,7 +394,6 @@ namespace MasterPlay.UI
             if (OwnNotOwned.IsChecked == true) filter.SelectedOwnershipIds.Add(4);
             if (OwnPSRequired.IsChecked == true) filter.SelectedOwnershipIds.Add(5);
 
-            // METASCORE LEVELS
             filter.SelectedMetaScores.Clear();
             if (MetaVeryHigh.IsChecked == true) filter.SelectedMetaScores.Add(MetaScoreLevel.VeryHigh);
             if (MetaHigh.IsChecked == true) filter.SelectedMetaScores.Add(MetaScoreLevel.High);
@@ -392,7 +401,6 @@ namespace MasterPlay.UI
             if (MetaLow.IsChecked == true) filter.SelectedMetaScores.Add(MetaScoreLevel.Low);
             if (MetaVeryLow.IsChecked == true) filter.SelectedMetaScores.Add(MetaScoreLevel.VeryLow);
 
-            // NEW: MetaScore None
             _viewModel.IncludeMetaScoreNone = MetaNone.IsChecked == true;
 
             _viewModel.ApplyFilterAndSort(true);

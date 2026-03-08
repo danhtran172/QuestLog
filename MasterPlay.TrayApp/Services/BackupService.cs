@@ -2,31 +2,42 @@
 using MasterPlay.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.IO;
 
-namespace MasterPlay.Service.Services
+namespace MasterPlay.TrayApp.Services
 {
+    // BackupService
     public class BackupService
     {
+        // Fields
         private readonly ILogger<BackupService> _logger;
         private System.Timers.Timer? _primaryBackupTimer;
         private bool _isBackupRunning = false;
 
+        // Constructor
         public BackupService(ILogger<BackupService> logger)
         {
             _logger = logger;
         }
 
-        public void Start(CancellationToken stoppingToken)
+        // Public Methods
+        public void Start()
         {
             _logger.LogInformation("BACKUP SERVICE STARTED");
-            _primaryBackupTimer = new System.Timers.Timer(60000); // 1 phút
+            _primaryBackupTimer = new System.Timers.Timer(60000);
             _primaryBackupTimer.Elapsed += (s, e) => PerformBackup();
             _primaryBackupTimer.AutoReset = true;
             _primaryBackupTimer.Start();
         }
 
-        public void PerformBackup()
+        public void Stop()
+        {
+            _primaryBackupTimer?.Stop();
+            _primaryBackupTimer?.Dispose();
+            _logger.LogInformation("Backup engine stopped.");
+        }
+
+        // Private Methods
+        private void PerformBackup()
         {
             if (_isBackupRunning)
             {
@@ -87,7 +98,7 @@ namespace MasterPlay.Service.Services
                                         break;
                                     }
                                 }
-                                catch { /* Bỏ qua process không truy cập được */ }
+                                catch { }
                             }
                         }
 
@@ -131,12 +142,10 @@ namespace MasterPlay.Service.Services
         private void CopyDirectory(string sourceDir, string destinationDir)
         {
             var dir = new DirectoryInfo(sourceDir);
-
             if (!dir.Exists)
                 throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
 
             DirectoryInfo[] dirs = dir.GetDirectories();
-
             Directory.CreateDirectory(destinationDir);
 
             foreach (FileInfo file in dir.GetFiles())
@@ -150,13 +159,6 @@ namespace MasterPlay.Service.Services
                 string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
                 CopyDirectory(subDir.FullName, newDestinationDir);
             }
-        }
-
-        public void Stop()
-        {
-            _primaryBackupTimer?.Stop();
-            _primaryBackupTimer?.Dispose();
-            _logger.LogInformation("Backup engine stopped at: {time}", DateTimeOffset.Now);
         }
     }
 }

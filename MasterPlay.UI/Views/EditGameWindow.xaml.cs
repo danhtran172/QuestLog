@@ -26,14 +26,12 @@ namespace MasterPlay.UI
         private void Score_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox tb = sender as TextBox;
-            // Allow digits and decimal separators (dot or comma)
             if (!Regex.IsMatch(e.Text, @"^[0-9.,]$"))
             {
                 e.Handled = true;
                 return;
             }
 
-            // If the input is a decimal separator, ensure only one exists in the text
             if (e.Text == "." || e.Text == ",")
             {
                 if (tb.Text.Contains(".") || tb.Text.Contains(","))
@@ -54,14 +52,12 @@ namespace MasterPlay.UI
         private void FinishScore_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox tb = sender as TextBox;
-            // Allow digits and decimal separators (dot or comma)
             if (!Regex.IsMatch(e.Text, @"^[0-9.,]$"))
             {
                 e.Handled = true;
                 return;
             }
 
-            // If the input is a decimal separator, ensure only one exists in the text
             if (e.Text == "." || e.Text == ",")
             {
                 if (tb.Text.Contains(".") || tb.Text.Contains(","))
@@ -71,6 +67,32 @@ namespace MasterPlay.UI
             }
         }
 
+        // ==================== POPUP CLOSED HANDLERS ====================
+        private void SeriesPopup_Closed(object sender, EventArgs e)
+        {
+            if (DataContext is EditGameViewModel vm)
+            {
+                vm.CategoryManager?.ResetEditing();
+            }
+        }
+
+        private void GenresPopup_Closed(object sender, EventArgs e)
+        {
+            if (DataContext is EditGameViewModel vm)
+            {
+                vm.CategoryManager?.ResetEditing();
+            }
+        }
+
+        private void ThemesPopup_Closed(object sender, EventArgs e)
+        {
+            if (DataContext is EditGameViewModel vm)
+            {
+                vm.CategoryManager?.ResetEditing();
+            }
+        }
+
+        // ==================== ITEM CLICK HANDLERS ====================
         private void SeriesItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (sender is Border border && border.DataContext is Series series && DataContext is EditGameViewModel vm)

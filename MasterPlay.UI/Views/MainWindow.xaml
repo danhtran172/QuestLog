@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
-        Title="MasterPlay" Height="700" Width="920" WindowStartupLocation="CenterScreen"
+        Title="MasterPlay" 
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
         Background="#F8F9FA" FontFamily="Segoe UI, Segoe UI Emoji"
         KeyDown="Window_KeyDown"
         xmlns:local="clr-namespace:MasterPlay.UI.Views"
@@ -1155,9 +1157,14 @@
                                             </Grid>
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                <Button Style="{StaticResource PlayButtonStyle}" Click="PlayGame_Click" Margin="0,0,10,0"
-                                                        Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}">
-                                                    <Image Width="16" Height="16" Source="/Assets/Play.png" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <Button Style="{StaticResource PlayButtonStyle}" 
+            Click="PlayGame_Click" 
+            Margin="0,0,10,0"
+            Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
+            IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}">
+                                                    <Image Width="16" Height="16" 
+               Source="/Assets/Play.png" 
+               RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Button>
                                                 <Button Style="{StaticResource InfoButtonStyle}" Click="EditGame_Click">
                                                     <Image Source="/Assets/Info.png" Width="17" Height="17" RenderOptions.BitmapScalingMode="HighQuality"/>

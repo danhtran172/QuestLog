@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
+        x:Name="ThisWindow"
         Title="Game Details" Height="780" Width="820"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White" FontFamily="Segoe UI">
@@ -516,10 +517,12 @@
                                         </WrapPanel>
                                     </Button>
 
-                                    <Popup IsOpen="{Binding IsSeriesPopupOpen}"
+                                    <Popup x:Name="SeriesPopup"
+                                           IsOpen="{Binding IsSeriesPopupOpen}"
                                            PlacementTarget="{Binding ElementName=SeriesButton}"
                                            Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
-                                           PopupAnimation="Slide" Width="320">
+                                           PopupAnimation="Slide" Width="320"
+                                           Closed="SeriesPopup_Closed">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -573,11 +576,30 @@
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" 
-                                                                        Tag="{Binding}">
-                                                                    <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" FontFamily="Segoe UI Emoji"/>
-                                                                </Border>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Border Grid.Column="0" 
+                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" 
+                                                                            Tag="{Binding}">
+                                                                        <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" FontFamily="Segoe UI Emoji"/>
+                                                                    </Border>
+                                                                    <Button Grid.Column="1" 
+                                                                            Style="{StaticResource IconButtonStyle}" 
+                                                                            Background="Transparent" 
+                                                                            BorderThickness="0"
+                                                                            Width="20" Height="20"
+                                                                            Margin="0"
+                                                                            HorizontalAlignment="Right"
+                                                                            Command="{Binding DataContext.OpenEditSeriesPopupCommand, ElementName=ThisWindow}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip="Edit series">
+                                                                        <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                    </Button>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
@@ -630,9 +652,11 @@
                                         </ItemsControl>
                                     </Button>
 
-                                    <Popup IsOpen="{Binding IsGenresPopupOpen}"
+                                    <Popup x:Name="GenresPopup"
+                                           IsOpen="{Binding IsGenresPopupOpen}"
                                            PlacementTarget="{Binding ElementName=GenresButton}"
-                                           Placement="Bottom" StaysOpen="False" Width="320">
+                                           Placement="Bottom" StaysOpen="False" Width="320"
+                                           Closed="GenresPopup_Closed">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -698,11 +722,30 @@
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" 
-                                                                        Tag="{Binding}">
-                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
-                                                                </Border>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Border Grid.Column="0" 
+                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" 
+                                                                            Tag="{Binding}">
+                                                                        <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                    </Border>
+                                                                    <Button Grid.Column="1" 
+                                                                            Style="{StaticResource IconButtonStyle}" 
+                                                                            Background="Transparent" 
+                                                                            BorderThickness="0"
+                                                                            Width="20" Height="20"
+                                                                            Margin="0"
+                                                                            HorizontalAlignment="Right"
+                                                                            Command="{Binding DataContext.OpenEditGenrePopupCommand, ElementName=ThisWindow}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip="Edit genre">
+                                                                        <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                    </Button>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
@@ -755,9 +798,11 @@
                                         </ItemsControl>
                                     </Button>
 
-                                    <Popup IsOpen="{Binding IsThemesPopupOpen}"
+                                    <Popup x:Name="ThemesPopup"
+                                           IsOpen="{Binding IsThemesPopupOpen}"
                                            PlacementTarget="{Binding ElementName=ThemesButton}"
-                                           Placement="Bottom" StaysOpen="False" Width="320">
+                                           Placement="Bottom" StaysOpen="False" Width="320"
+                                           Closed="ThemesPopup_Closed">
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
                                                 <Grid.RowDefinitions>
@@ -823,11 +868,30 @@
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" 
-                                                                        Tag="{Binding}">
-                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
-                                                                </Border>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Border Grid.Column="0" 
+                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" 
+                                                                            Tag="{Binding}">
+                                                                        <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                    </Border>
+                                                                    <Button Grid.Column="1" 
+                                                                            Style="{StaticResource IconButtonStyle}" 
+                                                                            Background="Transparent" 
+                                                                            BorderThickness="0"
+                                                                            Width="20" Height="20"
+                                                                            Margin="0"
+                                                                            HorizontalAlignment="Right"
+                                                                            Command="{Binding DataContext.OpenEditThemePopupCommand, ElementName=ThisWindow}"
+                                                                            CommandParameter="{Binding}"
+                                                                            ToolTip="Edit theme">
+                                                                        <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                    </Button>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
@@ -1442,6 +1506,118 @@
                         </Button>
                     </StackPanel>
                 </Grid>
+            </Border>
+        </Popup>
+
+        <!-- ==================== EDIT POPUPS ==================== -->
+        <!-- Edit Series Popup -->
+        <Popup x:Name="EditSeriesPopup"
+               IsOpen="{Binding IsEditSeriesPopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Series" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditSeriesName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveSeriesEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteSeriesCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditSeriesCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Edit Genre Popup -->
+        <Popup x:Name="EditGenrePopup"
+               IsOpen="{Binding IsEditGenrePopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Genre" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditGenreName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveGenreEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteGenreCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditGenreCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Edit Theme Popup -->
+        <Popup x:Name="EditThemePopup"
+               IsOpen="{Binding IsEditThemePopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Theme" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditThemeName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveThemeEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteThemeCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditThemeCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Popup>
     </Grid>

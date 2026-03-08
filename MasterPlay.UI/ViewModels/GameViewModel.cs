@@ -47,7 +47,6 @@ namespace MasterPlay.UI.ViewModels
         private bool hasPlayableExe;
         [ObservableProperty]
         private string folderWarningInfo = "";
-
         // Thêm các property lưu danh sách genre và theme
         private List<Genre> _gameGenres;
         private List<Theme> _gameThemes;

@@ -31,7 +31,6 @@ namespace MasterPlay.UI.ViewModels
             LoadGameData();
             HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
 
-            // Đăng ký sự kiện cho SelectedGenres và SelectedThemes để cập nhật DisplayGenres/Themes
             SelectedGenres.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DisplayGenres));
             SelectedThemes.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DisplayThemes));
         }
@@ -116,7 +115,6 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private int adjustMinutes;
 
-        // HasScore trở thành computed property
         public bool HasScore => (Score ?? 0) > 0;
 
         [ObservableProperty]
@@ -188,6 +186,34 @@ namespace MasterPlay.UI.ViewModels
 
         [ObservableProperty]
         private ObservableCollection<Theme> filteredThemes = new();
+
+        // ==================== EDIT POPUP STATE ====================
+        [ObservableProperty]
+        private bool isEditSeriesPopupOpen;
+
+        [ObservableProperty]
+        private bool isEditGenrePopupOpen;
+
+        [ObservableProperty]
+        private bool isEditThemePopupOpen;
+
+        [ObservableProperty]
+        private Series? editingSeries;
+
+        [ObservableProperty]
+        private Genre? editingGenre;
+
+        [ObservableProperty]
+        private Theme? editingTheme;
+
+        [ObservableProperty]
+        private string editSeriesName = string.Empty;
+
+        [ObservableProperty]
+        private string editGenreName = string.Empty;
+
+        [ObservableProperty]
+        private string editThemeName = string.Empty;
 
         public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : $"Create \"{SeriesSearchText}\"";
         public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
@@ -267,7 +293,6 @@ namespace MasterPlay.UI.ViewModels
 
                 if (rawgGame != null)
                 {
-                    // Cập nhật các property trung gian (UI sẽ tự cập nhật)
                     Name = rawgGame.Name ?? Name;
                     Publisher = rawgGame.Publishers ?? string.Empty;
                     Developer = rawgGame.Developers ?? string.Empty;
@@ -275,27 +300,7 @@ namespace MasterPlay.UI.ViewModels
                     MetaScore = rawgGame.MetaScore;
                     AvgPlaytime = rawgGame.AvgPlaytime;
 
-                    // KHÔNG cập nhật ảnh ở đây nữa
-                    // if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
-                    // {
-                    //     ImagePath = rawgGame.Background_Image;
-                    //     GImagePath = rawgGame.Background_Image;
-                    //     PreviewImage = LoadPreviewImage(ImagePath);
-                    // }
-                    // var galleryImg = await ApiService.GetGalleryImage(Name);
-                    // if (galleryImg != null)
-                    // {
-                    //     GImagePath = galleryImg;
-                    // }
-
                     SyncPublishDate(ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate));
-
-                    //var avgPlay = await HowLongToBeatService.GetPlayTimeAsync(SlugName);
-                    //if (avgPlay != null)
-                    //{
-                    //    AvgPlaytime = (int?)avgPlay;
-                    //}
-
 
                     await ShowStatus("Sync Successful!");
                 }
@@ -331,7 +336,6 @@ namespace MasterPlay.UI.ViewModels
                 if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Background_Image))
                 {
                     ImagePath = metadata.Background_Image;
-                    // Refresh preview
                     SyncImageCommand.Execute(null);
                     await ShowStatus("Cover image updated!");
                 }
@@ -389,8 +393,6 @@ namespace MasterPlay.UI.ViewModels
             Game.PublishDate = date;
         }
 
-        // Trong EditGameViewModel.cs
-
         [RelayCommand]
         private async Task GenerateBackupFolder()
         {
@@ -404,7 +406,6 @@ namespace MasterPlay.UI.ViewModels
             bool result = DataService.CreateBackupFolder(Game);
             if (result)
             {
-                // Cập nhật lại property BackupFolderPath từ Game (vì có thể đã thay đổi)
                 BackupFolderPath = Game.BackupFolderPath;
                 await ShowStatus("Backup folder created successfully!");
             }
@@ -431,7 +432,6 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        //SaveGame
         [RelayCommand]
         private void Save()
         {
@@ -451,7 +451,6 @@ namespace MasterPlay.UI.ViewModels
                     DataService.ReorderOnPromoteToNextPlay(Game);
                 }
 
-                // Xử lý GameGenres
                 if (Game.GameGenres == null)
                     Game.GameGenres = new List<GameGenre>();
                 Game.GameGenres.Clear();
@@ -460,7 +459,6 @@ namespace MasterPlay.UI.ViewModels
                     Game.GameGenres.Add(new GameGenre { GameId = Game.Id, GenreId = genre.Id });
                 }
 
-                // Xử lý GameThemes
                 if (Game.GameThemes == null)
                     Game.GameThemes = new List<GameTheme>();
                 Game.GameThemes.Clear();
@@ -509,7 +507,6 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel()
         {
-            // SỬA: Đặt IsReadOnly = true trước khi Reload
             IsReadOnly = true;
             ReloadGameFromConfig();
             StatusMessage = string.Empty;
@@ -536,7 +533,6 @@ namespace MasterPlay.UI.ViewModels
             {
                 if (double.TryParse(FinishScoreInput, out double newScore))
                 {
-                    // Validate: chỉ cho phép số từ 0-100 hoặc 999 (special)
                     if (newScore < 0 || newScore > 100 && newScore != 999)
                     {
                         ShowStatus("Score must be between 0-100 or 999 for 10🔥");
@@ -546,7 +542,7 @@ namespace MasterPlay.UI.ViewModels
                     Score = newScore;
                     SelectedProgress = allProgresses.FirstOrDefault(p => p.Name == "Done") ?? allProgresses.FirstOrDefault();
                     FinishedIn = DateTime.Now.Year.ToString();
-                    Save(); // Lưu tất cả thay đổi
+                    Save();
                     IsFinishPopupOpen = false;
                     ShowStatus($"{Name} has been finished with Score: {newScore}!");
                 }
@@ -810,6 +806,190 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(DisplayThemes));
         }
 
+        // ==================== EDIT COMMANDS ====================
+        [RelayCommand]
+        private void OpenEditSeriesPopup(Series series)
+        {
+            IsSeriesPopupOpen = false; // đóng popup chọn
+            EditingSeries = series;
+            EditSeriesName = series.Name;
+            IsEditSeriesPopupOpen = true;
+        }
+
+        [RelayCommand]
+        private void OpenEditGenrePopup(Genre genre)
+        {
+            IsGenresPopupOpen = false;
+            EditingGenre = genre;
+            EditGenreName = genre.Name;
+            IsEditGenrePopupOpen = true;
+        }
+
+        [RelayCommand]
+        private void OpenEditThemePopup(Theme theme)
+        {
+            IsThemesPopupOpen = false;
+            EditingTheme = theme;
+            EditThemeName = theme.Name;
+            IsEditThemePopupOpen = true;
+        }
+
+        [RelayCommand]
+        private void SaveSeriesEdit()
+        {
+            if (EditingSeries == null) return;
+            if (string.IsNullOrWhiteSpace(EditSeriesName))
+            {
+                MessageBox.Show("Series name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var success = DataService.UpdateSeries(EditingSeries.Id, EditSeriesName.Trim());
+            if (success)
+            {
+                EditingSeries.Name = EditSeriesName.Trim();
+                // Refresh AllSeries và FilteredSeries
+                AllSeries = new ObservableCollection<Series>(AllSeries.OrderBy(s => s.Name));
+                FilteredSeries = new ObservableCollection<Series>(AllSeries);
+                OnPropertyChanged(nameof(AllSeries));
+                OnPropertyChanged(nameof(FilteredSeries));
+                // Cập nhật DisplaySeries nếu đang chọn
+                if (SelectedSeries?.Id == EditingSeries.Id)
+                    OnPropertyChanged(nameof(DisplaySeries));
+            }
+            IsEditSeriesPopupOpen = false;
+            EditingSeries = null;
+        }
+
+        [RelayCommand]
+        private void SaveGenreEdit()
+        {
+            if (EditingGenre == null) return;
+            if (string.IsNullOrWhiteSpace(EditGenreName))
+            {
+                MessageBox.Show("Genre name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var success = DataService.UpdateGenre(EditingGenre.Id, EditGenreName.Trim());
+            if (success)
+            {
+                EditingGenre.Name = EditGenreName.Trim();
+                AllGenres = new ObservableCollection<Genre>(AllGenres.OrderBy(g => g.Name));
+                FilteredGenres = new ObservableCollection<Genre>(AllGenres);
+                OnPropertyChanged(nameof(AllGenres));
+                OnPropertyChanged(nameof(FilteredGenres));
+                if (SelectedGenres.Any(g => g.Id == EditingGenre.Id))
+                    OnPropertyChanged(nameof(DisplayGenres));
+            }
+            IsEditGenrePopupOpen = false;
+            EditingGenre = null;
+        }
+
+        [RelayCommand]
+        private void SaveThemeEdit()
+        {
+            if (EditingTheme == null) return;
+            if (string.IsNullOrWhiteSpace(EditThemeName))
+            {
+                MessageBox.Show("Theme name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var success = DataService.UpdateTheme(EditingTheme.Id, EditThemeName.Trim());
+            if (success)
+            {
+                EditingTheme.Name = EditThemeName.Trim();
+                AllThemes = new ObservableCollection<Theme>(AllThemes.OrderBy(t => t.Name));
+                FilteredThemes = new ObservableCollection<Theme>(AllThemes);
+                OnPropertyChanged(nameof(AllThemes));
+                OnPropertyChanged(nameof(FilteredThemes));
+                if (SelectedThemes.Any(t => t.Id == EditingTheme.Id))
+                    OnPropertyChanged(nameof(DisplayThemes));
+            }
+            IsEditThemePopupOpen = false;
+            EditingTheme = null;
+        }
+
+        [RelayCommand]
+        private void DeleteSeries()
+        {
+            if (EditingSeries == null) return;
+            var result = MessageBox.Show($"Are you sure you want to delete '{EditingSeries.Name}'? This will remove all associations with games.",
+                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
+
+            var success = DataService.DeleteSeries(EditingSeries.Id);
+            if (success)
+            {
+                if (SelectedSeries?.Id == EditingSeries.Id)
+                    SelectedSeries = null;
+                AllSeries.Remove(EditingSeries);
+                AllSeries = new ObservableCollection<Series>(AllSeries.OrderBy(s => s.Name));
+                FilteredSeries = new ObservableCollection<Series>(AllSeries);
+                OnPropertyChanged(nameof(AllSeries));
+                OnPropertyChanged(nameof(FilteredSeries));
+                OnPropertyChanged(nameof(DisplaySeries));
+            }
+            IsEditSeriesPopupOpen = false;
+            EditingSeries = null;
+        }
+
+        [RelayCommand]
+        private void DeleteGenre()
+        {
+            if (EditingGenre == null) return;
+            var result = MessageBox.Show($"Are you sure you want to delete '{EditingGenre.Name}'? This will remove all associations with games.",
+                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
+
+            var success = DataService.DeleteGenre(EditingGenre.Id);
+            if (success)
+            {
+                if (SelectedGenres.Any(g => g.Id == EditingGenre.Id))
+                    SelectedGenres.Remove(EditingGenre);
+                AllGenres.Remove(EditingGenre);
+                AllGenres = new ObservableCollection<Genre>(AllGenres.OrderBy(g => g.Name));
+                FilteredGenres = new ObservableCollection<Genre>(AllGenres);
+                OnPropertyChanged(nameof(AllGenres));
+                OnPropertyChanged(nameof(FilteredGenres));
+                OnPropertyChanged(nameof(DisplayGenres));
+            }
+            IsEditGenrePopupOpen = false;
+            EditingGenre = null;
+        }
+
+        [RelayCommand]
+        private void DeleteTheme()
+        {
+            if (EditingTheme == null) return;
+            var result = MessageBox.Show($"Are you sure you want to delete '{EditingTheme.Name}'? This will remove all associations with games.",
+                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
+
+            var success = DataService.DeleteTheme(EditingTheme.Id);
+            if (success)
+            {
+                if (SelectedThemes.Any(t => t.Id == EditingTheme.Id))
+                    SelectedThemes.Remove(EditingTheme);
+                AllThemes.Remove(EditingTheme);
+                AllThemes = new ObservableCollection<Theme>(AllThemes.OrderBy(t => t.Name));
+                FilteredThemes = new ObservableCollection<Theme>(AllThemes);
+                OnPropertyChanged(nameof(AllThemes));
+                OnPropertyChanged(nameof(FilteredThemes));
+                OnPropertyChanged(nameof(DisplayThemes));
+            }
+            IsEditThemePopupOpen = false;
+            EditingTheme = null;
+        }
+
+        [RelayCommand]
+        private void CancelEditSeries() => IsEditSeriesPopupOpen = false;
+        [RelayCommand]
+        private void CancelEditGenre() => IsEditGenrePopupOpen = false;
+        [RelayCommand]
+        private void CancelEditTheme() => IsEditThemePopupOpen = false;
+
         // ==================== PRIVATE HELPERS ====================
 
         private void LoadLists()
@@ -819,6 +999,10 @@ namespace MasterPlay.UI.ViewModels
             AllThemes = new ObservableCollection<Theme>(DataService.LoadThemesList());
             AllOwnerships = new ObservableCollection<OwnershipStatus>(DataService.LoadOwnershipList());
             AllProgresses = new ObservableCollection<ProgressStatus>(DataService.LoadProgressList());
+
+            FilteredSeries = new ObservableCollection<Series>(AllSeries);
+            FilteredGenres = new ObservableCollection<Genre>(AllGenres);
+            FilteredThemes = new ObservableCollection<Theme>(AllThemes);
         }
 
         private void LoadGameData()
@@ -855,7 +1039,6 @@ namespace MasterPlay.UI.ViewModels
 
             _originalProgressId = Game.ProgressId;
 
-            // Gán từ Game vào property trung gian
             Name = Game.Name ?? string.Empty;
             Publisher = Game.Publisher ?? string.Empty;
             Developer = Game.Developer ?? string.Empty;
@@ -917,7 +1100,6 @@ namespace MasterPlay.UI.ViewModels
                     BackupFolderAccessible = true;
                 }
 
-                // Cập nhật lại các property trung gian và UI
                 LoadGameData();
             }
         }
@@ -979,7 +1161,6 @@ namespace MasterPlay.UI.ViewModels
             UpdateTotalPlayTimeFromFields();
         }
 
-        // Khi property trung gian thay đổi, tự động cập nhật Game (để đồng bộ)
         partial void OnNameChanged(string value) => Game.Name = value;
         partial void OnPublisherChanged(string value) => Game.Publisher = value;
         partial void OnDeveloperChanged(string value) => Game.Developer = value;
@@ -998,7 +1179,6 @@ namespace MasterPlay.UI.ViewModels
         }
         partial void OnGImagePathChanged(string value) => Game.GImagePath = value;
 
-        // Thêm property Score
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(HasScore))]
         [NotifyPropertyChangedFor(nameof(DisplayScore))]
@@ -1051,7 +1231,6 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(HasInitExeNameForView));
         }
 
-        // ==================== FINISH POPUP PROPERTIES ====================
         [ObservableProperty]
         private bool isFinishPopupOpen;
 

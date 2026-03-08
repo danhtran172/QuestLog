@@ -17,6 +17,21 @@ namespace MasterPlay.Models
         {
             try
             {
+                // === THÊM: Copy template database vào AppData nếu cần ===
+                string appDataDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "MasterPlay");
+                Directory.CreateDirectory(appDataDir);
+
+                string dbPath = Path.Combine(appDataDir, "MasterPlay.db");
+                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MasterPlay.Template.db");
+
+                if (!File.Exists(dbPath) && File.Exists(templatePath))
+                {
+                    File.Copy(templatePath, dbPath);
+                }
+                // ====================================================
+
                 using (var context = new MasterPlayContext())
                 {
                     context.Database.EnsureCreated();
@@ -297,6 +312,124 @@ namespace MasterPlay.Models
                 uow.Themes.Add(theme);
                 uow.Complete();
                 return theme;
+            }
+        }
+
+        // ==================== UPDATE METHODS ====================
+        public static bool UpdateSeries(int id, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(newName))
+                throw new ArgumentException("Series name cannot be empty");
+
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var series = uow.Series.GetById(id);
+                if (series == null) return false;
+
+                // Kiểm tra trùng tên (trừ chính nó)
+                var existing = uow.Series.GetAll()
+                    .FirstOrDefault(s => s.Id != id && s.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                    throw new InvalidOperationException("Another series with this name already exists.");
+
+                series.Name = newName;
+                uow.Series.Update(series);
+                uow.Complete();
+                return true;
+            }
+        }
+
+        public static bool UpdateGenre(int id, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(newName))
+                throw new ArgumentException("Genre name cannot be empty");
+
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var genre = uow.Genres.GetById(id);
+                if (genre == null) return false;
+
+                var existing = uow.Genres.GetAll()
+                    .FirstOrDefault(g => g.Id != id && g.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                    throw new InvalidOperationException("Another genre with this name already exists.");
+
+                genre.Name = newName;
+                uow.Genres.Update(genre);
+                uow.Complete();
+                return true;
+            }
+        }
+
+        public static bool UpdateTheme(int id, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(newName))
+                throw new ArgumentException("Theme name cannot be empty");
+
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var theme = uow.Themes.GetById(id);
+                if (theme == null) return false;
+
+                var existing = uow.Themes.GetAll()
+                    .FirstOrDefault(t => t.Id != id && t.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                    throw new InvalidOperationException("Another theme with this name already exists.");
+
+                theme.Name = newName;
+                uow.Themes.Update(theme);
+                uow.Complete();
+                return true;
+            }
+        }
+
+        // ==================== DELETE METHODS ====================
+        public static bool DeleteSeries(int id)
+        {
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var series = uow.Series.GetById(id);
+                if (series == null) return false;
+
+                // Xóa các liên kết? Không cần vì DeleteBehavior.SetNull trong Game sẽ set SeriesId = null.
+                // Nếu muốn xóa hoàn toàn, chỉ cần xóa series.
+                uow.Series.Remove(series);
+                uow.Complete();
+                return true;
+            }
+        }
+
+        public static bool DeleteGenre(int id)
+        {
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var genre = uow.Genres.GetById(id);
+                if (genre == null) return false;
+
+                // Xóa tất cả liên kết trong GameGenre trước
+                var gameGenres = uow.GameGenres.Find(gg => gg.GenreId == id);
+                uow.GameGenres.RemoveRange(gameGenres);
+
+                uow.Genres.Remove(genre);
+                uow.Complete();
+                return true;
+            }
+        }
+
+        public static bool DeleteTheme(int id)
+        {
+            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            {
+                var theme = uow.Themes.GetById(id);
+                if (theme == null) return false;
+
+                // Xóa tất cả liên kết trong GameTheme trước
+                var gameThemes = uow.GameThemes.Find(gt => gt.ThemeId == id);
+                uow.GameThemes.RemoveRange(gameThemes);
+
+                uow.Themes.Remove(theme);
+                uow.Complete();
+                return true;
             }
         }
         #endregion
@@ -621,5 +754,4 @@ namespace MasterPlay.Models
         #endregion
 
     }
-
 }

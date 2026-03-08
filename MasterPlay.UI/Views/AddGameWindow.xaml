@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.ViewModels"
+        xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
+        x:Name="ThisWindow"
         Title="Add New Game" Height="780" Width="820"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White" FontFamily="Segoe UI">
@@ -126,14 +128,14 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ==================== TWO COLUMN INFO (LEFT: DATES/PUBLISHER, RIGHT: SCORES/STATUS) ==================== -->
+                <!-- ==================== TWO COLUMN INFO ==================== -->
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.9*"/>
                         <ColumnDefinition Width="1.1*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- LEFT COLUMN: PublishDate, Publisher, Developer, Series, Genre, Theme -->
+                    <!-- LEFT COLUMN -->
                     <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="8" Padding="15" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
                         <StackPanel>
                             <!-- Publish Date -->
@@ -195,12 +197,14 @@
                                             </Style>
                                         </WrapPanel.Style>
                                         <Border Style="{StaticResource TagChipStyle}">
-                                            <TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13"/>
+                                            <emoji:TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                         </Border>
                                     </WrapPanel>
                                 </Button>
 
-                                <Popup IsOpen="{Binding IsSeriesPopupOpen}"
+                                <!-- Popup chọn Series -->
+                                <Popup x:Name="SeriesPopup"
+                                       IsOpen="{Binding IsSeriesPopupOpen}"
                                        PlacementTarget="{Binding ElementName=SeriesButton}"
                                        Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
                                        PopupAnimation="Slide" Width="320">
@@ -231,7 +235,7 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13"/>
+                                                        <emoji:TextBlock Text="{Binding SelectedSeries.Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                         <Button Grid.Column="1"
                                                                 Style="{StaticResource TagRemoveButtonStyle}"
                                                                 Command="{Binding RemoveSelectedSeriesCommand}"/>
@@ -257,11 +261,32 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                    MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" 
-                                                                    Tag="{Binding}">
-                                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50"/>
-                                                            </Border>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <!-- Nội dung item -->
+                                                                <Border Grid.Column="0" 
+                                                                        Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                        MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" FontFamily="Segoe UI Emoji"/>
+                                                                </Border>
+                                                                <!-- Nút More -->
+                                                                <Button Grid.Column="1" 
+                                                                        Style="{StaticResource IconButtonStyle}" 
+                                                                        Background="Transparent" 
+                                                                        BorderThickness="0"
+                                                                        Width="20" Height="20"
+                                                                        Margin="0"
+                                                                        HorizontalAlignment="Right"
+                                                                        Command="{Binding DataContext.OpenEditSeriesPopupCommand, ElementName=ThisWindow}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Edit series">
+                                                                    <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                </Button>
+                                                            </Grid>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -272,11 +297,12 @@
                                                     Style="{StaticResource PopupCreateNewStyle}"
                                                     Visibility="{Binding SeriesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                     MouseLeftButtonUp="CreateNewSeries_MouseLeftButtonUp">
-                                                <TextBlock Text="{Binding CreateNewSeriesText}" 
+                                                <emoji:TextBlock Text="{Binding CreateNewSeriesText}" 
                                                            FontSize="13" 
                                                            Foreground="#FF88BA" 
                                                            Margin="10,0" 
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Emoji"/>
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -306,14 +332,16 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Style="{StaticResource TagChipStyle}">
-                                                    <TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13"/>
+                                                    <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </Button>
 
-                                <Popup IsOpen="{Binding IsGenresPopupOpen}"
+                                <!-- Popup chọn Genre -->
+                                <Popup x:Name="GenresPopup"
+                                       IsOpen="{Binding IsGenresPopupOpen}"
                                        PlacementTarget="{Binding ElementName=GenresButton}"
                                        Placement="Bottom" StaysOpen="False" Width="320">
                                     <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
@@ -351,7 +379,7 @@
                                                                         <ColumnDefinition Width="Auto"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13"/>
+                                                                    <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                                     <Button Grid.Column="1"
                                                                             Style="{StaticResource TagRemoveButtonStyle}"
                                                                             Command="{Binding DataContext.RemoveGenreCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -381,11 +409,32 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                    MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" 
-                                                                    Tag="{Binding}">
-                                                                <TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}"/>
-                                                            </Border>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <!-- Nội dung item -->
+                                                                <Border Grid.Column="0" 
+                                                                        Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                        MouseLeftButtonUp="GenreItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                </Border>
+                                                                <!-- Nút More -->
+                                                                <Button Grid.Column="1" 
+                                                                        Style="{StaticResource IconButtonStyle}" 
+                                                                        Background="Transparent" 
+                                                                        BorderThickness="0"
+                                                                        Width="20" Height="20"
+                                                                        Margin="0"
+                                                                        HorizontalAlignment="Right"
+                                                                        Command="{Binding DataContext.OpenEditGenrePopupCommand, ElementName=ThisWindow}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Edit genre">
+                                                                    <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                </Button>
+                                                            </Grid>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -396,11 +445,12 @@
                                                     Style="{StaticResource PopupCreateNewStyle}"
                                                     Visibility="{Binding GenresSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                     MouseLeftButtonUp="CreateNewGenre_MouseLeftButtonUp">
-                                                <TextBlock Text="{Binding CreateNewGenreText}" 
+                                                <emoji:TextBlock Text="{Binding CreateNewGenreText}" 
                                                            FontSize="13" 
                                                            Foreground="#FF88BA" 
                                                            Margin="10,0" 
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Emoji"/>
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -430,14 +480,16 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Style="{StaticResource TagChipStyle}">
-                                                    <TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13"/>
+                                                    <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </Button>
 
-                                <Popup IsOpen="{Binding IsThemesPopupOpen}"
+                                <!-- Popup chọn Theme -->
+                                <Popup x:Name="ThemesPopup"
+                                       IsOpen="{Binding IsThemesPopupOpen}"
                                        PlacementTarget="{Binding ElementName=ThemesButton}"
                                        Placement="Bottom" StaysOpen="False" Width="320">
                                     <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
@@ -475,7 +527,7 @@
                                                                         <ColumnDefinition Width="Auto"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13"/>
+                                                                    <emoji:TextBlock Text="{Binding Name}" Foreground="#2C3E50" FontSize="13" FontFamily="Segoe UI Emoji"/>
                                                                     <Button Grid.Column="1"
                                                                             Style="{StaticResource TagRemoveButtonStyle}"
                                                                             Command="{Binding DataContext.RemoveThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -505,11 +557,32 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border Style="{StaticResource PopupItemStyle}" Width="140"
-                                                                    MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" 
-                                                                    Tag="{Binding}">
-                                                                <TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}"/>
-                                                            </Border>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <!-- Nội dung item -->
+                                                                <Border Grid.Column="0" 
+                                                                        Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                        MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp" 
+                                                                        Tag="{Binding}">
+                                                                    <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                </Border>
+                                                                <!-- Nút More -->
+                                                                <Button Grid.Column="1" 
+                                                                        Style="{StaticResource IconButtonStyle}" 
+                                                                        Background="Transparent" 
+                                                                        BorderThickness="0"
+                                                                        Width="20" Height="20"
+                                                                        Margin="0"
+                                                                        HorizontalAlignment="Right"
+                                                                        Command="{Binding DataContext.OpenEditThemePopupCommand, ElementName=ThisWindow}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Edit theme">
+                                                                    <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                </Button>
+                                                            </Grid>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -520,11 +593,12 @@
                                                     Style="{StaticResource PopupCreateNewStyle}"
                                                     Visibility="{Binding ThemesSearchText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
                                                     MouseLeftButtonUp="CreateNewTheme_MouseLeftButtonUp">
-                                                <TextBlock Text="{Binding CreateNewThemeText}" 
+                                                <emoji:TextBlock Text="{Binding CreateNewThemeText}" 
                                                            FontSize="13" 
                                                            Foreground="#FF88BA" 
                                                            Margin="10,0" 
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Emoji"/>
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -533,11 +607,10 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- RIGHT COLUMN: MetaScore, AvgPlaytime, Excited, Ownership, Progress, FinishedIn -->
+                    <!-- RIGHT COLUMN -->
                     <Border Grid.Column="1" Background="#F9F9F9" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
-                        <!-- Đặt Resources ở đây để tránh lỗi Grid.Resources không đúng chỗ -->
                         <Border.Resources>
-                            <!-- Style dành cho Ownership - đã sửa để click toàn vùng mở dropdown -->
+                            <!-- Style dành cho Ownership -->
                             <Style x:Key="ChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
                                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                 <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -550,10 +623,11 @@
                                                     Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Ownership}"
                                                     HorizontalAlignment="Center"
                                                     Margin="2">
-                                                <TextBlock Text="{Binding Name}" 
+                                                <emoji:TextBlock Text="{Binding Name}" 
                                                            Foreground="#2C3E50" 
                                                            FontSize="13"
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Emoji"/>
                                             </Border>
                                         </DataTemplate>
                                     </Setter.Value>
@@ -568,7 +642,6 @@
                                                     CornerRadius="5"
                                                     SnapsToDevicePixels="True">
                                                 <Grid>
-                                                    <!-- Selected chip - không nhận sự kiện chuột -->
                                                     <Border x:Name="SelectedChip"
                                                             CornerRadius="4"
                                                             Padding="8,2"
@@ -577,13 +650,12 @@
                                                             Margin="2"
                                                             Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                                             IsHitTestVisible="False">
-                                                        <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                        <emoji:TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
                                                                    Foreground="#2C3E50" 
                                                                    FontSize="13"
-                                                                   VerticalAlignment="Center"/>
+                                                                   VerticalAlignment="Center"
+                                                                   FontFamily="Segoe UI Emoji"/>
                                                     </Border>
-
-                                                    <!-- Mũi tên - không nhận sự kiện chuột -->
                                                     <Path Data="M 0 0 L 5 5 L 10 0 Z"
                                                           Fill="#555555"
                                                           HorizontalAlignment="Right"
@@ -593,8 +665,6 @@
                                                           Height="5"
                                                           Opacity="0.8"
                                                           IsHitTestVisible="False"/>
-
-                                                    <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
                                                     <ToggleButton x:Name="ToggleButton"
                                                                   Background="Transparent"
                                                                   BorderThickness="0"
@@ -608,8 +678,6 @@
                                                             </ControlTemplate>
                                                         </ToggleButton.Template>
                                                     </ToggleButton>
-
-                                                    <!-- Popup -->
                                                     <Popup x:Name="Popup"
                                                            Placement="Bottom"
                                                            IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -649,7 +717,7 @@
                                 </Setter>
                             </Style>
 
-                            <!-- Style dành cho Progress - đã sửa để click toàn vùng mở dropdown -->
+                            <!-- Style dành cho Progress -->
                             <Style x:Key="ChipComboBoxStyleProgress" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
                                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                 <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -662,10 +730,11 @@
                                                     Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Progress}"
                                                     HorizontalAlignment="Center"
                                                     Margin="2">
-                                                <TextBlock Text="{Binding Name}" 
+                                                <emoji:TextBlock Text="{Binding Name}" 
                                                            Foreground="#2C3E50" 
                                                            FontSize="13"
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Emoji"/>
                                             </Border>
                                         </DataTemplate>
                                     </Setter.Value>
@@ -680,7 +749,6 @@
                                                     CornerRadius="5"
                                                     SnapsToDevicePixels="True">
                                                 <Grid>
-                                                    <!-- Selected chip - không nhận sự kiện chuột -->
                                                     <Border x:Name="SelectedChip"
                                                             CornerRadius="4"
                                                             Padding="8,2"
@@ -689,13 +757,12 @@
                                                             Margin="2"
                                                             Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                                             IsHitTestVisible="False">
-                                                        <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                        <emoji:TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
                                                                    Foreground="#2C3E50" 
                                                                    FontSize="13"
-                                                                   VerticalAlignment="Center"/>
+                                                                   VerticalAlignment="Center"
+                                                                   FontFamily="Segoe UI Emoji"/>
                                                     </Border>
-
-                                                    <!-- Mũi tên - không nhận sự kiện chuột -->
                                                     <Path Data="M 0 0 L 5 5 L 10 0 Z"
                                                           Fill="#555555"
                                                           HorizontalAlignment="Right"
@@ -705,8 +772,6 @@
                                                           Height="5"
                                                           Opacity="0.8"
                                                           IsHitTestVisible="False"/>
-
-                                                    <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
                                                     <ToggleButton x:Name="ToggleButton"
                                                                   Background="Transparent"
                                                                   BorderThickness="0"
@@ -720,8 +785,6 @@
                                                             </ControlTemplate>
                                                         </ToggleButton.Template>
                                                     </ToggleButton>
-
-                                                    <!-- Popup -->
                                                     <Popup x:Name="Popup"
                                                            Placement="Bottom"
                                                            IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -763,7 +826,7 @@
                         </Border.Resources>
 
                         <StackPanel>
-                            <!-- MetaScore + Check button -->
+                            <!-- MetaScore -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="115"/>
@@ -789,7 +852,7 @@
                                          HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                             </Grid>
 
-                            <!-- AvgPlaytime + Check button -->
+                            <!-- AvgPlaytime -->
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="115"/>
@@ -1021,5 +1084,117 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ==================== EDIT POPUPS ==================== -->
+        <!-- Edit Series Popup -->
+        <Popup x:Name="EditSeriesPopup"
+               IsOpen="{Binding IsEditSeriesPopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Series" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditSeriesName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveSeriesEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteSeriesCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditSeriesCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Edit Genre Popup -->
+        <Popup x:Name="EditGenrePopup"
+               IsOpen="{Binding IsEditGenrePopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Genre" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditGenreName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveGenreEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteGenreCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditGenreCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Edit Theme Popup -->
+        <Popup x:Name="EditThemePopup"
+               IsOpen="{Binding IsEditThemePopupOpen}"
+               Placement="Center"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Slide">
+            <Border Width="300" Padding="20"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Edit Theme" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBox Text="{Binding EditThemeName, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="30" Padding="8,4" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#708A58" 
+                                Command="{Binding SaveThemeEditCommand}" ToolTip="Save">
+                            <Image Source="/Assets/Save.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
+                                Command="{Binding DeleteThemeCommand}" ToolTip="Delete">
+                            <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
+                                Command="{Binding CancelEditThemeCommand}" ToolTip="Cancel">
+                            <Image Source="/Assets/Close.png" Width="18" Height="18"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
     </Grid>
 </Window>
