@@ -19,6 +19,7 @@ namespace MasterPlay.Models.Models
         public virtual DbSet<Theme> Themes { get; set; }
         public DbSet<GameGenre> GameGenres { get; set; }
         public DbSet<GameTheme> GameThemes { get; set; }
+        public virtual DbSet<PlayDiary> PlayDiaries { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -111,6 +112,17 @@ namespace MasterPlay.Models.Models
             modelBuilder.Entity<GameTheme>(entity =>
             {
                 entity.HasKey(gt => new { gt.GameId, gt.ThemeId });
+            });
+            modelBuilder.Entity<PlayDiary>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Date).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.HasOne(d => d.Game)
+                    .WithMany()
+                    .HasForeignKey(d => d.GameId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             OnModelCreatingPartial(modelBuilder);

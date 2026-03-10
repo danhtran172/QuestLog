@@ -1,5 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Style ComboBox đơn giản, hoạt động tốt trong Popup -->
     <Style x:Key="FilterComboBoxStyle" TargetType="ComboBox">
@@ -21,36 +21,36 @@
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
                         <ToggleButton x:Name="ToggleButton"
-                                      Grid.Column="2"
-                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      IsHitTestVisible="True"
-                                      Focusable="False">
+                                          Grid.Column="2"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          IsHitTestVisible="True"
+                                          Focusable="False">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="border"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                            CornerRadius="4">
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                CornerRadius="4">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <ContentPresenter Grid.Column="0"
-                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                              VerticalAlignment="Center"
-                                                              HorizontalAlignment="Center"
-                                                              Margin="4,0,0,0"/>
+                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  VerticalAlignment="Center"
+                                                                  HorizontalAlignment="Center"
+                                                                  Margin="4,0,0,0"/>
                                             <Path Grid.Column="1"
-                                                  Data="M0,0 L4,4 L8,0 Z"
-                                                  Fill="#666"
-                                                  Width="8"
-                                                  Height="4"
-                                                  Margin="0,0,8,0"
-                                                  VerticalAlignment="Center"/>
+                                                      Data="M0,0 L4,4 L8,0 Z"
+                                                      Fill="#666"
+                                                      Width="8"
+                                                      Height="4"
+                                                      Margin="0,0,8,0"
+                                                      VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -65,18 +65,18 @@
                             </ToggleButton.Template>
                         </ToggleButton>
                         <Popup x:Name="Popup"
-                               Placement="Bottom"
-                               IsOpen="{TemplateBinding IsDropDownOpen}"
-                               AllowsTransparency="True"
-                               Focusable="False"
-                               PopupAnimation="Slide">
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
                             <Border Background="White"
-                                    BorderBrush="#DDDDDD"
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Margin="0,2,0,0"
-                                    MaxHeight="200"
-                                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                        BorderBrush="#DDDDDD"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="0,2,0,0"
+                                        MaxHeight="200"
+                                        Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
                                 <ScrollViewer>
                                     <ItemsPresenter x:Name="ItemsPresenter"/>
                                 </ScrollViewer>
@@ -104,11 +104,11 @@
                     <Grid>
                         <!-- Không có ellipse, chỉ có image -->
                         <Image x:Name="FilterImage"
-                               Source="/Assets/Filter.png"
-                               Width="18"
-                               Height="18"
-                               Margin="0,2,0,0"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                   Source="/Assets/Filter.png"
+                                   Width="18"
+                                   Height="18"
+                                   Margin="0,2,0,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- DataTrigger thay đổi icon khi có filter active -->
@@ -196,9 +196,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1" 
-                                              Style="{StaticResource FilterComboBoxStyle}" 
-                                              Margin="0,0,3,0" 
-                                              SelectedIndex="0">
+                                                  Style="{StaticResource FilterComboBoxStyle}" 
+                                                  Margin="0,0,3,0" 
+                                                  SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
                                         <ComboBoxItem Content="="/>
@@ -206,9 +206,9 @@
                                         <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
                                     <TextBox Grid.Column="2" 
-                                             Style="{StaticResource BaseTextBoxStyle}" 
-                                             Height="28" 
-                                             Padding="6,2"/>
+                                                 Style="{StaticResource BaseTextBoxStyle}" 
+                                                 Height="28" 
+                                                 Padding="6,2"/>
                                 </Grid>
                                 <!-- Excited -->
                                 <Grid Margin="0,0,0,8">
@@ -219,9 +219,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1" 
-                                              Style="{StaticResource FilterComboBoxStyle}" 
-                                              Margin="0,0,3,0" 
-                                              SelectedIndex="0">
+                                                  Style="{StaticResource FilterComboBoxStyle}" 
+                                                  Margin="0,0,3,0" 
+                                                  SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
                                         <ComboBoxItem Content="="/>
@@ -229,9 +229,9 @@
                                         <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
                                     <TextBox Grid.Column="2" 
-                                             Style="{StaticResource BaseTextBoxStyle}" 
-                                             Height="28" 
-                                             Padding="6,2"/>
+                                                 Style="{StaticResource BaseTextBoxStyle}" 
+                                                 Height="28" 
+                                                 Padding="6,2"/>
                                 </Grid>
                             </StackPanel>
 
@@ -246,9 +246,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1" 
-                                              Style="{StaticResource FilterComboBoxStyle}" 
-                                              Margin="0,0,3,0" 
-                                              SelectedIndex="0">
+                                                  Style="{StaticResource FilterComboBoxStyle}" 
+                                                  Margin="0,0,3,0" 
+                                                  SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
                                         <ComboBoxItem Content="="/>
@@ -256,9 +256,9 @@
                                         <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
                                     <TextBox Grid.Column="2" 
-                                             Style="{StaticResource BaseTextBoxStyle}" 
-                                             Height="28" 
-                                             Padding="6,2"/>
+                                                 Style="{StaticResource BaseTextBoxStyle}" 
+                                                 Height="28" 
+                                                 Padding="6,2"/>
                                 </Grid>
                                 <!-- PlayTime -->
                                 <Grid Margin="0,0,0,8">
@@ -269,9 +269,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1" 
-                                              Style="{StaticResource FilterComboBoxStyle}" 
-                                              Margin="0,0,3,0" 
-                                              SelectedIndex="0">
+                                                  Style="{StaticResource FilterComboBoxStyle}" 
+                                                  Margin="0,0,3,0" 
+                                                  SelectedIndex="0">
                                         <ComboBoxItem Content=">"/>
                                         <ComboBoxItem Content=">="/>
                                         <ComboBoxItem Content="="/>
@@ -279,9 +279,9 @@
                                         <ComboBoxItem Content="&lt;"/>
                                     </ComboBox>
                                     <TextBox Grid.Column="2" 
-                                             Style="{StaticResource BaseTextBoxStyle}" 
-                                             Height="28" 
-                                             Padding="6,2"/>
+                                                 Style="{StaticResource BaseTextBoxStyle}" 
+                                                 Height="28" 
+                                                 Padding="6,2"/>
                                 </Grid>
                             </StackPanel>
                         </Grid>

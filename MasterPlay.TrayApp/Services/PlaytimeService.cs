@@ -79,15 +79,37 @@ namespace MasterPlay.TrayApp.Services
                         int newSeconds = (game.TotalPlayTimeSeconds ?? 0) + 30;
 
                         using (var context = new MasterPlayContext())
+                        using (var transaction = context.Database.BeginTransaction())
                         {
-                            var gameToUpdate = new Game { Id = game.Id };
-                            context.Games.Attach(gameToUpdate);
-                            gameToUpdate.TotalPlayTimeSeconds = newSeconds;
-                            context.Entry(gameToUpdate).Property(x => x.TotalPlayTimeSeconds).IsModified = true;
-                            context.SaveChanges();
-                        }
+                            try
+                            {
+                                // Update game's total play time
+                                var gameToUpdate = new Game { Id = game.Id };
+                                context.Games.Attach(gameToUpdate);
+                                gameToUpdate.TotalPlayTimeSeconds = newSeconds;
+                                context.Entry(gameToUpdate).Property(x => x.TotalPlayTimeSeconds).IsModified = true;
 
-                        _logger.LogInformation("Updated playtime for {name}, time: {time}s", game.Name, newSeconds);
+                                // Add diary entry
+                                var diary = new PlayDiary
+                                {
+                                    GameId = game.Id,
+                                    Date = DateTime.Now,
+                                    TimeSpent = 30,
+                                    Notes = null
+                                };
+                                context.PlayDiaries.Add(diary);
+
+                                context.SaveChanges();
+                                transaction.Commit();
+
+                                _logger.LogInformation("Updated playtime for {name}, time: {time}s, diary added.", game.Name, newSeconds);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                _logger.LogError(ex, "Failed to update playtime and diary for {name}", game.Name);
+                            }
+                        }
                     }
                     if (!isForeground)
                     {

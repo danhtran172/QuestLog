@@ -67,7 +67,6 @@ namespace MasterPlay.Models
                 {
                     var defaultConfig = new Config
                     {
-                        ConfigFilePath = configPath,
                         BackupRootPath = Path.Combine(GetConfigDirectory(), "Backups"),
                         DatabasePath = Path.Combine(GetConfigDirectory(), "MasterPlay.db"),
                         GameLibraryPath = new List<string> {

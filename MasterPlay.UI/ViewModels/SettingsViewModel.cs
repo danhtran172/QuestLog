@@ -91,7 +91,6 @@ namespace MasterPlay.UI.ViewModels
             {
                 var config = JsonService.LoadConfig();
                 config.BackupRootPath = BackupRootPath;
-                config.ConfigFilePath = ConfigPath;
                 config.DatabasePath = DatabasePath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
                 JsonService.SaveConfig(config);
@@ -109,18 +108,7 @@ namespace MasterPlay.UI.ViewModels
         private void LoadSettings()
         {
             var config = JsonService.LoadConfig();
-            if (config != null)
-            {
-                BackupRootPath = config.BackupRootPath ?? "";
-                ConfigPath = config.ConfigFilePath ?? "";
-                DatabasePath = config.DatabasePath ?? "";
-                LibraryPaths.Clear();
-                if (config.GameLibraryPath != null)
-                {
-                    foreach (var path in config.GameLibraryPath)
-                        LibraryPaths.Add(new LibraryPathItem { Value = path, IsReadOnly = true });
-                }
-            }
+           
         }
     }
 }

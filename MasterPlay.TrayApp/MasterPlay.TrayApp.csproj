@@ -9,6 +9,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Assets\TrayIcon.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\MasterPlay.Models\MasterPlay.Models.csproj" />
 	</ItemGroup>
 
@@ -19,14 +23,12 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Assets\TrayIcon.ico" />
+	</ItemGroup>
 	<PropertyGroup>
 		<ApplicationIcon>Assets\TrayIcon.ico</ApplicationIcon>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Content Include="Assets\TrayIcon.ico">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
 
 </Project>
