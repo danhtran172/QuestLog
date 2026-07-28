@@ -12,7 +12,6 @@ namespace MasterPlay.Models
     {
         private static readonly object _fileLock = new object();
 
-        // SỬA: Dùng AppData thay vì hardcode D:\Apps\[AppData]
         public static string GetConfigDirectory() =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MasterPlay");
 

@@ -1,5 +1,6 @@
 ﻿using MasterPlay.Models.Models;
 using MasterPlay.Models.Repositories;
+using MasterPlay.Models.Repositories.MasterPlay.Models.Repositories;
 
 namespace MasterPlay.Models
 {
@@ -15,6 +16,7 @@ namespace MasterPlay.Models
         IGenericRepository<DetectedProcess> DetectedProcesses { get; }
         IGenericRepository<GameGenre> GameGenres { get; }
         IGenericRepository<GameTheme> GameThemes { get; }
+        IPlayDiaryRepository PlayDiaries { get; }
 
         int Complete();
     }
@@ -22,7 +24,8 @@ namespace MasterPlay.Models
     public class UnitOfWork : IUnitOfWork
     {
         private readonly MasterPlayContext _context;
-
+        private readonly IPlayDiaryRepository _playDiaries;
+        public IPlayDiaryRepository PlayDiaries => _playDiaries;
         public UnitOfWork(MasterPlayContext context)
         {
             _context = context;
@@ -36,6 +39,7 @@ namespace MasterPlay.Models
             DetectedProcesses = new GenericRepository<DetectedProcess>(_context);
             GameGenres = new GenericRepository<GameGenre>(_context);
             GameThemes = new GenericRepository<GameTheme>(_context);
+            _playDiaries = new PlayDiaryRepository(_context);
         }
 
         public IGameRepository Games { get; private set; }

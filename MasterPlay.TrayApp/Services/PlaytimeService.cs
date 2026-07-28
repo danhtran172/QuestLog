@@ -89,20 +89,31 @@ namespace MasterPlay.TrayApp.Services
                                 gameToUpdate.TotalPlayTimeSeconds = newSeconds;
                                 context.Entry(gameToUpdate).Property(x => x.TotalPlayTimeSeconds).IsModified = true;
 
-                                // Add diary entry
-                                var diary = new PlayDiary
+                                // Find or create diary entry for today
+                                var today = DateTime.Today;
+                                var diary = context.PlayDiaries
+                                    .FirstOrDefault(d => d.GameId == game.Id && d.Date.Date == today);
+
+                                if (diary == null)
                                 {
-                                    GameId = game.Id,
-                                    Date = DateTime.Now,
-                                    TimeSpent = 30,
-                                    Notes = null
-                                };
-                                context.PlayDiaries.Add(diary);
+                                    diary = new PlayDiary
+                                    {
+                                        GameId = game.Id,
+                                        Date = today,
+                                        TimeSpent = 30,
+                                        Notes = null
+                                    };
+                                    context.PlayDiaries.Add(diary);
+                                }
+                                else
+                                {
+                                    diary.TimeSpent += 30;
+                                }
 
                                 context.SaveChanges();
                                 transaction.Commit();
 
-                                _logger.LogInformation("Updated playtime for {name}, time: {time}s, diary added.", game.Name, newSeconds);
+                                _logger.LogInformation("Updated playtime for {name}, time: {time}s, diary updated.", game.Name, newSeconds);
                             }
                             catch (Exception ex)
                             {

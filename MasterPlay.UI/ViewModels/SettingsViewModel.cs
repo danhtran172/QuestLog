@@ -108,7 +108,15 @@ namespace MasterPlay.UI.ViewModels
         private void LoadSettings()
         {
             var config = JsonService.LoadConfig();
-           
+
+            BackupRootPath = config.BackupRootPath ?? string.Empty;
+            DatabasePath = config.DatabasePath ?? string.Empty;
+            ConfigPath = JsonService.GetConfigPath();
+
+            LibraryPaths = new ObservableCollection<LibraryPathItem>(
+                (config.GameLibraryPath ?? new System.Collections.Generic.List<string>())
+                    .Select(path => new LibraryPathItem { Value = path, IsReadOnly = true })
+            );
         }
     }
 }

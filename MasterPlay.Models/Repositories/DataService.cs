@@ -187,8 +187,30 @@ namespace MasterPlay.Models
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
                 var existing = uow.DetectedProcesses.GetAll().ToList();
-                uow.DetectedProcesses.RemoveRange(existing);
-                uow.DetectedProcesses.AddRange(processes);
+
+                // QUAN TRỌNG: không được RemoveRange(existing) rồi AddRange(processes) trong
+                // cùng 1 SaveChanges. Vì FullPath có UNIQUE index, và EF Core thường thực thi
+                // INSERT trước DELETE đối với các entity không có quan hệ khóa ngoại, nên với
+                // các file .exe không đổi giữa 2 lần quét, EF sẽ cố insert dòng mới trùng
+                // FullPath trước khi xóa dòng cũ -> vi phạm UNIQUE -> ném exception -> toàn bộ
+                // SaveChanges bị rollback -> DetectedProcess không được cập nhật -> Ready của
+                // Game không bao giờ được đồng bộ lại (SyncGameStatus không chạy tới nơi).
+                //
+                // Cách fix: chỉ xóa những dòng không còn tồn tại trong lần quét mới,
+                // chỉ thêm những dòng thực sự mới xuất hiện, giữ nguyên phần không đổi.
+                var existingPaths = new HashSet<string>(
+                    existing.Select(p => p.FullPath), StringComparer.OrdinalIgnoreCase);
+                var newPaths = new HashSet<string>(
+                    processes.Select(p => p.FullPath), StringComparer.OrdinalIgnoreCase);
+
+                var toRemove = existing.Where(p => !newPaths.Contains(p.FullPath)).ToList();
+                var toAdd = processes.Where(p => !existingPaths.Contains(p.FullPath)).ToList();
+
+                if (toRemove.Count > 0)
+                    uow.DetectedProcesses.RemoveRange(toRemove);
+                if (toAdd.Count > 0)
+                    uow.DetectedProcesses.AddRange(toAdd);
+
                 uow.Complete();
             }
         }
