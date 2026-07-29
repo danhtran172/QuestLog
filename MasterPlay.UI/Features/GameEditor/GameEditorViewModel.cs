@@ -170,12 +170,15 @@ namespace MasterPlay.UI.Features.GameEditor
         private ProgressStatus? selectedProgress;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isSeriesPopupOpen;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isGenresPopupOpen;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isThemesPopupOpen;
 
         [ObservableProperty]
@@ -198,13 +201,72 @@ namespace MasterPlay.UI.Features.GameEditor
 
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isEditSeriesPopupOpen;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isEditGenrePopupOpen;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isEditThemePopupOpen;
+
+        public bool IsAnyPopupOpen =>
+            IsEditThemePopupOpen ||
+            IsEditGenrePopupOpen ||
+            IsEditSeriesPopupOpen ||
+            IsFinishPopupOpen ||
+            IsThemesPopupOpen ||
+            IsGenresPopupOpen ||
+            IsSeriesPopupOpen;
+
+        public bool CloseTopPopup()
+        {
+            if (IsEditThemePopupOpen)
+            {
+                IsEditThemePopupOpen = false;
+                return true;
+            }
+
+            if (IsEditGenrePopupOpen)
+            {
+                IsEditGenrePopupOpen = false;
+                return true;
+            }
+
+            if (IsEditSeriesPopupOpen)
+            {
+                IsEditSeriesPopupOpen = false;
+                return true;
+            }
+
+            if (IsFinishPopupOpen)
+            {
+                IsFinishPopupOpen = false;
+                return true;
+            }
+
+            if (IsThemesPopupOpen)
+            {
+                IsThemesPopupOpen = false;
+                return true;
+            }
+
+            if (IsGenresPopupOpen)
+            {
+                IsGenresPopupOpen = false;
+                return true;
+            }
+
+            if (IsSeriesPopupOpen)
+            {
+                IsSeriesPopupOpen = false;
+                return true;
+            }
+
+            return false;
+        }
 
         [ObservableProperty]
         private Series? editingSeries;
@@ -1300,6 +1362,7 @@ namespace MasterPlay.UI.Features.GameEditor
         }
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
         private bool isFinishPopupOpen;
 
         [ObservableProperty]

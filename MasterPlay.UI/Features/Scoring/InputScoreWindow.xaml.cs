@@ -38,6 +38,16 @@ namespace MasterPlay.UI.Features.Scoring
             Close();
         }
 
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape || Keyboard.Modifiers != ModifierKeys.None)
+                return;
+
+            DialogResult = false;
+            Close();
+            e.Handled = true;
+        }
+
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             string s = e.Text;

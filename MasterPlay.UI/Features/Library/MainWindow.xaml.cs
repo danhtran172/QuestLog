@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using MasterPlay.Infrastructure.Events;
 using MasterPlay.UI.Features.Queue;
 using MasterPlay.UI.Services.Runtime;
+using MasterPlay.UI.Services.Windowing;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -158,8 +159,16 @@ namespace MasterPlay.UI.Features.Library
             }
             if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
             {
-                _viewModel.OpenSettingsCommand.Execute(null);
-                e.Handled = true;
+                if (FilterPopup.IsOpen)
+                {
+                    FilterPanel_CloseRequested(null, EventArgs.Empty);
+                    e.Handled = true;
+                }
+                else if (PopupKeyboardService.CloseOpenComboBox(this))
+                {
+                    e.Handled = true;
+                }
+                return;
             }
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {

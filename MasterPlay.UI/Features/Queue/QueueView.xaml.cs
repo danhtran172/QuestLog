@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using MasterPlay.UI.Services.Windowing;
 
 namespace MasterPlay.UI.Features.Queue
 {
@@ -70,12 +71,8 @@ namespace MasterPlay.UI.Features.Queue
             try
             {
                 var mainWindow = Window.GetWindow(this) as MainWindow;
-                var editWindow = new GameEditorWindow(gameVm.Game)
-                {
-                    Owner = mainWindow
-                };
-
-                editWindow.ShowDialog();
+                var editWindow = new GameEditorWindow(gameVm.Game);
+                ModalWindowService.ShowDialog(mainWindow!, editWindow);
 
 
                 if (DataContext is MainWindowViewModel viewModel)

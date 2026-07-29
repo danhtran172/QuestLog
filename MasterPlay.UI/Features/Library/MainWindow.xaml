@@ -14,11 +14,6 @@
         SnapsToDevicePixels="True">
 
 
-    <Window.InputBindings>
-        <KeyBinding Key="Escape"
-                    Command="{Binding ToggleSettingsCommand}" />
-    </Window.InputBindings>
-
     <Window.Resources>
 
         <Color x:Key="HighlightColor">#FFFFE0</Color>
@@ -275,7 +270,7 @@
                StaysOpen="False"
                PopupAnimation="Slide"
                AllowsTransparency="True"
-               IsOpen="{Binding IsChecked, ElementName=FilterToggleButton}">
+               IsOpen="{Binding IsChecked, ElementName=FilterToggleButton, Mode=TwoWay}">
             <controls:FilterPanel CloseRequested="FilterPanel_CloseRequested"/>
         </Popup>
 
@@ -1028,5 +1023,10 @@
                 </StackPanel>
             </Grid>
         </Border>
+        <Border x:Name="FilterBackdrop"
+                Grid.RowSpan="3"
+                Panel.ZIndex="100"
+                Background="#91000000"
+                Visibility="{Binding IsChecked, ElementName=FilterToggleButton, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 </Window>

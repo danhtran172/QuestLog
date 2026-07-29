@@ -4,7 +4,8 @@
         xmlns:vm="clr-namespace:MasterPlay.UI.Features.GameEditor"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         x:Name="ThisWindow"
-        Background="White" FontFamily="Segoe UI">
+        Background="White" FontFamily="Segoe UI"
+        PreviewKeyDown="Popup_PreviewKeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="400"/>
@@ -513,10 +514,11 @@
                                     </Button>
 
                                     <Popup x:Name="SeriesPopup"
-                                           IsOpen="{Binding IsSeriesPopupOpen}"
+                                           IsOpen="{Binding IsSeriesPopupOpen, Mode=TwoWay}"
                                            PlacementTarget="{Binding ElementName=SeriesButton}"
                                            Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
                                            PopupAnimation="Slide" Width="320"
+                                           PreviewKeyDown="Popup_PreviewKeyDown"
                                            >
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
@@ -648,9 +650,10 @@
                                     </Button>
 
                                     <Popup x:Name="GenresPopup"
-                                           IsOpen="{Binding IsGenresPopupOpen}"
+                                           IsOpen="{Binding IsGenresPopupOpen, Mode=TwoWay}"
                                            PlacementTarget="{Binding ElementName=GenresButton}"
                                            Placement="Bottom" StaysOpen="False" Width="320"
+                                           PreviewKeyDown="Popup_PreviewKeyDown"
                                            >
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
@@ -794,9 +797,10 @@
                                     </Button>
 
                                     <Popup x:Name="ThemesPopup"
-                                           IsOpen="{Binding IsThemesPopupOpen}"
+                                           IsOpen="{Binding IsThemesPopupOpen, Mode=TwoWay}"
                                            PlacementTarget="{Binding ElementName=ThemesButton}"
                                            Placement="Bottom" StaysOpen="False" Width="320"
+                                           PreviewKeyDown="Popup_PreviewKeyDown"
                                            >
                                         <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
                                             <Grid MinHeight="300" MaxHeight="400">
@@ -1452,13 +1456,19 @@
             </Grid>
         </Border>
 
+        <Border x:Name="PopupBackdrop"
+                Grid.RowSpan="3"
+                Panel.ZIndex="100"
+                Background="#91000000"
+                Visibility="{Binding IsAnyPopupOpen, Converter={StaticResource BoolToVis}}"/>
 
         <Popup x:Name="FinishPopup"
-               IsOpen="{Binding IsFinishPopupOpen}"
+               IsOpen="{Binding IsFinishPopupOpen, Mode=TwoWay}"
                Placement="Center"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Slide">
+               PopupAnimation="Slide"
+               PreviewKeyDown="Popup_PreviewKeyDown">
             <Border Width="200" Height="150"
                     CornerRadius="10"
                     Background="White"
@@ -1507,11 +1517,12 @@
 
 
         <Popup x:Name="EditSeriesPopup"
-               IsOpen="{Binding IsEditSeriesPopupOpen}"
+               IsOpen="{Binding IsEditSeriesPopupOpen, Mode=TwoWay}"
                Placement="Center"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Slide">
+               PopupAnimation="Slide"
+               PreviewKeyDown="Popup_PreviewKeyDown">
             <Border Width="300" Padding="20"
                     Background="White"
                     BorderBrush="#E0E0E0"
@@ -1544,11 +1555,12 @@
 
 
         <Popup x:Name="EditGenrePopup"
-               IsOpen="{Binding IsEditGenrePopupOpen}"
+               IsOpen="{Binding IsEditGenrePopupOpen, Mode=TwoWay}"
                Placement="Center"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Slide">
+               PopupAnimation="Slide"
+               PreviewKeyDown="Popup_PreviewKeyDown">
             <Border Width="300" Padding="20"
                     Background="White"
                     BorderBrush="#E0E0E0"
@@ -1581,11 +1593,12 @@
 
 
         <Popup x:Name="EditThemePopup"
-               IsOpen="{Binding IsEditThemePopupOpen}"
+               IsOpen="{Binding IsEditThemePopupOpen, Mode=TwoWay}"
                Placement="Center"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Slide">
+               PopupAnimation="Slide"
+               PreviewKeyDown="Popup_PreviewKeyDown">
             <Border Width="300" Padding="20"
                     Background="White"
                     BorderBrush="#E0E0E0"

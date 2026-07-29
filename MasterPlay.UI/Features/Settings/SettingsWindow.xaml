@@ -4,7 +4,8 @@
         xmlns:vm="clr-namespace:MasterPlay.UI.Features.Settings"
         Title="{DynamicResource Settings}" Height="840" Width="680"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="White" FontFamily="Segoe UI">
+        Background="White" FontFamily="Segoe UI"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Window.DataContext>
         <vm:SettingsViewModel />
     </Window.DataContext>

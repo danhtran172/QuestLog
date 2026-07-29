@@ -110,5 +110,14 @@ namespace MasterPlay.UI.Features.GameEditor
                 vm.CreateNewThemeCommand.Execute(null);
             }
         }
+
+        private void Popup_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape || Keyboard.Modifiers != ModifierKeys.None)
+                return;
+
+            if (DataContext is GameEditorViewModel viewModel && viewModel.CloseTopPopup())
+                e.Handled = true;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using MasterPlay.UI.Shared.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MasterPlay.UI.Features.Library;
 
@@ -97,6 +98,15 @@ public partial class FilterPanel : UserControl
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void FilterPanel_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || Keyboard.Modifiers != ModifierKeys.None)
+            return;
+
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+        e.Handled = true;
     }
 
     private IEnumerable<CheckBox> GetFilterCheckBoxes()

@@ -12,21 +12,17 @@ public sealed class MainWindowActions : IMainWindowActions
 {
     public bool ShowGameEditor(Game? game)
     {
-        var window = new GameEditorWindow(game)
-        {
-            Owner = Application.Current.MainWindow
-        };
-        window.ShowDialog();
+        var owner = Application.Current.MainWindow;
+        var window = new GameEditorWindow(game);
+        ModalWindowService.ShowDialog(owner, window);
         return true;
     }
 
     public bool ShowSettings()
     {
-        var window = new SettingsWindow
-        {
-            Owner = Application.Current.MainWindow
-        };
-        window.ShowDialog();
+        var owner = Application.Current.MainWindow;
+        var window = new SettingsWindow();
+        ModalWindowService.ShowDialog(owner, window);
         return true;
     }
 
