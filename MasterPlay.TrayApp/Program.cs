@@ -22,7 +22,7 @@ namespace MasterPlay.TrayApp
 
             var services = new ServiceCollection();
             ConfigureServices(services);
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
 
 

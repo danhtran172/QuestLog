@@ -596,6 +596,7 @@ Tính năng:
 - Playtime Tracking.
 - Library Scanner.
 - Backup Service.
+- Open MasterPlay; mở UI mới hoặc đưa cửa sổ đang chạy lên foreground.
 - Sync Images to Cloudinary.
 - Open Log Folder.
 - Start with Windows.

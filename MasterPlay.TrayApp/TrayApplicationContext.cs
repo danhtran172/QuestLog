@@ -6,6 +6,7 @@ using MasterPlay.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace MasterPlay.TrayApp
 {
@@ -22,6 +23,7 @@ namespace MasterPlay.TrayApp
         private ToolStripMenuItem? _libraryMenuItem;
         private ToolStripMenuItem? _backupMenuItem;
         private ToolStripMenuItem? _syncImagesMenuItem;
+        private ToolStripMenuItem? _openMasterPlayMenuItem;
         private ToolStripMenuItem? _openLogMenuItem;
         private ToolStripMenuItem? _startupMenuItem;
         private ToolStripMenuItem? _exitMenuItem;
@@ -30,6 +32,7 @@ namespace MasterPlay.TrayApp
         private System.Threading.Timer? _languageReloadTimer;
 
         private bool _isSyncingImages = false;
+        private bool _isExiting;
 
         public TrayApplicationContext(IServiceProvider serviceProvider)
         {
@@ -71,6 +74,10 @@ namespace MasterPlay.TrayApp
         private void BuildContextMenu()
         {
             _contextMenu = new ContextMenuStrip();
+
+            _openMasterPlayMenuItem = new ToolStripMenuItem(LocalizationService.Get("OpenMasterPlay"), null, OpenMasterPlay);
+            _contextMenu.Items.Add(_openMasterPlayMenuItem);
+            _contextMenu.Items.Add(new ToolStripSeparator());
 
             _playTimeMenuItem = new ToolStripMenuItem(LocalizationService.Get("PlayTimeTracking"), null, TogglePlayTime) { Checked = true };
             _libraryMenuItem = new ToolStripMenuItem(LocalizationService.Get("LibraryScanner"), null, ToggleLibrary) { Checked = true };
@@ -202,6 +209,71 @@ namespace MasterPlay.TrayApp
             Process.Start("explorer.exe", logPath);
         }
 
+        private void OpenMasterPlay(object? sender, EventArgs e)
+        {
+            try
+            {
+                using var runningProcess = Process.GetProcessesByName("MasterPlay.UI")
+                    .FirstOrDefault(process => process.Id != Environment.ProcessId);
+                if (runningProcess != null)
+                {
+                    var handle = runningProcess.MainWindowHandle;
+                    if (handle != IntPtr.Zero)
+                    {
+                        ShowWindow(handle, 9);
+                        SetForegroundWindow(handle);
+                    }
+                    return;
+                }
+
+                var executablePath = FindMasterPlayExecutable();
+                if (executablePath == null)
+                    throw new FileNotFoundException(LocalizationService.Get("MasterPlayExecutableNotFound"));
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = executablePath,
+                    WorkingDirectory = Path.GetDirectoryName(executablePath),
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not open MasterPlay UI.");
+                MessageBox.Show(
+                    LocalizationService.Get("CannotOpenMasterPlay", ex.Message),
+                    LocalizationService.Get("Error"),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private static string? FindMasterPlayExecutable()
+        {
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new List<string>
+            {
+                Path.Combine(baseDirectory, "MasterPlay.UI.exe"),
+                Path.Combine(baseDirectory, "UI", "MasterPlay.UI.exe")
+            };
+
+            var outputDirectory = new DirectoryInfo(baseDirectory);
+            var configurationDirectory = outputDirectory.Parent;
+            var repositoryDirectory = outputDirectory.Parent?.Parent?.Parent?.Parent;
+            if (configurationDirectory != null && repositoryDirectory != null)
+            {
+                candidates.Add(Path.Combine(
+                    repositoryDirectory.FullName,
+                    "MasterPlay.UI",
+                    "bin",
+                    configurationDirectory.Name,
+                    "net8.0-windows",
+                    "MasterPlay.UI.exe"));
+            }
+
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
         private void ToggleStartWithWindows(object? sender, EventArgs e)
         {
             var enable = !StartupHelper.IsStartupEnabled();
@@ -268,6 +340,7 @@ namespace MasterPlay.TrayApp
 
         private void ApplyLocalizedMenuText()
         {
+            if (_openMasterPlayMenuItem != null) _openMasterPlayMenuItem.Text = LocalizationService.Get("OpenMasterPlay");
             if (_playTimeMenuItem != null) _playTimeMenuItem.Text = LocalizationService.Get("PlayTimeTracking");
             if (_libraryMenuItem != null) _libraryMenuItem.Text = LocalizationService.Get("LibraryScanner");
             if (_backupMenuItem != null) _backupMenuItem.Text = LocalizationService.Get("BackupService");
@@ -277,15 +350,36 @@ namespace MasterPlay.TrayApp
             if (_exitMenuItem != null) _exitMenuItem.Text = LocalizationService.Get("Exit");
         }
 
-        private void Exit(object? sender, EventArgs e)
+        private async void Exit(object? sender, EventArgs e)
         {
+            if (_isExiting)
+                return;
+
+            _isExiting = true;
             _logger.LogInformation("Shutting down...");
-            _playTimeService.Stop();
-            _libraryService.Stop();
-            _backupService.Stop();
+            _contextMenu?.Close();
+            if (_contextMenu != null)
+                _contextMenu.Enabled = false;
             _trayIcon.Visible = false;
-            _trayIcon.Dispose();
-            Application.Exit();
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _backupService.Stop();
+                    _libraryService.Stop();
+                    _playTimeService.Stop();
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while stopping tray services.");
+            }
+            finally
+            {
+                _logger.LogInformation("Tray application stopped.");
+                ExitThread();
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -298,5 +392,11 @@ namespace MasterPlay.TrayApp
             }
             base.Dispose(disposing);
         }
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr windowHandle);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr windowHandle, int command);
     }
 }
