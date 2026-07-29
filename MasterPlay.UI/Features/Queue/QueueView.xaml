@@ -21,6 +21,7 @@
         <Style x:Key="GridViewColumnHeaderStyle" TargetType="GridViewColumnHeader">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
@@ -32,6 +33,8 @@
               VirtualizingPanel.ScrollUnit="Pixel"
               BorderThickness="0"
               Background="Transparent"
+              Padding="0"
+              Margin="0"
               ItemContainerStyle="{StaticResource ListViewItemStyle}"
               HorizontalContentAlignment="Stretch"
               dragDrop:DragDrop.IsDragSource="True"
@@ -77,14 +80,15 @@
                 </GridViewColumn>
 
 
-                <GridViewColumn Width="142">
+                <GridViewColumn Width="140">
                     <GridViewColumn.Header>
                         <TextBlock Text="{DynamicResource Image}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <Border Width="140" Height="65" CornerRadius="4"
-                                    HorizontalAlignment="Left">
+                            <Border Height="65"
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Stretch">
                                 <Border.Background>
                                     <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
                                                 Stretch="UniformToFill"
@@ -106,7 +110,9 @@
                             <TextBlock Text="{Binding DisplayName}"
                                        Style="{StaticResource QueueTextStyle}"
                                        HorizontalAlignment="Stretch"
-                                       TextAlignment="Left"/>
+                                       TextAlignment="Left"
+                                       Padding="0"
+                                       Margin="0"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
@@ -124,6 +130,8 @@
                                              HorizontalAlignment="Left"
                                              TextAlignment="Left"
                                              TextWrapping="NoWrap"
+                                             Padding="0"
+                                             Margin="0"
                                              FontFamily="Segoe UI Emoji"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
@@ -136,10 +144,16 @@
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayExcited}"
-                                       Style="{StaticResource QueueTextStyle}"
-                                       HorizontalAlignment="Stretch"
-                                       TextAlignment="Center"/>
+                            <emoji:TextBlock Text="{Binding DisplayExcited}"
+                                             Foreground="#2C3E50"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Stretch"
+                                             TextAlignment="Center"
+                                             TextTrimming="CharacterEllipsis"
+                                             TextWrapping="NoWrap"
+                                             Padding="0"
+                                             Margin="0"
+                                             FontFamily="Segoe UI Emoji"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
@@ -210,6 +224,8 @@
                                              HorizontalAlignment="Left"
                                              TextAlignment="Left"
                                              TextWrapping="NoWrap"
+                                             Padding="0"
+                                             Margin="0"
                                              FontFamily="Segoe UI Emoji"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
