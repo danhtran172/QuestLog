@@ -80,15 +80,14 @@
                 </GridViewColumn>
 
 
-                <GridViewColumn Width="140">
+                <GridViewColumn Width="142">
                     <GridViewColumn.Header>
                         <TextBlock Text="{DynamicResource Image}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <Border Height="65"
-                                    CornerRadius="4"
-                                    HorizontalAlignment="Stretch">
+                            <Border Width="140" Height="65" CornerRadius="4"
+                                    HorizontalAlignment="Left">
                                 <Border.Background>
                                     <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
                                                 Stretch="UniformToFill"
