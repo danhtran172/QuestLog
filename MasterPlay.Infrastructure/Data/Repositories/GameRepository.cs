@@ -27,6 +27,7 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
             .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
             .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
             .Include(g => g.GamePosition)
+            .Include(g => g.OwnershipInfo)
             .ToList();
     }
 
@@ -45,6 +46,7 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
             .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
             .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
             .Include(g => g.GamePosition)
+            .Include(g => g.OwnershipInfo)
             .FirstOrDefault(g => g.Id == id)!;
     }
     public void UpdateWithDetails(Game game)
@@ -53,6 +55,7 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
             .Include(g => g.GameGenres)
             .Include(g => g.GameThemes)
             .Include(g => g.GamePosition)
+            .Include(g => g.OwnershipInfo)
             .FirstOrDefault(g => g.Id == game.Id);
 
         if (existing == null) throw new Exception("Game not found");
@@ -60,6 +63,20 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
         _context.Entry(existing).CurrentValues.SetValues(game);
 
         existing.SeriesId = game.SeriesId;
+
+        if (game.OwnershipInfo == null)
+        {
+            if (existing.OwnershipInfo != null)
+                _context.Remove(existing.OwnershipInfo);
+        }
+        else if (existing.OwnershipInfo == null)
+        {
+            existing.OwnershipInfo = game.OwnershipInfo;
+        }
+        else
+        {
+            _context.Entry(existing.OwnershipInfo).CurrentValues.SetValues(game.OwnershipInfo);
+        }
 
         existing.GameGenres.Clear();
         foreach (var gg in game.GameGenres)

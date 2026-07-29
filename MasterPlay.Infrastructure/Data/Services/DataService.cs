@@ -42,6 +42,21 @@ namespace MasterPlay.Infrastructure.Data.Services
                     context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=10000;");
                     context.Database.ExecuteSqlRaw(
                         """
+                        CREATE TABLE IF NOT EXISTS GameOwnershipInfo (
+                            GameId TEXT NOT NULL CONSTRAINT PK_GameOwnershipInfo PRIMARY KEY,
+                            SteamAccount TEXT NULL,
+                            SteamPassword TEXT NULL,
+                            UbisoftAccount TEXT NULL,
+                            UbisoftPassword TEXT NULL,
+                            SupportDocumentUrl TEXT NULL,
+                            DownloadUrl TEXT NULL,
+                            Note TEXT NULL,
+                            CONSTRAINT FK_GameOwnershipInfo_Games_GameId
+                                FOREIGN KEY (GameId) REFERENCES Games (Id) ON DELETE CASCADE
+                        );
+                        """);
+                    context.Database.ExecuteSqlRaw(
+                        """
                         INSERT OR IGNORE INTO OwnershipStatus (Id, Name, SortOrder, ColorCode)
                         VALUES (6, 'Steam Off', 2, '#66C0F4');
                         UPDATE OwnershipStatus

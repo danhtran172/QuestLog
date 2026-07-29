@@ -58,6 +58,8 @@ public partial class Game
 
     public virtual GamePosition? GamePosition { get; set; }
 
+    public virtual GameOwnershipInfo? OwnershipInfo { get; set; }
+
     public virtual OwnershipStatus? Ownership { get; set; }
 
     public virtual ProgressStatus? Progress { get; set; }

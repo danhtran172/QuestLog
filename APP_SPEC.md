@@ -206,6 +206,7 @@ Các trường config:
 | Đánh giá | Score, MetaScore, Excited, AvgPlayTime |
 | Phân loại | OwnershipId, ProgressId |
 | Quan hệ | Series, Genres, Themes, GamePosition |
+| Thông tin sở hữu đặc biệt | GameOwnershipInfo: Steam/Ubisoft account, support document, download URL, note |
 
 ### 5.2. Danh mục
 
@@ -465,7 +466,20 @@ Tính năng:
 - Gallery path/URL.
 - SlugName được quản lý nội bộ.
 
-### 7.3. Metadata
+### 7.3. Thông tin Steam Off và Pirate
+
+- Steam Off có Steam account, password, link tài liệu hỗ trợ và note.
+- Khi Publisher hoặc Developer là Ubisoft, form Edit hiện thêm Ubisoft Connect account và password.
+- Pirate có download link và note.
+- Dữ liệu được lưu trong bảng `GameOwnershipInfo` quan hệ 1-1 với game.
+- Database cũ tự tạo bảng mới khi app khởi động, không cần xóa hoặc tạo lại database.
+- Chế độ View có nút Info cạnh Ownership để toggle khung thông tin.
+- Ubisoft account tự ẩn khi không có dữ liệu.
+- Có nút copy riêng cho account và password.
+- More info và Download page mở URL bằng ứng dụng mặc định của Windows.
+- Link không hợp lệ, Clipboard không khả dụng và lỗi mở link đều có thông báo theo ngôn ngữ hiện tại.
+
+### 7.4. Metadata
 
 - Đồng bộ metadata từ RAWG.
 - Chuẩn hóa tên.
@@ -479,7 +493,7 @@ Tính năng:
 - Đồng bộ gallery riêng.
 - Refresh preview ảnh từ local path hoặc URL.
 
-### 7.4. Ảnh
+### 7.5. Ảnh
 
 - Chấp nhận nguồn ảnh local hoặc URL.
 - Khi lưu, ảnh chưa nằm trên Cloudinary được thử upload.
@@ -489,7 +503,7 @@ Tính năng:
 - Lỗi upload không chặn việc lưu game.
 - Có khả năng xóa ảnh Cloudinary theo GameId ở tầng service.
 
-### 7.5. Series, Genre và Theme
+### 7.6. Series, Genre và Theme
 
 - Chọn một Series.
 - Chọn nhiều Genres.
@@ -503,7 +517,7 @@ Tính năng:
 - Khi xóa danh mục, association với game được xử lý lại.
 - Popup quản lý có lớp phủ và hỗ trợ Esc.
 
-### 7.6. Folder và backup metadata
+### 7.7. Folder và backup metadata
 
 - Chọn Save folder.
 - Chọn Backup folder.
@@ -516,7 +530,7 @@ Tính năng:
 - Đổi tên backup folder khi tên game thay đổi.
 - Khi thêm game mới, tự tạo backup folder nếu có thể.
 
-### 7.7. Playtime và tra cứu ngoài
+### 7.8. Playtime và tra cứu ngoài
 
 - Tăng playtime bằng số phút dương do người dùng nhập.
 - Giảm playtime bằng số phút dương do người dùng nhập.
@@ -524,7 +538,7 @@ Tính năng:
 - Mở trang Metacritic theo slug để kiểm tra MetaScore.
 - Infrastructure có hàm scraper HowLongToBeat trả về Main + Extras.
 
-### 7.8. Progress và điểm
+### 7.9. Progress và điểm
 
 - Thay đổi progress.
 - Khi progress đổi, cập nhật vị trí queue tương ứng.
@@ -537,7 +551,7 @@ Tính năng:
   - Ghi năm hoàn thành hiện tại.
   - Lưu game.
 
-### 7.9. Disable game
+### 7.10. Disable game
 
 - Xác nhận trước khi thực hiện.
 - Soft delete bằng `IsDisabled`.

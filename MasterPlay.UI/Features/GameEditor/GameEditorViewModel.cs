@@ -54,10 +54,12 @@ namespace MasterPlay.UI.Features.GameEditor
         private string name = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasUbisoftPublisher))]
         [NotifyPropertyChangedFor(nameof(DisplayPublisher))]
         private string publisher = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasUbisoftPublisher))]
         [NotifyPropertyChangedFor(nameof(DisplayDeveloper))]
         private string developer = string.Empty;
 
@@ -135,6 +137,36 @@ namespace MasterPlay.UI.Features.GameEditor
         [ObservableProperty]
         private string statusMessage = string.Empty;
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasSteamAccountData))]
+        private string steamAccount = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasSteamAccountData))]
+        private string steamPassword = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasUbisoftAccountData))]
+        private string ubisoftAccount = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasUbisoftAccountData))]
+        private string ubisoftPassword = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasSupportDocument))]
+        private string supportDocumentUrl = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasDownloadLink))]
+        private string downloadUrl = string.Empty;
+
+        [ObservableProperty]
+        private string ownershipNote = string.Empty;
+
+        [ObservableProperty]
+        private bool isOwnershipInfoVisible;
+
 
         [ObservableProperty]
         private ObservableCollection<Series> allSeries = new();
@@ -163,6 +195,9 @@ namespace MasterPlay.UI.Features.GameEditor
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayOwnership))]
+        [NotifyPropertyChangedFor(nameof(IsSteamOffOwnership))]
+        [NotifyPropertyChangedFor(nameof(IsPiratedOwnership))]
+        [NotifyPropertyChangedFor(nameof(HasSpecialOwnership))]
         private OwnershipStatus? selectedOwnership;
 
         [ObservableProperty]
@@ -333,6 +368,20 @@ namespace MasterPlay.UI.Features.GameEditor
 
         public bool HasSlugName => !string.IsNullOrWhiteSpace(SlugName);
         public bool HasInitExeNameForView => !string.IsNullOrWhiteSpace(InitExeName);
+        public bool IsSteamOffOwnership => SelectedOwnership?.Id == 6;
+        public bool IsPiratedOwnership => SelectedOwnership?.Id == 2;
+        public bool HasSpecialOwnership => IsSteamOffOwnership || IsPiratedOwnership;
+        public bool HasUbisoftPublisher =>
+            Publisher.Contains("Ubisoft", StringComparison.OrdinalIgnoreCase) ||
+            Developer.Contains("Ubisoft", StringComparison.OrdinalIgnoreCase);
+        public bool HasSteamAccountData =>
+            !string.IsNullOrWhiteSpace(SteamAccount) ||
+            !string.IsNullOrWhiteSpace(SteamPassword);
+        public bool HasUbisoftAccountData =>
+            !string.IsNullOrWhiteSpace(UbisoftAccount) ||
+            !string.IsNullOrWhiteSpace(UbisoftPassword);
+        public bool HasSupportDocument => !string.IsNullOrWhiteSpace(SupportDocumentUrl);
+        public bool HasDownloadLink => !string.IsNullOrWhiteSpace(DownloadUrl);
 
 
 
@@ -344,6 +393,50 @@ namespace MasterPlay.UI.Features.GameEditor
                 LoadGameData();
             ReloadGameFromConfig();
             if (IsReadOnly) StatusMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        private void ToggleOwnershipInfo()
+        {
+            if (HasSpecialOwnership)
+                IsOwnershipInfoVisible = !IsOwnershipInfoVisible;
+        }
+
+        [RelayCommand]
+        private async Task CopyOwnershipValue(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            try
+            {
+                Clipboard.SetText(value);
+                await ShowStatus(LocalizationService.Get("CopiedToClipboard"));
+            }
+            catch
+            {
+                await ShowStatus(LocalizationService.Get("ClipboardUnavailable"));
+            }
+        }
+
+        [RelayCommand]
+        private async Task OpenOwnershipLink(string? value)
+        {
+            if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                await ShowStatus(LocalizationService.Get("InvalidLink"));
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+            }
+            catch
+            {
+                await ShowStatus(LocalizationService.Get("CannotOpenLink"));
+            }
         }
 
         [RelayCommand]
@@ -553,6 +646,7 @@ namespace MasterPlay.UI.Features.GameEditor
                 Game.ImagePath = ImagePath;
                 Game.GImagePath = GImagePath;
                 Game.Score = Score;
+                Game.OwnershipInfo = CreateOwnershipInfo();
 
 
 
@@ -1185,6 +1279,45 @@ namespace MasterPlay.UI.Features.GameEditor
             SyncPublishDate(Game.PublishDate);
             UpdatePlayTimeFieldsFromSeconds();
             HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
+
+            var ownershipInfo = Game.OwnershipInfo;
+            SteamAccount = ownershipInfo?.SteamAccount ?? string.Empty;
+            SteamPassword = ownershipInfo?.SteamPassword ?? string.Empty;
+            UbisoftAccount = ownershipInfo?.UbisoftAccount ?? string.Empty;
+            UbisoftPassword = ownershipInfo?.UbisoftPassword ?? string.Empty;
+            SupportDocumentUrl = ownershipInfo?.SupportDocumentUrl ?? string.Empty;
+            DownloadUrl = ownershipInfo?.DownloadUrl ?? string.Empty;
+            OwnershipNote = ownershipInfo?.Note ?? string.Empty;
+            IsOwnershipInfoVisible = false;
+        }
+
+        private GameOwnershipInfo? CreateOwnershipInfo()
+        {
+            var values = new[]
+            {
+                SteamAccount,
+                SteamPassword,
+                UbisoftAccount,
+                UbisoftPassword,
+                SupportDocumentUrl,
+                DownloadUrl,
+                OwnershipNote
+            };
+
+            if (values.All(string.IsNullOrWhiteSpace))
+                return null;
+
+            return new GameOwnershipInfo
+            {
+                GameId = Game.Id,
+                SteamAccount = SteamAccount.Trim(),
+                SteamPassword = SteamPassword.Trim(),
+                UbisoftAccount = UbisoftAccount.Trim(),
+                UbisoftPassword = UbisoftPassword.Trim(),
+                SupportDocumentUrl = SupportDocumentUrl.Trim(),
+                DownloadUrl = DownloadUrl.Trim(),
+                Note = OwnershipNote.Trim()
+            };
         }
 
         private void UpdatePlayTimeFieldsFromSeconds()
@@ -1359,6 +1492,12 @@ namespace MasterPlay.UI.Features.GameEditor
         {
             if (!value) InitExeName = string.Empty;
             OnPropertyChanged(nameof(HasInitExeNameForView));
+        }
+
+        partial void OnSelectedOwnershipChanged(OwnershipStatus? value)
+        {
+            if (!HasSpecialOwnership)
+                IsOwnershipInfoVisible = false;
         }
 
         [ObservableProperty]

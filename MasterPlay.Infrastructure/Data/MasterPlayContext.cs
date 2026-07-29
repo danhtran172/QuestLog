@@ -14,6 +14,7 @@ namespace MasterPlay.Infrastructure.Data
         public virtual DbSet<DetectedProcess> DetectedProcesses { get; set; }
         public virtual DbSet<Game> Games { get; set; }
         public virtual DbSet<GamePosition> GamePositions { get; set; }
+        public virtual DbSet<GameOwnershipInfo> GameOwnershipInfos { get; set; }
         public virtual DbSet<Genre> Genres { get; set; }
         public virtual DbSet<OwnershipStatus> OwnershipStatuses { get; set; }
         public virtual DbSet<ProgressStatus> ProgressStatuses { get; set; }
@@ -77,6 +78,16 @@ namespace MasterPlay.Infrastructure.Data
                 entity.HasKey(e => e.GameId);
                 entity.ToTable("GamePosition");
                 entity.HasOne(d => d.Game).WithOne(p => p.GamePosition).HasForeignKey<GamePosition>(d => d.GameId);
+            });
+
+            modelBuilder.Entity<GameOwnershipInfo>(entity =>
+            {
+                entity.HasKey(e => e.GameId);
+                entity.ToTable("GameOwnershipInfo");
+                entity.HasOne(e => e.Game)
+                    .WithOne(e => e.OwnershipInfo)
+                    .HasForeignKey<GameOwnershipInfo>(e => e.GameId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Genre>(entity =>
