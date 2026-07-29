@@ -1,10 +1,8 @@
 using CommunityToolkit.Mvvm.Messaging;
-using MasterPlay.Infrastructure.FileSystem;
-using MasterPlay.Infrastructure.Data.Repositories;
 using MasterPlay.Infrastructure.Events;
 using MasterPlay.UI.Features.Queue;
+using MasterPlay.UI.Services.Runtime;
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +14,7 @@ namespace MasterPlay.UI.Features.Library
         #region Fields
 
         private readonly MainWindowViewModel _viewModel;
+        private readonly GameProcessMonitor _gameProcessMonitor;
         private bool _isInitializing;
 
         #endregion
@@ -25,6 +24,7 @@ namespace MasterPlay.UI.Features.Library
         public MainWindow()
         {
             _viewModel = new MainWindowViewModel();
+            _gameProcessMonitor = new GameProcessMonitor();
             _isInitializing = true;
 
             InitializeComponent();
@@ -32,17 +32,37 @@ namespace MasterPlay.UI.Features.Library
             DataContext = _viewModel;
             WeakReferenceMessenger.Default.Register<RefreshUIMessage>(this, (r, m) =>
             {
-                Dispatcher.Invoke(() =>
-                {
-                    _viewModel.LoadGamesData();
-                });
+                Dispatcher.Invoke(_viewModel.LoadGamesData);
             });
+            _gameProcessMonitor.RunningProcessesChanged += OnRunningProcessesChanged;
+            Loaded += OnLoaded;
+            Closed += OnClosed;
 
             _isInitializing = false;
             _viewModel.LoadGamesData();
         }
 
         #endregion
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            _gameProcessMonitor.Start();
+        }
+
+        private void OnRunningProcessesChanged(IReadOnlySet<string> runningProcessNames)
+        {
+            if (Dispatcher.HasShutdownStarted)
+                return;
+
+            Dispatcher.BeginInvoke(() => _viewModel.UpdateRunningStates(runningProcessNames));
+        }
+
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            _gameProcessMonitor.RunningProcessesChanged -= OnRunningProcessesChanged;
+            _gameProcessMonitor.Dispose();
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+        }
 
         private void SearchByComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

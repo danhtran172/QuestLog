@@ -20,6 +20,7 @@ namespace MasterPlay.UI.Features.Library
 
         private const int DefaultPageSize = 30;
         private const int MaxPageSize = int.MaxValue;
+        private static readonly TimeSpan SearchDebounceDelay = TimeSpan.FromMilliseconds(280);
 
 
         private string _searchText = string.Empty;
@@ -202,18 +203,20 @@ namespace MasterPlay.UI.Features.Library
 
         public void LoadGamesData()
         {
+            CancelPendingSearch();
             _allGamesCache = DataService.LoadGames()
                 .Where(g => !g.IsDisabled)
                 .Select(g => new GameViewModel(g))
                 .ToList();
-            ApplyFilterAndSort(resetToFirstPage: false);
+
+            if (string.IsNullOrWhiteSpace(_searchText) || IsPlayQueueMode)
+                ApplyFilterAndSort(resetToFirstPage: false);
+            else
+                ScheduleSearch(resetToFirstPage: false);
         }
 
         public void ApplyFilterAndSort(bool resetToFirstPage = true)
         {
-            if (resetToFirstPage)
-                _currentPage = 1;
-
             if (_allGamesCache.Count == 0)
             {
                 _allGamesCache = DataService.LoadGames()
@@ -222,14 +225,23 @@ namespace MasterPlay.UI.Features.Library
                     .ToList();
             }
 
-            var allData = _allGamesCache.AsQueryable();
+            ApplyFilterAndSortCore(_allGamesCache, resetToFirstPage, applySearch: true);
+        }
+
+        private void ApplyFilterAndSortCore(
+            IReadOnlyList<GameViewModel> source,
+            bool resetToFirstPage,
+            bool applySearch)
+        {
+            if (resetToFirstPage)
+                _currentPage = 1;
+
+            var allData = source.AsQueryable();
 
             allData = ApplyViewModeFilter(allData);
 
-            if (!IsPlayQueueMode)
-            {
+            if (!IsPlayQueueMode && applySearch)
                 allData = ApplySearchFilter(allData);
-            }
 
             var afterSearch = allData.AsEnumerable();
 
@@ -300,33 +312,75 @@ namespace MasterPlay.UI.Features.Library
 
         public void SetSearchText(string searchText, bool applyImmediately = true)
         {
-
             if (IsPlayQueueMode)
                 return;
 
-            SearchText = searchText ?? string.Empty;
-            if (!applyImmediately)
-                _searchCancellation?.Cancel();
+            if (applyImmediately)
+            {
+                SearchText = searchText ?? string.Empty;
+                return;
+            }
+
+            CancelPendingSearch();
+            SetProperty(ref _searchText, searchText ?? string.Empty, nameof(SearchText));
         }
 
-        private void ScheduleSearch()
+        private void ScheduleSearch(bool resetToFirstPage = true)
         {
-            _searchCancellation?.Cancel();
-            _searchCancellation?.Dispose();
+            CancelPendingSearch();
             _searchCancellation = new CancellationTokenSource();
-            _ = ApplySearchAfterDelayAsync(_searchCancellation.Token);
+            var source = _allGamesCache.ToArray();
+            var searchText = _searchText.Trim();
+            var searchBy = _searchBy;
+            _ = ApplySearchAfterDelayAsync(
+                source,
+                searchText,
+                searchBy,
+                resetToFirstPage,
+                _searchCancellation.Token);
         }
 
-        private async Task ApplySearchAfterDelayAsync(CancellationToken cancellationToken)
+        private async Task ApplySearchAfterDelayAsync(
+            IReadOnlyList<GameViewModel> source,
+            string searchText,
+            string searchBy,
+            bool resetToFirstPage,
+            CancellationToken cancellationToken)
         {
             try
             {
-                await Task.Delay(180, cancellationToken);
-                ApplyFilterAndSort(true);
+                await Task.Delay(SearchDebounceDelay, cancellationToken);
+                var matches = searchText.Length == 0
+                    ? source
+                    : await Task.Run(
+                        () => (IReadOnlyList<GameViewModel>)source
+                            .Where(game => game.MatchesSearch(searchBy, searchText))
+                            .ToList(),
+                        cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!string.Equals(searchText, _searchText.Trim(), StringComparison.Ordinal)
+                    || !string.Equals(searchBy, _searchBy, StringComparison.Ordinal))
+                    return;
+
+                ApplyFilterAndSortCore(matches, resetToFirstPage, applySearch: false);
             }
             catch (OperationCanceledException)
             {
             }
+        }
+
+        private void CancelPendingSearch()
+        {
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            _searchCancellation = null;
+        }
+
+        public void UpdateRunningStates(IReadOnlySet<string> runningProcessNames)
+        {
+            foreach (var game in _allGamesCache)
+                game.UpdateRunningState(runningProcessNames);
         }
 
         [RelayCommand]
@@ -389,7 +443,7 @@ namespace MasterPlay.UI.Features.Library
 
             SearchBy = string.IsNullOrWhiteSpace(searchBy) ? "All" : searchBy;
             if (!string.IsNullOrWhiteSpace(_searchText) && !IsPlayQueueMode)
-                ApplyFilterAndSort(true);
+                ScheduleSearch();
         }
 
         public void SetSortIndex(int sortIndex)

@@ -5,8 +5,8 @@ using MasterPlay.Infrastructure.Data.Services;
 using MasterPlay.Core.Entities;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 
 namespace MasterPlay.UI.Features.Library
@@ -41,16 +41,24 @@ namespace MasterPlay.UI.Features.Library
         [NotifyPropertyChangedFor(nameof(DisplayImagePath))]
         [NotifyPropertyChangedFor(nameof(DisplayGalleryImagePath))]
         [NotifyPropertyChangedFor(nameof(ShowFolderWarning))]
-        [NotifyPropertyChangedFor(nameof(IsGameRunning))]
         private Game _game;
 
         [ObservableProperty]
         private bool hasPlayableExe;
         [ObservableProperty]
+        private bool isGameRunning;
+        [ObservableProperty]
         private string folderWarningInfo = "";
 
-        private List<Genre> _gameGenres;
-        private List<Theme> _gameThemes;
+        private List<Genre> _gameGenres = [];
+        private List<Theme> _gameThemes = [];
+        private string _searchName = string.Empty;
+        private string _searchSeries = string.Empty;
+        private string _searchPublisher = string.Empty;
+        private string _searchDeveloper = string.Empty;
+        private string _searchAll = string.Empty;
+        private string _nameInitials = string.Empty;
+        private string _seriesInitials = string.Empty;
 
 
 
@@ -59,10 +67,6 @@ namespace MasterPlay.UI.Features.Library
         public GameViewModel(Game game)
         {
             Game = game ?? throw new ArgumentNullException(nameof(game));
-            HasPlayableExe = game.Ready;
-
-            _gameGenres = DataService.GetGameGenres(game.Id);
-            _gameThemes = DataService.GetGameThemes(game.Id);
         }
 
 
@@ -177,12 +181,6 @@ namespace MasterPlay.UI.Features.Library
 
         public bool ShowFolderWarning => CheckFolderWarning();
 
-        public bool IsGameRunning => CheckRunningGame();
-
-
-
-
-
         public string GetLaunchProcessPath()
         {
             var detectedProcesses = DataService.LoadDetectedProcesses();
@@ -259,26 +257,56 @@ namespace MasterPlay.UI.Features.Library
         }
 
 
-        private bool CheckRunningGame()
+        internal bool MatchesSearch(string searchBy, string search)
         {
-            if (!Game.Ready)
-            {
-                return false;
-            }
+            if (search.Length == 0)
+                return true;
 
-            string processName = Game.ExeName;
-            if (string.IsNullOrWhiteSpace(processName))
+            return searchBy switch
             {
-                return false;
-            }
+                "Name" => Contains(_searchName, search) || Contains(_nameInitials, search),
+                "Series" => Contains(_searchSeries, search) || Contains(_seriesInitials, search),
+                "Publisher" => Contains(_searchPublisher, search),
+                "Developer" => Contains(_searchDeveloper, search),
+                "Release" => int.TryParse(search, out var year) && Game.PublishDate?.Year == year,
+                _ => Contains(_searchAll, search) || Contains(_nameInitials, search) || Contains(_seriesInitials, search)
+            };
+        }
 
-            if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                processName = processName[..^4];
-            }
+        internal void UpdateRunningState(IReadOnlySet<string> runningProcessNames)
+        {
+            var processName = Path.GetFileNameWithoutExtension(Game.ExeName?.Trim() ?? string.Empty);
+            IsGameRunning = Game.Ready
+                && processName.Length > 0
+                && runningProcessNames.Contains(processName);
+        }
 
-            Process[] processes = Process.GetProcessesByName(processName);
-            return processes.Length > 0;
+        private void RebuildSearchIndex()
+        {
+            _searchName = Game.Name ?? string.Empty;
+            _searchSeries = Game.Series?.Name ?? string.Empty;
+            _searchPublisher = Game.Publisher ?? string.Empty;
+            _searchDeveloper = Game.Developer ?? string.Empty;
+            _nameInitials = BuildInitials(_searchName);
+            _seriesInitials = BuildInitials(_searchSeries);
+            _searchAll = string.Join(
+                '\u001F',
+                _searchName,
+                _searchSeries,
+                string.Join('\u001E', _gameGenres.Where(x => x != null).Select(x => x.Name ?? string.Empty)),
+                string.Join('\u001E', _gameThemes.Where(x => x != null).Select(x => x.Name ?? string.Empty)));
+        }
+
+        private static string BuildInitials(string value)
+        {
+            return string.Concat(
+                value.Split([' ', '-', '_', '.'], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(word => char.ToLowerInvariant(word[0])));
+        }
+
+        private static bool Contains(string value, string search)
+        {
+            return value.Contains(search, StringComparison.OrdinalIgnoreCase);
         }
 
 
@@ -293,6 +321,7 @@ namespace MasterPlay.UI.Features.Library
             {
                 _gameGenres = DataService.GetGameGenres(value.Id);
                 _gameThemes = DataService.GetGameThemes(value.Id);
+                RebuildSearchIndex();
 
                 OnPropertyChanged(nameof(DisplayGenres));
                 OnPropertyChanged(nameof(DisplayThemes));
