@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
              xmlns:dragDrop="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+             xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -14,7 +15,7 @@
         <Style TargetType="TextBlock" x:Key="QueueTextStyle">
             <Setter Property="Foreground" Value="#2C3E50"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Margin" Value="0"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
         <Style x:Key="GridViewColumnHeaderStyle" TargetType="GridViewColumnHeader">
@@ -76,14 +77,14 @@
                 </GridViewColumn>
 
 
-                <GridViewColumn Width="160">
+                <GridViewColumn Width="142">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Image}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Image}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
                             <Border Width="140" Height="65" CornerRadius="4"
-                                    HorizontalAlignment="Center">
+                                    HorizontalAlignment="Left">
                                 <Border.Background>
                                     <ImageBrush ImageSource="{Binding Game.GImagePath, Converter={StaticResource SteamImgConv}}"
                                                 Stretch="UniformToFill"
@@ -98,7 +99,7 @@
 
                 <GridViewColumn Width="180">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Name}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Name}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -111,18 +112,19 @@
                 </GridViewColumn>
 
 
-                <GridViewColumn Width="90">
+                <GridViewColumn Width="110">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Progress}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Progress}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayProgress}"
-                                       Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"
-                                       TextWrapping="NoWrap"/>
+                            <emoji:TextBlock Text="{Binding DisplayProgress}"
+                                             Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Left"
+                                             TextAlignment="Left"
+                                             TextWrapping="NoWrap"
+                                             FontFamily="Segoe UI Emoji"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
@@ -130,7 +132,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Excited}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Excited}" Foreground="#2C3E50" HorizontalAlignment="Center"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -145,7 +147,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Published}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Published}" Foreground="#2C3E50" HorizontalAlignment="Center"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -160,7 +162,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource MetaScore}" Margin="5,0" Foreground="#2C3E50" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource MetaScore}" Foreground="#2C3E50" HorizontalAlignment="Center"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -183,7 +185,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource AvgPlay}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource AvgPlay}" Foreground="#2C3E50" HorizontalAlignment="Center"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -196,18 +198,19 @@
                 </GridViewColumn>
 
 
-                <GridViewColumn Width="90">
+                <GridViewColumn Width="110">
                     <GridViewColumn.Header>
-                        <TextBlock Text="{DynamicResource Ownership}" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Ownership}" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayOwnership}"
-                                       Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"
-                                       TextWrapping="NoWrap"/>
+                            <emoji:TextBlock Text="{Binding DisplayOwnership}"
+                                             Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Left"
+                                             TextAlignment="Left"
+                                             TextWrapping="NoWrap"
+                                             FontFamily="Segoe UI Emoji"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
