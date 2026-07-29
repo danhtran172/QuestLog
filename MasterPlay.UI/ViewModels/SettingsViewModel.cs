@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MasterPlay.Core.Localization;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
 using Microsoft.Win32;
@@ -19,7 +20,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void EditLibrary()
         {
-            var dialog = new OpenFolderDialog { Title = "Select Game Library Folder" };
+            var dialog = new OpenFolderDialog { Title = LocalizationService.Get("SelectGameLibraryFolder") };
             if (dialog.ShowDialog() == true)
             {
                 Value = dialog.FolderName;
@@ -39,7 +40,10 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty] private bool isBackupReadOnly = true;
         [ObservableProperty] private bool isConfigReadOnly = true;
         [ObservableProperty] private bool isDatabaseReadOnly = true;
+        [ObservableProperty] private LanguageOption? selectedLanguage;
 
+        public IReadOnlyList<LanguageOption> AvailableLanguages => LocalizationService.Languages;
+        private string _originalLanguage = LocalizationService.CurrentLanguage;
 
         public SettingsViewModel()
         {
@@ -50,7 +54,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void EditBackup()
         {
-            var d = new OpenFolderDialog { Title = "Select Backup Root Folder" };
+            var d = new OpenFolderDialog { Title = LocalizationService.Get("SelectBackupRootFolder") };
             if (d.ShowDialog() == true) BackupRootPath = d.FolderName;
         }
 
@@ -59,8 +63,8 @@ namespace MasterPlay.UI.ViewModels
         {
             var d = new OpenFileDialog
             {
-                Title = "Select Config File",
-                Filter = "JSON files|*.json|All files|*.*"
+                Title = LocalizationService.Get("SelectConfigFile"),
+                Filter = $"{LocalizationService.Get("JsonFiles")}|*.json|{LocalizationService.Get("AllFiles")}|*.*"
             };
             if (d.ShowDialog() == true) ConfigPath = d.FileName;
         }
@@ -70,8 +74,8 @@ namespace MasterPlay.UI.ViewModels
         {
             var d = new OpenFileDialog
             {
-                Title = "Select Database File",
-                Filter = "Database files|*.db|All files|*.*"
+                Title = LocalizationService.Get("SelectDatabaseFile"),
+                Filter = $"{LocalizationService.Get("DatabaseFiles")}|*.db|{LocalizationService.Get("AllFiles")}|*.*"
             };
             if (d.ShowDialog() == true) DatabasePath = d.FileName;
         }
@@ -93,16 +97,24 @@ namespace MasterPlay.UI.ViewModels
                 config.BackupRootPath = BackupRootPath;
                 config.DatabasePath = DatabasePath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
+                config.Language = SelectedLanguage?.Code ?? "en-US";
                 JsonService.SaveConfig(config);
-                StatusMessage = "Settings saved successfully!";
+                _originalLanguage = config.Language;
+                StatusMessage = LocalizationService.Get("SettingsSaved");
                 IsBackupReadOnly = IsConfigReadOnly = IsDatabaseReadOnly = true;
                 foreach (var item in LibraryPaths) item.IsReadOnly = true;
             }
-            catch (Exception ex) { StatusMessage = "Error: " + ex.Message; }
+            catch (Exception ex) { StatusMessage = LocalizationService.Get("ErrorWithDetails", ex.Message); }
         }
 
         [RelayCommand]
-        private void Cancel() => RaiseRequestClose(false);
+        private void Cancel()
+        {
+            RestoreLanguage();
+            RaiseRequestClose(false);
+        }
+
+        public void RestoreLanguage() => LocalizationService.SetLanguage(_originalLanguage);
 
 
         private void LoadSettings()
@@ -112,11 +124,19 @@ namespace MasterPlay.UI.ViewModels
             BackupRootPath = config.BackupRootPath ?? string.Empty;
             DatabasePath = config.DatabasePath ?? string.Empty;
             ConfigPath = JsonService.GetConfigPath();
+            _originalLanguage = LocalizationService.CurrentLanguage;
+            SelectedLanguage = AvailableLanguages.First(x => x.Code == _originalLanguage);
 
             LibraryPaths = new ObservableCollection<LibraryPathItem>(
                 (config.GameLibraryPath ?? new System.Collections.Generic.List<string>())
                     .Select(path => new LibraryPathItem { Value = path, IsReadOnly = true })
             );
+        }
+
+        partial void OnSelectedLanguageChanged(LanguageOption? value)
+        {
+            if (value != null)
+                LocalizationService.SetLanguage(value.Code);
         }
     }
 }

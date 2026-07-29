@@ -1,5 +1,6 @@
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
+using MasterPlay.Core.Localization;
 using System;
 using System.Globalization;
 using System.IO;
@@ -17,7 +18,7 @@ namespace MasterPlay.UI.ViewModels.Generral
             if (string.IsNullOrWhiteSpace(game.Name))
             {
                 var original = DataService.LoadGames().FirstOrDefault(g => g.Id == game.Id);
-                game.Name = original?.Name ?? "Unknown Game";
+                game.Name = original?.Name ?? LocalizationService.Get("UnknownGame");
             }
 
             if (!string.IsNullOrWhiteSpace(game.ExeName))

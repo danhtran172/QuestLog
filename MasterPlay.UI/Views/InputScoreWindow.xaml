@@ -1,7 +1,7 @@
 <Window x:Class="MasterPlay.UI.InputScoreWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Enter Score" Height="230" Width="230"
+        Title="{DynamicResource EnterScore}" Height="230" Width="230"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="White">
     <Grid Margin="20">
@@ -12,7 +12,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Rate this Game: "
+                   Text="{DynamicResource RateThisGame}"
                    FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
         <Border Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="6">

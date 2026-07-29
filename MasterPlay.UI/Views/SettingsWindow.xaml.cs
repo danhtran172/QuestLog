@@ -16,6 +16,7 @@ namespace MasterPlay.UI
                 DialogResult = result;
                 Close();
             };
+            Closed += (_, _) => viewModel.RestoreLanguage();
         }
     }
 }

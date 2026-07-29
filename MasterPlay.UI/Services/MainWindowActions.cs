@@ -1,3 +1,4 @@
+using MasterPlay.Core.Localization;
 using MasterPlay.Helpers;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels;
@@ -14,7 +15,8 @@ public sealed class MainWindowActions : IMainWindowActions
         {
             Owner = Application.Current.MainWindow
         };
-        return window.ShowDialog() == true;
+        window.ShowDialog();
+        return true;
     }
 
     public bool ShowSettings()
@@ -23,7 +25,8 @@ public sealed class MainWindowActions : IMainWindowActions
         {
             Owner = Application.Current.MainWindow
         };
-        return window.ShowDialog() == true;
+        window.ShowDialog();
+        return true;
     }
 
     public void LaunchGame(Game game)
@@ -32,8 +35,8 @@ public sealed class MainWindowActions : IMainWindowActions
         if (string.IsNullOrWhiteSpace(processPath))
         {
             MessageBox.Show(
-                "Game executable path not found.",
-                "Notification",
+                LocalizationService.Get("GameExecutableNotFound"),
+                LocalizationService.Get("Notification"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             return;

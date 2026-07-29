@@ -49,7 +49,7 @@ namespace MasterPlay.UI
             if (_isInitializing || _viewModel == null)
                 return;
 
-            string searchBy = (SearchByComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
+            string searchBy = (SearchByComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "All";
             _viewModel.SetSearchBy(searchBy);
         }
 

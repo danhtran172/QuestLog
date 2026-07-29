@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using MasterPlay.Core.Localization;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -27,7 +28,7 @@ namespace MasterPlay.UI
             }
             else
             {
-                MessageBox.Show("Score must be 0-10 or 999.", "Invalid Score", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(LocalizationService.Get("ScoreInputRange"), LocalizationService.Get("InvalidScoreTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using MasterPlay.Core.Localization;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
@@ -89,7 +90,7 @@ namespace MasterPlay.UI.ViewModels
             Game?.PublishDate?.ToString("yyyy") ?? "--";
 
         public string DisplayPublishDate =>
-            Game?.PublishDate?.ToString("MMM dd, yyyy", CultureInfo.InvariantCulture) ?? "--";
+            Game?.PublishDate?.ToString("MMM dd, yyyy", CultureInfo.CurrentCulture) ?? "--";
 
         public string DisplayPublisher =>
             FormatText(Game?.Publisher);
@@ -122,10 +123,10 @@ namespace MasterPlay.UI.ViewModels
         }
 
         public string DisplayProgress =>
-            FormatText(Game?.Progress?.Name);
+            LocalizationService.GetDataValue(Game?.Progress?.Name);
 
         public string DisplayOwnership =>
-            FormatText(Game?.Ownership?.Name);
+            LocalizationService.GetDataValue(Game?.Ownership?.Name);
 
         public string DisplayScore => Game.Score switch
         {
@@ -244,10 +245,10 @@ namespace MasterPlay.UI.ViewModels
             if (showWarning)
             {
                 var missingItems = new System.Collections.Generic.List<string>();
-                if (saveMissing) missingItems.Add("Save Folder");
-                if (backupMissing) missingItems.Add("Backup Folder");
-                if (exeMissing) missingItems.Add("Process Name");
-                FolderWarningInfo = "Cannot Backup: " + string.Join(", ", missingItems) + " not available!";
+                if (saveMissing) missingItems.Add(LocalizationService.Get("SaveFolder"));
+                if (backupMissing) missingItems.Add(LocalizationService.Get("BackupFolder"));
+                if (exeMissing) missingItems.Add(LocalizationService.Get("ProcessName"));
+                FolderWarningInfo = LocalizationService.Get("CannotBackup", string.Join(", ", missingItems));
             }
             else
             {

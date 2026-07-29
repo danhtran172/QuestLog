@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GongSolutions.Wpf.DragDrop;
+using MasterPlay.Core.Localization;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
@@ -64,6 +65,7 @@ namespace MasterPlay.UI.ViewModels
 
             ApplyFilterCommand = new RelayCommand(ApplyFilter);
             ClearFilterCommand = new RelayCommand(ClearFilter);
+            LocalizationService.LanguageChanged += OnLanguageChanged;
         }
 
 
@@ -164,18 +166,18 @@ namespace MasterPlay.UI.ViewModels
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalItems / (double)_pageSize));
         public bool CanGoPrev => _currentPage > 1;
         public bool CanGoNext => _currentPage < TotalPages;
-        public string PageInfoText => $"Page {CurrentPage} / {TotalPages}";
+        public string PageInfoText => LocalizationService.Get("PageInfo", CurrentPage, TotalPages);
 
         public string PaginationSummaryText
         {
             get
             {
                 if (_totalItems <= 0)
-                    return "Showing 0 items";
+                    return LocalizationService.Get("ShowingNoItems");
 
                 int start = ((_currentPage - 1) * _pageSize) + 1;
                 int end = Math.Min(_currentPage * _pageSize, _totalItems);
-                return $"Showing {start}-{end} of {_totalItems}";
+                return LocalizationService.Get("ShowingItems", start, end, _totalItems);
             }
         }
 
@@ -838,6 +840,12 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(TotalPages));
             OnPropertyChanged(nameof(CanGoPrev));
             OnPropertyChanged(nameof(CanGoNext));
+            OnPropertyChanged(nameof(PageInfoText));
+            OnPropertyChanged(nameof(PaginationSummaryText));
+        }
+
+        private void OnLanguageChanged(object? sender, EventArgs e)
+        {
             OnPropertyChanged(nameof(PageInfoText));
             OnPropertyChanged(nameof(PaginationSummaryText));
         }

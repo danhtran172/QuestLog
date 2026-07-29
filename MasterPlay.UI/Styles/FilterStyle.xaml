@@ -173,8 +173,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Filter" FontSize="18" FontWeight="SemiBold" Foreground="#A1BC98"/>
-                            <CheckBox Grid.Column="1" Content="Reverse filter" Style="{StaticResource FilterCheckBoxStyle}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="0" Text="{DynamicResource Filter}" FontSize="18" FontWeight="SemiBold" Foreground="#A1BC98"/>
+                            <CheckBox Grid.Column="1" Content="{DynamicResource ReverseFilter}" Style="{StaticResource FilterCheckBoxStyle}" VerticalAlignment="Center"/>
                         </Grid>
 
 
@@ -194,7 +194,7 @@
                                         <ColumnDefinition Width="55"/>
                                         <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Finish:" VerticalAlignment="Center" FontSize="12"/>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource FinishedYear}" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1"
                                                   Style="{StaticResource FilterComboBoxStyle}"
                                                   Margin="0,0,3,0"
@@ -217,7 +217,7 @@
                                         <ColumnDefinition Width="55"/>
                                         <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Excited:" VerticalAlignment="Center" FontSize="12"/>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource ExcitedLabel}" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1"
                                                   Style="{StaticResource FilterComboBoxStyle}"
                                                   Margin="0,0,3,0"
@@ -244,7 +244,7 @@
                                         <ColumnDefinition Width="55"/>
                                         <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Score:" VerticalAlignment="Center" FontSize="12"/>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource ScoreLabel}" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1"
                                                   Style="{StaticResource FilterComboBoxStyle}"
                                                   Margin="0,0,3,0"
@@ -267,7 +267,7 @@
                                         <ColumnDefinition Width="55"/>
                                         <ColumnDefinition Width="60"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="PlayTime:" VerticalAlignment="Center" FontSize="12"/>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource PlayTime}" VerticalAlignment="Center" FontSize="12"/>
                                     <ComboBox Grid.Column="1"
                                                   Style="{StaticResource FilterComboBoxStyle}"
                                                   Margin="0,0,3,0"
@@ -297,55 +297,55 @@
 
 
                             <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Text="Avg Play" Style="{StaticResource FilterColumnHeaderStyle}"/>
-                                <CheckBox Content="Very Long" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Long" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Medium" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Short" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Very Short" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <TextBlock Text="{DynamicResource AvgPlay}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="{DynamicResource VeryLong}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Long}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Medium}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Short}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource VeryShort}" Style="{StaticResource FilterCheckBoxStyle}"/>
                             </StackPanel>
 
 
                             <StackPanel Grid.Column="1" Margin="8,0">
-                                <TextBlock Text="Progress" Style="{StaticResource FilterColumnHeaderStyle}"/>
-                                <CheckBox Content="NextPlay" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Done" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Playing" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Intended" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Pending" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <TextBlock Text="{DynamicResource Progress}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="{DynamicResource NextPlay}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Done}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Playing}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Intended}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Pending}" Style="{StaticResource FilterCheckBoxStyle}"/>
                             </StackPanel>
 
 
                             <StackPanel Grid.Column="2" Margin="8,0">
-                                <TextBlock Text="Ownership" Style="{StaticResource FilterColumnHeaderStyle}"/>
-                                <CheckBox Content="Ready" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Painted" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="GamePass" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="PlayStation" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Not Owned" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <TextBlock Text="{DynamicResource Ownership}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="{DynamicResource Ready}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Pirated}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource GamePass}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource PsRequired}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource NotOwned}" Style="{StaticResource FilterCheckBoxStyle}"/>
                             </StackPanel>
 
 
                             <StackPanel Grid.Column="3" Margin="8,0,0,0">
-                                <TextBlock Text="MetaScore" Style="{StaticResource FilterColumnHeaderStyle}"/>
-                                <CheckBox Content="Very High" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="High" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Medium" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Low" Style="{StaticResource FilterCheckBoxStyle}"/>
-                                <CheckBox Content="Very Low" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <TextBlock Text="{DynamicResource MetaScore}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                                <CheckBox Content="{DynamicResource VeryHigh}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource High}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Medium}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource Low}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                                <CheckBox Content="{DynamicResource VeryLow}" Style="{StaticResource FilterCheckBoxStyle}"/>
                             </StackPanel>
                         </Grid>
 
 
                         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
 
-                            <Button Content="Clear Filter" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ClearFilterCommand}"/>
+                            <Button Content="{DynamicResource Clear}" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ClearFilterCommand}"/>
 
 
-                            <Button Content="Apply" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ApplyFilterCommand}"/>
+                            <Button Content="{DynamicResource Apply}" Width="100" Height="32" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,8,0" Command="{Binding ApplyFilterCommand}"/>
 
 
-                            <Button Width="32" Height="32" Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" ToolTip="Cancel">
+                            <Button Width="32" Height="32" Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" ToolTip="{DynamicResource Cancel}">
                                 <Image Source="/Assets/Back3.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Button>
                         </StackPanel>

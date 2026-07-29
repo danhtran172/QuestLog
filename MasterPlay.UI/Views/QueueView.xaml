@@ -78,7 +78,7 @@
 
                 <GridViewColumn Width="160">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Image" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Image}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -98,7 +98,7 @@
 
                 <GridViewColumn Width="180">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Name" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Name}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -113,7 +113,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Progress" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Progress}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -130,7 +130,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Excited" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Excited}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -145,7 +145,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Published" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Published}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -160,7 +160,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="MetaScore" Margin="5,0" Foreground="#2C3E50" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource MetaScore}" Margin="5,0" Foreground="#2C3E50" HorizontalAlignment="Center"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -183,7 +183,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Avg Play" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource AvgPlay}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
@@ -198,7 +198,7 @@
 
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
-                        <TextBlock Text="Ownership" Margin="5,0" Foreground="#2C3E50"/>
+                        <TextBlock Text="{DynamicResource Ownership}" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>

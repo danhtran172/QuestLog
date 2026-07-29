@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MasterPlay.Core.Localization;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
@@ -40,7 +41,7 @@ namespace MasterPlay.UI.ViewModels
         public bool IsExisting => !IsNew;
         public bool CanDelete => IsExisting && !IsReadOnly;
         public bool CanFinish => IsExisting && IsReadOnly;
-        public string EditorTitle => IsNew ? "Add Game" : "Game Details";
+        public string EditorTitle => LocalizationService.Get(IsNew ? "AddGame" : "GameDetails");
 
         [ObservableProperty]
         private Game game;
@@ -221,9 +222,9 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string editThemeName = string.Empty;
 
-        public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : $"Create \"{SeriesSearchText}\"";
-        public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
-        public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
+        public string CreateNewSeriesText => string.IsNullOrWhiteSpace(SeriesSearchText) ? "" : LocalizationService.Get("CreateItem", SeriesSearchText);
+        public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : LocalizationService.Get("CreateItem", GenresSearchText);
+        public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : LocalizationService.Get("CreateItem", ThemesSearchText);
 
 
         public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "--" : Name;
@@ -286,12 +287,12 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                await ShowStatus("Game name is empty. Please enter a name first.");
+                await ShowStatus(LocalizationService.Get("GameNameEmptyFirst"));
                 return;
             }
 
             IsBusy = true;
-            await ShowStatus("Syncing...", 0);
+            await ShowStatus(LocalizationService.Get("Syncing"), 0);
 
             try
             {
@@ -308,16 +309,16 @@ namespace MasterPlay.UI.ViewModels
 
                     SyncPublishDate(ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate));
 
-                    await ShowStatus("Sync Successful!");
+                    await ShowStatus(LocalizationService.Get("SyncSuccessful"));
                 }
                 else
                 {
-                    await ShowStatus($"Cannot find game info for '{Name}'");
+                    await ShowStatus(LocalizationService.Get("CannotFindGameInfo", Name));
                 }
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Sync Error: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("SyncError", ex.Message));
                 Debug.WriteLine($"Sync error: {ex}");
             }
             finally
@@ -331,7 +332,7 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                await ShowStatus("Game name is empty.");
+                await ShowStatus(LocalizationService.Get("GameNameEmpty"));
                 return;
             }
 
@@ -343,16 +344,16 @@ namespace MasterPlay.UI.ViewModels
                 {
                     ImagePath = metadata.Background_Image;
                     SyncImageCommand.Execute(null);
-                    await ShowStatus("Cover image updated!");
+                    await ShowStatus(LocalizationService.Get("CoverUpdated"));
                 }
                 else
                 {
-                    await ShowStatus("No cover image found.");
+                    await ShowStatus(LocalizationService.Get("CoverNotFound"));
                 }
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Error: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
             }
             finally
             {
@@ -365,7 +366,7 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                await ShowStatus("Game name is empty.");
+                await ShowStatus(LocalizationService.Get("GameNameEmpty"));
                 return;
             }
 
@@ -376,16 +377,16 @@ namespace MasterPlay.UI.ViewModels
                 if (!string.IsNullOrWhiteSpace(galleryUrl))
                 {
                     GImagePath = galleryUrl;
-                    await ShowStatus("Gallery image updated!");
+                    await ShowStatus(LocalizationService.Get("GalleryUpdated"));
                 }
                 else
                 {
-                    await ShowStatus("No gallery image found.");
+                    await ShowStatus(LocalizationService.Get("GalleryNotFound"));
                 }
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Error: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
             }
             finally
             {
@@ -404,7 +405,7 @@ namespace MasterPlay.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                await ShowStatus("Game name is empty.");
+                await ShowStatus(LocalizationService.Get("GameNameEmpty"));
                 return;
             }
 
@@ -413,11 +414,11 @@ namespace MasterPlay.UI.ViewModels
             if (result)
             {
                 BackupFolderPath = Game.BackupFolderPath;
-                await ShowStatus("Backup folder created successfully!");
+                await ShowStatus(LocalizationService.Get("BackupFolderCreated"));
             }
             else
             {
-                await ShowStatus("Failed to create backup folder. Please check backup root path in settings.");
+                await ShowStatus(LocalizationService.Get("BackupFolderCreateFailed"));
             }
             IsBusy = false;
         }
@@ -433,7 +434,7 @@ namespace MasterPlay.UI.ViewModels
                 }
                 else
                 {
-                    StatusMessage = "Could not rename backup folder.";
+                    StatusMessage = LocalizationService.Get("BackupFolderRenameFailed");
                 }
             }
         }
@@ -499,7 +500,7 @@ namespace MasterPlay.UI.ViewModels
                     if (!string.IsNullOrWhiteSpace(Game.ImagePath) &&
                         !CloudinaryImageService.IsCloudinaryUrl(Game.ImagePath))
                     {
-                        await ShowStatus("Dang tai anh cover len Cloudinary...", 0);
+                        await ShowStatus(LocalizationService.Get("UploadingCover"), 0);
                         var coverUrl = await CloudinaryImageService.UploadGameImageAsync(Game.Id, Game.ImagePath, "cover");
                         if (!string.IsNullOrWhiteSpace(coverUrl))
                         {
@@ -511,7 +512,7 @@ namespace MasterPlay.UI.ViewModels
                     if (!string.IsNullOrWhiteSpace(Game.GImagePath) &&
                         !CloudinaryImageService.IsCloudinaryUrl(Game.GImagePath))
                     {
-                        await ShowStatus("Dang tai anh gallery len Cloudinary...", 0);
+                        await ShowStatus(LocalizationService.Get("UploadingGallery"), 0);
                         var galleryUrl = await CloudinaryImageService.UploadGameImageAsync(Game.Id, Game.GImagePath, "gallery");
                         if (!string.IsNullOrWhiteSpace(galleryUrl))
                         {
@@ -551,14 +552,14 @@ namespace MasterPlay.UI.ViewModels
                 IsReadOnly = true;
                 ReloadGameFromConfig();
 
-                await ShowStatus("Data Saved Successfully!");
+                await ShowStatus(LocalizationService.Get("DataSaved"));
                 if (IsNew)
                     RaiseRequestClose(true);
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Error: {ex.Message}");
-                MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
+                MessageBox.Show(StatusMessage, LocalizationService.Get("SystemError"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -585,7 +586,7 @@ namespace MasterPlay.UI.ViewModels
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Error: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
             }
         }
 
@@ -598,7 +599,7 @@ namespace MasterPlay.UI.ViewModels
                 {
                     if (newScore < 0 || newScore > 100 && newScore != 999)
                     {
-                        await ShowStatus("Score must be between 0-100 or 999 for 10🔥");
+                        await ShowStatus(LocalizationService.Get("ScoreRange"));
                         return;
                     }
 
@@ -607,16 +608,16 @@ namespace MasterPlay.UI.ViewModels
                     FinishedIn = DateTime.Now.Year.ToString();
                     await Save();
                     IsFinishPopupOpen = false;
-                    await ShowStatus($"{Name} has been finished with Score: {newScore}!");
+                    await ShowStatus(LocalizationService.Get("GameFinished", Name, newScore));
                 }
                 else
                 {
-                    await ShowStatus("Invalid score input!");
+                    await ShowStatus(LocalizationService.Get("InvalidScore"));
                 }
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Error: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
             }
         }
 
@@ -629,21 +630,21 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private async Task DeleteGame()
         {
-            var result = MessageBox.Show($"Are you sure to Disable '{Name}'?\n(Game will be hidden but data remains.)",
-                "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show(LocalizationService.Get("DisableConfirmation", Name),
+                LocalizationService.Get("Confirm"), MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
                 try
                 {
                     Game.IsDisabled = true;
                     DataService.UpdateGame(Game);
-                    await ShowStatus($"{Name} is Disabled!");
+                    await ShowStatus(LocalizationService.Get("GameDisabled", Name));
                     RaiseRequestClose(true);
                 }
                 catch (Exception ex)
                 {
-                    await ShowStatus($"Error: {ex.Message}");
-                    MessageBox.Show(StatusMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
+                    MessageBox.Show(StatusMessage, LocalizationService.Get("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -656,7 +657,7 @@ namespace MasterPlay.UI.ViewModels
         {
             var d = new Microsoft.Win32.OpenFolderDialog
             {
-                Title = "Choose Save Folder",
+                Title = LocalizationService.Get("ChooseSaveFolder"),
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (d.ShowDialog() == true)
@@ -668,7 +669,7 @@ namespace MasterPlay.UI.ViewModels
         {
             var d = new Microsoft.Win32.OpenFolderDialog
             {
-                Title = "Choose Backup Folder",
+                Title = LocalizationService.Get("ChooseBackupFolder"),
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (d.ShowDialog() == true)
@@ -676,10 +677,10 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void OpenSaveFolder() => HandleFolderOpening((SaveFolderPath, "Save Folder"));
+        private void OpenSaveFolder() => HandleFolderOpening((SaveFolderPath, LocalizationService.Get("SaveFolder")));
 
         [RelayCommand]
-        private void OpenBackupFolder() => HandleFolderOpening((BackupFolderPath, "Backup Folder"));
+        private void OpenBackupFolder() => HandleFolderOpening((BackupFolderPath, LocalizationService.Get("BackupFolder")));
 
         [RelayCommand]
         private async Task SyncImage()
@@ -687,17 +688,17 @@ namespace MasterPlay.UI.ViewModels
             if (string.IsNullOrWhiteSpace(ImagePath))
             {
                 PreviewImage = null;
-                await ShowStatus("No image URL provided.");
+                await ShowStatus(LocalizationService.Get("NoImageUrl"));
                 return;
             }
             try
             {
                 PreviewImage = LoadPreviewImage(ImagePath);
-                await ShowStatus("Image preview updated successfully.");
+                await ShowStatus(LocalizationService.Get("ImagePreviewUpdated"));
             }
             catch (Exception ex)
             {
-                await ShowStatus($"Failed to load image: {ex.Message}");
+                await ShowStatus(LocalizationService.Get("ImageLoadFailed", ex.Message));
             }
         }
 
@@ -706,12 +707,12 @@ namespace MasterPlay.UI.ViewModels
         {
             if (AdjustMinutes <= 0)
             {
-                await ShowStatus("Please enter a positive number of minutes.");
+                await ShowStatus(LocalizationService.Get("PositiveMinutes"));
                 return;
             }
             Game.TotalPlayTimeSeconds = (Game.TotalPlayTimeSeconds ?? 0) + AdjustMinutes * 60;
             UpdatePlayTimeFieldsFromSeconds();
-            await ShowStatus($"Added {AdjustMinutes} minutes to play time.");
+            await ShowStatus(LocalizationService.Get("MinutesAdded", AdjustMinutes));
             AdjustMinutes = 0;
         }
 
@@ -720,13 +721,13 @@ namespace MasterPlay.UI.ViewModels
         {
             if (AdjustMinutes <= 0)
             {
-                await ShowStatus("Please enter a positive number of minutes.");
+                await ShowStatus(LocalizationService.Get("PositiveMinutes"));
                 return;
             }
             long newSeconds = (Game.TotalPlayTimeSeconds ?? 0) - AdjustMinutes * 60;
             Game.TotalPlayTimeSeconds = newSeconds < 0 ? 0 : (int)newSeconds;
             UpdatePlayTimeFieldsFromSeconds();
-            await ShowStatus($"Subtracted {AdjustMinutes} minutes from play time.");
+            await ShowStatus(LocalizationService.Get("MinutesSubtracted", AdjustMinutes));
             AdjustMinutes = 0;
         }
 
@@ -903,7 +904,7 @@ namespace MasterPlay.UI.ViewModels
             if (EditingSeries == null) return;
             if (string.IsNullOrWhiteSpace(EditSeriesName))
             {
-                MessageBox.Show("Series name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(LocalizationService.Get("SeriesNameEmpty"), LocalizationService.Get("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -930,7 +931,7 @@ namespace MasterPlay.UI.ViewModels
             if (EditingGenre == null) return;
             if (string.IsNullOrWhiteSpace(EditGenreName))
             {
-                MessageBox.Show("Genre name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(LocalizationService.Get("GenreNameEmpty"), LocalizationService.Get("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -955,7 +956,7 @@ namespace MasterPlay.UI.ViewModels
             if (EditingTheme == null) return;
             if (string.IsNullOrWhiteSpace(EditThemeName))
             {
-                MessageBox.Show("Theme name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(LocalizationService.Get("ThemeNameEmpty"), LocalizationService.Get("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -978,8 +979,8 @@ namespace MasterPlay.UI.ViewModels
         private void DeleteSeries()
         {
             if (EditingSeries == null) return;
-            var result = MessageBox.Show($"Are you sure you want to delete '{EditingSeries.Name}'? This will remove all associations with games.",
-                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var result = MessageBox.Show(LocalizationService.Get("DeleteAssociationConfirmation", EditingSeries.Name),
+                                         LocalizationService.Get("ConfirmDelete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
 
             var success = DataService.DeleteSeries(EditingSeries.Id);
@@ -1002,8 +1003,8 @@ namespace MasterPlay.UI.ViewModels
         private void DeleteGenre()
         {
             if (EditingGenre == null) return;
-            var result = MessageBox.Show($"Are you sure you want to delete '{EditingGenre.Name}'? This will remove all associations with games.",
-                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var result = MessageBox.Show(LocalizationService.Get("DeleteAssociationConfirmation", EditingGenre.Name),
+                                         LocalizationService.Get("ConfirmDelete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
 
             var success = DataService.DeleteGenre(EditingGenre.Id);
@@ -1026,8 +1027,8 @@ namespace MasterPlay.UI.ViewModels
         private void DeleteTheme()
         {
             if (EditingTheme == null) return;
-            var result = MessageBox.Show($"Are you sure you want to delete '{EditingTheme.Name}'? This will remove all associations with games.",
-                                         "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var result = MessageBox.Show(LocalizationService.Get("DeleteAssociationConfirmation", EditingTheme.Name),
+                                         LocalizationService.Get("ConfirmDelete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
 
             var success = DataService.DeleteTheme(EditingTheme.Id);
@@ -1169,11 +1170,11 @@ namespace MasterPlay.UI.ViewModels
 
         private void HandleFolderOpening(params (string? Path, string Desc)[] locations)
         {
-            if (!FileHelper.TryOpenLocations(out var errors, locations))
+            if (!FileHelper.TryOpenLocations(out _, locations))
             {
                 MessageBox.Show(
-                    "Cannot Open Folder:\n" + string.Join("\n", errors),
-                    "Access Error",
+                    LocalizationService.Get("FolderUnavailable"),
+                    LocalizationService.Get("AccessError"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }

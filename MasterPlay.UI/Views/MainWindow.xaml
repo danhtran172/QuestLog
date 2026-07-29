@@ -84,7 +84,7 @@
                                         <ItemsPresenter SnapsToDevicePixels="True"/>
 
                                         <CheckBox x:Name="ReverseCheckBox"
-                                          Content="Reverse"
+                                          Content="{DynamicResource Reverse}"
                                           Margin="8,4,8,8"
                                           IsChecked="{Binding DataContext.IsReverseSort, RelativeSource={RelativeSource AncestorType=Window}}"
                                           VerticalAlignment="Center"
@@ -125,7 +125,7 @@
                     <StackPanel Orientation="Horizontal"
                                 VerticalAlignment="Bottom"
                                 HorizontalAlignment="Left">
-                        <Button Content="Default" Command="{Binding ShowAllCommand}" MinWidth="70">
+                        <Button Content="{DynamicResource Default}" Command="{Binding ShowAllCommand}" MinWidth="70">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
                                     <Style.Triggers>
@@ -139,7 +139,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="Planing" Command="{Binding ShowPlanningCommand}" MinWidth="70">
+                        <Button Content="{DynamicResource Planning}" Command="{Binding ShowPlanningCommand}" MinWidth="70">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
                                     <Style.Triggers>
@@ -153,7 +153,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="Finished" Command="{Binding ShowFinishedCommand}" MinWidth="70">
+                        <Button Content="{DynamicResource Finished}" Command="{Binding ShowFinishedCommand}" MinWidth="70">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
                                     <Style.Triggers>
@@ -167,7 +167,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="PlayQueue" Command="{Binding ShowPlayQueueCommand}" MinWidth="70">
+                        <Button Content="{DynamicResource PlayQueue}" Command="{Binding ShowPlayQueueCommand}" MinWidth="70">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource TabButtonStyle}">
                                     <Style.Triggers>
@@ -208,12 +208,12 @@
                                           HorizontalContentAlignment="Center"
                                           Padding="0"
                                           SelectionChanged="SearchByComboBox_SelectionChanged">
-                                    <ComboBoxItem Content="All"/>
-                                    <ComboBoxItem Content="Name"/>
-                                    <ComboBoxItem Content="Series"/>
-                                    <ComboBoxItem Content="Publisher"/>
-                                    <ComboBoxItem Content="Developer"/>
-                                    <ComboBoxItem Content="Release"/>
+                                    <ComboBoxItem Content="{DynamicResource All}" Tag="All"/>
+                                    <ComboBoxItem Content="{DynamicResource Name}" Tag="Name"/>
+                                    <ComboBoxItem Content="{DynamicResource Series}" Tag="Series"/>
+                                    <ComboBoxItem Content="{DynamicResource Publisher}" Tag="Publisher"/>
+                                    <ComboBoxItem Content="{DynamicResource Developer}" Tag="Developer"/>
+                                    <ComboBoxItem Content="{DynamicResource Release}" Tag="Release"/>
                                 </ComboBox>
                             </Border>
                         </Grid>
@@ -228,17 +228,17 @@
                               SelectedIndex="0"
                               Margin="10,0,5,0"
                               Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
-                        <ComboBoxItem Content="Default"/>
-                        <ComboBoxItem Content="Status"/>
-                        <ComboBoxItem Content="Name"/>
-                        <ComboBoxItem Content="Playtime"/>
-                        <ComboBoxItem Content="Publish"/>
-                        <ComboBoxItem Content="MetaScore"/>
-                        <ComboBoxItem Content="Excited"/>
-                        <ComboBoxItem Content="Score"/>
-                        <ComboBoxItem Content="Ownership"/>
-                        <ComboBoxItem Content="Progress"/>
-                        <ComboBoxItem Content="AvgPlaytime"/>
+                        <ComboBoxItem Content="{DynamicResource Default}"/>
+                        <ComboBoxItem Content="{DynamicResource Status}"/>
+                        <ComboBoxItem Content="{DynamicResource Name}"/>
+                        <ComboBoxItem Content="{DynamicResource PlayTime}"/>
+                        <ComboBoxItem Content="{DynamicResource Publish}"/>
+                        <ComboBoxItem Content="{DynamicResource MetaScore}"/>
+                        <ComboBoxItem Content="{DynamicResource Excited}"/>
+                        <ComboBoxItem Content="{DynamicResource Score}"/>
+                        <ComboBoxItem Content="{DynamicResource Ownership}"/>
+                        <ComboBoxItem Content="{DynamicResource Progress}"/>
+                        <ComboBoxItem Content="{DynamicResource AvgPlaytime}"/>
                     </ComboBox>
 
                     <ToggleButton x:Name="FilterToggleButton"
@@ -353,10 +353,10 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublishedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
@@ -370,7 +370,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublisherLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -380,7 +380,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PlaytimeLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -402,7 +402,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -423,7 +423,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource DeveloperLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -444,7 +444,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublisherLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -465,7 +465,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PlaytimeLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -486,7 +486,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -507,7 +507,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -528,7 +528,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -549,7 +549,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource AvgPlayLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -559,7 +559,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Progress:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ProgressLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
                                             </StackPanel>
@@ -573,10 +573,10 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublishedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
@@ -590,7 +590,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -600,7 +600,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource AvgPlayLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -610,7 +610,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -632,7 +632,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -653,7 +653,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource DeveloperLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -674,7 +674,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublisherLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -695,7 +695,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PlaytimeLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -716,7 +716,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -737,7 +737,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource AvgPlayLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -747,7 +747,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Progress:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ProgressLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
                                             </StackPanel>
@@ -761,10 +761,10 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Score:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="MetaScore: " FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
@@ -778,7 +778,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Finished In:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource FinishedInLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -788,7 +788,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Playtime:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PlaytimeLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -798,7 +798,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Avg Play:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource AvgPlayLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -820,7 +820,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Series:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -841,7 +841,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Developer:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource DeveloperLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Game.Developer}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -862,7 +862,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Publisher:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublisherLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
@@ -883,7 +883,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Excited:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -904,7 +904,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Ownership:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
                                                 </Grid>
 
@@ -914,7 +914,7 @@
                                                         <ColumnDefinition Width="70"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Published:" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{DynamicResource PublishedLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublishYear}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
                                             </StackPanel>
@@ -1000,7 +1000,7 @@
                     Visibility="{Binding IsPlayQueueMode, Converter={StaticResource InverseBoolToVis}}">
                     <Button x:Name="PrevPageButton"
                     Style="{StaticResource PaginationButtonStyle}"
-                    Content="‹ Prev"
+                    Content="{DynamicResource Previous}"
                     Click="PrevPageButton_Click"
                     IsEnabled="{Binding CanGoPrev}"/>
                     <TextBlock x:Name="PageInfoTextBlock"
@@ -1012,7 +1012,7 @@
                        Foreground="#555555"/>
                     <Button x:Name="NextPageButton"
                     Style="{StaticResource PaginationButtonStyle}"
-                    Content="Next ›"
+                    Content="{DynamicResource Next}"
                     Click="NextPageButton_Click"
                     IsEnabled="{Binding CanGoNext}"/>
                 </StackPanel>

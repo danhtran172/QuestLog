@@ -1,5 +1,6 @@
 using MasterPlay.UI.ViewModels;
 using MasterPlay.UI.Views;
+using MasterPlay.Core.Localization;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -84,7 +85,7 @@ namespace MasterPlay.UI.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error opening edit window: {ex.Message}", "Notification");
+                MessageBox.Show(LocalizationService.Get("ErrorOpeningEditor", ex.Message), LocalizationService.Get("Notification"));
             }
         }
     }

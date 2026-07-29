@@ -63,7 +63,7 @@
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Visibility="{Binding HasScore, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Score"
+                            <TextBlock Text="{DynamicResource Score}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
@@ -79,7 +79,7 @@
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center">
-                            <TextBlock Text="Playtime"
+                            <TextBlock Text="{DynamicResource PlayTime}"
                                        Style="{StaticResource FieldLabelStyle}"
                                        VerticalAlignment="Center"
                                        Margin="0,1,0,0"/>
@@ -115,7 +115,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource PublishedDate}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublishDate}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
 
@@ -124,7 +124,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Publisher}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPublisher}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
 
@@ -133,7 +133,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Developer}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayDeveloper}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
 
@@ -142,7 +142,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Series}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
 
@@ -151,7 +151,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Genre}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayGenres}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI Emoji"/>
                                 </Grid>
 
@@ -160,7 +160,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Theme}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayThemes}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI Emoji"/>
                                 </Grid>
                             </StackPanel>
@@ -181,10 +181,10 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                        <TextBlock Text="{DynamicResource MetaScore}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                         <Button Style="{StaticResource IconButtonStyle}"
                                                 Command="{Binding CheckMetaScoreCommand}"
-                                                ToolTip="Check MetaScore"
+                                                ToolTip="{DynamicResource CheckMetaScore}"
                                                 Width="12"
                                                 Height="12"
                                                 Margin="2,-2,0,0"
@@ -220,10 +220,10 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                        <TextBlock Text="{DynamicResource AvgPlaytime}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                         <Button Style="{StaticResource IconButtonStyle}"
                                                 Command="{Binding CheckPlayTimeCommand}"
-                                                ToolTip="Check Playtime"
+                                                ToolTip="{DynamicResource CheckPlaytime}"
                                                 Width="12"
                                                 Height="12"
                                                 Margin="2,-2,0,0"
@@ -248,7 +248,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Excited}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}"
                                                Style="{StaticResource ValueTextStyle}"
                                                FontWeight="Normal"
@@ -263,7 +263,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Ownership}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <emoji:TextBlock Grid.Column="1"
                                                Text="{Binding DisplayOwnership}"
                                                Foreground="{Binding SelectedOwnership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}"
@@ -280,7 +280,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Play Progress" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource PlayProgress}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <emoji:TextBlock Grid.Column="1"
                                                Text="{Binding DisplayProgress}"
                                                Foreground="{Binding SelectedProgress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}"
@@ -297,7 +297,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource FinishedIn}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 </Grid>
                             </StackPanel>
@@ -313,7 +313,7 @@
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Text="{DynamicResource ProcessName}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                             </Grid>
 
@@ -324,7 +324,7 @@
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Launch Game Process" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Text="{DynamicResource LaunchGameProcess}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayInitProcessName}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                             </Grid>
 
@@ -335,7 +335,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Text="{DynamicResource SaveLocation}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplaySaveFolderPath}" Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding OpenSaveFolderCommand}"
@@ -352,7 +352,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Text="{DynamicResource BackupFolder}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
                                 <TextBlock Grid.Column="1" Text="{Binding DisplayBackupFolderPath}"
                                            Style="{StaticResource ValueTextStyle}" FontWeight="Normal" FontSize="13"
                                            TextWrapping="Wrap" VerticalAlignment="Top"/>
@@ -380,11 +380,11 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Game Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{DynamicResource GameName}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Margin="10,0,0,0"
                                         Background="#6FA4AF" Command="{Binding SyncCommand}"
-                                        ToolTip="Sync Game Data">
+                                        ToolTip="{DynamicResource SyncGameData}">
                                     <Image Source="/Assets/Clound Sync.png" Width="18" Height="18"
                                            RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
@@ -396,7 +396,7 @@
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Score" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{DynamicResource Score}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBox Width="80" HorizontalContentAlignment="Center"
                                              Text="{Binding Score, TargetNullValue='', UpdateSourceTrigger=LostFocus}"
@@ -410,7 +410,7 @@
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Play Time" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{DynamicResource PlayTime}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
                                         <TextBox Width="60" HorizontalContentAlignment="Center" Text="{Binding PlayTimeHours, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
@@ -422,13 +422,13 @@
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="0,0,4,0"
-                                                Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="Subtract minutes"
+                                                Command="{Binding AdjustPlayTimeDownCommand}" ToolTip="{DynamicResource SubtractMinutes}"
                                                 Width="20" Height="20">
                                             <Image Source="/Assets/Minus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
                                         <TextBox Width="55" Text="{Binding AdjustMinutes, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" Height="28" Padding="8,4"/>
                                         <Button Style="{StaticResource IconButtonStyle}" Background="#F0EEED" Margin="4,0,0,0"
-                                                Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="Add minutes"
+                                                Command="{Binding AdjustPlayTimeUpCommand}" ToolTip="{DynamicResource AddMinutes}"
                                                 Width="20" Height="20">
                                             <Image Source="/Assets/Plus.png" Width="10" Height="10" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Button>
@@ -454,7 +454,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Published Date" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource PublishedDate}" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding PublishDateInput, UpdateSourceTrigger=PropertyChanged}"
                                              Height="28" Padding="8,4"/>
                                 </Grid>
@@ -465,7 +465,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Publisher" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource Publisher}" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}"
                                              Height="28" Padding="8,4"/>
                                 </Grid>
@@ -476,7 +476,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Developer" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource Developer}" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding Developer, UpdateSourceTrigger=PropertyChanged}"
                                              Height="28" Padding="8,4"/>
                                 </Grid>
@@ -487,7 +487,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Series" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Series}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
                                             x:Name="SeriesButton"
@@ -591,7 +591,7 @@
                                                                             HorizontalAlignment="Right"
                                                                             Command="{Binding DataContext.OpenEditSeriesPopupCommand, ElementName=ThisWindow}"
                                                                             CommandParameter="{Binding}"
-                                                                            ToolTip="Edit series">
+                                                                            ToolTip="{DynamicResource EditSeriesTip}">
                                                                         <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                                     </Button>
                                                                 </Grid>
@@ -623,7 +623,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Genre" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Genre}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
                                             x:Name="GenresButton"
@@ -737,7 +737,7 @@
                                                                             HorizontalAlignment="Right"
                                                                             Command="{Binding DataContext.OpenEditGenrePopupCommand, ElementName=ThisWindow}"
                                                                             CommandParameter="{Binding}"
-                                                                            ToolTip="Edit genre">
+                                                                            ToolTip="{DynamicResource EditGenreTip}">
                                                                         <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                                     </Button>
                                                                 </Grid>
@@ -769,7 +769,7 @@
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Theme" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{DynamicResource Theme}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
 
                                     <Button Grid.Column="1"
                                             x:Name="ThemesButton"
@@ -883,7 +883,7 @@
                                                                             HorizontalAlignment="Right"
                                                                             Command="{Binding DataContext.OpenEditThemePopupCommand, ElementName=ThisWindow}"
                                                                             CommandParameter="{Binding}"
-                                                                            ToolTip="Edit theme">
+                                                                            ToolTip="{DynamicResource EditThemeTip}">
                                                                         <Image Source="/Assets/More.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                                     </Button>
                                                                 </Grid>
@@ -1153,10 +1153,10 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="MetaScore" Style="{StaticResource FieldLabelStyle}"/>
+                                        <TextBlock Text="{DynamicResource MetaScore}" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}"
                                                 Command="{Binding CheckMetaScoreCommand}"
-                                                ToolTip="Check MetaScore"
+                                                ToolTip="{DynamicResource CheckMetaScore}"
                                                 Width="12"
                                                 Height="12"
                                                 Margin="2,-2,0,0"
@@ -1179,10 +1179,10 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Avg Playtime" Style="{StaticResource FieldLabelStyle}"/>
+                                        <TextBlock Text="{DynamicResource AvgPlaytime}" Style="{StaticResource FieldLabelStyle}"/>
                                         <Button Style="{StaticResource IconButtonStyle}"
                                                 Command="{Binding CheckPlayTimeCommand}"
-                                                ToolTip="Check Playtime"
+                                                ToolTip="{DynamicResource CheckPlaytime}"
                                                 Width="12"
                                                 Height="12"
                                                 Margin="2,-2,0,0"
@@ -1203,7 +1203,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Excited" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource Excited}" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1"
                                              Text="{Binding Excited, TargetNullValue='', UpdateSourceTrigger=LostFocus}"
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="Score_PreviewTextInput"/>
@@ -1214,7 +1214,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Ownership" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource Ownership}" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
                                               ItemsSource="{Binding AllOwnerships}"
                                               SelectedItem="{Binding SelectedOwnership}"
@@ -1228,7 +1228,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Progress" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource Progress}" Style="{StaticResource FieldLabelStyle}"/>
                                     <ComboBox Grid.Column="1"
                                               ItemsSource="{Binding AllProgresses}"
                                               SelectedItem="{Binding SelectedProgress}"
@@ -1241,7 +1241,7 @@
                                         <ColumnDefinition Width="115"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Finished In" Style="{StaticResource FieldLabelStyle}"/>
+                                    <TextBlock Text="{DynamicResource FinishedIn}" Style="{StaticResource FieldLabelStyle}"/>
                                     <TextBox Grid.Column="1" Text="{Binding FinishedIn, UpdateSourceTrigger=PropertyChanged}"
                                              HorizontalContentAlignment="Center" Height="28" Padding="8,4" PreviewTextInput="FinishedIn_PreviewTextInput"/>
                                 </Grid>
@@ -1259,9 +1259,9 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Process Name" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource ProcessName}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding ExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
-                                <CheckBox Grid.Column="2" Content="Has launch process" IsChecked="{Binding HasInitExeName}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="2" Content="{DynamicResource HasLaunchProcess}" IsChecked="{Binding HasInitExeName}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </Grid>
 
 
@@ -1270,7 +1270,7 @@
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Launch Game Process" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBlock Text="{DynamicResource LaunchGameProcess}" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding InitExeName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                             </Grid>
 
@@ -1281,7 +1281,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Save Location" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBlock Text="{DynamicResource SaveLocation}" Style="{StaticResource FieldLabelStyle}"/>
                                 <TextBox Grid.Column="1" Text="{Binding SaveFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding EditSaveFolderCommand}" IsEnabled="{Binding SaveFolderAccessible}">
@@ -1297,14 +1297,14 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Backup Folder" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource BackupFolder}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding BackupFolderPath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4" VerticalAlignment="Center"/>
                                 <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Background="#FADA7A" Margin="15,0,0,0"
                                         Command="{Binding EditBackupFolderCommand}" IsEnabled="{Binding BackupFolderAccessible}">
                                     <Image Source="/Assets/Edit Folder.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                                 <Button Grid.Column="3" Style="{StaticResource IconButtonStyle}" Background="#6FA4AF" Margin="8,0,0,0"
-                                        Command="{Binding GenerateBackupFolderCommand}" ToolTip="Generate backup folder from game name">
+                                        Command="{Binding GenerateBackupFolderCommand}" ToolTip="{DynamicResource GenerateBackupFolder}">
                                     <Image Source="/Assets/Generate.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -1316,14 +1316,14 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Cover Image URL" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource CoverImageUrl}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
                                         Style="{StaticResource IconButtonStyle}"
                                         Background="#6FA4AF"
                                         Margin="15,0,0,0"
                                         Command="{Binding SyncCoverCommand}"
-                                        ToolTip="Refresh preview image">
+                                        ToolTip="{DynamicResource RefreshPreviewImage}">
                                     <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -1335,14 +1335,14 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Gallery Image Path" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource GalleryImagePath}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center"/>
                                 <TextBox Grid.Column="1" Text="{Binding GImagePath, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="8,4"/>
                                 <Button Grid.Column="2"
                                         Style="{StaticResource IconButtonStyle}"
                                         Background="#6FA4AF"
                                         Margin="15,0,0,0"
                                         Command="{Binding SyncGalleryCommand}"
-                                        ToolTip="Refresh gallery preview image">
+                                        ToolTip="{DynamicResource RefreshGalleryImage}">
                                     <Image Source="/Assets/Clound Sync.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Button>
                             </Grid>
@@ -1394,7 +1394,7 @@
                         Background="#A94A4A"
                         HorizontalAlignment="Left"
                         Command="{Binding DeleteGameCommand}"
-                        ToolTip="Disable Game"
+                        ToolTip="{DynamicResource DisableGame}"
                         Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}">
                     <Image Source="/Assets/Delete.png"
                            Width="20"
@@ -1407,7 +1407,7 @@
                         Background="#DDAED3"
                         HorizontalAlignment="Left"
                         Command="{Binding FinishGameCommand}"
-                        ToolTip="Mark as Finished"
+                        ToolTip="{DynamicResource MarkAsFinished}"
                         Visibility="{Binding CanFinish, Converter={StaticResource BoolToVis}}">
                     <Image Source="/Assets/Finish3.png"
                            Width="20"
@@ -1470,7 +1470,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Enter Score"
+                    <TextBlock Text="{DynamicResource EnterScore}"
                                HorizontalAlignment="Center"
                                FontSize="14"
                                FontWeight="SemiBold"
@@ -1521,20 +1521,20 @@
                     <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Edit Series" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBlock Text="{DynamicResource EditSeries}" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
                     <TextBox Text="{Binding EditSeriesName, UpdateSourceTrigger=PropertyChanged}"
                              Height="30" Padding="8,4" Margin="0,0,0,15"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource IconButtonStyle}" Background="#708A58"
-                                Command="{Binding SaveSeriesEditCommand}" ToolTip="Save">
+                                Command="{Binding SaveSeriesEditCommand}" ToolTip="{DynamicResource Save}">
                             <Image Source="/Assets/Save.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
-                                Command="{Binding DeleteSeriesCommand}" ToolTip="Delete">
+                                Command="{Binding DeleteSeriesCommand}" ToolTip="{DynamicResource Delete}">
                             <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
-                                Command="{Binding CancelEditSeriesCommand}" ToolTip="Cancel">
+                                Command="{Binding CancelEditSeriesCommand}" ToolTip="{DynamicResource Cancel}">
                             <Image Source="/Assets/Close.png" Width="18" Height="18"/>
                         </Button>
                     </StackPanel>
@@ -1558,20 +1558,20 @@
                     <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Edit Genre" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBlock Text="{DynamicResource EditGenre}" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
                     <TextBox Text="{Binding EditGenreName, UpdateSourceTrigger=PropertyChanged}"
                              Height="30" Padding="8,4" Margin="0,0,0,15"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource IconButtonStyle}" Background="#708A58"
-                                Command="{Binding SaveGenreEditCommand}" ToolTip="Save">
+                                Command="{Binding SaveGenreEditCommand}" ToolTip="{DynamicResource Save}">
                             <Image Source="/Assets/Save.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
-                                Command="{Binding DeleteGenreCommand}" ToolTip="Delete">
+                                Command="{Binding DeleteGenreCommand}" ToolTip="{DynamicResource Delete}">
                             <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
-                                Command="{Binding CancelEditGenreCommand}" ToolTip="Cancel">
+                                Command="{Binding CancelEditGenreCommand}" ToolTip="{DynamicResource Cancel}">
                             <Image Source="/Assets/Close.png" Width="18" Height="18"/>
                         </Button>
                     </StackPanel>
@@ -1595,20 +1595,20 @@
                     <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Edit Theme" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                    <TextBlock Text="{DynamicResource EditTheme}" FontSize="16" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,15"/>
                     <TextBox Text="{Binding EditThemeName, UpdateSourceTrigger=PropertyChanged}"
                              Height="30" Padding="8,4" Margin="0,0,0,15"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource IconButtonStyle}" Background="#708A58"
-                                Command="{Binding SaveThemeEditCommand}" ToolTip="Save">
+                                Command="{Binding SaveThemeEditCommand}" ToolTip="{DynamicResource Save}">
                             <Image Source="/Assets/Save.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#A94A4A" Margin="10,0,0,0"
-                                Command="{Binding DeleteThemeCommand}" ToolTip="Delete">
+                                Command="{Binding DeleteThemeCommand}" ToolTip="{DynamicResource Delete}">
                             <Image Source="/Assets/Delete.png" Width="18" Height="18"/>
                         </Button>
                         <Button Style="{StaticResource IconButtonStyle}" Background="#7F8C8D" Margin="10,0,0,0"
-                                Command="{Binding CancelEditThemeCommand}" ToolTip="Cancel">
+                                Command="{Binding CancelEditThemeCommand}" ToolTip="{DynamicResource Cancel}">
                             <Image Source="/Assets/Close.png" Width="18" Height="18"/>
                         </Button>
                     </StackPanel>
