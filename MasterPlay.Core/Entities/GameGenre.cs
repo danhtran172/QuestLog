@@ -1,4 +1,4 @@
-﻿using MasterPlay.Models.Models;
+namespace MasterPlay.Core.Entities;
 
 public class GameGenre
 {

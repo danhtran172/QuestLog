@@ -1,4 +1,4 @@
-using MasterPlay.Models.Models;
+using MasterPlay.Core.Entities;
 
 namespace MasterPlay.TrayApp.Services;
 

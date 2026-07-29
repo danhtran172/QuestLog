@@ -1,6 +1,6 @@
 using System;
 
-namespace MasterPlay.Models.Models
+namespace MasterPlay.Core.Entities
 {
 
     public class PlayDiary

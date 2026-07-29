@@ -1,5 +1,5 @@
-using MasterPlay.Models;
-using MasterPlay.Models.Models;
+using MasterPlay.Core.Entities;
+using MasterPlay.Infrastructure.Data.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

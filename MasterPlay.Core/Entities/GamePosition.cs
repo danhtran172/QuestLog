@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
-namespace MasterPlay.Models.Models;
+namespace MasterPlay.Core.Entities;
 
 public partial class GamePosition
 {

@@ -1,5 +1,6 @@
-using MasterPlay.Models;
-using MasterPlay.Models.Models;
+using MasterPlay.Infrastructure.Configuration;
+using MasterPlay.Infrastructure.Data.Services;
+using MasterPlay.Core.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace MasterPlay.TrayApp.Services;

@@ -1,5 +1,5 @@
 using MasterPlay.Core.Localization;
-using MasterPlay.Models;
+using MasterPlay.Infrastructure.Configuration;
 using System.Windows;
 
 namespace MasterPlay.UI

@@ -1,7 +1,7 @@
 using MasterPlay.TrayApp;
 using MasterPlay.TrayApp.Logging;
 using MasterPlay.Core.Localization;
-using MasterPlay.Models;
+using MasterPlay.Infrastructure.Configuration;
 using MasterPlay.TrayApp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

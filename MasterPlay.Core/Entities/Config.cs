@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MasterPlay.Models.Models
+namespace MasterPlay.Core.Entities
 {
     public class Config
     {

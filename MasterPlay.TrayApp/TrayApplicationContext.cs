@@ -1,4 +1,5 @@
-﻿using MasterPlay.Models;
+using MasterPlay.Infrastructure.Configuration;
+using MasterPlay.Infrastructure.Integrations.Cloudinary;
 using MasterPlay.TrayApp.Services;
 using MasterPlay.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
