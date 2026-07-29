@@ -43,7 +43,18 @@ namespace MasterPlay.Infrastructure.Data.Services
                     context.Database.ExecuteSqlRaw(
                         """
                         INSERT OR IGNORE INTO OwnershipStatus (Id, Name, SortOrder, ColorCode)
-                        VALUES (6, 'Steam Off', 6, '#66C0F4');
+                        VALUES (6, 'Steam Off', 2, '#66C0F4');
+                        UPDATE OwnershipStatus
+                        SET SortOrder = CASE Id
+                            WHEN 1 THEN 1
+                            WHEN 6 THEN 2
+                            WHEN 2 THEN 3
+                            WHEN 3 THEN 4
+                            WHEN 4 THEN 5
+                            WHEN 5 THEN 6
+                            ELSE SortOrder
+                        END
+                        WHERE Id IN (1, 2, 3, 4, 5, 6);
                         """);
                 }
             }
