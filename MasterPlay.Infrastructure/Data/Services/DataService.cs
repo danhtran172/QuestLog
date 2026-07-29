@@ -55,6 +55,9 @@ namespace MasterPlay.Infrastructure.Data.Services
                             ELSE SortOrder
                         END
                         WHERE Id IN (1, 2, 3, 4, 5, 6);
+                        UPDATE ProgressStatus
+                        SET Name = '⛔ Drop'
+                        WHERE Id = 5;
                         """);
                 }
             }
