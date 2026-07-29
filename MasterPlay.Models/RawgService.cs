@@ -1,5 +1,4 @@
-﻿
-using MasterPlay.Models.ResponseDTOs;
+﻿using MasterPlay.Models.ResponseDTOs;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
 using System.Net.Http.Json;
@@ -129,11 +128,8 @@ namespace MasterPlay.Models
             if (match.Success)
             {
                 var appId = int.Parse(match.Groups[1].Value);
-                if (appId != null)
-                {
-                    string imageUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg";
-                    return imageUrl;
-                }
+                string imageUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg";
+                return imageUrl;
             }
 
             return null;

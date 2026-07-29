@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CloudinaryDotNet" Version="1.29.2" />
     <PackageReference Include="Codepotatoes.Scraper.HowLongToBeat" Version="1.1.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="HowLongToBeat" Version="1.0.3" />

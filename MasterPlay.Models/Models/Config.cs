@@ -11,6 +11,11 @@ namespace MasterPlay.Models.Models
         public string BackupRootPath { get; set; } = string.Empty;
         public List<string> GameLibraryPath { get; set; } = new List<string>();
         public string DatabasePath { get; set; } = string.Empty;
-        public bool isDarkMode  { get; set; } = false;
+        public bool isDarkMode { get; set; } = false;
+
+        // ==================== CLOUDINARY ====================
+        public string CloudinaryCloudName { get; set; } = string.Empty;
+        public string CloudinaryApiKey { get; set; } = string.Empty;
+        public string CloudinaryApiSecret { get; set; } = string.Empty;
     }
 }

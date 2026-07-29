@@ -39,7 +39,7 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private Game game;
 
-        // ==================== PROPERTIES TRUNG GIAN CHO TẤT CẢ FIELD ====================
+        // ==================== PROPERTIES TRUNG GIAN CHO TAT CA FIELD ====================
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayName))]
         private string name = string.Empty;
@@ -433,7 +433,7 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void Save()
+        private async Task Save()
         {
             try
             {
@@ -483,6 +483,48 @@ namespace MasterPlay.UI.ViewModels
                 Game.GImagePath = GImagePath;
                 Game.Score = Score;
 
+                // ==================== UPLOAD ANH LEN CLOUDINARY ====================
+                // Chi upload neu anh chua phai link Cloudinary (tuc la vua duoc doi/sync moi).
+                // Moi game chi luu dung 1 anh moi nhat cho moi loai (cover / gallery).
+                try
+                {
+                    IsBusy = true;
+
+                    if (!string.IsNullOrWhiteSpace(Game.ImagePath) &&
+                        !CloudinaryImageService.IsCloudinaryUrl(Game.ImagePath))
+                    {
+                        await ShowStatus("Dang tai anh cover len Cloudinary...", 0);
+                        var coverUrl = await CloudinaryImageService.UploadGameImageAsync(Game.Id, Game.ImagePath, "cover");
+                        if (!string.IsNullOrWhiteSpace(coverUrl))
+                        {
+                            Game.ImagePath = coverUrl;
+                            ImagePath = coverUrl;
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(Game.GImagePath) &&
+                        !CloudinaryImageService.IsCloudinaryUrl(Game.GImagePath))
+                    {
+                        await ShowStatus("Dang tai anh gallery len Cloudinary...", 0);
+                        var galleryUrl = await CloudinaryImageService.UploadGameImageAsync(Game.Id, Game.GImagePath, "gallery");
+                        if (!string.IsNullOrWhiteSpace(galleryUrl))
+                        {
+                            Game.GImagePath = galleryUrl;
+                            GImagePath = galleryUrl;
+                        }
+                    }
+                }
+                catch (Exception cloudEx)
+                {
+                    // Khong chan viec luu game neu Cloudinary loi - giu lai link anh hien tai
+                    Debug.WriteLine($"Cloudinary upload error: {cloudEx.Message}");
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
+                // ======================================================================
+
                 Game = ViewModelHelpers.InputFormatter(Game);
 
                 DataService.UpdateGame(Game);
@@ -495,11 +537,11 @@ namespace MasterPlay.UI.ViewModels
                 IsReadOnly = true;
                 ReloadGameFromConfig();
 
-                ShowStatus("Data Saved Successfully!");
+                await ShowStatus("Data Saved Successfully!");
             }
             catch (Exception ex)
             {
-                ShowStatus($"Error: {ex.Message}");
+                await ShowStatus($"Error: {ex.Message}");
                 MessageBox.Show(StatusMessage, "System Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -527,7 +569,7 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void FinishSave()
+        private async Task FinishSave()
         {
             try
             {
@@ -535,25 +577,25 @@ namespace MasterPlay.UI.ViewModels
                 {
                     if (newScore < 0 || newScore > 100 && newScore != 999)
                     {
-                        ShowStatus("Score must be between 0-100 or 999 for 10🔥");
+                        await ShowStatus("Score must be between 0-100 or 999 for 10🔥");
                         return;
                     }
 
                     Score = newScore;
                     SelectedProgress = allProgresses.FirstOrDefault(p => p.Name == "Done") ?? allProgresses.FirstOrDefault();
                     FinishedIn = DateTime.Now.Year.ToString();
-                    Save();
+                    await Save();
                     IsFinishPopupOpen = false;
-                    ShowStatus($"{Name} has been finished with Score: {newScore}!");
+                    await ShowStatus($"{Name} has been finished with Score: {newScore}!");
                 }
                 else
                 {
-                    ShowStatus("Invalid score input!");
+                    await ShowStatus("Invalid score input!");
                 }
             }
             catch (Exception ex)
             {
-                ShowStatus($"Error: {ex.Message}");
+                await ShowStatus($"Error: {ex.Message}");
             }
         }
 
@@ -810,7 +852,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void OpenEditSeriesPopup(Series series)
         {
-            IsSeriesPopupOpen = false; // đóng popup chọn
+            IsSeriesPopupOpen = false; // dong popup chon
             EditingSeries = series;
             EditSeriesName = series.Name;
             IsEditSeriesPopupOpen = true;
@@ -848,12 +890,12 @@ namespace MasterPlay.UI.ViewModels
             if (success)
             {
                 EditingSeries.Name = EditSeriesName.Trim();
-                // Refresh AllSeries và FilteredSeries
+                // Refresh AllSeries va FilteredSeries
                 AllSeries = new ObservableCollection<Series>(AllSeries.OrderBy(s => s.Name));
                 FilteredSeries = new ObservableCollection<Series>(AllSeries);
                 OnPropertyChanged(nameof(AllSeries));
                 OnPropertyChanged(nameof(FilteredSeries));
-                // Cập nhật DisplaySeries nếu đang chọn
+                // Cap nhat DisplaySeries neu dang chon
                 if (SelectedSeries?.Id == EditingSeries.Id)
                     OnPropertyChanged(nameof(DisplaySeries));
             }

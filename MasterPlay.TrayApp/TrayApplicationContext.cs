@@ -1,4 +1,5 @@
-﻿using MasterPlay.TrayApp.Services;
+﻿using MasterPlay.Models;
+using MasterPlay.TrayApp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -17,12 +18,9 @@ namespace MasterPlay.TrayApp
         private ToolStripMenuItem? _playTimeMenuItem;
         private ToolStripMenuItem? _libraryMenuItem;
         private ToolStripMenuItem? _backupMenuItem;
-        private ToolStripMenuItem? _startupMenuItem;
+        private ToolStripMenuItem? _syncImagesMenuItem;
 
-        // Dùng riêng cho Tray app. UI app (MainWindow.xaml.cs) phải dùng tên khác
-        // để tránh 2 nơi cùng ghi đè lên 1 registry value, gây rối trạng thái.
-        private const string StartupRegistryPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        private const string StartupAppName = "MasterPlayTray";
+        private bool _isSyncingImages = false;
 
         public TrayApplicationContext(IServiceProvider serviceProvider)
         {
@@ -72,17 +70,13 @@ namespace MasterPlay.TrayApp
             contextMenu.Items.Add(_libraryMenuItem);
             contextMenu.Items.Add(_backupMenuItem);
             contextMenu.Items.Add(new ToolStripSeparator());
+
+            _syncImagesMenuItem = new ToolStripMenuItem("Sync Images to Cloudinary", null, SyncImagesToCloudinary_Click);
+            contextMenu.Items.Add(_syncImagesMenuItem);
+            contextMenu.Items.Add(new ToolStripSeparator());
+
             contextMenu.Items.Add(new ToolStripMenuItem("Open Log Folder", null, OpenLogFolder));
-
-            // Khởi tạo đúng trạng thái Checked ngay từ đầu, dựa trên việc kiểm tra
-            // registry entry hiện có có thật sự trỏ đúng tới exe hiện tại hay không
-            // (trước đây không hề set Checked nên ô này không bao giờ hiện tick).
-            _startupMenuItem = new ToolStripMenuItem("Start with Windows", null, ToggleStartWithWindows)
-            {
-                Checked = IsStartupEnabled()
-            };
-            contextMenu.Items.Add(_startupMenuItem);
-
+            contextMenu.Items.Add(new ToolStripMenuItem("Start with Windows", null, ToggleStartWithWindows));
             contextMenu.Items.Add(new ToolStripSeparator());
             contextMenu.Items.Add(new ToolStripMenuItem("Exit", null, Exit));
 
@@ -137,6 +131,47 @@ namespace MasterPlay.TrayApp
             }
         }
 
+        private async void SyncImagesToCloudinary_Click(object? sender, EventArgs e)
+        {
+            if (_isSyncingImages)
+            {
+                _trayIcon.ShowBalloonTip(3000, "MasterPlay", "Image sync is already running.", ToolTipIcon.Info);
+                return;
+            }
+
+            _isSyncingImages = true;
+            _syncImagesMenuItem!.Enabled = false;
+            _syncImagesMenuItem.Text = "Syncing images...";
+
+            _logger.LogInformation("Cloudinary image sync started from tray menu.");
+            _trayIcon.ShowBalloonTip(3000, "MasterPlay", "Starting image sync to Cloudinary...", ToolTipIcon.Info);
+
+            try
+            {
+                var progress = new Progress<string>(msg => _logger.LogInformation("[ImageSync] {msg}", msg));
+                var result = await CloudinaryImageService.MigrateAllGameImagesToCloudinaryAsync(progress);
+
+                string summary =
+                    $"Cover: {result.CoverUploaded} uploaded, {result.CoverAlreadySynced} already synced, {result.CoverMissing} missing.\n" +
+                    $"Gallery: {result.GalleryUploaded} uploaded, {result.GalleryAlreadySynced} already synced, {result.GalleryMissing} missing.\n" +
+                    $"Failed: {result.Failed} / Total {result.TotalGames} games.";
+
+                _logger.LogInformation("Cloudinary image sync finished. {summary}", summary.Replace("\n", " "));
+                _trayIcon.ShowBalloonTip(6000, "MasterPlay - Image Sync Complete", summary, ToolTipIcon.Info);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Cloudinary image sync.");
+                _trayIcon.ShowBalloonTip(5000, "MasterPlay - Image Sync Error", ex.Message, ToolTipIcon.Error);
+            }
+            finally
+            {
+                _isSyncingImages = false;
+                _syncImagesMenuItem.Enabled = true;
+                _syncImagesMenuItem.Text = "Sync Images to Cloudinary";
+            }
+        }
+
         private void OpenLogFolder(object? sender, EventArgs e)
         {
             string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
@@ -144,63 +179,20 @@ namespace MasterPlay.TrayApp
             Process.Start("explorer.exe", logPath);
         }
 
-        // Kiểm tra registry KHÔNG chỉ dựa vào "key có tồn tại hay không", mà còn so
-        // sánh đường dẫn lưu trong đó có đúng bằng đường dẫn exe hiện tại không.
-        // Nếu trước đây app từng được publish/di chuyển sang thư mục khác, entry cũ
-        // trong registry có thể đang trỏ tới 1 file exe không còn tồn tại nữa -
-        // trường hợp đó phải coi là "chưa thật sự bật", không phải "đang bật".
-        private bool IsStartupEnabled()
-        {
-            try
-            {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(StartupRegistryPath, false);
-                var value = key?.GetValue(StartupAppName) as string;
-                return !string.IsNullOrEmpty(value) &&
-                       string.Equals(value.Trim('"'), Application.ExecutablePath, StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         private void ToggleStartWithWindows(object? sender, EventArgs e)
         {
-            try
+            string appName = "MasterPlayTray";
+            string appPath = Application.ExecutablePath;
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key!.GetValue(appName) == null)
             {
-                string appPath = Application.ExecutablePath;
-
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(StartupRegistryPath, true);
-                if (key == null)
-                {
-                    MessageBox.Show("Cannot access the Windows startup registry key.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                bool currentlyEnabled = IsStartupEnabled();
-
-                if (!currentlyEnabled)
-                {
-                    // Luôn ghi đè, kể cả khi key cũ đã tồn tại nhưng trỏ sai đường dẫn -
-                    // nhờ đó tự sửa luôn các entry bị lệch do publish/di chuyển thư mục
-                    // trước đây, thay vì bị hiểu nhầm là "đã bật" rồi xóa mất nó đi.
-                    key.SetValue(StartupAppName, appPath);
-                    _startupMenuItem!.Checked = true;
-                    _logger.LogInformation("Start with Windows enabled. Path: {path}", appPath);
-                    MessageBox.Show("Will start with Windows.", "Info");
-                }
-                else
-                {
-                    key.DeleteValue(StartupAppName, false);
-                    _startupMenuItem!.Checked = false;
-                    _logger.LogInformation("Start with Windows disabled.");
-                    MessageBox.Show("Will NOT start with Windows.", "Info");
-                }
+                key.SetValue(appName, appPath);
+                MessageBox.Show("Will start with Windows.", "Info");
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Error toggling Start with Windows.");
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                key.DeleteValue(appName);
+                MessageBox.Show("Will NOT start with Windows.", "Info");
             }
         }
 

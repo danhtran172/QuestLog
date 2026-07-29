@@ -466,6 +466,40 @@ namespace MasterPlay.UI.ViewModels
 
                 newGame = ViewModelHelpers.InputFormatter(newGame);
 
+                // ==================== UPLOAD ANH LEN CLOUDINARY ====================
+                // Moi game chi luu dung 1 anh moi nhat cho moi loai (cover / gallery),
+                // vi PublicId co dinh theo GameId va Overwrite = true.
+                try
+                {
+                    IsBusy = true;
+
+                    if (!string.IsNullOrWhiteSpace(newGame.ImagePath))
+                    {
+                        await ShowStatus("Dang tai anh cover len Cloudinary...", 0);
+                        var coverUrl = await CloudinaryImageService.UploadGameImageAsync(newGame.Id, newGame.ImagePath, "cover");
+                        if (!string.IsNullOrWhiteSpace(coverUrl))
+                            newGame.ImagePath = coverUrl;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(newGame.GImagePath))
+                    {
+                        await ShowStatus("Dang tai anh gallery len Cloudinary...", 0);
+                        var galleryUrl = await CloudinaryImageService.UploadGameImageAsync(newGame.Id, newGame.GImagePath, "gallery");
+                        if (!string.IsNullOrWhiteSpace(galleryUrl))
+                            newGame.GImagePath = galleryUrl;
+                    }
+                }
+                catch (Exception cloudEx)
+                {
+                    // Khong chan viec them game neu Cloudinary loi - giu lai link anh goc
+                    Debug.WriteLine($"Cloudinary upload error: {cloudEx.Message}");
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
+                // ======================================================================
+
                 DataService.AddGame(newGame);
 
                 RaiseRequestClose(true);
@@ -602,7 +636,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void OpenEditSeriesPopup(Series series)
         {
-            IsSeriesPopupOpen = false; // Đóng popup chọn Series
+            IsSeriesPopupOpen = false; // Dong popup chon Series
             EditingSeries = series;
             EditSeriesName = series.Name;
             IsEditSeriesPopupOpen = true;
@@ -611,7 +645,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void OpenEditGenrePopup(Genre genre)
         {
-            IsGenresPopupOpen = false; // Đóng popup chọn Genre
+            IsGenresPopupOpen = false; // Dong popup chon Genre
             EditingGenre = genre;
             EditGenreName = genre.Name;
             IsEditGenrePopupOpen = true;
@@ -620,7 +654,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void OpenEditThemePopup(Theme theme)
         {
-            IsThemesPopupOpen = false; // Đóng popup chọn Theme
+            IsThemesPopupOpen = false; // Dong popup chon Theme
             EditingTheme = theme;
             EditThemeName = theme.Name;
             IsEditThemePopupOpen = true;

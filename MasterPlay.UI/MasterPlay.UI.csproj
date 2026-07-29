@@ -111,6 +111,8 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.3" />
     <PackageReference Include="System.Net.Http.Json" Version="10.0.2" />
+	  <PackageReference Include="CloudinaryDotNet" Version="1.29.2" />
+
   </ItemGroup>
 
   <ItemGroup>
