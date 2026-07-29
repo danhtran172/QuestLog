@@ -1,149 +1,205 @@
-﻿using MasterPlay.Models;
+using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace MasterPlay.TrayApp.Services
+namespace MasterPlay.TrayApp.Services;
+
+public sealed class PlayTimeService : IDisposable
 {
-    // PlayTimeService
-    public class PlayTimeService
+    private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan GameRefreshInterval = TimeSpan.FromMinutes(1);
+    private readonly ILogger<PlayTimeService> _logger;
+    private readonly ConcurrentDictionary<string, int> _pendingSeconds = new();
+    private readonly HashSet<string> _runningGameIds = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _flushLock = new(1, 1);
+    private CancellationTokenSource? _cancellation;
+    private Task? _worker;
+    private List<Game> _games = [];
+
+    public event EventHandler<GameActivity>? GameStopped;
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLastInputInfo(ref LastInputInfo lastInputInfo);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LastInputInfo
     {
-        // Fields
-        private readonly ILogger<PlayTimeService> _logger;
-        private System.Timers.Timer? _timer;
+        public uint Size;
+        public uint Time;
+    }
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+    public PlayTimeService(ILogger<PlayTimeService> logger)
+    {
+        _logger = logger;
+    }
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+    public void Start()
+    {
+        if (_worker is { IsCompleted: false })
+            return;
 
-        [DllImport("user32.dll")]
-        private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+        _cancellation = new CancellationTokenSource();
+        _worker = RunAsync(_cancellation.Token);
+        _logger.LogInformation("Playtime tracking started");
+    }
 
-        [StructLayout(LayoutKind.Sequential)]
-        struct LASTINPUTINFO
+    public void Stop()
+    {
+        if (_cancellation == null)
+            return;
+
+        _cancellation.Cancel();
+        try
         {
-            public uint cbSize;
-            public uint dwTime;
+            _worker?.GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
+        {
         }
 
-        // Constructor
-        public PlayTimeService(ILogger<PlayTimeService> logger)
-        {
-            _logger = logger;
-        }
+        FlushAsync(CancellationToken.None).GetAwaiter().GetResult();
+        _cancellation.Dispose();
+        _cancellation = null;
+        _worker = null;
+        _logger.LogInformation("Playtime tracking stopped");
+    }
 
-        // Public Methods
-        public void Start()
-        {
-            _logger.LogInformation("PLAYTIME SERVICE STARTED");
-            _timer = new System.Timers.Timer(30000);
-            _timer.Elapsed += (s, e) => TrackPlayTime();
-            _timer.AutoReset = true;
-            _timer.Start();
-        }
+    private async Task RunAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(SampleInterval);
+        var refreshAt = DateTimeOffset.MinValue;
+        var flushAt = DateTimeOffset.UtcNow + FlushInterval;
 
-        public void Stop()
+        while (await timer.WaitForNextTickAsync(cancellationToken))
         {
-            _timer?.Stop();
-            _logger.LogInformation("PlayTime tracking stopped.");
-        }
+            var now = DateTimeOffset.UtcNow;
+            if (now >= refreshAt)
+            {
+                _games = DataService.LoadActiveGames();
+                refreshAt = now + GameRefreshInterval;
+            }
 
-        // Private Methods
-        private void TrackPlayTime()
+            SampleGames(now);
+
+            if (now >= flushAt)
+            {
+                await FlushAsync(cancellationToken);
+                flushAt = now + FlushInterval;
+            }
+        }
+    }
+
+    private void SampleGames(DateTimeOffset now)
+    {
+        var foregroundWindow = GetForegroundWindow();
+        GetWindowThreadProcessId(foregroundWindow, out var foregroundProcessId);
+        var userIsActive = GetIdleTime() < TimeSpan.FromSeconds(30);
+        var currentlyRunning = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var game in _games)
         {
+            var processName = NormalizeProcessName(game.ExeName);
+            if (processName.Length == 0)
+                continue;
+
+            Process[] processes;
             try
             {
-                var gameList = DataService.LoadActiveGames();
-                foreach (var game in gameList)
-                {
-                    if (string.IsNullOrEmpty(game.ExeName)) continue;
-
-                    string processName = game.ExeName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
-                    var processes = Process.GetProcessesByName(processName);
-                    if (processes.Length == 0) continue;
-
-                    _logger.LogInformation(game.Name + " is running");
-
-                    bool isForeground = false;
-                    IntPtr fgWindow = GetForegroundWindow();
-                    GetWindowThreadProcessId(fgWindow, out uint fgPid);
-                    if (processes.Any(p => p.Id == fgPid)) isForeground = true;
-
-                    bool hadInput = GetIdleTime() < 30000;
-
-                    if (isForeground && hadInput)
-                    {
-                        int newSeconds = (game.TotalPlayTimeSeconds ?? 0) + 30;
-
-                        using (var context = new MasterPlayContext())
-                        using (var transaction = context.Database.BeginTransaction())
-                        {
-                            try
-                            {
-                                // Update game's total play time
-                                var gameToUpdate = new Game { Id = game.Id };
-                                context.Games.Attach(gameToUpdate);
-                                gameToUpdate.TotalPlayTimeSeconds = newSeconds;
-                                context.Entry(gameToUpdate).Property(x => x.TotalPlayTimeSeconds).IsModified = true;
-
-                                // Find or create diary entry for today
-                                var today = DateTime.Today;
-                                var diary = context.PlayDiaries
-                                    .FirstOrDefault(d => d.GameId == game.Id && d.Date.Date == today);
-
-                                if (diary == null)
-                                {
-                                    diary = new PlayDiary
-                                    {
-                                        GameId = game.Id,
-                                        Date = today,
-                                        TimeSpent = 30,
-                                        Notes = null
-                                    };
-                                    context.PlayDiaries.Add(diary);
-                                }
-                                else
-                                {
-                                    diary.TimeSpent += 30;
-                                }
-
-                                context.SaveChanges();
-                                transaction.Commit();
-
-                                _logger.LogInformation("Updated playtime for {name}, time: {time}s, diary updated.", game.Name, newSeconds);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                _logger.LogError(ex, "Failed to update playtime and diary for {name}", game.Name);
-                            }
-                        }
-                    }
-                    if (!isForeground)
-                    {
-                        _logger.LogInformation("No foreground");
-                    }
-                    if (!hadInput)
-                    {
-                        _logger.LogInformation("No input");
-                    }
-                }
+                processes = Process.GetProcessesByName(processName);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Error occurred while tracking playtime.");
+                continue;
+            }
+
+            try
+            {
+                if (processes.Length == 0)
+                    continue;
+
+                currentlyRunning.Add(game.Id);
+                if (userIsActive && processes.Any(x => x.Id == foregroundProcessId))
+                    _pendingSeconds.AddOrUpdate(game.Id, (int)SampleInterval.TotalSeconds, (_, value) => value + (int)SampleInterval.TotalSeconds);
+            }
+            finally
+            {
+                foreach (var process in processes)
+                    process.Dispose();
             }
         }
 
-        private uint GetIdleTime()
+        foreach (var stoppedId in _runningGameIds.Except(currentlyRunning).ToArray())
         {
-            LASTINPUTINFO lastInput = new LASTINPUTINFO();
-            lastInput.cbSize = (uint)Marshal.SizeOf(lastInput);
-            GetLastInputInfo(ref lastInput);
-            return (uint)Environment.TickCount - lastInput.dwTime;
+            var game = _games.FirstOrDefault(x => x.Id == stoppedId);
+            if (game != null)
+                GameStopped?.Invoke(this, new GameActivity(game, now));
         }
+
+        _runningGameIds.Clear();
+        _runningGameIds.UnionWith(currentlyRunning);
+    }
+
+    private async Task FlushAsync(CancellationToken cancellationToken)
+    {
+        if (_pendingSeconds.IsEmpty || !await _flushLock.WaitAsync(0, cancellationToken))
+            return;
+
+        try
+        {
+            var batch = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var entry in _pendingSeconds.ToArray())
+            {
+                if (_pendingSeconds.TryRemove(entry.Key, out var seconds))
+                    batch[entry.Key] = seconds;
+            }
+
+            try
+            {
+                await DataService.RecordPlaytimeAsync(batch, cancellationToken);
+            }
+            catch
+            {
+                foreach (var entry in batch)
+                    _pendingSeconds.AddOrUpdate(entry.Key, entry.Value, (_, value) => value + entry.Value);
+                throw;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Failed to persist playtime batch");
+        }
+        finally
+        {
+            _flushLock.Release();
+        }
+    }
+
+    private static string NormalizeProcessName(string? executableName)
+    {
+        return Path.GetFileNameWithoutExtension(executableName?.Trim() ?? string.Empty);
+    }
+
+    private static TimeSpan GetIdleTime()
+    {
+        var info = new LastInputInfo { Size = (uint)Marshal.SizeOf<LastInputInfo>() };
+        return GetLastInputInfo(ref info)
+            ? TimeSpan.FromMilliseconds(unchecked((uint)Environment.TickCount - info.Time))
+            : TimeSpan.Zero;
+    }
+
+    public void Dispose()
+    {
+        Stop();
+        _flushLock.Dispose();
     }
 }

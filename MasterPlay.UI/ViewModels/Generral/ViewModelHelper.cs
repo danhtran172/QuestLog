@@ -1,4 +1,4 @@
-﻿using MasterPlay.Models;
+using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using System;
 using System.Globalization;
@@ -82,24 +82,24 @@ namespace MasterPlay.UI.ViewModels.Generral
 
         string[] formats =
         {
-        // dd/MM/yyyy, dd/MM/yy
+
         "d/M/yyyy", "dd/MM/yyyy",
         "d/M/yy",   "dd/MM/yy",
 
-        // yy/MM/dd
+
         "yy/M/d",   "yy/MM/dd",
 
-        // yyyy/MM/dd (bonus, tiện dùng)
+
         "yyyy/M/d", "yyyy/MM/dd",
 
-        // dd-MM-yyyy, dd-MM-yy
+
         "d-M-yyyy", "dd-MM-yyyy",
         "d-M-yy",   "dd-MM-yy",
 
-        // yy-MM-dd
+
         "yy-M-d",   "yy-MM-dd",
 
-        // yyyy-MM-dd (bonus)
+
         "yyyy-M-d", "yyyy-MM-dd",
 
         "ddMMyyyy", "ddMMyy"

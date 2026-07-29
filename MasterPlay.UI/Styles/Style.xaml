@@ -1,15 +1,15 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="clr-namespace:MasterPlay.UI.Converters">
 
-    <!-- ==================== BRUSHES ==================== -->
+
     <SolidColorBrush x:Key="PrimaryGreenBrush" Color="#A1BC98"/>
     <SolidColorBrush x:Key="MainTextBrush" Color="#2C3E50"/>
     <SolidColorBrush x:Key="SubTextBrush" Color="#7F8C8D"/>
     <SolidColorBrush x:Key="ItemHoverBackground" Color="#ECECEC"/>
     <SolidColorBrush x:Key="ItemSelectedBackground" Color="#D2E3FC"/>
 
-    <!-- ==================== CONVERTERS ==================== -->
+
     <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
     <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
     <converters:BoolToOpacityConverter x:Key="BoolToOpacity"/>
@@ -22,8 +22,8 @@
     <converters:SteamImageConverter x:Key="SteamImgConv"/>
     <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter"/>
 
-    <!-- ==================== TEXT STYLES ==================== -->
-    <!-- Field Label -->
+
+
     <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#555555"/>
@@ -32,7 +32,7 @@
         <Setter Property="FontSize" Value="13"/>
     </Style>
 
-    <!-- Value Text Normal -->
+
     <Style x:Key="ValueTextStyleNormal" TargetType="TextBlock">
         <Setter Property="HorizontalAlignment" Value="Left"/>
         <Setter Property="FontWeight" Value="Normal"/>
@@ -40,13 +40,13 @@
         <Setter Property="FontSize" Value="14"/>
     </Style>
 
-    <!-- Required Star -->
+
     <Style x:Key="RequiredStarStyle" TargetType="Run">
         <Setter Property="Foreground" Value="#E74C3C"/>
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
-    <!-- Value Text -->
+
     <Style x:Key="ValueTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="Foreground" Value="#2C3E50"/>
@@ -54,7 +54,7 @@
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
 
-    <!-- N/A Text -->
+
     <Style x:Key="NAStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="Foreground" Value="#BDC3C7"/>
@@ -62,8 +62,8 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- ==================== TEXTBOX STYLES ==================== -->
-    <!-- Base TextBox -->
+
+
     <Style x:Key="BaseTextBoxStyle" TargetType="TextBox">
         <Setter Property="Padding" Value="10,8"/>
         <Setter Property="BorderBrush" Value="#DDDDDD"/>
@@ -91,7 +91,7 @@
         </Setter>
     </Style>
 
-    <!-- Modern Search Box -->
+
     <Style x:Key="ModernSearchBox" TargetType="TextBox">
         <Setter Property="Background" Value="White"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -120,7 +120,7 @@
         </Setter>
     </Style>
 
-    <!-- Popup Search Box (kế thừa ModernSearchBox) -->
+
     <Style x:Key="PopupSearchBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ModernSearchBox}">
         <Setter Property="Margin" Value="0,0,0,8"/>
         <Setter Property="Height" Value="30"/>
@@ -150,11 +150,11 @@
         </Setter>
     </Style>
 
-    <!-- Base TextBox áp dụng mặc định -->
+
     <Style TargetType="TextBox" BasedOn="{StaticResource BaseTextBoxStyle}"/>
 
-    <!-- ==================== BUTTON STYLES ==================== -->
-    <!-- Icon Button Style - CHỈ ĐỔ BÓNG, KHÔNG BORDER, giống hệt Play/Info -->
+
+
     <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="Width" Value="35"/>
@@ -194,7 +194,7 @@
         </Setter>
     </Style>
 
-    <!-- Play Button (kế thừa IconButtonStyle) -->
+
     <Style x:Key="PlayButtonStyle" TargetType="Button" BasedOn="{StaticResource IconButtonStyle}">
         <Setter Property="Background">
             <Setter.Value>
@@ -212,14 +212,14 @@
                 <ControlTemplate TargetType="Button">
                     <Grid>
                         <Ellipse x:Name="circle" Fill="{TemplateBinding Background}"/>
-                        <Image x:Name="icon" Source="/Assets/Play.png" Width="16" Height="16" 
+                        <Image x:Name="icon" Source="/Assets/Play.png" Width="16" Height="16"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="circle" Property="Opacity" Value="0.8"/>
                         </Trigger>
-                        <!-- CHỈ THÊM DÒNG NÀY: đổi icon khi game đang chạy -->
+
                         <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
                             <Setter TargetName="icon" Property="Source" Value="/Assets/Playing.png"/>
                         </DataTrigger>
@@ -242,7 +242,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Info Button (kế thừa IconButtonStyle) - chỉ thêm background gradient và border -->
+
     <Style x:Key="InfoButtonStyle" TargetType="Button" BasedOn="{StaticResource IconButtonStyle}">
         <Setter Property="Background">
             <Setter.Value>
@@ -256,7 +256,7 @@
         <Setter Property="BorderBrush" Value="#A0FFFFFF"/>
         <Setter Property="BorderThickness" Value="1,1,2,2"/>
     </Style>
-    <!-- Tag Input Button (Notion style) -->
+
     <Style x:Key="TagInputButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="White"/>
         <Setter Property="BorderBrush" Value="#DDDDDD"/>
@@ -291,7 +291,7 @@
         </Setter>
     </Style>
 
-    <!-- Pagination Button -->
+
     <Style x:Key="PaginationButtonStyle" TargetType="Button">
         <Setter Property="MinWidth" Value="64"/>
         <Setter Property="Height" Value="28"/>
@@ -332,8 +332,8 @@
         </Setter>
     </Style>
 
-    <!-- ==================== COMBOBOX STYLES ==================== -->
-    <!-- Modern Selection Box -->
+
+
     <Style x:Key="ModernSelectionBoxStyle" TargetType="ComboBox">
         <Setter Property="Height" Value="36"/>
         <Setter Property="Background" Value="White"/>
@@ -392,11 +392,11 @@
         </Setter>
     </Style>
 
-    <!-- Modern ComboBox Style -->
+
     <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Height" Value="30"/>
         <Setter Property="Background" Value="White"/>
-        <!-- Thêm ItemContainerStyle để điều chỉnh khoảng cách giữa các item -->
+
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
                 <Style TargetType="ComboBoxItem">
@@ -468,7 +468,7 @@
         </Setter>
     </Style>
 
-    <!-- Simple Selection Box (đã sửa theo yêu cầu) -->
+
     <Style x:Key="SimpleSelectionBoxStyle" TargetType="ComboBox">
         <Setter Property="Height" Value="36"/>
         <Setter Property="Padding" Value="10,8,28,8"/>
@@ -497,7 +497,7 @@
                             CornerRadius="5"
                             SnapsToDevicePixels="True">
                         <Grid>
-                            <!-- ToggleButton nền, phủ toàn bộ để bắt sự kiện click -->
+
                             <ToggleButton x:Name="ToggleButton"
                                           Background="Transparent"
                                           BorderThickness="0"
@@ -512,7 +512,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
 
-                            <!-- Text hiển thị selected item -->
+
                             <TextBlock x:Name="SelectedText"
                                        Text="{TemplateBinding SelectionBoxItem, Converter={StaticResource StringToStringConverter}}"
                                        Margin="10,0,32,0"
@@ -525,7 +525,7 @@
                                        TextAlignment="Center"
                                        IsHitTestVisible="False"/>
 
-                            <!-- Mũi tên -->
+
                             <Path Data="M 0 0 L 5 5 L 10 0 Z"
                                   Fill="#555555"
                                   HorizontalAlignment="Right"
@@ -536,7 +536,7 @@
                                   Opacity="0.8"
                                   IsHitTestVisible="False"/>
 
-                            <!-- Popup -->
+
                             <Popup x:Name="Popup"
                                    Placement="Bottom"
                                    IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -573,7 +573,7 @@
         </Setter>
     </Style>
 
-    <!-- ==================== PAGINATION STYLES ==================== -->
+
     <Style x:Key="PaginationSummaryTextStyle" TargetType="TextBlock">
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="FontSize" Value="12"/>
@@ -589,8 +589,8 @@
         <Setter Property="Margin" Value="0,0,8,0"/>
     </Style>
 
-    <!-- ==================== NOTION-STYLE POPUP STYLES ==================== -->
-    <!-- Chip Style -->
+
+
     <Style x:Key="TagChipStyle" TargetType="Border">
         <Setter Property="Background" Value="#E5E4E2"/>
         <Setter Property="CornerRadius" Value="5"/>
@@ -598,7 +598,7 @@
         <Setter Property="Margin" Value="1.5,2.5,1.5,2.5"/>
     </Style>
 
-    <!-- Remove Button on Chip -->
+
     <Style x:Key="TagRemoveButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="16"/>
         <Setter Property="Height" Value="16"/>
@@ -609,7 +609,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <TextBlock Text="✕" FontSize="12" Foreground="#666" 
+                    <TextBlock Text="✕" FontSize="12" Foreground="#666"
                                VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </ControlTemplate>
             </Setter.Value>
@@ -621,7 +621,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Popup Item Style -->
+
     <Style x:Key="PopupItemStyle" TargetType="Border">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="8,4"/>
@@ -634,7 +634,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Create New Item Style (Notion) -->
+
     <Style x:Key="PopupCreateNewStyle" TargetType="Border">
         <Setter Property="Height" Value="30"/>
         <Setter Property="Background" Value="White"/>
@@ -642,10 +642,10 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="LightGray" 
-                                  Direction="90" 
-                                  ShadowDepth="2" 
-                                  BlurRadius="4" 
+                <DropShadowEffect Color="LightGray"
+                                  Direction="90"
+                                  ShadowDepth="2"
+                                  BlurRadius="4"
                                   Opacity="0.15"/>
             </Setter.Value>
         </Setter>
@@ -655,7 +655,7 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-    <!-- ==================== TAB BUTTON STYLE ==================== -->
+
     <Style x:Key="TabButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="#555555"/>
@@ -688,7 +688,7 @@
         </Setter>
     </Style>
 
-    <!-- ListViewItem Style (dùng cho QueueView) -->
+
     <Style x:Key="ListViewItemStyle" TargetType="ListViewItem">
         <Setter Property="Height" Value="65"/>
         <Setter Property="BorderBrush" Value="#E4E4E4"/>
@@ -714,7 +714,7 @@
         </Setter>
     </Style>
 
-    <!-- ==================== FILTER ACTION BUTTON STYLE ==================== -->
+
     <Style x:Key="FilterActionButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="White"/>
         <Setter Property="Foreground" Value="#2C3E50"/>
@@ -753,13 +753,13 @@
         </Setter>
     </Style>
 
-    <!-- ==================== CHIP COMBOBOX STYLES (dùng chung cho Ownership & Progress) ==================== -->
-    <!-- Base style cho Chip ComboBox, kế thừa SimpleSelectionBoxStyle và sửa phần hiển thị selected item thành chip -->
+
+
     <Style x:Key="BaseChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Height" Value="28"/>
-        <!-- ItemTemplate cho các item trong dropdown -->
+
         <Setter Property="ItemTemplate">
             <Setter.Value>
                 <DataTemplate>
@@ -768,15 +768,15 @@
                             Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter={Binding Tag, RelativeSource={RelativeSource FindAncestor, AncestorType=ComboBox}}}"
                             HorizontalAlignment="Center"
                             Margin="2">
-                        <TextBlock Text="{Binding Name}" 
-                                   Foreground="#2C3E50" 
+                        <TextBlock Text="{Binding Name}"
+                                   Foreground="#2C3E50"
                                    FontSize="13"
                                    VerticalAlignment="Center"/>
                     </Border>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
-        <!-- Override template để hiển thị selected item dạng chip -->
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
@@ -787,7 +787,7 @@
                             CornerRadius="5"
                             SnapsToDevicePixels="True">
                         <Grid>
-                            <!-- ToggleButton nền, phủ toàn bộ để bắt sự kiện click -->
+
                             <ToggleButton x:Name="ToggleButton"
                                           Background="Transparent"
                                           BorderThickness="0"
@@ -802,7 +802,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
 
-                            <!-- Selected item hiển thị dạng chip -->
+
                             <Border x:Name="SelectedChip"
                                     CornerRadius="4"
                                     Padding="8,2"
@@ -810,13 +810,13 @@
                                     HorizontalAlignment="Center"
                                     Margin="2"
                                     Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
-                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
-                                           Foreground="#2C3E50" 
+                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Foreground="#2C3E50"
                                            FontSize="13"
                                            VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Mũi tên -->
+
                             <Path Data="M 0 0 L 5 5 L 10 0 Z"
                                   Fill="#555555"
                                   HorizontalAlignment="Right"
@@ -827,7 +827,7 @@
                                   Opacity="0.8"
                                   IsHitTestVisible="False"/>
 
-                            <!-- Popup -->
+
                             <Popup x:Name="Popup"
                                    Placement="Bottom"
                                    IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -867,8 +867,8 @@
         </Setter>
     </Style>
 
-    <!-- ==================== CHIP COMBOBOX STYLES (đã sửa lỗi click và width đúng như các hàng khác) ==================== -->
-    <!-- Style dành cho Ownership (cứng ConverterParameter="Ownership") -->
+
+
     <Style x:Key="ChipComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -881,8 +881,8 @@
                         Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Ownership}"
                         HorizontalAlignment="Center"
                         Margin="2">
-                        <TextBlock Text="{Binding Name}" 
-                               Foreground="#2C3E50" 
+                        <TextBlock Text="{Binding Name}"
+                               Foreground="#2C3E50"
                                FontSize="13"
                                VerticalAlignment="Center"/>
                     </Border>
@@ -899,7 +899,7 @@
                         CornerRadius="5"
                         SnapsToDevicePixels="True">
                         <Grid>
-                            <!-- Selected chip - không nhận sự kiện chuột -->
+
                             <Border x:Name="SelectedChip"
                                 CornerRadius="4"
                                 Padding="8,2"
@@ -908,13 +908,13 @@
                                 Margin="2"
                                 Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 IsHitTestVisible="False">
-                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
-                                       Foreground="#2C3E50" 
+                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Foreground="#2C3E50"
                                        FontSize="13"
                                        VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Mũi tên - không nhận sự kiện chuột -->
+
                             <Path Data="M 0 0 L 5 5 L 10 0 Z"
                               Fill="#555555"
                               HorizontalAlignment="Right"
@@ -925,7 +925,7 @@
                               Opacity="0.8"
                               IsHitTestVisible="False"/>
 
-                            <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
+
                             <ToggleButton x:Name="ToggleButton"
                                       Background="Transparent"
                                       BorderThickness="0"
@@ -940,7 +940,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
 
-                            <!-- Popup -->
+
                             <Popup x:Name="Popup"
                                Placement="Bottom"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -980,7 +980,7 @@
         </Setter>
     </Style>
 
-    <!-- Style dành cho Progress (cứng ConverterParameter="Progress") -->
+
     <Style x:Key="ChipComboBoxStyleProgress" TargetType="ComboBox" BasedOn="{StaticResource SimpleSelectionBoxStyle}">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -993,8 +993,8 @@
                         Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Progress}"
                         HorizontalAlignment="Center"
                         Margin="2">
-                        <TextBlock Text="{Binding Name}" 
-                               Foreground="#2C3E50" 
+                        <TextBlock Text="{Binding Name}"
+                               Foreground="#2C3E50"
                                FontSize="13"
                                VerticalAlignment="Center"/>
                     </Border>
@@ -1011,7 +1011,7 @@
                         CornerRadius="5"
                         SnapsToDevicePixels="True">
                         <Grid>
-                            <!-- Selected chip - không nhận sự kiện chuột -->
+
                             <Border x:Name="SelectedChip"
                                 CornerRadius="4"
                                 Padding="8,2"
@@ -1020,13 +1020,13 @@
                                 Margin="2"
                                 Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 IsHitTestVisible="False">
-                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" 
-                                       Foreground="#2C3E50" 
+                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Foreground="#2C3E50"
                                        FontSize="13"
                                        VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Mũi tên - không nhận sự kiện chuột -->
+
                             <Path Data="M 0 0 L 5 5 L 10 0 Z"
                               Fill="#555555"
                               HorizontalAlignment="Right"
@@ -1037,7 +1037,7 @@
                               Opacity="0.8"
                               IsHitTestVisible="False"/>
 
-                            <!-- ToggleButton phủ toàn bộ - đặt cuối để nằm trên cùng -->
+
                             <ToggleButton x:Name="ToggleButton"
                                       Background="Transparent"
                                       BorderThickness="0"
@@ -1052,7 +1052,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
 
-                            <!-- Popup -->
+
                             <Popup x:Name="Popup"
                                Placement="Bottom"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -1092,14 +1092,14 @@
         </Setter>
     </Style>
 
-    <!-- Emoji Text Style for Genre/Theme names -->
+
     <Style x:Key="EmojiTextStyle" TargetType="TextBlock" BasedOn="{StaticResource ValueTextStyle}">
         <Setter Property="FontFamily" Value="Segoe UI Emoji"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
         <Setter Property="FontSize" Value="16"/>
-        <!-- Tăng size nếu emoji quá nhỏ -->
+
     </Style>
 
 </ResourceDictionary>

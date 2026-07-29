@@ -1,4 +1,4 @@
-﻿using MasterPlay.Helpers;
+using MasterPlay.Helpers;
 using MasterPlay.Models.Models;
 using Newtonsoft.Json;
 using System;
@@ -22,7 +22,7 @@ namespace MasterPlay.Models
             var config = LoadConfig();
             if (config.GameLibraryPath == null || !config.GameLibraryPath.Any())
             {
-                // Nếu chưa có, tạo mặc định là thư mục Documents hoặc một thư mục hợp lý
+
                 config.GameLibraryPath = new List<string> {
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Games")
                 };
@@ -47,7 +47,7 @@ namespace MasterPlay.Models
             var config = LoadConfig();
             if (string.IsNullOrEmpty(config.BackupRootPath))
             {
-                // Đặt backup trong AppData cho nhất quán
+
                 config.BackupRootPath = Path.Combine(GetConfigDirectory(), "Backups");
                 SaveConfig(config);
             }

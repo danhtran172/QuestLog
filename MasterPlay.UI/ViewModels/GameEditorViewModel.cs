@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
@@ -16,19 +16,19 @@ using System.Windows.Media.Imaging;
 
 namespace MasterPlay.UI.ViewModels
 {
-    public partial class EditGameViewModel : BaseViewModel
+    public partial class GameEditorViewModel : BaseViewModel
     {
         private CancellationTokenSource? _msgCts;
-        public CategoryManager CategoryManager { get; } = new CategoryManager();
+        public GameEditorViewModel() : this(null) { }
 
-        public EditGameViewModel() : this(new Game()) { }
-
-        public EditGameViewModel(Game selectedGame)
+        public GameEditorViewModel(Game? selectedGame)
         {
+            IsNew = selectedGame == null;
             Game = selectedGame ?? new Game();
             ReloadGameFromConfig();
             LoadLists();
             LoadGameData();
+            IsReadOnly = !IsNew;
             HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);
 
             SelectedGenres.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DisplayGenres));
@@ -36,10 +36,16 @@ namespace MasterPlay.UI.ViewModels
         }
         private int? _originalProgressId;
 
+        public bool IsNew { get; }
+        public bool IsExisting => !IsNew;
+        public bool CanDelete => IsExisting && !IsReadOnly;
+        public bool CanFinish => IsExisting && IsReadOnly;
+        public string EditorTitle => IsNew ? "Add Game" : "Game Details";
+
         [ObservableProperty]
         private Game game;
 
-        // ==================== PROPERTIES TRUNG GIAN CHO TAT CA FIELD ====================
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayName))]
         private string name = string.Empty;
@@ -126,7 +132,7 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private string statusMessage = string.Empty;
 
-        // Selection properties
+
         [ObservableProperty]
         private ObservableCollection<Series> allSeries = new();
 
@@ -187,7 +193,7 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty]
         private ObservableCollection<Theme> filteredThemes = new();
 
-        // ==================== EDIT POPUP STATE ====================
+
         [ObservableProperty]
         private bool isEditSeriesPopupOpen;
 
@@ -219,7 +225,7 @@ namespace MasterPlay.UI.ViewModels
         public string CreateNewGenreText => string.IsNullOrWhiteSpace(GenresSearchText) ? "" : $"Create \"{GenresSearchText}\"";
         public string CreateNewThemeText => string.IsNullOrWhiteSpace(ThemesSearchText) ? "" : $"Create \"{ThemesSearchText}\"";
 
-        // Display properties
+
         public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "--" : Name;
         public string DisplayPublishDate => Game.PublishDate?.ToString("MMM dd, yyyy") ?? "--";
         public string DisplayPublisher => string.IsNullOrWhiteSpace(Publisher) ? "--" : Publisher;
@@ -263,7 +269,7 @@ namespace MasterPlay.UI.ViewModels
         public bool HasSlugName => !string.IsNullOrWhiteSpace(SlugName);
         public bool HasInitExeNameForView => !string.IsNullOrWhiteSpace(InitExeName);
 
-        // ==================== COMMANDS ====================
+
 
         [RelayCommand]
         private void ToggleEditMode()
@@ -278,7 +284,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private async Task Sync()
         {
-            if (string.IsNullOrWhiteSpace(Game.Name))
+            if (string.IsNullOrWhiteSpace(Name))
             {
                 await ShowStatus("Game name is empty. Please enter a name first.");
                 return;
@@ -289,7 +295,7 @@ namespace MasterPlay.UI.ViewModels
 
             try
             {
-                var rawgGame = await RawgService.GetMetadata_Rawg(Game.Name);
+                var rawgGame = await RawgService.GetMetadata_Rawg(Name);
 
                 if (rawgGame != null)
                 {
@@ -306,7 +312,7 @@ namespace MasterPlay.UI.ViewModels
                 }
                 else
                 {
-                    await ShowStatus($"Cannot find game info for '{Game.Name}'");
+                    await ShowStatus($"Cannot find game info for '{Name}'");
                 }
             }
             catch (Exception ex)
@@ -483,9 +489,9 @@ namespace MasterPlay.UI.ViewModels
                 Game.GImagePath = GImagePath;
                 Game.Score = Score;
 
-                // ==================== UPLOAD ANH LEN CLOUDINARY ====================
-                // Chi upload neu anh chua phai link Cloudinary (tuc la vua duoc doi/sync moi).
-                // Moi game chi luu dung 1 anh moi nhat cho moi loai (cover / gallery).
+
+
+
                 try
                 {
                     IsBusy = true;
@@ -516,18 +522,26 @@ namespace MasterPlay.UI.ViewModels
                 }
                 catch (Exception cloudEx)
                 {
-                    // Khong chan viec luu game neu Cloudinary loi - giu lai link anh hien tai
+
                     Debug.WriteLine($"Cloudinary upload error: {cloudEx.Message}");
                 }
                 finally
                 {
                     IsBusy = false;
                 }
-                // ======================================================================
+
 
                 Game = ViewModelHelpers.InputFormatter(Game);
 
-                DataService.UpdateGame(Game);
+                if (IsNew)
+                {
+                    DataService.AddGame(Game);
+                    DataService.CreateBackupFolder(Game);
+                }
+                else
+                {
+                    DataService.UpdateGame(Game);
+                }
 
                 if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath))
                 {
@@ -538,6 +552,8 @@ namespace MasterPlay.UI.ViewModels
                 ReloadGameFromConfig();
 
                 await ShowStatus("Data Saved Successfully!");
+                if (IsNew)
+                    RaiseRequestClose(true);
             }
             catch (Exception ex)
             {
@@ -549,13 +565,18 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel()
         {
+            if (IsNew)
+            {
+                RaiseRequestClose(false);
+                return;
+            }
             IsReadOnly = true;
             ReloadGameFromConfig();
             StatusMessage = string.Empty;
         }
 
         [RelayCommand]
-        private void FinishGame()
+        private async Task FinishGame()
         {
             try
             {
@@ -564,7 +585,7 @@ namespace MasterPlay.UI.ViewModels
             }
             catch (Exception ex)
             {
-                ShowStatus($"Error: {ex.Message}");
+                await ShowStatus($"Error: {ex.Message}");
             }
         }
 
@@ -582,7 +603,7 @@ namespace MasterPlay.UI.ViewModels
                     }
 
                     Score = newScore;
-                    SelectedProgress = allProgresses.FirstOrDefault(p => p.Name == "Done") ?? allProgresses.FirstOrDefault();
+                    SelectedProgress = AllProgresses.FirstOrDefault(p => p.Name == "Done") ?? AllProgresses.FirstOrDefault();
                     FinishedIn = DateTime.Now.Year.ToString();
                     await Save();
                     IsFinishPopupOpen = false;
@@ -606,7 +627,7 @@ namespace MasterPlay.UI.ViewModels
         }
 
         [RelayCommand]
-        private void DeleteGame()
+        private async Task DeleteGame()
         {
             var result = MessageBox.Show($"Are you sure to Disable '{Name}'?\n(Game will be hidden but data remains.)",
                 "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -616,12 +637,12 @@ namespace MasterPlay.UI.ViewModels
                 {
                     Game.IsDisabled = true;
                     DataService.UpdateGame(Game);
-                    ShowStatus($"{Name} is Disabled!");
+                    await ShowStatus($"{Name} is Disabled!");
                     RaiseRequestClose(true);
                 }
                 catch (Exception ex)
                 {
-                    ShowStatus($"Error: {ex.Message}");
+                    await ShowStatus($"Error: {ex.Message}");
                     MessageBox.Show(StatusMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -661,51 +682,51 @@ namespace MasterPlay.UI.ViewModels
         private void OpenBackupFolder() => HandleFolderOpening((BackupFolderPath, "Backup Folder"));
 
         [RelayCommand]
-        private void SyncImage()
+        private async Task SyncImage()
         {
             if (string.IsNullOrWhiteSpace(ImagePath))
             {
                 PreviewImage = null;
-                ShowStatus("No image URL provided.");
+                await ShowStatus("No image URL provided.");
                 return;
             }
             try
             {
                 PreviewImage = LoadPreviewImage(ImagePath);
-                ShowStatus("Image preview updated successfully.");
+                await ShowStatus("Image preview updated successfully.");
             }
             catch (Exception ex)
             {
-                ShowStatus($"Failed to load image: {ex.Message}");
+                await ShowStatus($"Failed to load image: {ex.Message}");
             }
         }
 
         [RelayCommand]
-        private void AdjustPlayTimeUp()
+        private async Task AdjustPlayTimeUp()
         {
             if (AdjustMinutes <= 0)
             {
-                ShowStatus("Please enter a positive number of minutes.");
+                await ShowStatus("Please enter a positive number of minutes.");
                 return;
             }
             Game.TotalPlayTimeSeconds = (Game.TotalPlayTimeSeconds ?? 0) + AdjustMinutes * 60;
             UpdatePlayTimeFieldsFromSeconds();
-            ShowStatus($"Added {AdjustMinutes} minutes to play time.");
+            await ShowStatus($"Added {AdjustMinutes} minutes to play time.");
             AdjustMinutes = 0;
         }
 
         [RelayCommand]
-        private void AdjustPlayTimeDown()
+        private async Task AdjustPlayTimeDown()
         {
             if (AdjustMinutes <= 0)
             {
-                ShowStatus("Please enter a positive number of minutes.");
+                await ShowStatus("Please enter a positive number of minutes.");
                 return;
             }
             long newSeconds = (Game.TotalPlayTimeSeconds ?? 0) - AdjustMinutes * 60;
             Game.TotalPlayTimeSeconds = newSeconds < 0 ? 0 : (int)newSeconds;
             UpdatePlayTimeFieldsFromSeconds();
-            ShowStatus($"Subtracted {AdjustMinutes} minutes from play time.");
+            await ShowStatus($"Subtracted {AdjustMinutes} minutes from play time.");
             AdjustMinutes = 0;
         }
 
@@ -733,7 +754,7 @@ namespace MasterPlay.UI.ViewModels
             catch (Exception ex) { Debug.WriteLine($"Cannot open browser: {ex.Message}"); }
         }
 
-        // ==================== CHIP COMMANDS ====================
+
 
         [RelayCommand]
         private void OpenSeriesPopup()
@@ -848,11 +869,11 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(DisplayThemes));
         }
 
-        // ==================== EDIT COMMANDS ====================
+
         [RelayCommand]
         private void OpenEditSeriesPopup(Series series)
         {
-            IsSeriesPopupOpen = false; // dong popup chon
+            IsSeriesPopupOpen = false;
             EditingSeries = series;
             EditSeriesName = series.Name;
             IsEditSeriesPopupOpen = true;
@@ -890,12 +911,12 @@ namespace MasterPlay.UI.ViewModels
             if (success)
             {
                 EditingSeries.Name = EditSeriesName.Trim();
-                // Refresh AllSeries va FilteredSeries
+
                 AllSeries = new ObservableCollection<Series>(AllSeries.OrderBy(s => s.Name));
                 FilteredSeries = new ObservableCollection<Series>(AllSeries);
                 OnPropertyChanged(nameof(AllSeries));
                 OnPropertyChanged(nameof(FilteredSeries));
-                // Cap nhat DisplaySeries neu dang chon
+
                 if (SelectedSeries?.Id == EditingSeries.Id)
                     OnPropertyChanged(nameof(DisplaySeries));
             }
@@ -1032,7 +1053,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void CancelEditTheme() => IsEditThemePopupOpen = false;
 
-        // ==================== PRIVATE HELPERS ====================
+
 
         private void LoadLists()
         {
@@ -1178,15 +1199,17 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // ==================== PARTIAL METHODS ====================
 
-        partial void OnGameChanged(Game? value)
+
+        partial void OnGameChanged(Game value)
         {
             PreviewImage = LoadPreviewImage(value?.ImagePath);
         }
 
         partial void OnIsReadOnlyChanged(bool value)
         {
+            OnPropertyChanged(nameof(CanDelete));
+            OnPropertyChanged(nameof(CanFinish));
             if (!value) UpdatePlayTimeFieldsFromSeconds();
         }
 

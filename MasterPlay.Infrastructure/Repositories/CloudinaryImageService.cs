@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using System;
 using System.Threading.Tasks;
@@ -24,7 +24,7 @@ namespace MasterPlay.Models
     {
         private static Cloudinary? _cloudinary;
 
-        // Root folder chua toan bo anh cua app tren Cloudinary
+
         private const string RootFolder = "MasterPlay";
         private const string CoverFolder = RootFolder + "/Covers";
         private const string GalleryFolder = RootFolder + "/Galleries";
@@ -46,12 +46,12 @@ namespace MasterPlay.Models
             return _cloudinary;
         }
 
-        /// <summary>
-        /// Kiem tra mot link anh da nam dung trong folder MasterPlay tren Cloudinary chua.
-        /// Bat buoc 2 dieu kien: dung domain Cloudinary VA nam trong folder "/MasterPlay/".
-        /// Neu anh o mien Cloudinary nhung khong thuoc folder nay (vi du upload tay ngoai luong,
-        /// hoac tu nguon khac) thi van bi coi la CHUA dong bo va se duoc tai lai dung cho.
-        /// </summary>
+
+
+
+
+
+
         public static bool IsCloudinaryUrl(string? url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -69,11 +69,11 @@ namespace MasterPlay.Models
         private static string GetFullPublicId(string gameId, string type) =>
             $"{GetFolder(type)}/{gameId}";
 
-        /// <summary>
-        /// Upload anh (tu URL hoac file local) len Cloudinary vao folder MasterPlay/Covers
-        /// hoac MasterPlay/Galleries, ghi de anh cu cung loai.
-        /// type: "cover" hoac "gallery"
-        /// </summary>
+
+
+
+
+
         public static async Task<string?> UploadGameImageAsync(string gameId, string imageSource, string type)
         {
             if (string.IsNullOrWhiteSpace(imageSource))
@@ -128,14 +128,14 @@ namespace MasterPlay.Models
             }
         }
 
-        /// <summary>
-        /// Quet toan bo game trong DB. Voi tung anh (cover/gallery):
-        /// - Neu da la link Cloudinary VA nam dung folder MasterPlay -> "AlreadySynced", KHONG tai lai.
-        /// - Neu rong (chua co anh) -> "Missing", khong lam gi.
-        /// - Neu co link nhung chua dung chuan (chua upload, hoac cloudinary nhung sai folder)
-        ///   -> tai len lai dung folder va tinh vao "Uploaded".
-        /// Moi game deu duoc log chi tiet qua progress de biet ly do cu the.
-        /// </summary>
+
+
+
+
+
+
+
+
         public static async Task<ImageSyncResult> MigrateAllGameImagesToCloudinaryAsync(IProgress<string>? progress = null)
         {
             var result = new ImageSyncResult();
@@ -150,7 +150,7 @@ namespace MasterPlay.Models
                 string coverStatus;
                 string galleryStatus;
 
-                // ==== Cover ====
+
                 if (string.IsNullOrWhiteSpace(game.ImagePath))
                 {
                     result.CoverMissing++;
@@ -178,7 +178,7 @@ namespace MasterPlay.Models
                     }
                 }
 
-                // ==== Gallery ====
+
                 if (string.IsNullOrWhiteSpace(game.GImagePath))
                 {
                     result.GalleryMissing++;

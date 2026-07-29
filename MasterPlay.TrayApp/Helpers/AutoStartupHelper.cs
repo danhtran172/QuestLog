@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 
 namespace MasterPlay.TrayApp.Helpers
@@ -21,7 +21,7 @@ namespace MasterPlay.TrayApp.Helpers
                     }
                 }
             }
-            catch (Exception) { /* Bỏ qua lỗi */ }
+            catch (Exception) {  }
         }
 
         public static void DisableStartup()

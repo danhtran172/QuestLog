@@ -1,28 +1,20 @@
-﻿using MasterPlay.Models.Models;
+using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace MasterPlay.UI
+namespace MasterPlay.UI.Controls
 {
-    public partial class EditGameWindow : Window
+    public partial class GameEditorControl : UserControl
     {
-        public EditGameWindow(Game game)
+        public GameEditorControl()
         {
             InitializeComponent();
-
-            var viewModel = new EditGameViewModel(game);
-            DataContext = viewModel;
-            viewModel.RequestClose += result =>
-            {
-                DialogResult = result;
-                Close();
-            };
         }
 
-        // ==================== INPUT VALIDATION ====================
+
         private void Score_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox tb = sender as TextBox;
@@ -67,35 +59,11 @@ namespace MasterPlay.UI
             }
         }
 
-        // ==================== POPUP CLOSED HANDLERS ====================
-        private void SeriesPopup_Closed(object sender, EventArgs e)
-        {
-            if (DataContext is EditGameViewModel vm)
-            {
-                vm.CategoryManager?.ResetEditing();
-            }
-        }
 
-        private void GenresPopup_Closed(object sender, EventArgs e)
-        {
-            if (DataContext is EditGameViewModel vm)
-            {
-                vm.CategoryManager?.ResetEditing();
-            }
-        }
 
-        private void ThemesPopup_Closed(object sender, EventArgs e)
-        {
-            if (DataContext is EditGameViewModel vm)
-            {
-                vm.CategoryManager?.ResetEditing();
-            }
-        }
-
-        // ==================== ITEM CLICK HANDLERS ====================
         private void SeriesItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.DataContext is Series series && DataContext is EditGameViewModel vm)
+            if (sender is Border border && border.DataContext is Series series && DataContext is GameEditorViewModel vm)
             {
                 vm.SelectSeriesCommand.Execute(series);
             }
@@ -103,7 +71,7 @@ namespace MasterPlay.UI
 
         private void CreateNewSeries_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is EditGameViewModel vm)
+            if (DataContext is GameEditorViewModel vm)
             {
                 vm.CreateNewSeriesCommand.Execute(null);
             }
@@ -111,7 +79,7 @@ namespace MasterPlay.UI
 
         private void GenreItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.DataContext is Genre genre && DataContext is EditGameViewModel vm)
+            if (sender is Border border && border.DataContext is Genre genre && DataContext is GameEditorViewModel vm)
             {
                 vm.SelectGenreCommand.Execute(genre);
             }
@@ -119,7 +87,7 @@ namespace MasterPlay.UI
 
         private void CreateNewGenre_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is EditGameViewModel vm)
+            if (DataContext is GameEditorViewModel vm)
             {
                 vm.CreateNewGenreCommand.Execute(null);
             }
@@ -127,7 +95,7 @@ namespace MasterPlay.UI
 
         private void ThemeItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.DataContext is Theme theme && DataContext is EditGameViewModel vm)
+            if (sender is Border border && border.DataContext is Theme theme && DataContext is GameEditorViewModel vm)
             {
                 vm.SelectThemeCommand.Execute(theme);
             }
@@ -135,7 +103,7 @@ namespace MasterPlay.UI
 
         private void CreateNewTheme_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (DataContext is EditGameViewModel vm)
+            if (DataContext is GameEditorViewModel vm)
             {
                 vm.CreateNewThemeCommand.Execute(null);
             }

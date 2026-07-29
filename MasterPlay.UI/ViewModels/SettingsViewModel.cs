@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
@@ -11,11 +11,11 @@ namespace MasterPlay.UI.ViewModels
 {
     public partial class LibraryPathItem : ObservableObject
     {
-        // --- Properties ---
+
         [ObservableProperty] private string value = string.Empty;
         [ObservableProperty] private bool isReadOnly = true;
 
-        // --- Commands ---
+
         [RelayCommand]
         private void EditLibrary()
         {
@@ -31,7 +31,7 @@ namespace MasterPlay.UI.ViewModels
 
     public partial class SettingsViewModel : BaseViewModel
     {
-        // --- Properties ---
+
         [ObservableProperty] private string backupRootPath = string.Empty;
         [ObservableProperty] private string configPath = string.Empty;
         [ObservableProperty] private string databasePath = string.Empty;
@@ -40,13 +40,13 @@ namespace MasterPlay.UI.ViewModels
         [ObservableProperty] private bool isConfigReadOnly = true;
         [ObservableProperty] private bool isDatabaseReadOnly = true;
 
-        // --- Constructors and Initialization ---
+
         public SettingsViewModel()
         {
             LoadSettings();
         }
 
-        // --- Commands: Editing Paths ---
+
         [RelayCommand]
         private void EditBackup()
         {
@@ -76,14 +76,14 @@ namespace MasterPlay.UI.ViewModels
             if (d.ShowDialog() == true) DatabasePath = d.FileName;
         }
 
-        // --- Commands: Library Management ---
+
         [RelayCommand]
         private void AddLibrary() => LibraryPaths.Add(new LibraryPathItem { Value = "", IsReadOnly = false });
 
         [RelayCommand]
         private void RemoveLibrary(LibraryPathItem item) { if (item != null) LibraryPaths.Remove(item); }
 
-        // --- Commands: Saving and Canceling ---
+
         [RelayCommand]
         private void Save()
         {
@@ -104,7 +104,7 @@ namespace MasterPlay.UI.ViewModels
         [RelayCommand]
         private void Cancel() => RaiseRequestClose(false);
 
-        // --- Private Methods: Data Loading ---
+
         private void LoadSettings()
         {
             var config = JsonService.LoadConfig();

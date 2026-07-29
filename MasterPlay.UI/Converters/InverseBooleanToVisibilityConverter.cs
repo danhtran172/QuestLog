@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -14,7 +14,7 @@ namespace MasterPlay.UI.Converters
             {
                 return boolValue ? Visibility.Collapsed : Visibility.Visible;
             }
-            return Visibility.Visible; // fallback
+            return Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

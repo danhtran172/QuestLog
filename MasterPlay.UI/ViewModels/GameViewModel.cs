@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using MasterPlay.Helpers;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
@@ -12,9 +12,9 @@ namespace MasterPlay.UI.ViewModels
 {
     public partial class GameViewModel : ObservableObject
     {
-        // =====================================================================
-        // Fields
-        // =====================================================================
+
+
+
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayName))]
@@ -47,13 +47,13 @@ namespace MasterPlay.UI.ViewModels
         private bool hasPlayableExe;
         [ObservableProperty]
         private string folderWarningInfo = "";
-        // Thêm các property lưu danh sách genre và theme
+
         private List<Genre> _gameGenres;
         private List<Theme> _gameThemes;
 
-        // =====================================================================
-        // Constructor
-        // =====================================================================
+
+
+
 
         public GameViewModel(Game game)
         {
@@ -64,9 +64,9 @@ namespace MasterPlay.UI.ViewModels
             _gameThemes = DataService.GetGameThemes(game.Id);
         }
 
-        // =====================================================================
-        // Public Display Properties
-        // =====================================================================
+
+
+
 
         public string DisplayName =>
             string.IsNullOrWhiteSpace((string?)(Game?.Name)) ? "--" : Game.Name;
@@ -100,7 +100,7 @@ namespace MasterPlay.UI.ViewModels
         public string DisplaySeries =>
             FormatText(Game?.Series?.Name);
 
-        // Genre và Theme từ danh sách đã load
+
         public string DisplayGenres
         {
             get
@@ -170,17 +170,17 @@ namespace MasterPlay.UI.ViewModels
         public string DisplayGalleryImagePath =>
             FormatText(Game?.GImagePath);
 
-        // =====================================================================
-        // Public Status Properties
-        // =====================================================================
+
+
+
 
         public bool ShowFolderWarning => CheckFolderWarning();
 
         public bool IsGameRunning => CheckRunningGame();
 
-        // =====================================================================
-        // Public Methods
-        // =====================================================================
+
+
+
 
         public string GetLaunchProcessPath()
         {
@@ -206,9 +206,9 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // =====================================================================
-        // Private Methods
-        // =====================================================================
+
+
+
 
         private static string FormatText(string? value)
         {
@@ -280,19 +280,19 @@ namespace MasterPlay.UI.ViewModels
             return processes.Length > 0;
         }
 
-        // =====================================================================
-        // Partial Property Changed Handlers
-        // =====================================================================
+
+
+
 
         partial void OnGameChanged(Game value)
         {
             HasPlayableExe = value?.Ready ?? false;
-            // Khi game thay đổi (nếu có), reload genre và theme
+
             if (value != null)
             {
                 _gameGenres = DataService.GetGameGenres(value.Id);
                 _gameThemes = DataService.GetGameThemes(value.Id);
-                // Notify các property liên quan
+
                 OnPropertyChanged(nameof(DisplayGenres));
                 OnPropertyChanged(nameof(DisplayThemes));
             }

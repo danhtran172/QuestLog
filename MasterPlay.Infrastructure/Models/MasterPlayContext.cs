@@ -29,7 +29,7 @@ namespace MasterPlay.Models.Models
                 var dir = Path.GetDirectoryName(dbPath);
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
-                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+                optionsBuilder.UseSqlite($"Data Source={dbPath};Default Timeout=10;Pooling=True");
             }
         }
 

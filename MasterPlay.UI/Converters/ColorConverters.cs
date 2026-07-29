@@ -1,4 +1,4 @@
-﻿using MasterPlay.Models;
+using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using System;
 using System.Collections.Generic;
@@ -64,7 +64,7 @@ namespace MasterPlay.UI.Converters
             else if (value is OwnershipStatus os) id = os.Id;
             else if (value is ProgressStatus ps) id = ps.Id;
             else if (value is string str && int.TryParse(str, out int parsedId)) id = parsedId;
-            var opacity = "40"; //%
+            var opacity = "40";
             if (id.HasValue && id > 0)
             {
                 if (parameter as string == "Progress")
@@ -84,7 +84,7 @@ namespace MasterPlay.UI.Converters
                     var ownership = _ownershipCache.FirstOrDefault(o => o.Id == id);
                     if (ownership?.ColorCode != null)
                     {
-                        
+
                         var glassColor = ownership.ColorCode.Replace("#", $"#{opacity}");
                         try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(glassColor)); }
                         catch { }

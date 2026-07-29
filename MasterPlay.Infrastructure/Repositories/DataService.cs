@@ -1,7 +1,8 @@
-﻿using MasterPlay.Helpers;
+using MasterPlay.Helpers;
 using MasterPlay.Models.Models;
 using MasterPlay.Models.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +18,7 @@ namespace MasterPlay.Models
         {
             try
             {
-                // === THÊM: Copy template database vào AppData nếu cần ===
+
                 string appDataDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "MasterPlay");
@@ -30,11 +31,14 @@ namespace MasterPlay.Models
                 {
                     File.Copy(templatePath, dbPath);
                 }
-                // ====================================================
+
 
                 using (var context = new MasterPlayContext())
                 {
                     context.Database.EnsureCreated();
+                    context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+                    context.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
+                    context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=10000;");
                 }
             }
             catch (Exception ex)
@@ -90,6 +94,47 @@ namespace MasterPlay.Models
             }
         }
 
+        public static async Task RecordPlaytimeAsync(
+            IReadOnlyDictionary<string, int> elapsedSeconds,
+            CancellationToken cancellationToken = default)
+        {
+            if (elapsedSeconds.Count == 0)
+                return;
+
+            await using var context = new MasterPlayContext();
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+            var today = DateTime.Today;
+
+            foreach (var entry in elapsedSeconds.Where(x => x.Value > 0))
+            {
+                await context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE Games SET TotalPlayTimeSeconds = COALESCE(TotalPlayTimeSeconds, 0) + {entry.Value} WHERE Id = {entry.Key}",
+                    cancellationToken);
+
+                var diary = await context.PlayDiaries
+                    .FirstOrDefaultAsync(
+                        x => x.GameId == entry.Key && x.Date.Date == today,
+                        cancellationToken);
+
+                if (diary == null)
+                {
+                    context.PlayDiaries.Add(new PlayDiary
+                    {
+                        GameId = entry.Key,
+                        Date = today,
+                        TimeSpent = entry.Value
+                    });
+                }
+                else
+                {
+                    diary.TimeSpent += entry.Value;
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+
         public static void UpdateGamePositions(IEnumerable<Game> games)
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
@@ -116,12 +161,12 @@ namespace MasterPlay.Models
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
-                // Xóa tất cả GamePositions hiện có
+
                 var allPositions = uow.GamePositions.GetAll().ToList();
                 if (allPositions.Any())
                     uow.GamePositions.RemoveRange(allPositions);
 
-                // Tạo GamePositions mới theo thứ tự
+
                 var positions = new List<GamePosition>();
                 for (int i = 0; i < orderedGames.Count; i++)
                 {
@@ -133,7 +178,7 @@ namespace MasterPlay.Models
                 }
                 uow.GamePositions.AddRange(positions);
 
-                // Cập nhật từng game (Progress đã được set ở ViewModel)
+
                 foreach (var game in orderedGames)
                 {
                     uow.Games.UpdateWithDetails(game);
@@ -152,10 +197,10 @@ namespace MasterPlay.Models
                 {
                     try
                     {
-                        // Xóa toàn bộ GamePosition
+
                         context.Database.ExecuteSqlRaw("DELETE FROM GamePosition");
 
-                        // Thêm mới từng game
+
                         for (int i = 0; i < orderedGames.Count; i++)
                         {
                             context.Database.ExecuteSqlRaw(
@@ -163,7 +208,7 @@ namespace MasterPlay.Models
                                 orderedGames[i].Id, i + 1);
                         }
 
-                        // Cập nhật ProgressId
+
                         foreach (var game in orderedGames)
                         {
                             context.Database.ExecuteSqlRaw(
@@ -188,16 +233,16 @@ namespace MasterPlay.Models
             {
                 var existing = uow.DetectedProcesses.GetAll().ToList();
 
-                // QUAN TRỌNG: không được RemoveRange(existing) rồi AddRange(processes) trong
-                // cùng 1 SaveChanges. Vì FullPath có UNIQUE index, và EF Core thường thực thi
-                // INSERT trước DELETE đối với các entity không có quan hệ khóa ngoại, nên với
-                // các file .exe không đổi giữa 2 lần quét, EF sẽ cố insert dòng mới trùng
-                // FullPath trước khi xóa dòng cũ -> vi phạm UNIQUE -> ném exception -> toàn bộ
-                // SaveChanges bị rollback -> DetectedProcess không được cập nhật -> Ready của
-                // Game không bao giờ được đồng bộ lại (SyncGameStatus không chạy tới nơi).
-                //
-                // Cách fix: chỉ xóa những dòng không còn tồn tại trong lần quét mới,
-                // chỉ thêm những dòng thực sự mới xuất hiện, giữ nguyên phần không đổi.
+
+
+
+
+
+
+
+
+
+
                 var existingPaths = new HashSet<string>(
                     existing.Select(p => p.FullPath), StringComparer.OrdinalIgnoreCase);
                 var newPaths = new HashSet<string>(
@@ -337,7 +382,7 @@ namespace MasterPlay.Models
             }
         }
 
-        // ==================== UPDATE METHODS ====================
+
         public static bool UpdateSeries(int id, string newName)
         {
             if (string.IsNullOrWhiteSpace(newName))
@@ -348,7 +393,7 @@ namespace MasterPlay.Models
                 var series = uow.Series.GetById(id);
                 if (series == null) return false;
 
-                // Kiểm tra trùng tên (trừ chính nó)
+
                 var existing = uow.Series.GetAll()
                     .FirstOrDefault(s => s.Id != id && s.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
@@ -405,7 +450,7 @@ namespace MasterPlay.Models
             }
         }
 
-        // ==================== DELETE METHODS ====================
+
         public static bool DeleteSeries(int id)
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
@@ -413,8 +458,8 @@ namespace MasterPlay.Models
                 var series = uow.Series.GetById(id);
                 if (series == null) return false;
 
-                // Xóa các liên kết? Không cần vì DeleteBehavior.SetNull trong Game sẽ set SeriesId = null.
-                // Nếu muốn xóa hoàn toàn, chỉ cần xóa series.
+
+
                 uow.Series.Remove(series);
                 uow.Complete();
                 return true;
@@ -428,7 +473,7 @@ namespace MasterPlay.Models
                 var genre = uow.Genres.GetById(id);
                 if (genre == null) return false;
 
-                // Xóa tất cả liên kết trong GameGenre trước
+
                 var gameGenres = uow.GameGenres.Find(gg => gg.GenreId == id);
                 uow.GameGenres.RemoveRange(gameGenres);
 
@@ -445,7 +490,7 @@ namespace MasterPlay.Models
                 var theme = uow.Themes.GetById(id);
                 if (theme == null) return false;
 
-                // Xóa tất cả liên kết trong GameTheme trước
+
                 var gameThemes = uow.GameThemes.Find(gt => gt.ThemeId == id);
                 uow.GameThemes.RemoveRange(gameThemes);
 
@@ -518,7 +563,7 @@ namespace MasterPlay.Models
 
                 if (!string.IsNullOrWhiteSpace(game.SaveFolderPath))
                 {
-                    // Đổi tên file cho đồng bộ với UpdateSaveLocationFile
+
                     string txtPath = Path.Combine(uniquePath, "SaveLocation.txt");
                     File.WriteAllText(txtPath, game.SaveFolderPath);
                 }
@@ -575,7 +620,7 @@ namespace MasterPlay.Models
 
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
-                // Lấy tất cả game trong PlayQueue (ProgressId 2,3,4) có GamePosition
+
                 var allQueueGames = uow.Games.GetAllWithDetails()
                     .Where(g => !g.IsDisabled && (g.ProgressId == 2 || g.ProgressId == 3 || g.ProgressId == 4))
                     .ToList();
@@ -585,18 +630,18 @@ namespace MasterPlay.Models
                     .OrderBy(g => g.GamePosition.PlayOrder)
                     .ToList();
 
-                // Trường hợp 1: Promote lên NextPlay (new = 3, old != 3)
+
                 if (newProgressId == 3 && oldProgressId != 3)
                 {
-                    // Tìm các game NextPlay hiện tại
+
                     var nextPlayGames = withPositions.Where(g => g.ProgressId == 3).ToList();
                     if (nextPlayGames.Any())
                     {
-                        // Lấy game NextPlay có PlayOrder lớn nhất (cuối hàng đợi)
+
                         var lastNextPlay = nextPlayGames.OrderByDescending(g => g.GamePosition.PlayOrder).First();
                         int targetOrder = lastNextPlay.GamePosition.PlayOrder.Value;
 
-                        // Gán PlayOrder cho game được promote
+
                         if (game.GamePosition == null)
                         {
                             game.GamePosition = new GamePosition { GameId = game.Id };
@@ -604,7 +649,7 @@ namespace MasterPlay.Models
                         }
                         game.GamePosition.PlayOrder = targetOrder;
 
-                        // Chuyển lastNextPlay thành Intended (ProgressId = 4) và xóa GamePosition của nó
+
                         lastNextPlay.ProgressId = 4;
                         lastNextPlay.Progress = uow.ProgressStatuses.GetById(4);
                         if (lastNextPlay.GamePosition != null)
@@ -618,7 +663,7 @@ namespace MasterPlay.Models
                     }
                     else
                     {
-                        // Không có NextPlay nào: thêm vào cuối danh sách
+
                         int nextOrder = withPositions.Any() ? withPositions.Max(g => g.GamePosition.PlayOrder.Value) + 1 : 1;
                         if (game.GamePosition == null)
                         {
@@ -629,31 +674,31 @@ namespace MasterPlay.Models
                         uow.Games.UpdateWithDetails(game);
                     }
                 }
-                // Trường hợp 2: Demote khỏi NextPlay (old = 3, new != 3)
+
                 else if (oldProgressId == 3 && newProgressId != 3)
                 {
-                    // Xóa GamePosition của game hiện tại (nếu có)
+
                     if (game.GamePosition != null)
                     {
                         uow.GamePositions.Remove(game.GamePosition);
                         game.GamePosition = null;
                     }
 
-                    // Tìm game Intended (ProgressId = 4) có PlayOrder nhỏ nhất (đầu hàng đợi)
+
                     var intendedGames = withPositions.Where(g => g.ProgressId == 4).ToList();
                     if (intendedGames.Any())
                     {
                         var firstIntended = intendedGames.OrderBy(g => g.GamePosition.PlayOrder).First();
                         int targetOrder = firstIntended.GamePosition.PlayOrder.Value;
 
-                        // Chuyển firstIntended thành NextPlay (ProgressId = 3)
+
                         firstIntended.ProgressId = 3;
                         firstIntended.Progress = uow.ProgressStatuses.GetById(3);
-                        // Giữ nguyên PlayOrder của nó
+
 
                         uow.Games.UpdateWithDetails(firstIntended);
                     }
-                    // Nếu không có Intended nào, thì không cần làm gì thêm
+
 
                     uow.Games.UpdateWithDetails(game);
                 }
@@ -668,41 +713,41 @@ namespace MasterPlay.Models
 
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
-                // Load lại promotedGame từ database để có tracking đúng (tránh xung đột)
+
                 var gameToPromote = uow.Games.GetByIdWithDetails(promotedGame.Id);
                 if (gameToPromote == null) return;
 
-                // Lấy tất cả game trong PlayQueue (ProgressId 2,3,4) có GamePosition
+
                 var allQueueGames = uow.Games.GetAllWithDetails()
                     .Where(g => !g.IsDisabled && (g.ProgressId == 2 || g.ProgressId == 3 || g.ProgressId == 4))
                     .ToList();
 
-                // Lọc các game có GamePosition (PlayOrder)
+
                 var withPositions = allQueueGames
                     .Where(g => g.GamePosition != null && g.GamePosition.PlayOrder.HasValue)
                     .OrderBy(g => g.GamePosition.PlayOrder)
                     .ToList();
 
-                // Tìm các game NextPlay (ProgressId == 3) có PlayOrder
+
                 var nextPlayGames = withPositions.Where(g => g.ProgressId == 3).ToList();
 
                 if (nextPlayGames.Any())
                 {
-                    // Lấy game NextPlay có PlayOrder lớn nhất (cao nhất - ở cuối hàng đợi)
+
                     var lastNextPlay = nextPlayGames.OrderByDescending(g => g.GamePosition.PlayOrder).First();
                     int targetOrder = lastNextPlay.GamePosition.PlayOrder.Value;
 
-                    // Cập nhật GamePosition cho game được promote
+
                     if (gameToPromote.GamePosition == null)
                     {
-                        // Nếu chưa có, tạo mới
+
                         gameToPromote.GamePosition = new GamePosition { GameId = gameToPromote.Id };
                         uow.GamePositions.Add(gameToPromote.GamePosition);
                     }
-                    // Nếu đã có, chỉ cập nhật PlayOrder (không tạo mới)
+
                     gameToPromote.GamePosition.PlayOrder = targetOrder;
 
-                    // Chuyển lastNextPlay thành Intended (ProgressId = 4) và xóa GamePosition của nó
+
                     lastNextPlay.ProgressId = 4;
                     lastNextPlay.Progress = uow.ProgressStatuses.GetById(4);
 
@@ -712,13 +757,13 @@ namespace MasterPlay.Models
                         lastNextPlay.GamePosition = null;
                     }
 
-                    // Cập nhật các thay đổi
+
                     uow.Games.UpdateWithDetails(gameToPromote);
                     uow.Games.UpdateWithDetails(lastNextPlay);
                 }
                 else
                 {
-                    // Không có NextPlay nào: thêm vào cuối danh sách
+
                     int nextOrder = withPositions.Any() ? withPositions.Max(g => g.GamePosition.PlayOrder.Value) + 1 : 1;
 
                     if (gameToPromote.GamePosition == null)

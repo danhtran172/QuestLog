@@ -1,11 +1,11 @@
-﻿<UserControl x:Class="MasterPlay.UI.Views.QueueView"
+<UserControl x:Class="MasterPlay.UI.Views.QueueView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converters="clr-namespace:MasterPlay.UI.Converters"
              xmlns:dragDrop="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <converters:SteamImageConverter x:Key="SteamImgConv"/>
@@ -25,7 +25,7 @@
         </Style>
     </UserControl.Resources>
     <ListView x:Name="QueueListView"
-              ItemsSource="{Binding Games}" 
+              ItemsSource="{Binding Games}"
               ScrollViewer.HorizontalScrollBarVisibility="Auto"
               ScrollViewer.VerticalScrollBarVisibility="Auto"
               VirtualizingPanel.ScrollUnit="Pixel"
@@ -41,14 +41,14 @@
               MouseDoubleClick="QueueListView_MouseDoubleClick">
         <ListView.View>
             <GridView ColumnHeaderContainerStyle="{StaticResource GridViewColumnHeaderStyle}">
-                <!-- Drag handle column -->
+
                 <GridViewColumn Width="40">
                     <GridViewColumn.Header>
                         <TextBlock Text="" Margin="2,0"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <Border Width="30" Height="30" 
+                            <Border Width="30" Height="30"
                                     CornerRadius="4"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
@@ -66,8 +66,8 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <Image Source="/Assets/Drag.png" 
-                                       Width="20" Height="20" 
+                                <Image Source="/Assets/Drag.png"
+                                       Width="20" Height="20"
                                        Stretch="Uniform"
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Border>
@@ -75,7 +75,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Image column -->
+
                 <GridViewColumn Width="160">
                     <GridViewColumn.Header>
                         <TextBlock Text="Image" Margin="5,0" Foreground="#2C3E50"/>
@@ -95,22 +95,22 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Name -->
+
                 <GridViewColumn Width="180">
                     <GridViewColumn.Header>
                         <TextBlock Text="Name" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayName}" 
-                                       Style="{StaticResource QueueTextStyle}" 
+                            <TextBlock Text="{Binding DisplayName}"
+                                       Style="{StaticResource QueueTextStyle}"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Left"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Progress (colored text) -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Progress" Margin="5,0" Foreground="#2C3E50"/>
@@ -127,37 +127,37 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Excited -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Excited" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayExcited}" 
-                                       Style="{StaticResource QueueTextStyle}" 
+                            <TextBlock Text="{Binding DisplayExcited}"
+                                       Style="{StaticResource QueueTextStyle}"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Published -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Published" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayPublishYear}" 
-                                       Style="{StaticResource QueueTextStyle}" 
+                            <TextBlock Text="{Binding DisplayPublishYear}"
+                                       Style="{StaticResource QueueTextStyle}"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- MetaScore column -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="MetaScore" Margin="5,0" Foreground="#2C3E50" HorizontalAlignment="Center"/>
@@ -180,22 +180,22 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Avg Playtime -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Avg Play" Margin="5,0" Foreground="#2C3E50"/>
                     </GridViewColumn.Header>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayAvgPlayTime}" 
-                                       Style="{StaticResource QueueTextStyle}" 
+                            <TextBlock Text="{Binding DisplayAvgPlayTime}"
+                                       Style="{StaticResource QueueTextStyle}"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"/>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!-- Ownership (colored text) -->
+
                 <GridViewColumn Width="90">
                     <GridViewColumn.Header>
                         <TextBlock Text="Ownership" Margin="5,0" Foreground="#2C3E50"/>

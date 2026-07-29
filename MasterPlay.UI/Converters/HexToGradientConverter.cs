@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -35,10 +35,10 @@ namespace MasterPlay.UI.Converters
 
         private LinearGradientBrush CreateGlassGradient(Color baseColor)
         {
-            // Tạo 3 màu biến thể:
-            // - Màu sáng hơn (pha trắng 30%) với alpha 0.9
-            // - Màu gốc với alpha 0.7
-            // - Màu tối hơn (pha đen 30%) với alpha 0.8
+
+
+
+
             Color lightColor = Color.FromArgb(
                 (byte)(255 * 0.9),
                 (byte)Math.Min(255, baseColor.R + (255 - baseColor.R) * 0.3),

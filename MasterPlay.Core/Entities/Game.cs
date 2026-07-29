@@ -7,7 +7,7 @@ public partial class Game
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
-    public string Name { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
 
     public string? SlugName { get; set; }
 
@@ -53,8 +53,8 @@ public partial class Game
 
     public DateTime? CreateAt { get; set; } = DateTime.Now;
 
-    public virtual ICollection<GameGenre> GameGenres { get; set; }
-    public virtual ICollection<GameTheme> GameThemes { get; set; }
+    public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
+    public virtual ICollection<GameTheme> GameThemes { get; set; } = new List<GameTheme>();
 
     public virtual GamePosition? GamePosition { get; set; }
 

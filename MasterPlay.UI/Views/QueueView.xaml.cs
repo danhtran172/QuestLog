@@ -1,4 +1,4 @@
-﻿using MasterPlay.UI.ViewModels;
+using MasterPlay.UI.ViewModels;
 using MasterPlay.UI.Views;
 using System;
 using System.Windows;
@@ -15,7 +15,7 @@ namespace MasterPlay.UI.Views
             InitializeComponent();
         }
 
-        // ==================== SCROLL TO TOP ====================
+
         public void ScrollToTop()
         {
             var scrollViewer = FindVisualChild<ScrollViewer>(QueueListView);
@@ -44,7 +44,7 @@ namespace MasterPlay.UI.Views
             return null;
         }
 
-        // ==================== DOUBLE-CLICK HANDLER ====================
+
         private void QueueListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var listView = sender as ListView;
@@ -54,7 +54,7 @@ namespace MasterPlay.UI.Views
             }
         }
 
-        // ==================== EDIT BUTTON CLICK (nếu có button trong tương lai) ====================
+
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is GameViewModel gameVm && gameVm.Game != null)
@@ -63,20 +63,20 @@ namespace MasterPlay.UI.Views
             }
         }
 
-        // ==================== CHUNG: MỞ EDIT WINDOW ====================
+
         private void OpenEditWindow(GameViewModel gameVm)
         {
             try
             {
                 var mainWindow = Window.GetWindow(this) as MainWindow;
-                var editWindow = new EditGameWindow(gameVm.Game)
+                var editWindow = new GameEditorWindow(gameVm.Game)
                 {
                     Owner = mainWindow
                 };
 
                 editWindow.ShowDialog();
 
-                // Refresh data after editing
+
                 if (DataContext is MainWindowViewModel viewModel)
                 {
                     viewModel.LoadGamesData();

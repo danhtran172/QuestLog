@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,12 +34,12 @@ namespace MasterPlay.Helpers
                 {
                     if (Directory.Exists(path))
                     {
-                        // Open folder
+
                         Process.Start("explorer.exe", path);
                     }
                     else if (File.Exists(path))
                     {
-                        // Open containing folder and select the file
+
                         string? folder = Path.GetDirectoryName(path);
                         if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
                         {
@@ -91,7 +91,7 @@ namespace MasterPlay.Helpers
         {
             try
             {
-                // 1. Validate the path
+
                 if (string.IsNullOrWhiteSpace(path))
                 {
                     Console.WriteLine("[ERROR] Launch failed: Path is null or empty.");
@@ -104,11 +104,11 @@ namespace MasterPlay.Helpers
                     return;
                 }
 
-                // 2. Prepare the process start information
+
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = path,
-                    // Setting the WorkingDirectory to the folder containing the exe is CRITICAL for games
+
                     WorkingDirectory = Path.GetDirectoryName(path),
                     UseShellExecute = true,
                     WindowStyle = ProcessWindowStyle.Normal
@@ -116,7 +116,7 @@ namespace MasterPlay.Helpers
 
                 Console.WriteLine($"[INFO] Initializing process: {Path.GetFileName(path)}");
 
-                // 3. Start the process
+
                 using (Process? exeProcess = Process.Start(startInfo))
                 {
                     if (exeProcess != null)
@@ -131,7 +131,7 @@ namespace MasterPlay.Helpers
             }
             catch (System.ComponentModel.Win32Exception ex)
             {
-                // This usually happens if the user cancels the UAC prompt (Run as Admin)
+
                 Console.WriteLine($"[ERROR] System/Permission error: {ex.Message}");
             }
             catch (Exception ex)

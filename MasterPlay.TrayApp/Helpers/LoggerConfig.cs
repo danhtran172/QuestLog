@@ -1,11 +1,11 @@
-﻿using Serilog;
+using Serilog;
 
 namespace MasterPlay.TrayApp.Logging
 {
-    // LoggerConfig
+
     public static class LoggerConfig
     {
-        // Configure
+
         public static void Configure()
         {
             Log.Logger = new LoggerConfiguration()

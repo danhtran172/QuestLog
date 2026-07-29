@@ -17,6 +17,7 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
     public IEnumerable<Game> GetAllWithDetails()
     {
         return _dbSet
+            .AsNoTracking()
             .Include(g => g.Series)
             .Include(g => g.Ownership)
             .Include(g => g.Progress)
@@ -28,19 +29,20 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
 
     public IEnumerable<Game> GetActiveGames()
     {
-        return _dbSet.Where(g => g.Ready && !g.IsDisabled).ToList();
+        return _dbSet.AsNoTracking().Where(g => g.Ready && !g.IsDisabled).ToList();
     }
 
     public Game GetByIdWithDetails(string id)
     {
         return _dbSet
+            .AsNoTracking()
             .Include(g => g.Series)
             .Include(g => g.Ownership)
             .Include(g => g.Progress)
             .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
             .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
             .Include(g => g.GamePosition)
-            .FirstOrDefault(g => g.Id == id);
+            .FirstOrDefault(g => g.Id == id)!;
     }
     public void UpdateWithDetails(Game game)
     {

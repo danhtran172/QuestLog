@@ -1,4 +1,4 @@
-﻿using MasterPlay.UI.ViewModels;
+using MasterPlay.UI.ViewModels;
 using System.Windows;
 
 namespace MasterPlay.UI
@@ -8,7 +8,7 @@ namespace MasterPlay.UI
         public SettingsWindow()
         {
             InitializeComponent();
-            
+
             var viewModel = (SettingsViewModel)DataContext;
             DataContext = viewModel;
             viewModel.RequestClose += result =>

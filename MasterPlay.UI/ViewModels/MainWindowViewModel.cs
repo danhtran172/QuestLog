@@ -1,9 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GongSolutions.Wpf.DragDrop;
 using MasterPlay.Models;
 using MasterPlay.Models.Models;
 using MasterPlay.UI.ViewModels.Generral;
+using MasterPlay.UI.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,11 +16,11 @@ namespace MasterPlay.UI.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject, IDropTarget
     {
-        // Constants
+
         private const int DefaultPageSize = 30;
         private const int MaxPageSize = int.MaxValue;
 
-        // Fields
+
         private string _searchText = string.Empty;
         private string _viewMode = "All";
         private string _searchBy = "All";
@@ -31,29 +32,33 @@ namespace MasterPlay.UI.ViewModels
         private int _totalItems = 0;
 
         private List<GameViewModel> _filteredGamesCache = new();
+        private List<GameViewModel> _allGamesCache = new();
         private List<ProgressStatus> _progressStatuses;
+        private readonly IMainWindowActions _actions;
+        private CancellationTokenSource? _searchCancellation;
 
-        // Filter Options
+
         public FilterOptions CurrentFilter { get; } = new FilterOptions();
 
-        // Include None flags for MetaScore and AvgPlay
+
         [ObservableProperty]
         private bool _includeMetaScoreNone;
 
         [ObservableProperty]
         private bool _includeAvgPlayNone;
 
-        // Commands
+
         public ICommand ApplyFilterCommand { get; }
         public ICommand ClearFilterCommand { get; }
 
-        // Reverse sort property
+
         [ObservableProperty]
         private bool isReverseSort;
 
-        // Constructor
-        public MainWindowViewModel()
+
+        public MainWindowViewModel(IMainWindowActions? actions = null)
         {
+            _actions = actions ?? new MainWindowActions();
             Games = new ObservableCollection<GameViewModel>();
             _progressStatuses = DataService.LoadProgressList();
 
@@ -61,16 +66,16 @@ namespace MasterPlay.UI.ViewModels
             ClearFilterCommand = new RelayCommand(ClearFilter);
         }
 
-        // Collection Properties
+
         public ObservableCollection<GameViewModel> Games { get; }
 
-        // Mode Properties
+
         public bool IsAllMode => string.Equals(_viewMode, "All", StringComparison.OrdinalIgnoreCase);
         public bool IsPlanMode => string.Equals(_viewMode, "Plan", StringComparison.OrdinalIgnoreCase);
         public bool IsFinishMode => string.Equals(_viewMode, "Finish", StringComparison.OrdinalIgnoreCase);
         public bool IsPlayQueueMode => string.Equals(_viewMode, "PlayQueue", StringComparison.OrdinalIgnoreCase);
 
-        // Additional Info Properties
+
         public bool ShouldShowSeries => SearchBy == "Series";
         public bool ShouldShowDeveloper => SearchBy == "Developer";
         public bool ShouldShowPublisher => SearchBy == "Publisher" && !IsAllMode;
@@ -80,11 +85,15 @@ namespace MasterPlay.UI.ViewModels
         public bool ShouldShowOwnership => SortIndex == 8 && !IsPlanMode;
         public bool ShouldShowAvgPlaytime => SortIndex == 10 && !IsFinishMode;
 
-        // Filter Properties
+
         public string SearchText
         {
             get => _searchText;
-            set => SetProperty(ref _searchText, value ?? string.Empty);
+            set
+            {
+                if (SetProperty(ref _searchText, value ?? string.Empty) && !IsPlayQueueMode)
+                    ScheduleSearch();
+            }
         }
 
         public string ViewMode
@@ -148,7 +157,7 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // Pagination Properties
+
         public int CurrentPage => _currentPage;
         public int PageSize => _pageSize;
         public int TotalItems => _totalItems;
@@ -170,7 +179,7 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // NEW: Property kiểm tra có filter nào đang active không
+
         public bool HasActiveFilter
         {
             get
@@ -188,9 +197,13 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // Public Data Methods
+
         public void LoadGamesData()
         {
+            _allGamesCache = DataService.LoadGames()
+                .Where(g => !g.IsDisabled)
+                .Select(g => new GameViewModel(g))
+                .ToList();
             ApplyFilterAndSort(resetToFirstPage: false);
         }
 
@@ -199,10 +212,15 @@ namespace MasterPlay.UI.ViewModels
             if (resetToFirstPage)
                 _currentPage = 1;
 
-            var allData = DataService.LoadGames()
-                .Where(g => !g.IsDisabled)
-                .Select(g => new GameViewModel(g))
-                .AsQueryable();
+            if (_allGamesCache.Count == 0)
+            {
+                _allGamesCache = DataService.LoadGames()
+                    .Where(g => !g.IsDisabled)
+                    .Select(g => new GameViewModel(g))
+                    .ToList();
+            }
+
+            var allData = _allGamesCache.AsQueryable();
 
             allData = ApplyViewModeFilter(allData);
 
@@ -220,7 +238,7 @@ namespace MasterPlay.UI.ViewModels
 
             _filteredGamesCache = filteredQuery.ToList();
 
-            if (isReverseSort)
+            if (IsReverseSort)
             {
                 _filteredGamesCache.Reverse();
             }
@@ -280,13 +298,75 @@ namespace MasterPlay.UI.ViewModels
 
         public void SetSearchText(string searchText, bool applyImmediately = true)
         {
-            // Không cho phép tìm kiếm trong PlayQueue mode
+
             if (IsPlayQueueMode)
                 return;
 
             SearchText = searchText ?? string.Empty;
-            if (applyImmediately && !IsPlayQueueMode)
+            if (!applyImmediately)
+                _searchCancellation?.Cancel();
+        }
+
+        private void ScheduleSearch()
+        {
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            _searchCancellation = new CancellationTokenSource();
+            _ = ApplySearchAfterDelayAsync(_searchCancellation.Token);
+        }
+
+        private async Task ApplySearchAfterDelayAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Delay(180, cancellationToken);
                 ApplyFilterAndSort(true);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        [RelayCommand]
+        private void ShowAll() => SetViewMode("All");
+
+        [RelayCommand]
+        private void ShowPlanning() => SetViewMode("Plan");
+
+        [RelayCommand]
+        private void ShowFinished() => SetViewMode("Finish");
+
+        [RelayCommand]
+        private void ShowPlayQueue() => SetViewMode("PlayQueue");
+
+        [RelayCommand]
+        private void AddGame()
+        {
+            if (_actions.ShowGameEditor(null))
+                LoadGamesData();
+        }
+
+        [RelayCommand]
+        private void EditGame(GameViewModel? game)
+        {
+            if (game != null && _actions.ShowGameEditor(game.Game))
+                LoadGamesData();
+        }
+
+        [RelayCommand]
+        private void OpenSettings()
+        {
+            if (_actions.ShowSettings())
+                LoadGamesData();
+        }
+
+        [RelayCommand]
+        private void PlayGame(GameViewModel? game)
+        {
+            if (game == null)
+                return;
+            _actions.LaunchGame(game.Game);
+            LoadGamesData();
         }
 
         public void SetViewMode(string viewMode)
@@ -301,7 +381,7 @@ namespace MasterPlay.UI.ViewModels
 
         public void SetSearchBy(string searchBy)
         {
-            // Không cho phép thay đổi search by trong PlayQueue mode
+
             if (IsPlayQueueMode)
                 return;
 
@@ -527,13 +607,13 @@ namespace MasterPlay.UI.ViewModels
             return source.Where(vm => MatchesFilter(vm));
         }
 
-        // SỬA LẠI LOGIC FILTER: None = 0 hoặc null, kết hợp OR với các level
+
         private bool MatchesFilter(GameViewModel vm)
         {
             var game = vm.Game;
             var filter = CurrentFilter;
 
-            // Kiểm tra nếu không có filter nào được chọn (bao gồm cả None)
+
             bool hasAnyFilter = filter.ValueFinish.HasValue
                 || filter.ValueExcited.HasValue
                 || filter.ValueScore.HasValue
@@ -549,23 +629,23 @@ namespace MasterPlay.UI.ViewModels
 
             bool matches = true;
 
-            // Finish
+
             if (filter.ValueFinish.HasValue)
                 matches = matches && CompareFinishedIn(game.FinishedIn, filter.ValueFinish.Value, filter.OperatorFinish);
 
-            // Excited
+
             if (filter.ValueExcited.HasValue)
                 matches = matches && CompareDouble(game.Excited, filter.ValueExcited.Value, filter.OperatorExcited);
 
-            // Score
+
             if (filter.ValueScore.HasValue)
                 matches = matches && CompareDouble(game.Score, filter.ValueScore.Value, filter.OperatorScore);
 
-            // PlayTime
+
             if (filter.ValuePlayTime.HasValue)
                 matches = matches && CompareInt(game.TotalPlayTimeSeconds, filter.ValuePlayTime.Value, filter.OperatorPlayTime);
 
-            // Avg Play: None = 0 hoặc null, kết hợp OR với các level
+
             bool avgPass = true;
             if (IncludeAvgPlayNone || filter.SelectedAvgPlays.Count > 0)
             {
@@ -577,15 +657,15 @@ namespace MasterPlay.UI.ViewModels
             }
             matches = matches && avgPass;
 
-            // Progress
+
             if (filter.SelectedProgressIds.Count > 0)
                 matches = matches && filter.SelectedProgressIds.Contains(game.ProgressId ?? 0);
 
-            // Ownership
+
             if (filter.SelectedOwnershipIds.Count > 0)
                 matches = matches && filter.SelectedOwnershipIds.Contains(game.OwnershipId ?? 0);
 
-            // MetaScore: None = 0 hoặc null, kết hợp OR với các level
+
             bool metaPass = true;
             if (IncludeMetaScoreNone || filter.SelectedMetaScores.Count > 0)
             {
@@ -762,7 +842,7 @@ namespace MasterPlay.UI.ViewModels
             OnPropertyChanged(nameof(PaginationSummaryText));
         }
 
-        // IDropTarget Implementation
+
         void IDropTarget.DragOver(IDropInfo dropInfo)
         {
             if (IsPlayQueueMode && dropInfo.Data is GameViewModel)
@@ -847,14 +927,14 @@ namespace MasterPlay.UI.ViewModels
 
         private void ApplyFilter()
         {
-            // Không cho phép áp dụng filter trong PlayQueue mode
+
             if (IsPlayQueueMode)
                 return;
 
-            // Giả sử trong code-behind bạn đã cập nhật CurrentFilter và các flag None từ UI
-            // Sau đó gọi ApplyFilterAndSort
+
+
             ApplyFilterAndSort(true);
-            // Cập nhật trạng thái HasActiveFilter
+
             OnPropertyChanged(nameof(HasActiveFilter));
         }
 
@@ -865,7 +945,7 @@ namespace MasterPlay.UI.ViewModels
 
         partial void OnIsReverseSortChanged(bool value)
         {
-            // Không cho phép reverse sort trong PlayQueue mode
+
             if (IsPlayQueueMode)
                 return;
 
@@ -875,7 +955,7 @@ namespace MasterPlay.UI.ViewModels
             }
         }
 
-        // Khi IncludeMetaScoreNone hoặc IncludeAvgPlayNone thay đổi, cập nhật HasActiveFilter
+
         partial void OnIncludeMetaScoreNoneChanged(bool value)
         {
             OnPropertyChanged(nameof(HasActiveFilter));

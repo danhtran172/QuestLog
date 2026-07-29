@@ -1,4 +1,4 @@
-﻿// Enums for filter levels
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 
@@ -20,7 +20,7 @@ public enum MetaScoreLevel
     VeryLow
 }
 
-// Filter options class
+
 public class FilterOptions : ObservableObject
 {
     private string _operatorFinish = "=";
