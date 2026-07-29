@@ -70,6 +70,8 @@
                                  Height="28"
                                  Padding="8,4"/>
                     </Grid>
+
+                    <Separator Margin="0,2,0,12"/>
                 </StackPanel>
 
                 <Grid Margin="0,0,0,12">
