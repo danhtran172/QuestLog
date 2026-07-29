@@ -17,6 +17,16 @@ namespace MasterPlay.UI.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            var directColorCode = value switch
+            {
+                OwnershipStatus ownership => ownership.ColorCode,
+                ProgressStatus progress => progress.ColorCode,
+                _ => null
+            };
+            var directBrush = CreateBrush(directColorCode);
+            if (directBrush != null)
+                return directBrush;
+
             int? id = null;
             if (value is int intVal) id = intVal;
             else if (value is OwnershipStatus os) id = os.Id;
@@ -29,24 +39,35 @@ namespace MasterPlay.UI.Converters
                 {
                     _progressCache ??= DataService.LoadProgressList();
                     var progress = _progressCache.FirstOrDefault(p => p.Id == id);
-                    if (progress?.ColorCode != null)
-                    {
-                        try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(progress.ColorCode)); }
-                        catch { }
-                    }
+                    var brush = CreateBrush(progress?.ColorCode);
+                    if (brush != null)
+                        return brush;
                 }
                 else if (parameter as string == "Ownership")
                 {
                     _ownershipCache ??= DataService.LoadOwnershipList();
                     var ownership = _ownershipCache.FirstOrDefault(o => o.Id == id);
-                    if (ownership?.ColorCode != null)
-                    {
-                        try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(ownership.ColorCode)); }
-                        catch { }
-                    }
+                    var brush = CreateBrush(ownership?.ColorCode);
+                    if (brush != null)
+                        return brush;
                 }
             }
             return Brushes.Transparent;
+        }
+
+        private static SolidColorBrush? CreateBrush(string? colorCode)
+        {
+            if (string.IsNullOrWhiteSpace(colorCode))
+                return null;
+
+            try
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorCode));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -59,39 +80,57 @@ namespace MasterPlay.UI.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            var directColorCode = value switch
+            {
+                OwnershipStatus ownership => ownership.ColorCode,
+                ProgressStatus progress => progress.ColorCode,
+                _ => null
+            };
+            var directBrush = CreateGlassBrush(directColorCode);
+            if (directBrush != null)
+                return directBrush;
+
             int? id = null;
             if (value is int intVal) id = intVal;
             else if (value is OwnershipStatus os) id = os.Id;
             else if (value is ProgressStatus ps) id = ps.Id;
             else if (value is string str && int.TryParse(str, out int parsedId)) id = parsedId;
-            var opacity = "40";
             if (id.HasValue && id > 0)
             {
                 if (parameter as string == "Progress")
                 {
                     _progressCache ??= DataService.LoadProgressList();
                     var progress = _progressCache.FirstOrDefault(p => p.Id == id);
-                    if (progress?.ColorCode != null)
-                    {
-                        var glassColor = progress.ColorCode.Replace("#", $"#{opacity}");
-                        try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(glassColor)); }
-                        catch { }
-                    }
+                    var brush = CreateGlassBrush(progress?.ColorCode);
+                    if (brush != null)
+                        return brush;
                 }
                 else if (parameter as string == "Ownership")
                 {
                     _ownershipCache ??= DataService.LoadOwnershipList();
                     var ownership = _ownershipCache.FirstOrDefault(o => o.Id == id);
-                    if (ownership?.ColorCode != null)
-                    {
-
-                        var glassColor = ownership.ColorCode.Replace("#", $"#{opacity}");
-                        try { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(glassColor)); }
-                        catch { }
-                    }
+                    var brush = CreateGlassBrush(ownership?.ColorCode);
+                    if (brush != null)
+                        return brush;
                 }
             }
             return Brushes.Transparent;
+        }
+
+        private static SolidColorBrush? CreateGlassBrush(string? colorCode)
+        {
+            if (string.IsNullOrWhiteSpace(colorCode))
+                return null;
+
+            var glassColor = colorCode.Replace("#", "#40");
+            try
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(glassColor));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
