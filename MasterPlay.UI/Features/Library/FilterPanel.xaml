@@ -3,131 +3,217 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Width="700"
              PreviewKeyDown="FilterPanel_PreviewKeyDown">
-    <Border Background="White"
-            BorderBrush="#E0E0E0"
-            BorderThickness="1"
-            CornerRadius="12"
-            Padding="20">
-        <Border.Effect>
-            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
-        </Border.Effect>
+    <Border Style="{StaticResource FilterPopupBorderStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,14">
-                <TextBlock Text="{DynamicResource Filter}" FontSize="18" FontWeight="SemiBold" Foreground="#A1BC98"/>
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource Filter}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="#A1BC98"/>
                 <CheckBox x:Name="ReverseCheckBox"
+                          Grid.Column="1"
                           Content="{DynamicResource ReverseFilter}"
-                          HorizontalAlignment="Right"
+                          Style="{StaticResource FilterCheckBoxStyle}"
                           VerticalAlignment="Center"/>
             </Grid>
 
-            <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,14">
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource FinishedYear}"/>
-                    <ComboBox x:Name="FinishOperator" SelectedIndex="0">
-                        <ComboBoxItem Content="="/>
-                        <ComboBoxItem Content=">"/>
-                        <ComboBoxItem Content=">="/>
-                        <ComboBoxItem Content="&lt;"/>
-                        <ComboBoxItem Content="&lt;="/>
-                    </ComboBox>
-                    <TextBox x:Name="FinishValue" Margin="0,4,0,0"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource Excited}"/>
-                    <ComboBox x:Name="ExcitedOperator" SelectedIndex="0">
-                        <ComboBoxItem Content="="/>
-                        <ComboBoxItem Content=">"/>
-                        <ComboBoxItem Content=">="/>
-                        <ComboBoxItem Content="&lt;"/>
-                        <ComboBoxItem Content="&lt;="/>
-                    </ComboBox>
-                    <TextBox x:Name="ExcitedValue" Margin="0,4,0,0"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource Score}"/>
-                    <ComboBox x:Name="ScoreOperator" SelectedIndex="0">
-                        <ComboBoxItem Content="="/>
-                        <ComboBoxItem Content=">"/>
-                        <ComboBoxItem Content=">="/>
-                        <ComboBoxItem Content="&lt;"/>
-                        <ComboBoxItem Content="&lt;="/>
-                    </ComboBox>
-                    <TextBox x:Name="ScoreValue" Margin="0,4,0,0"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource PlaytimeHours}"/>
-                    <ComboBox x:Name="PlayTimeOperator" SelectedIndex="0">
-                        <ComboBoxItem Content="="/>
-                        <ComboBoxItem Content=">"/>
-                        <ComboBoxItem Content=">="/>
-                        <ComboBoxItem Content="&lt;"/>
-                        <ComboBoxItem Content="&lt;="/>
-                    </ComboBox>
-                    <TextBox x:Name="PlayTimeValue" Margin="0,4,0,0"/>
-                </StackPanel>
-            </UniformGrid>
+            <Grid Grid.Row="1" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <UniformGrid Grid.Row="2" Columns="4" Margin="0,0,0,14">
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource AveragePlaytime}" FontWeight="SemiBold"/>
-                    <CheckBox x:Name="AvgVeryLong" Content="{DynamicResource VeryLong}"/>
-                    <CheckBox x:Name="AvgLong" Content="{DynamicResource Long}"/>
-                    <CheckBox x:Name="AvgMedium" Content="{DynamicResource Medium}"/>
-                    <CheckBox x:Name="AvgShort" Content="{DynamicResource Short}"/>
-                    <CheckBox x:Name="AvgVeryShort" Content="{DynamicResource VeryShort}"/>
-                    <CheckBox x:Name="AvgNone" Content="{DynamicResource None}"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource Progress}" FontWeight="SemiBold"/>
-                    <CheckBox x:Name="ProgressNextPlay" Content="{DynamicResource NextPlay}"/>
-                    <CheckBox x:Name="ProgressDone" Content="{DynamicResource Done}"/>
-                    <CheckBox x:Name="ProgressPlaying" Content="{DynamicResource Playing}"/>
-                    <CheckBox x:Name="ProgressIntended" Content="{DynamicResource Intended}"/>
-                    <CheckBox x:Name="ProgressDrop" Content="{DynamicResource Dropped}"/>
-                    <CheckBox x:Name="ProgressPending" Content="{DynamicResource Pending}"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource Ownership}" FontWeight="SemiBold"/>
-                    <CheckBox x:Name="OwnReady" Content="{DynamicResource Ready}"/>
-                    <CheckBox x:Name="OwnPirated" Content="{DynamicResource Pirated}"/>
-                    <CheckBox x:Name="OwnGamePass" Content="{DynamicResource GamePass}"/>
-                    <CheckBox x:Name="OwnNotOwned" Content="{DynamicResource NotOwned}"/>
-                    <CheckBox x:Name="OwnPSRequired" Content="{DynamicResource PsRequired}"/>
-                    <CheckBox x:Name="OwnSteamOff" Content="{DynamicResource SteamOff}"/>
-                </StackPanel>
-                <StackPanel Margin="4">
-                    <TextBlock Text="{DynamicResource MetaScore}" FontWeight="SemiBold"/>
-                    <CheckBox x:Name="MetaVeryHigh" Content="{DynamicResource VeryHigh}"/>
-                    <CheckBox x:Name="MetaHigh" Content="{DynamicResource High}"/>
-                    <CheckBox x:Name="MetaMedium" Content="{DynamicResource Medium}"/>
-                    <CheckBox x:Name="MetaLow" Content="{DynamicResource Low}"/>
-                    <CheckBox x:Name="MetaVeryLow" Content="{DynamicResource VeryLow}"/>
-                    <CheckBox x:Name="MetaNone" Content="{DynamicResource None}"/>
-                </StackPanel>
-            </UniformGrid>
+                <StackPanel Grid.Column="0">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource FinishedYear}" VerticalAlignment="Center" FontSize="12"/>
+                        <ComboBox x:Name="FinishOperator"
+                                  Grid.Column="1"
+                                  Style="{StaticResource FilterComboBoxStyle}"
+                                  Margin="0,0,6,0"
+                                  SelectedIndex="0">
+                            <ComboBoxItem Content="="/>
+                            <ComboBoxItem Content=">"/>
+                            <ComboBoxItem Content=">="/>
+                            <ComboBoxItem Content="&lt;"/>
+                            <ComboBoxItem Content="&lt;="/>
+                        </ComboBox>
+                        <TextBox x:Name="FinishValue"
+                                 Grid.Column="2"
+                                 Style="{StaticResource BaseTextBoxStyle}"
+                                 Height="28"
+                                 Padding="6,2"/>
+                    </Grid>
 
-            <Separator Grid.Row="3" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource ExcitedLabel}" VerticalAlignment="Center" FontSize="12"/>
+                        <ComboBox x:Name="ExcitedOperator"
+                                  Grid.Column="1"
+                                  Style="{StaticResource FilterComboBoxStyle}"
+                                  Margin="0,0,6,0"
+                                  SelectedIndex="0">
+                            <ComboBoxItem Content="="/>
+                            <ComboBoxItem Content=">"/>
+                            <ComboBoxItem Content=">="/>
+                            <ComboBoxItem Content="&lt;"/>
+                            <ComboBoxItem Content="&lt;="/>
+                        </ComboBox>
+                        <TextBox x:Name="ExcitedValue"
+                                 Grid.Column="2"
+                                 Style="{StaticResource BaseTextBoxStyle}"
+                                 Height="28"
+                                 Padding="6,2"/>
+                    </Grid>
+                </StackPanel>
 
-            <Grid Grid.Row="4">
+                <StackPanel Grid.Column="2">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource ScoreLabel}" VerticalAlignment="Center" FontSize="12"/>
+                        <ComboBox x:Name="ScoreOperator"
+                                  Grid.Column="1"
+                                  Style="{StaticResource FilterComboBoxStyle}"
+                                  Margin="0,0,6,0"
+                                  SelectedIndex="0">
+                            <ComboBoxItem Content="="/>
+                            <ComboBoxItem Content=">"/>
+                            <ComboBoxItem Content=">="/>
+                            <ComboBoxItem Content="&lt;"/>
+                            <ComboBoxItem Content="&lt;="/>
+                        </ComboBox>
+                        <TextBox x:Name="ScoreValue"
+                                 Grid.Column="2"
+                                 Style="{StaticResource BaseTextBoxStyle}"
+                                 Height="28"
+                                 Padding="6,2"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource PlayTime}" VerticalAlignment="Center" FontSize="12"/>
+                        <ComboBox x:Name="PlayTimeOperator"
+                                  Grid.Column="1"
+                                  Style="{StaticResource FilterComboBoxStyle}"
+                                  Margin="0,0,6,0"
+                                  SelectedIndex="0">
+                            <ComboBoxItem Content="="/>
+                            <ComboBoxItem Content=">"/>
+                            <ComboBoxItem Content=">="/>
+                            <ComboBoxItem Content="&lt;"/>
+                            <ComboBoxItem Content="&lt;="/>
+                        </ComboBox>
+                        <TextBox x:Name="PlayTimeValue"
+                                 Grid.Column="2"
+                                 Style="{StaticResource BaseTextBoxStyle}"
+                                 Height="28"
+                                 Padding="6,2"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="2" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="{DynamicResource AvgPlay}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                    <CheckBox x:Name="AvgVeryLong" Content="{DynamicResource VeryLong}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="AvgLong" Content="{DynamicResource Long}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="AvgMedium" Content="{DynamicResource Medium}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="AvgShort" Content="{DynamicResource Short}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="AvgVeryShort" Content="{DynamicResource VeryShort}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="AvgNone" Content="{DynamicResource None}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="8,0">
+                    <TextBlock Text="{DynamicResource Progress}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                    <CheckBox x:Name="ProgressNextPlay" Content="{DynamicResource NextPlay}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="ProgressDone" Content="{DynamicResource Done}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="ProgressPlaying" Content="{DynamicResource Playing}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="ProgressIntended" Content="{DynamicResource Intended}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="ProgressDrop" Content="{DynamicResource Dropped}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="ProgressPending" Content="{DynamicResource Pending}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="8,0">
+                    <TextBlock Text="{DynamicResource Ownership}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                    <CheckBox x:Name="OwnReady" Content="{DynamicResource Ready}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="OwnSteamOff" Content="{DynamicResource SteamOff}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="OwnPirated" Content="{DynamicResource Pirated}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="OwnGamePass" Content="{DynamicResource GamePass}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="OwnNotOwned" Content="{DynamicResource NotOwned}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="OwnPSRequired" Content="{DynamicResource PsRequired}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Margin="8,0,0,0">
+                    <TextBlock Text="{DynamicResource MetaScore}" Style="{StaticResource FilterColumnHeaderStyle}"/>
+                    <CheckBox x:Name="MetaVeryHigh" Content="{DynamicResource VeryHigh}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="MetaHigh" Content="{DynamicResource High}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="MetaMedium" Content="{DynamicResource Medium}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="MetaLow" Content="{DynamicResource Low}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="MetaVeryLow" Content="{DynamicResource VeryLow}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                    <CheckBox x:Name="MetaNone" Content="{DynamicResource None}" Style="{StaticResource FilterCheckBoxStyle}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="3" Margin="0,10,0,0">
                 <Button Content="{DynamicResource Clear}"
+                        Width="100"
+                        Height="32"
                         HorizontalAlignment="Left"
-                        Click="Clear_Click"
-                        Padding="18,6"/>
+                        Style="{StaticResource PaginationButtonStyle}"
+                        Click="Clear_Click"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{DynamicResource Cancel}" Click="Cancel_Click" Padding="18,6"/>
                     <Button Content="{DynamicResource Apply}"
-                            Click="Apply_Click"
-                            Padding="18,6"
+                            Width="100"
+                            Height="32"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Click="Apply_Click"/>
+                    <Button Width="32"
+                            Height="32"
                             Margin="8,0,0,0"
-                            Background="#A1BC98"/>
+                            Style="{StaticResource IconButtonStyle}"
+                            Background="#7F8C8D"
+                            ToolTip="{DynamicResource Cancel}"
+                            Click="Cancel_Click">
+                        <Image Source="/Assets/Back3.png"
+                               Width="16"
+                               Height="16"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Grid>
