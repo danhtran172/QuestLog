@@ -40,8 +40,9 @@
                              Padding="8,4"/>
                 </Grid>
 
+                <Separator Margin="0,2,0,12"/>
+
                 <StackPanel Visibility="{Binding HasUbisoftPublisher, Converter={StaticResource BoolToVis}}">
-                    <Separator Margin="0,2,0,12"/>
                     <TextBlock Text="{DynamicResource UbisoftConnectAccount}"
                                FontWeight="SemiBold"
                                Foreground="#2C3E50"
