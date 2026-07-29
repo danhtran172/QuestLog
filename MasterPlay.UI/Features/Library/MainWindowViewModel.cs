@@ -594,7 +594,7 @@ namespace MasterPlay.UI.Features.Library
                 .ThenByDescending(vm => vm.Game.Excited)
                 .ThenBy(vm => vm.Game.Name)
                 .ThenBy(vm => vm.Game.ProgressId ?? int.MaxValue)
-                .ThenBy(vm => vm.Game.OwnershipId ?? int.MaxValue);
+                .ThenBy(vm => vm.Game.Ownership != null ? vm.Game.Ownership.SortOrder : int.MaxValue);
         }
         if (IsPlanMode)
         {
@@ -642,7 +642,7 @@ namespace MasterPlay.UI.Features.Library
             ordered = source.OrderByDescending(vm => vm.Game.Score);
             break;
         case 8:
-            ordered = source.OrderBy(vm => vm.Game.OwnershipId ?? int.MaxValue);
+            ordered = source.OrderBy(vm => vm.Game.Ownership != null ? vm.Game.Ownership.SortOrder : int.MaxValue);
             break;
         case 9:
             ordered = source.OrderBy(vm => vm.Game.ProgressId ?? int.MaxValue);
