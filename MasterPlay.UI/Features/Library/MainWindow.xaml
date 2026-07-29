@@ -398,7 +398,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
 
@@ -628,7 +628,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
 
@@ -816,7 +816,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource SeriesLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Game.Series}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplaySeries}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
 
