@@ -40,6 +40,11 @@ namespace MasterPlay.Infrastructure.Data.Services
                     context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
                     context.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
                     context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=10000;");
+                    context.Database.ExecuteSqlRaw(
+                        """
+                        INSERT OR IGNORE INTO OwnershipStatus (Id, Name, SortOrder, ColorCode)
+                        VALUES (6, 'Steam Off', 6, '#66C0F4');
+                        """);
                 }
             }
             catch (Exception ex)

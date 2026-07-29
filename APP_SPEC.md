@@ -236,6 +236,7 @@ Các ownership được dùng trong bộ lọc hiện tại:
 - Game Pass.
 - Not owned.
 - PS required.
+- Steam Off.
 
 ### 5.4. Queue, lịch sử và phát hiện executable
 
@@ -325,7 +326,7 @@ Các nhóm lọc:
 | Total playtime | `>`, `>=`, `=`, `<=`, `<` |
 | Avg length | Very long, Long, Medium, Short, Very short, None |
 | Progress | Next play, Done, Playing, Intended, Dropped, Pending |
-| Ownership | Ready, Pirated, Game Pass, Not owned, PS required |
+| Ownership | Ready, Pirated, Game Pass, Not owned, PS required, Steam Off |
 | MetaScore | Very high, High, Medium, Low, Very low, None |
 
 Ngưỡng Avg length:
@@ -778,4 +779,3 @@ Một bản build được xem là đáp ứng chức năng hiện tại khi:
 14. Save change hoặc game stop tạo backup theo policy.
 15. Cloudinary sync chạy và báo kết quả mà không khóa menu chạy lặp.
 16. Esc và lớp phủ hoạt động trên các modal/popup.
-

@@ -79,7 +79,8 @@ public partial class FilterPanel : UserControl
             (OwnPirated, 2),
             (OwnGamePass, 3),
             (OwnNotOwned, 4),
-            (OwnPSRequired, 5));
+            (OwnPSRequired, 5),
+            (OwnSteamOff, 6));
 
         ReplaceSelection(
             filter.SelectedMetaScores,
@@ -115,7 +116,7 @@ public partial class FilterPanel : UserControl
         [
             AvgVeryLong, AvgLong, AvgMedium, AvgShort, AvgVeryShort, AvgNone,
             ProgressNextPlay, ProgressDone, ProgressPlaying, ProgressIntended, ProgressDrop, ProgressPending,
-            OwnReady, OwnPirated, OwnGamePass, OwnNotOwned, OwnPSRequired,
+            OwnReady, OwnPirated, OwnGamePass, OwnNotOwned, OwnPSRequired, OwnSteamOff,
             MetaVeryHigh, MetaHigh, MetaMedium, MetaLow, MetaVeryLow, MetaNone
         ];
     }

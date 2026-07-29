@@ -40,6 +40,7 @@ public static class LocalizationService
         ["GamePass"] = "Game Pass",
         ["NotOwned"] = "Not owned",
         ["PsRequired"] = "PS required",
+        ["SteamOff"] = "Steam Off",
         ["MetaScore"] = "MetaScore",
         ["VeryHigh"] = "Very high",
         ["High"] = "High",
@@ -230,6 +231,7 @@ public static class LocalizationService
         ["Ready"] = "Sẵn sàng",
         ["Pirated"] = "Bản lậu",
         ["GamePass"] = "Game Pass",
+        ["SteamOff"] = "Steam Off",
         ["NotOwned"] = "Chưa sở hữu",
         ["PsRequired"] = "Cần PS",
         ["MetaScore"] = "MetaScore",
@@ -443,6 +445,7 @@ public static class LocalizationService
             "ready" => "Ready",
             "painted" or "pirated" => "Pirated",
             "gamepass" => "GamePass",
+            "steamoff" => "SteamOff",
             "playstation" or "psrequired" => "PsRequired",
             "notowned" => "NotOwned",
             _ => string.Empty

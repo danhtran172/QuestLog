@@ -101,6 +101,7 @@
                     <CheckBox x:Name="OwnGamePass" Content="{DynamicResource GamePass}"/>
                     <CheckBox x:Name="OwnNotOwned" Content="{DynamicResource NotOwned}"/>
                     <CheckBox x:Name="OwnPSRequired" Content="{DynamicResource PsRequired}"/>
+                    <CheckBox x:Name="OwnSteamOff" Content="{DynamicResource SteamOff}"/>
                 </StackPanel>
                 <StackPanel Margin="4">
                     <TextBlock Text="{DynamicResource MetaScore}" FontWeight="SemiBold"/>
