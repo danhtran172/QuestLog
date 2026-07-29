@@ -1,6 +1,7 @@
 using MasterPlay.Infrastructure.Configuration;
 using MasterPlay.Infrastructure.Integrations.Cloudinary;
 using MasterPlay.TrayApp.Services;
+using MasterPlay.TrayApp.Startup;
 using MasterPlay.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -85,7 +86,11 @@ namespace MasterPlay.TrayApp
             _contextMenu.Items.Add(new ToolStripSeparator());
 
             _openLogMenuItem = new ToolStripMenuItem(LocalizationService.Get("OpenLogFolder"), null, OpenLogFolder);
-            _startupMenuItem = new ToolStripMenuItem(LocalizationService.Get("StartWithWindows"), null, ToggleStartWithWindows);
+            _startupMenuItem = new ToolStripMenuItem(LocalizationService.Get("StartWithWindows"), null, ToggleStartWithWindows)
+            {
+                Checked = StartupHelper.IsStartupEnabled(),
+                CheckOnClick = false
+            };
             _exitMenuItem = new ToolStripMenuItem(LocalizationService.Get("Exit"), null, Exit);
             _contextMenu.Items.Add(_openLogMenuItem);
             _contextMenu.Items.Add(_startupMenuItem);
@@ -199,19 +204,26 @@ namespace MasterPlay.TrayApp
 
         private void ToggleStartWithWindows(object? sender, EventArgs e)
         {
-            string appName = "MasterPlayTray";
-            string appPath = Application.ExecutablePath;
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-            if (key!.GetValue(appName) == null)
+            var enable = !StartupHelper.IsStartupEnabled();
+            var succeeded = enable
+                ? StartupHelper.EnableStartup(Application.ExecutablePath)
+                : StartupHelper.DisableStartup();
+
+            _startupMenuItem!.Checked = StartupHelper.IsStartupEnabled();
+
+            if (!succeeded)
             {
-                key.SetValue(appName, appPath);
-                MessageBox.Show(LocalizationService.Get("WillStartWithWindows"), LocalizationService.Get("Info"));
+                MessageBox.Show(
+                    LocalizationService.Get("StartupSettingFailed"),
+                    LocalizationService.Get("Error"),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
             }
-            else
-            {
-                key.DeleteValue(appName);
-                MessageBox.Show(LocalizationService.Get("WillNotStartWithWindows"), LocalizationService.Get("Info"));
-            }
+
+            MessageBox.Show(
+                LocalizationService.Get(enable ? "WillStartWithWindows" : "WillNotStartWithWindows"),
+                LocalizationService.Get("Info"));
         }
 
         private void WatchLanguageChanges()

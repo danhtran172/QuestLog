@@ -1,6 +1,4 @@
 using Microsoft.Win32;
-using System;
-
 namespace MasterPlay.TrayApp.Startup
 {
     public static class StartupHelper
@@ -8,40 +6,47 @@ namespace MasterPlay.TrayApp.Startup
         private const string RegistryKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
         private const string AppName = "MasterPlayTray";
 
-        public static void EnableStartup()
+        public static bool EnableStartup(string executablePath)
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath, true))
-                {
-                    if (key != null)
-                    {
-                        string exePath = $"\"{System.Reflection.Assembly.GetExecutingAssembly().Location}\"";
-                        key.SetValue(AppName, exePath);
-                    }
-                }
+                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath, true);
+                if (key == null)
+                    return false;
+
+                key.SetValue(AppName, $"\"{executablePath}\"", RegistryValueKind.String);
+                return IsStartupEnabled();
             }
-            catch (Exception) {  }
+            catch
+            {
+                return false;
+            }
         }
 
-        public static void DisableStartup()
+        public static bool DisableStartup()
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath, true))
-                {
-                    if (key != null && key.GetValue(AppName) != null)
-                        key.DeleteValue(AppName);
-                }
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath, true);
+                key?.DeleteValue(AppName, false);
+                return !IsStartupEnabled();
             }
-            catch (Exception) { }
+            catch
+            {
+                return false;
+            }
         }
 
         public static bool IsStartupEnabled()
         {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath, false))
+            try
             {
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath, false);
                 return key?.GetValue(AppName) != null;
+            }
+            catch
+            {
+                return false;
             }
         }
     }
