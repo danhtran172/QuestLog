@@ -10,6 +10,7 @@ public static class ModalWindowService
     public static bool? ShowDialog(Window owner, Window dialog)
     {
         var backdrop = CreateBackdrop(owner);
+        using var outsideClickMonitor = new OutsideClickMonitor(owner, dialog);
         void SyncBackdrop(object? sender, EventArgs e) => PositionBackdrop(owner, backdrop);
 
         owner.LocationChanged += SyncBackdrop;
@@ -75,6 +76,92 @@ public static class ModalWindowService
     [DllImport("user32.dll")]
     private static extern bool GetWindowRect(IntPtr windowHandle, out NativeRect rectangle);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWindowsHookEx(
+        int hookId,
+        MouseHookProcedure procedure,
+        IntPtr moduleHandle,
+        uint threadId);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWindowsHookEx(IntPtr hookHandle);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CallNextHookEx(
+        IntPtr hookHandle,
+        int code,
+        IntPtr message,
+        IntPtr data);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr GetModuleHandle(string? moduleName);
+
+    private delegate IntPtr MouseHookProcedure(int code, IntPtr message, IntPtr data);
+
+    private sealed class OutsideClickMonitor : IDisposable
+    {
+        private const int LowLevelMouseHook = 14;
+        private const int LeftButtonDown = 0x0201;
+        private readonly Window _owner;
+        private readonly Window _dialog;
+        private readonly MouseHookProcedure _procedure;
+        private IntPtr _hookHandle;
+
+        public OutsideClickMonitor(Window owner, Window dialog)
+        {
+            _owner = owner;
+            _dialog = dialog;
+            _procedure = HandleMouseEvent;
+            _hookHandle = SetWindowsHookEx(
+                LowLevelMouseHook,
+                _procedure,
+                GetModuleHandle(null),
+                0);
+        }
+
+        public void Dispose()
+        {
+            if (_hookHandle == IntPtr.Zero)
+                return;
+
+            UnhookWindowsHookEx(_hookHandle);
+            _hookHandle = IntPtr.Zero;
+        }
+
+        private IntPtr HandleMouseEvent(int code, IntPtr message, IntPtr data)
+        {
+            if (code >= 0 &&
+                message.ToInt32() == LeftButtonDown &&
+                _dialog.IsVisible &&
+                _dialog.IsActive)
+            {
+                var mouseInput = Marshal.PtrToStructure<LowLevelMouseInput>(data);
+                var ownerHandle = new WindowInteropHelper(_owner).Handle;
+                var dialogHandle = new WindowInteropHelper(_dialog).Handle;
+
+                if (ownerHandle != IntPtr.Zero &&
+                    dialogHandle != IntPtr.Zero &&
+                    GetWindowRect(ownerHandle, out var ownerRectangle) &&
+                    GetWindowRect(dialogHandle, out var dialogRectangle) &&
+                    Contains(ownerRectangle, mouseInput.Point) &&
+                    !Contains(dialogRectangle, mouseInput.Point))
+                {
+                    _dialog.Dispatcher.BeginInvoke(_dialog.Close);
+                }
+            }
+
+            return CallNextHookEx(_hookHandle, code, message, data);
+        }
+
+        private static bool Contains(NativeRect rectangle, NativePoint point)
+        {
+            return point.X >= rectangle.Left &&
+                   point.X < rectangle.Right &&
+                   point.Y >= rectangle.Top &&
+                   point.Y < rectangle.Bottom;
+        }
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct NativeRect
     {
@@ -82,5 +169,22 @@ public static class ModalWindowService
         public int Top;
         public int Right;
         public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint
+    {
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LowLevelMouseInput
+    {
+        public NativePoint Point;
+        public uint MouseData;
+        public uint Flags;
+        public uint Time;
+        public UIntPtr ExtraInfo;
     }
 }
