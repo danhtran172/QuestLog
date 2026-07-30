@@ -14,6 +14,7 @@ namespace MasterPlay.UI.Features.GameEditor
         public GameEditorControl()
         {
             InitializeComponent();
+            PopupBackdrop.MouseLeftButtonDown += PopupBackdrop_MouseLeftButtonDown;
         }
 
 
@@ -116,6 +117,12 @@ namespace MasterPlay.UI.Features.GameEditor
             if (e.Key != Key.Escape || Keyboard.Modifiers != ModifierKeys.None)
                 return;
 
+            if (DataContext is GameEditorViewModel viewModel && viewModel.CloseTopPopup())
+                e.Handled = true;
+        }
+
+        private void PopupBackdrop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
             if (DataContext is GameEditorViewModel viewModel && viewModel.CloseTopPopup())
                 e.Handled = true;
         }

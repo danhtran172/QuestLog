@@ -31,6 +31,7 @@ namespace MasterPlay.UI.Features.Library
             InitializeComponent();
 
             DataContext = _viewModel;
+            FilterBackdrop.MouseLeftButtonDown += FilterBackdrop_MouseLeftButtonDown;
             WeakReferenceMessenger.Default.Register<RefreshUIMessage>(this, (r, m) =>
             {
                 Dispatcher.Invoke(_viewModel.LoadGamesData);
@@ -198,6 +199,12 @@ namespace MasterPlay.UI.Features.Library
         {
             FilterPopup.IsOpen = false;
             FilterToggleButton.IsChecked = false;
+        }
+
+        private void FilterBackdrop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            FilterPanel_CloseRequested(null, EventArgs.Empty);
+            e.Handled = true;
         }
     }
 }
