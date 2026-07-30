@@ -1,6 +1,7 @@
 using MasterPlay.TrayApp;
 using MasterPlay.TrayApp.Logging;
 using MasterPlay.Core.Localization;
+using MasterPlay.Core.Metadata;
 using MasterPlay.Infrastructure.Configuration;
 using MasterPlay.TrayApp.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +46,7 @@ namespace MasterPlay.TrayApp
             });
 
             services.AddSingleton<PlayTimeService>();
+            services.AddSingleton<IGameMetadataResolver, NullGameMetadataResolver>();
             services.AddSingleton<LibraryService>();
             services.AddSingleton<BackupService>();
         }

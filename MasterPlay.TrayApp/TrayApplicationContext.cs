@@ -18,6 +18,7 @@ namespace MasterPlay.TrayApp
         private readonly PlayTimeService _playTimeService;
         private readonly LibraryService _libraryService;
         private readonly BackupService _backupService;
+        private readonly SynchronizationContext? _uiContext;
 
         private ToolStripMenuItem? _playTimeMenuItem;
         private ToolStripMenuItem? _libraryMenuItem;
@@ -62,13 +63,35 @@ namespace MasterPlay.TrayApp
             };
 
             BuildContextMenu();
+            _uiContext = SynchronizationContext.Current;
             WatchLanguageChanges();
 
             _playTimeService.Start();
+            _libraryService.GameDiscovered += OnGameDiscovered;
             _libraryService.Start();
             _backupService.Start();
 
             _logger.LogInformation("Tray application started.");
+        }
+
+        private void OnGameDiscovered(object? sender, LibraryGameNotification notification)
+        {
+            void ShowNotification()
+            {
+                var localizationKey = notification.Kind == LibraryGameNotificationKind.Added
+                    ? "NewGameAdded"
+                    : "NewGameDetected";
+                _trayIcon.ShowBalloonTip(
+                    5000,
+                    "MasterPlay",
+                    LocalizationService.Get(localizationKey, notification.GameName),
+                    ToolTipIcon.Info);
+            }
+
+            if (_uiContext == null)
+                ShowNotification();
+            else
+                _uiContext.Post(_ => ShowNotification(), null);
         }
 
         private void BuildContextMenu()
@@ -388,6 +411,7 @@ namespace MasterPlay.TrayApp
             {
                 _languageReloadTimer?.Dispose();
                 _configWatcher?.Dispose();
+                _libraryService.GameDiscovered -= OnGameDiscovered;
                 _trayIcon?.Dispose();
             }
             base.Dispose(disposing);
