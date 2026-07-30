@@ -71,8 +71,8 @@ namespace MasterPlay.Infrastructure.Data.Services
                         END
                         WHERE Id IN (1, 2, 3, 4, 5, 6);
                         UPDATE ProgressStatus
-                        SET Name = '⛔ Drop'
-                        WHERE Id = 5;
+                        SET Name = 'Drop'
+                        WHERE Id = 5 AND Name = '⛔ Drop';
                         UPDATE ProgressStatus
                         SET ColorCode = '#F5A623'
                         WHERE Id = 4 OR lower(trim(Name)) IN ('planned', 'intended');
