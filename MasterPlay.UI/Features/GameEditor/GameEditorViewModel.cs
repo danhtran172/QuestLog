@@ -30,6 +30,8 @@ namespace MasterPlay.UI.Features.GameEditor
             Game = selectedGame ?? new Game();
             ReloadGameFromConfig();
             LoadLists();
+            if (IsNew)
+                Game.ProgressId = AllProgresses.FirstOrDefault(progress => string.Equals(progress.Name, "Pending", StringComparison.OrdinalIgnoreCase))?.Id;
             LoadGameData();
             IsReadOnly = !IsNew;
             HasInitExeName = !string.IsNullOrWhiteSpace(Game.InitExeName);

@@ -585,21 +585,21 @@
                                                     <ItemsControl ItemsSource="{Binding FilteredSeries}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <WrapPanel Orientation="Horizontal"/>
+                                                                <StackPanel/>
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid>
+                                                                <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
                                                                     <Border Grid.Column="0"
-                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            Style="{StaticResource PopupItemStyle}"
                                                                             MouseLeftButtonUp="SeriesItem_MouseLeftButtonUp"
                                                                             Tag="{Binding}">
-                                                                        <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" FontFamily="Segoe UI Emoji"/>
+                                                                        <emoji:TextBlock Text="{Binding Name}" FontSize="13" Foreground="#2C3E50" TextTrimming="CharacterEllipsis" FontFamily="Segoe UI Emoji"/>
                                                                     </Border>
                                                                     <Button Grid.Column="1"
                                                                             Style="{StaticResource IconButtonStyle}"
@@ -732,21 +732,28 @@
                                                     <ItemsControl ItemsSource="{Binding FilteredGenres}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <WrapPanel Orientation="Horizontal"/>
+                                                                <StackPanel/>
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid>
+                                                                <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
                                                                     <Border Grid.Column="0"
-                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            Style="{StaticResource PopupItemStyle}"
                                                                             MouseLeftButtonUp="GenreItem_MouseLeftButtonUp"
                                                                             Tag="{Binding}">
-                                                                        <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Image Source="{Binding IconData, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/>
+                                                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" TextTrimming="CharacterEllipsis"/>
+                                                                        </Grid>
                                                                     </Border>
                                                                     <Button Grid.Column="1"
                                                                             Style="{StaticResource IconButtonStyle}"
@@ -879,21 +886,28 @@
                                                     <ItemsControl ItemsSource="{Binding FilteredThemes}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <WrapPanel Orientation="Horizontal"/>
+                                                                <StackPanel/>
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid>
+                                                                <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
                                                                     <Border Grid.Column="0"
-                                                                            Style="{StaticResource PopupItemStyle}" Width="120"
+                                                                            Style="{StaticResource PopupItemStyle}"
                                                                             MouseLeftButtonUp="ThemeItem_MouseLeftButtonUp"
                                                                             Tag="{Binding}">
-                                                                        <emoji:TextBlock Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" FontFamily="Segoe UI Emoji"/>
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Image Source="{Binding IconData, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/>
+                                                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource EmojiTextStyle}" TextTrimming="CharacterEllipsis"/>
+                                                                        </Grid>
                                                                     </Border>
                                                                     <Button Grid.Column="1"
                                                                             Style="{StaticResource IconButtonStyle}"
