@@ -136,7 +136,7 @@ namespace MasterPlay.UI.Features.Library
         {
             null => "--",
             <= 0 => "--",
-            999 => "10🔥",
+            999 => "10",
             _ => Game.Score.Value.ToString()
         };
 
@@ -144,7 +144,7 @@ namespace MasterPlay.UI.Features.Library
         {
             null => "--",
             <= 0 => "--",
-            999 => "10🔥",
+            999 => "10",
             _ => Game.Excited.Value.ToString()
         };
 

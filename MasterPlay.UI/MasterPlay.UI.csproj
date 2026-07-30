@@ -31,6 +31,7 @@
     <None Remove="Assets\EditFolder.png" />
     <None Remove="Assets\Filter.png" />
     <None Remove="Assets\Filter2.png" />
+    <None Remove="Assets\fire.png" />
     <None Remove="Assets\Filtering.png" />
     <None Remove="Assets\Finish.png" />
     <None Remove="Assets\Finish3.png" />
@@ -97,6 +98,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\Info.png" />
+    <Resource Include="Assets\fire.png" />
   </ItemGroup>
 
   <ItemGroup>

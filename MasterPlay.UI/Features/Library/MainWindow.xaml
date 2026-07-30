@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.Features.Library"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
+        xmlns:shared="clr-namespace:MasterPlay.UI.Shared.Controls"
         Title="MasterPlay"
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
@@ -482,7 +483,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayExcited}" Value="{Binding Game.Excited}" FontSize="12" ToolTip="{Binding DisplayExcited}"/>
                                                 </Grid>
 
 
@@ -503,7 +504,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayScore}" Value="{Binding Game.Score}" FontSize="12" ToolTip="{Binding DisplayScore}"/>
                                                 </Grid>
 
 
@@ -586,7 +587,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayExcited}" Value="{Binding Game.Excited}" FontSize="12" ToolTip="{Binding DisplayExcited}"/>
                                                 </Grid>
 
 
@@ -712,7 +713,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayScore}" Value="{Binding Game.Score}" FontSize="12" ToolTip="{Binding DisplayScore}"/>
                                                 </Grid>
 
 
@@ -757,7 +758,7 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ScoreLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayScore}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayScore}" Value="{Binding Game.Score}" FontSize="12" ToolTip="{Binding DisplayScore}"/>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                                                         <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
@@ -879,7 +880,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ExcitedLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <shared:FireValueControl Grid.Column="1" Text="{Binding DisplayExcited}" Value="{Binding Game.Excited}" FontSize="12" ToolTip="{Binding DisplayExcited}"/>
                                                 </Grid>
 
 

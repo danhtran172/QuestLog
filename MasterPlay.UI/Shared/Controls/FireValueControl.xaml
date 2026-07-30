@@ -1,0 +1,25 @@
+<UserControl x:Class="MasterPlay.UI.Shared.Controls.FireValueControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root"
+             HorizontalAlignment="Left"
+             VerticalAlignment="Center">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <TextBlock x:Name="ValueText"
+                   Foreground="{Binding Foreground, ElementName=Root}"
+                   FontFamily="{Binding FontFamily, ElementName=Root}"
+                   FontSize="{Binding FontSize, ElementName=Root}"
+                   FontStyle="{Binding FontStyle, ElementName=Root}"
+                   FontWeight="{Binding FontWeight, ElementName=Root}"
+                   VerticalAlignment="Center"/>
+        <Image x:Name="FireImage"
+               Source="/Assets/fire.png"
+               Width="{Binding FontSize, ElementName=Root}"
+               Height="{Binding FontSize, ElementName=Root}"
+               Margin="2,0,0,0"
+               Stretch="Uniform"
+               VerticalAlignment="Center"
+               Visibility="Collapsed"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+    </StackPanel>
+</UserControl>

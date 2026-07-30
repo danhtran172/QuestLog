@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MasterPlay.UI.Features.GameEditor"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
+        xmlns:shared="clr-namespace:MasterPlay.UI.Shared.Controls"
         x:Name="ThisWindow"
         Background="White" FontFamily="Segoe UI"
         PreviewKeyDown="Popup_PreviewKeyDown">
@@ -68,12 +69,12 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
-                            <emoji:TextBlock Text="{Binding DisplayScore}"
-                                       FontSize="18"
-                                       FontWeight="Normal"
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe UI Emoji"/>
+                            <shared:FireValueControl Text="{Binding DisplayScore}"
+                                                     Value="{Binding Score}"
+                                                     FontSize="18"
+                                                     FontWeight="Normal"
+                                                     Margin="8,0,0,0"
+                                                     VerticalAlignment="Center"/>
                         </StackPanel>
 
 
@@ -250,13 +251,13 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{DynamicResource Excited}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
-                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayExcited}"
-                                               Style="{StaticResource ValueTextStyle}"
-                                               FontWeight="Normal"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"
-                                               VerticalAlignment="Top"
-                                               FontFamily="Segoe UI Emoji"/>
+                                    <shared:FireValueControl Grid.Column="1"
+                                                             Text="{Binding DisplayExcited}"
+                                                             Value="{Binding Excited}"
+                                                             Foreground="#2C3E50"
+                                                             FontWeight="Normal"
+                                                             FontSize="13"
+                                                             VerticalAlignment="Top"/>
                                 </Grid>
 
                                 <Grid Margin="0,0,0,12">

@@ -338,7 +338,7 @@ namespace MasterPlay.UI.Features.GameEditor
         {
             null => "--",
             <= 0 => "--",
-            999 => "10🔥",
+            999 => "10",
             _ => Excited.Value.ToString()
         };
         public string DisplayAvgPlayTime => (AvgPlaytime ?? 0) > 0 ? AvgPlaytime.ToString() + "h" : "--";
@@ -353,7 +353,7 @@ namespace MasterPlay.UI.Features.GameEditor
         {
             null => "--",
             <= 0 => "--",
-            999 => "10🔥",
+            999 => "10",
             _ => Score.Value.ToString()
         };
         public string DisplayPlayTime
