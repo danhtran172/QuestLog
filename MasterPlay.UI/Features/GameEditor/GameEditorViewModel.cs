@@ -4,6 +4,7 @@ using MasterPlay.Core.Localization;
 using MasterPlay.Infrastructure.FileSystem;
 using MasterPlay.Infrastructure.Data.Services;
 using MasterPlay.Infrastructure.Integrations.Cloudinary;
+using MasterPlay.Infrastructure.Integrations.Gemini;
 using MasterPlay.Infrastructure.Integrations.Rawg;
 using MasterPlay.Core.Entities;
 using MasterPlay.UI.Shared.ViewModels;
@@ -44,8 +45,13 @@ namespace MasterPlay.UI.Features.GameEditor
         public bool IsNew { get; }
         public bool IsExisting => !IsNew;
         public bool CanDelete => IsExisting && !IsReadOnly;
-        public bool CanFinish => IsExisting && IsReadOnly;
+        public bool CanFinish => IsExisting && IsReadOnly && !IsDlc;
         public string EditorTitle => LocalizationService.Get(IsNew ? "AddGame" : "GameDetails");
+        public bool ShowRuntimeFields => !IsDlc;
+        public bool ShowSeriesField => !IsDlc;
+        public bool ShowBaseGameField => IsDlc;
+        public bool ShowInitExeNameField => ShowRuntimeFields && HasInitExeName;
+        public string DisplayBaseGame => SelectedBaseGame?.Name ?? "--";
 
         [ObservableProperty]
         private Game game;
@@ -53,7 +59,16 @@ namespace MasterPlay.UI.Features.GameEditor
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayName))]
+        [NotifyPropertyChangedFor(nameof(HasPreviewHeader))]
         private string name = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanFinish))]
+        [NotifyPropertyChangedFor(nameof(ShowRuntimeFields))]
+        [NotifyPropertyChangedFor(nameof(ShowSeriesField))]
+        [NotifyPropertyChangedFor(nameof(ShowBaseGameField))]
+        [NotifyPropertyChangedFor(nameof(ShowInitExeNameField))]
+        private bool isDlc;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(HasUbisoftPublisher))]
@@ -85,6 +100,7 @@ namespace MasterPlay.UI.Features.GameEditor
         private string slugName = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayProcessName))]
         private string exeName = string.Empty;
 
         [ObservableProperty]
@@ -93,9 +109,11 @@ namespace MasterPlay.UI.Features.GameEditor
         private string initExeName = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplaySaveFolderPath))]
         private string saveFolderPath = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayBackupFolderPath))]
         private string backupFolderPath = string.Empty;
 
         [ObservableProperty]
@@ -105,9 +123,13 @@ namespace MasterPlay.UI.Features.GameEditor
         private string gImagePath = string.Empty;
 
         [ObservableProperty]
+        private string steamLibraryImagePath = string.Empty;
+
+        [ObservableProperty]
         private bool isBusy;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasPreviewHeader))]
         private BitmapImage? previewImage;
 
         [ObservableProperty]
@@ -134,6 +156,7 @@ namespace MasterPlay.UI.Features.GameEditor
         private string publishDateInput = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInitExeNameField))]
         private bool hasInitExeName;
 
         [ObservableProperty]
@@ -186,6 +209,9 @@ namespace MasterPlay.UI.Features.GameEditor
         private ObservableCollection<ProgressStatus> allProgresses = new();
 
         [ObservableProperty]
+        private ObservableCollection<Game> baseGames = new();
+
+        [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplaySeries))]
         private Series? selectedSeries;
 
@@ -205,6 +231,10 @@ namespace MasterPlay.UI.Features.GameEditor
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DisplayProgress))]
         private ProgressStatus? selectedProgress;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayBaseGame))]
+        private Game? selectedBaseGame;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsAnyPopupOpen))]
@@ -329,6 +359,7 @@ namespace MasterPlay.UI.Features.GameEditor
 
 
         public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "--" : Name;
+        public bool HasPreviewHeader => !IsNew || PreviewImage != null;
         public string DisplayPublishDate => Game.PublishDate?.ToString("MMM dd, yyyy") ?? "--";
         public string DisplayPublisher => string.IsNullOrWhiteSpace(Publisher) ? "--" : Publisher;
         public string DisplayDeveloper => string.IsNullOrWhiteSpace(Developer) ? "--" : Developer;
@@ -345,6 +376,28 @@ namespace MasterPlay.UI.Features.GameEditor
         };
         public string DisplayAvgPlayTime => (AvgPlaytime ?? 0) > 0 ? AvgPlaytime.ToString() + "h" : "--";
         public string DisplayFinishedIn => string.IsNullOrWhiteSpace(FinishedIn) ? "Not Finished" : FinishedIn;
+
+        public string DisplayFinishHistory
+        {
+            get
+            {
+                var finishes = Game?.Finishes?
+                    .OrderByDescending(finish => finish.FinishedAt)
+                    .Select(finish => $"{finish.FinishedAt:yyyy-MM-dd} \u00b7 {FormatFinishScore(finish.Score)}")
+                    .ToList();
+
+                return finishes?.Count > 0
+                    ? string.Join(Environment.NewLine, finishes)
+                    : "Not Finished";
+            }
+        }
+
+        private static string FormatFinishScore(double? score) => score switch
+        {
+            null or <= 0 => "--",
+            999 => "10",
+            _ => score.Value.ToString()
+        };
         public string DisplayProcessName => string.IsNullOrWhiteSpace(ExeName) ? "--" : $"{ExeName}.exe";
         public string DisplayInitProcessName => string.IsNullOrWhiteSpace(InitExeName) ? "--" : $"{InitExeName}.exe";
         public string DisplaySaveFolderPath => string.IsNullOrWhiteSpace(SaveFolderPath) ? "--" : SaveFolderPath;
@@ -468,6 +521,29 @@ namespace MasterPlay.UI.Features.GameEditor
 
                     SyncPublishDate(ViewModelHelpers.StringToDateOnly(rawgGame.ReleaseDate));
 
+                    if (!string.IsNullOrWhiteSpace(rawgGame.Background_Image))
+                        ImagePath = rawgGame.Background_Image;
+
+                    try
+                    {
+                        var galleryImage = await RawgService.GetGalleryImage(Name);
+                        if (!string.IsNullOrWhiteSpace(galleryImage))
+                            GImagePath = galleryImage;
+
+                        var steamLibraryImage = await RawgService.GetSteamLibraryImage(Name);
+                        if (!string.IsNullOrWhiteSpace(steamLibraryImage))
+                            SteamLibraryImagePath = steamLibraryImage;
+                    }
+                    catch (Exception galleryException)
+                    {
+                        Debug.WriteLine($"Gallery sync skipped: {galleryException}");
+                    }
+
+                    // Gemini enrichment is optional: a quota/API/model failure must not fail metadata sync.
+                    var executableName = await GeminiService.GetExecutableNameAsync(Name);
+                    if (!string.IsNullOrWhiteSpace(executableName))
+                        ExeName = executableName;
+
                     await ShowStatus(LocalizationService.Get("SyncSuccessful"));
                 }
                 else
@@ -553,6 +629,39 @@ namespace MasterPlay.UI.Features.GameEditor
             }
         }
 
+        [RelayCommand]
+        private async Task SyncSteamLibraryImage()
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                await ShowStatus(LocalizationService.Get("GameNameEmpty"));
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                var steamLibraryUrl = await RawgService.GetSteamLibraryImage(Name);
+                if (!string.IsNullOrWhiteSpace(steamLibraryUrl))
+                {
+                    SteamLibraryImagePath = steamLibraryUrl;
+                    await ShowStatus(LocalizationService.Get("SteamLibraryImageUpdated"));
+                }
+                else
+                {
+                    await ShowStatus(LocalizationService.Get("SteamLibraryImageNotFound"));
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowStatus(LocalizationService.Get("ErrorWithDetails", ex.Message));
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         private void SyncPublishDate(DateOnly? date)
         {
             PublishDateInput = date?.ToString("dd/MM/yyyy") ?? string.Empty;
@@ -584,6 +693,9 @@ namespace MasterPlay.UI.Features.GameEditor
 
         private void UpdateBackupFolderPath(string newGameName)
         {
+            if (IsDlc)
+                return;
+
             if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) && Directory.Exists(Game.BackupFolderPath))
             {
                 bool renamed = DataService.RenameBackupFolder(Game, newGameName);
@@ -603,16 +715,40 @@ namespace MasterPlay.UI.Features.GameEditor
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(Name) && Name != Game.Name)
+                var publishDate = ViewModelHelpers.StringToDateOnly(PublishDateInput);
+                if (!string.IsNullOrWhiteSpace(PublishDateInput) && publishDate == null)
+                {
+                    await ShowStatus(LocalizationService.Get("InvalidPublishDate"));
+                    return;
+                }
+
+                Game.PublishDate = publishDate;
+
+                if (IsDlc)
+                {
+                    if (SelectedBaseGame == null)
+                    {
+                        await ShowStatus(LocalizationService.Get("DlcBaseGameRequired"));
+                        return;
+                    }
+
+                    Name = EnsureDlcNameTag(Name);
+                    ClearDlcRuntimeData();
+                    Game.BaseGameId = SelectedBaseGame.Id;
+                    Game.SeriesId = SelectedBaseGame.SeriesId;
+                }
+
+                if (!IsDlc && !string.IsNullOrWhiteSpace(Name) && Name != Game.Name)
                 {
                     UpdateBackupFolderPath(Name);
                 }
 
-                Game.SeriesId = SelectedSeries?.Id;
+                if (!IsDlc)
+                    Game.SeriesId = SelectedSeries?.Id;
                 Game.OwnershipId = SelectedOwnership?.Id;
                 Game.ProgressId = SelectedProgress?.Id;
 
-                if (SelectedProgress?.Id == 3 && _originalProgressId != 3)
+                if (!IsDlc && SelectedProgress?.Id == 3 && _originalProgressId != 3)
                 {
                     DataService.ReorderOnPromoteToNextPlay(Game);
                 }
@@ -647,6 +783,7 @@ namespace MasterPlay.UI.Features.GameEditor
                 Game.BackupFolderPath = BackupFolderPath;
                 Game.ImagePath = ImagePath;
                 Game.GImagePath = GImagePath;
+                Game.SteamLibraryImagePath = SteamLibraryImagePath;
                 Game.Score = Score;
                 Game.OwnershipInfo = CreateOwnershipInfo();
 
@@ -680,6 +817,18 @@ namespace MasterPlay.UI.Features.GameEditor
                             GImagePath = galleryUrl;
                         }
                     }
+
+                    if (!string.IsNullOrWhiteSpace(Game.SteamLibraryImagePath) &&
+                        !CloudinaryImageService.IsCloudinaryUrl(Game.SteamLibraryImagePath))
+                    {
+                        await ShowStatus(LocalizationService.Get("UploadingSteamLibraryImage"), 0);
+                        var steamLibraryUrl = await CloudinaryImageService.UploadGameImageAsync(Game.Id, Game.SteamLibraryImagePath, "steam-library");
+                        if (!string.IsNullOrWhiteSpace(steamLibraryUrl))
+                        {
+                            Game.SteamLibraryImagePath = steamLibraryUrl;
+                            SteamLibraryImagePath = steamLibraryUrl;
+                        }
+                    }
                 }
                 catch (Exception cloudEx)
                 {
@@ -697,20 +846,22 @@ namespace MasterPlay.UI.Features.GameEditor
                 if (IsNew)
                 {
                     DataService.AddGame(Game);
-                    DataService.CreateBackupFolder(Game);
+                    if (!IsDlc)
+                        DataService.CreateBackupFolder(Game);
                 }
                 else
                 {
                     DataService.UpdateGame(Game);
                 }
 
-                if (!string.IsNullOrWhiteSpace(Game.BackupFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath))
+                if (!IsDlc && !string.IsNullOrWhiteSpace(Game.BackupFolderPath) && FileHelper.FileCheck(Game.BackupFolderPath))
                 {
                     DataService.UpdateSaveLocationFile(Game);
                 }
 
                 IsReadOnly = true;
                 ReloadGameFromConfig();
+                RefreshViewState();
 
                 await ShowStatus(LocalizationService.Get("DataSaved"));
                 if (IsNew)
@@ -733,6 +884,7 @@ namespace MasterPlay.UI.Features.GameEditor
             }
             IsReadOnly = true;
             ReloadGameFromConfig();
+            RefreshViewState();
             StatusMessage = string.Empty;
         }
 
@@ -767,6 +919,9 @@ namespace MasterPlay.UI.Features.GameEditor
                     SelectedProgress = AllProgresses.FirstOrDefault(p => p.Name == "Done") ?? AllProgresses.FirstOrDefault();
                     FinishedIn = DateTime.Now.Year.ToString();
                     await Save();
+                    DataService.AddGameFinish(Game.Id, newScore, DateTime.Now);
+                    ReloadGameFromConfig();
+                    OnPropertyChanged(nameof(DisplayFinishHistory));
                     IsFinishPopupOpen = false;
                     await ShowStatus(LocalizationService.Get("GameFinished", Name, newScore));
                 }
@@ -1223,6 +1378,9 @@ namespace MasterPlay.UI.Features.GameEditor
             AllThemes = new ObservableCollection<Theme>(DataService.LoadThemesList());
             AllOwnerships = new ObservableCollection<OwnershipStatus>(DataService.LoadOwnershipList());
             AllProgresses = new ObservableCollection<ProgressStatus>(DataService.LoadProgressList());
+            BaseGames = new ObservableCollection<Game>(DataService.LoadGames()
+                .Where(game => !game.IsDlc && game.Id != Game.Id)
+                .OrderBy(game => game.Name));
 
             FilteredSeries = new ObservableCollection<Series>(AllSeries);
             FilteredGenres = new ObservableCollection<Genre>(AllGenres);
@@ -1261,6 +1419,9 @@ namespace MasterPlay.UI.Features.GameEditor
             SelectedProgress = AllProgresses.FirstOrDefault(p => p.Id == Game.ProgressId);
             OnPropertyChanged(nameof(DisplayProgress));
 
+            IsDlc = Game.IsDlc;
+            SelectedBaseGame = BaseGames.FirstOrDefault(game => game.Id == Game.BaseGameId);
+
             _originalProgressId = Game.ProgressId;
 
             Name = Game.Name ?? string.Empty;
@@ -1268,6 +1429,7 @@ namespace MasterPlay.UI.Features.GameEditor
             Developer = Game.Developer ?? string.Empty;
             Excited = Game.Excited;
             FinishedIn = Game.FinishedIn ?? string.Empty;
+            OnPropertyChanged(nameof(DisplayFinishHistory));
             AvgPlaytime = Game.AvgPlayTime;
             MetaScore = Game.MetaScore;
             SlugName = Game.SlugName ?? string.Empty;
@@ -1277,6 +1439,7 @@ namespace MasterPlay.UI.Features.GameEditor
             BackupFolderPath = Game.BackupFolderPath ?? string.Empty;
             ImagePath = Game.ImagePath ?? string.Empty;
             GImagePath = Game.GImagePath ?? string.Empty;
+            SteamLibraryImagePath = Game.SteamLibraryImagePath ?? string.Empty;
             Score = Game.Score;
             SyncPublishDate(Game.PublishDate);
             UpdatePlayTimeFieldsFromSeconds();
@@ -1404,6 +1567,23 @@ namespace MasterPlay.UI.Features.GameEditor
         partial void OnGameChanged(Game value)
         {
             PreviewImage = LoadPreviewImage(value?.ImagePath);
+            RefreshViewState();
+        }
+
+        private void RefreshViewState()
+        {
+            foreach (var propertyName in new[]
+            {
+                nameof(DisplayName), nameof(DisplayPublishDate), nameof(DisplayPublisher), nameof(DisplayDeveloper),
+                nameof(DisplaySeries), nameof(DisplayGenres), nameof(DisplayThemes), nameof(DisplayMetaScore),
+                nameof(DisplayExcited), nameof(DisplayAvgPlayTime), nameof(DisplayFinishedIn), nameof(DisplayFinishHistory), nameof(DisplayProcessName),
+                nameof(DisplayInitProcessName), nameof(DisplaySaveFolderPath), nameof(DisplayBackupFolderPath),
+                nameof(DisplayOwnership), nameof(DisplayProgress), nameof(DisplayScore), nameof(DisplayPlayTime),
+                nameof(HasSlugName), nameof(HasInitExeNameForView), nameof(HasScore), nameof(HasSpecialOwnership)
+            })
+            {
+                OnPropertyChanged(propertyName);
+            }
         }
 
         partial void OnIsReadOnlyChanged(bool value)
@@ -1426,7 +1606,65 @@ namespace MasterPlay.UI.Features.GameEditor
             UpdateTotalPlayTimeFromFields();
         }
 
+        private const string DlcNameTag = " [DLC]";
+
+        private static string EnsureDlcNameTag(string name)
+        {
+            var trimmedName = name?.Trim() ?? string.Empty;
+            return trimmedName.EndsWith(DlcNameTag, StringComparison.OrdinalIgnoreCase)
+                ? trimmedName
+                : trimmedName + DlcNameTag;
+        }
+
+        private static string RemoveDlcNameTag(string name)
+        {
+            var trimmedName = name?.Trim() ?? string.Empty;
+            return trimmedName.EndsWith(DlcNameTag, StringComparison.OrdinalIgnoreCase)
+                ? trimmedName[..^DlcNameTag.Length].TrimEnd()
+                : trimmedName;
+        }
+
+        private void ClearDlcRuntimeData()
+        {
+            ExeName = string.Empty;
+            InitExeName = string.Empty;
+            HasInitExeName = false;
+            SaveFolderPath = string.Empty;
+            BackupFolderPath = string.Empty;
+            PlayTimeHours = 0;
+            PlayTimeMinutes = 0;
+            AdjustMinutes = 0;
+            Game.TotalPlayTimeSeconds = 0;
+            Game.Ready = false;
+            Game.GamePosition = null;
+        }
+
         partial void OnNameChanged(string value) => Game.Name = value;
+        partial void OnIsDlcChanged(bool value)
+        {
+            Game.IsDlc = value;
+            if (value)
+            {
+                Name = EnsureDlcNameTag(Name);
+                ClearDlcRuntimeData();
+            }
+            else
+            {
+                Game.BaseGameId = null;
+                SelectedBaseGame = null;
+                Name = RemoveDlcNameTag(Name);
+            }
+        }
+
+        partial void OnSelectedBaseGameChanged(Game? value)
+        {
+            if (!IsDlc)
+                return;
+
+            Game.BaseGameId = value?.Id;
+            Game.SeriesId = value?.SeriesId;
+            SelectedSeries = AllSeries.FirstOrDefault(series => series.Id == value?.SeriesId);
+        }
         partial void OnPublisherChanged(string value) => Game.Publisher = value;
         partial void OnDeveloperChanged(string value) => Game.Developer = value;
         partial void OnExcitedChanged(double? value) => Game.Excited = value;
@@ -1443,6 +1681,7 @@ namespace MasterPlay.UI.Features.GameEditor
             PreviewImage = LoadPreviewImage(value);
         }
         partial void OnGImagePathChanged(string value) => Game.GImagePath = value;
+        partial void OnSteamLibraryImagePathChanged(string value) => Game.SteamLibraryImagePath = value;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(HasScore))]

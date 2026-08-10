@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using MasterPlay.UI.Features.GameEditor;
 
 namespace MasterPlay.UI.Services.Windowing;
 
@@ -23,6 +24,10 @@ public static class ModalWindowService
             backdrop.Owner = owner;
             backdrop.Show();
             dialog.Owner = owner;
+
+            if (dialog is GameEditorWindow)
+                dialog.Height = owner.ActualHeight * 0.9;
+
             return dialog.ShowDialog();
         }
         finally

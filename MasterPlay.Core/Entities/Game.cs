@@ -19,6 +19,10 @@ public partial class Game
 
     public bool IsDisabled { get; set; }
 
+    public bool IsDlc { get; set; }
+
+    public string? BaseGameId { get; set; }
+
     public string? SaveFolderPath { get; set; }
 
     public string? BackupFolderPath { get; set; }
@@ -28,6 +32,8 @@ public partial class Game
     public string? ImagePath { get; set; }
 
     public string? GImagePath { get; set; }
+
+    public string? SteamLibraryImagePath { get; set; }
 
     public DateOnly? PublishDate { get; set; }
 
@@ -55,6 +61,8 @@ public partial class Game
 
     public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
     public virtual ICollection<GameTheme> GameThemes { get; set; } = new List<GameTheme>();
+
+    public virtual ICollection<GameFinish> Finishes { get; set; } = new List<GameFinish>();
 
     public virtual GamePosition? GamePosition { get; set; }
 

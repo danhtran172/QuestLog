@@ -77,6 +77,9 @@ public sealed class BackupService : IDisposable
 
     private void QueueBackup(Game game)
     {
+        if (game.IsDlc)
+            return;
+
         if (string.IsNullOrWhiteSpace(game.SaveFolderPath) || !Directory.Exists(game.SaveFolderPath))
             return;
 
@@ -189,6 +192,9 @@ public sealed class BackupService : IDisposable
 
     private async Task BackupGameAsync(Game game, CancellationToken cancellationToken)
     {
+        if (game.IsDlc)
+            return;
+
         if (_lastBackups.TryGetValue(game.Id, out var lastBackup) &&
             DateTimeOffset.UtcNow - lastBackup < MinimumBackupInterval)
             return;

@@ -10,4 +10,5 @@ public partial class DetectedProcess
     public string ExeName { get; set; } = null!;
 
     public string FullPath { get; set; } = null!;
+
 }

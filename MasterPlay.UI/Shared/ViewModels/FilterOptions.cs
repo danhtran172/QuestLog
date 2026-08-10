@@ -36,6 +36,8 @@ public class FilterOptions : ObservableObject
     private ObservableCollection<AvgPlayLevel> _selectedAvgPlays = new();
     private ObservableCollection<int> _selectedProgressIds = new();
     private ObservableCollection<int> _selectedOwnershipIds = new();
+    private ObservableCollection<int> _selectedGenreIds = new();
+    private ObservableCollection<int> _selectedThemeIds = new();
     private ObservableCollection<MetaScoreLevel> _selectedMetaScores = new();
     private bool _isReverse;
 
@@ -99,6 +101,18 @@ public class FilterOptions : ObservableObject
     {
         get => _selectedOwnershipIds;
         set => SetProperty(ref _selectedOwnershipIds, value ?? new());
+    }
+
+    public ObservableCollection<int> SelectedGenreIds
+    {
+        get => _selectedGenreIds;
+        set => SetProperty(ref _selectedGenreIds, value ?? new());
+    }
+
+    public ObservableCollection<int> SelectedThemeIds
+    {
+        get => _selectedThemeIds;
+        set => SetProperty(ref _selectedThemeIds, value ?? new());
     }
 
     public ObservableCollection<MetaScoreLevel> SelectedMetaScores

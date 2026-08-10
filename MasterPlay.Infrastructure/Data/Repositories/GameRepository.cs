@@ -28,12 +28,13 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
             .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
             .Include(g => g.GamePosition)
             .Include(g => g.OwnershipInfo)
+            .Include(g => g.Finishes)
             .ToList();
     }
 
     public IEnumerable<Game> GetActiveGames()
     {
-        return _dbSet.AsNoTracking().Where(g => g.Ready && !g.IsDisabled).ToList();
+        return _dbSet.AsNoTracking().Where(g => g.Ready && !g.IsDisabled && !g.IsDlc).ToList();
     }
 
     public Game GetByIdWithDetails(string id)
@@ -47,6 +48,7 @@ public class GameRepository : GenericRepository<Game>, IGameRepository
             .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
             .Include(g => g.GamePosition)
             .Include(g => g.OwnershipInfo)
+            .Include(g => g.Finishes)
             .FirstOrDefault(g => g.Id == id)!;
     }
     public void UpdateWithDetails(Game game)

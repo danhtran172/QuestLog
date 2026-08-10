@@ -28,6 +28,9 @@ public sealed class MainWindowActions : IMainWindowActions
 
     public void LaunchGame(Game game)
     {
+        if (game.IsDlc)
+            return;
+
         var processPath = new GameViewModel(game).GetLaunchProcessPath();
         if (string.IsNullOrWhiteSpace(processPath))
         {

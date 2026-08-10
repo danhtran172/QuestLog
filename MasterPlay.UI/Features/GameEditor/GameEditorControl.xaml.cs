@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 
 namespace MasterPlay.UI.Features.GameEditor
 {
@@ -125,6 +127,26 @@ namespace MasterPlay.UI.Features.GameEditor
         {
             if (DataContext is GameEditorViewModel viewModel && viewModel.CloseTopPopup())
                 e.Handled = true;
+        }
+
+        private void SearchPopup_Opened(object? sender, EventArgs e)
+        {
+            TextBox? searchBox = sender switch
+            {
+                Popup popup when popup == SeriesPopup => SeriesSearchBox,
+                Popup popup when popup == GenresPopup => GenresSearchBox,
+                Popup popup when popup == ThemesPopup => ThemesSearchBox,
+                _ => null
+            };
+
+            if (searchBox != null)
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    searchBox.Focus();
+                    searchBox.SelectAll();
+                }, DispatcherPriority.Input);
+            }
         }
     }
 }

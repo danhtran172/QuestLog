@@ -50,7 +50,7 @@
                         <StackPanel>
                             <TextBlock Text="{DynamicResource SteamAccount}"
                                        FontWeight="SemiBold"
-                                       Foreground="#2C3E50"
+                                       Foreground="{DynamicResource MainTextBrush}"
                                        Margin="0,0,0,10"/>
                             <Grid Margin="0,0,0,7">
                                 <Grid.ColumnDefinitions>
@@ -97,7 +97,7 @@
                         <StackPanel>
                             <TextBlock Text="{DynamicResource UbisoftConnectAccount}"
                                        FontWeight="SemiBold"
-                                       Foreground="#2C3E50"
+                                       Foreground="{DynamicResource MainTextBrush}"
                                        Margin="0,0,0,10"/>
                             <Grid Margin="0,0,0,7">
                                 <Grid.ColumnDefinitions>
@@ -140,7 +140,7 @@
                         Padding="12"
                         MinHeight="75">
                     <StackPanel>
-                        <TextBlock Text="{DynamicResource Note}" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource Note}" FontWeight="SemiBold" Foreground="{DynamicResource MainTextBrush}" Margin="0,0,0,6"/>
                         <TextBlock Text="{Binding OwnershipNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
@@ -170,7 +170,7 @@
                         MinHeight="90"
                         Margin="0,8,0,0">
                     <StackPanel>
-                        <TextBlock Text="{DynamicResource Note}" FontWeight="SemiBold" Foreground="#2C3E50" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource Note}" FontWeight="SemiBold" Foreground="{DynamicResource MainTextBrush}" Margin="0,0,0,6"/>
                         <TextBlock Text="{Binding OwnershipNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MasterPlay.Core.Localization;
 using MasterPlay.Infrastructure.Configuration;
+using MasterPlay.UI.Services;
 using MasterPlay.UI.Shared.ViewModels;
 using Microsoft.Win32;
 using System;
@@ -41,12 +42,17 @@ namespace MasterPlay.UI.Features.Settings
         [ObservableProperty] private bool isConfigReadOnly = true;
         [ObservableProperty] private bool isDatabaseReadOnly = true;
         [ObservableProperty] private LanguageOption? selectedLanguage;
+        [ObservableProperty] private bool isDarkMode;
+        [ObservableProperty] private bool isCatalogPage;
+        public CatalogSettingsViewModel Catalog { get; } = new();
 
         public IReadOnlyList<LanguageOption> AvailableLanguages => LocalizationService.Languages;
         private string _originalLanguage = LocalizationService.CurrentLanguage;
+        private bool _originalDarkMode;
 
         public SettingsViewModel()
         {
+            Catalog.BackRequested += () => IsCatalogPage = false;
             LoadSettings();
         }
 
@@ -87,6 +93,12 @@ namespace MasterPlay.UI.Features.Settings
         [RelayCommand]
         private void RemoveLibrary(LibraryPathItem item) { if (item != null) LibraryPaths.Remove(item); }
 
+        [RelayCommand]
+        private void ManageLabelsAndIcons()
+        {
+            IsCatalogPage = true;
+        }
+
 
         [RelayCommand]
         private void Save()
@@ -98,8 +110,10 @@ namespace MasterPlay.UI.Features.Settings
                 config.DatabasePath = DatabasePath;
                 config.GameLibraryPath = LibraryPaths.Select(x => x.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
                 config.Language = SelectedLanguage?.Code ?? "en-US";
+                config.isDarkMode = IsDarkMode;
                 JsonService.SaveConfig(config);
                 _originalLanguage = config.Language;
+                _originalDarkMode = config.isDarkMode;
                 StatusMessage = LocalizationService.Get("SettingsSaved");
                 IsBackupReadOnly = IsConfigReadOnly = IsDatabaseReadOnly = true;
                 foreach (var item in LibraryPaths) item.IsReadOnly = true;
@@ -111,10 +125,12 @@ namespace MasterPlay.UI.Features.Settings
         private void Cancel()
         {
             RestoreLanguage();
+            RestoreTheme();
             RaiseRequestClose(false);
         }
 
         public void RestoreLanguage() => LocalizationService.SetLanguage(_originalLanguage);
+        public void RestoreTheme() => ThemeService.Apply(_originalDarkMode);
 
 
         private void LoadSettings()
@@ -125,6 +141,8 @@ namespace MasterPlay.UI.Features.Settings
             DatabasePath = config.DatabasePath ?? string.Empty;
             ConfigPath = JsonService.GetConfigPath();
             _originalLanguage = LocalizationService.CurrentLanguage;
+            _originalDarkMode = config.isDarkMode;
+            IsDarkMode = _originalDarkMode;
             SelectedLanguage = AvailableLanguages.First(x => x.Code == _originalLanguage);
 
             LibraryPaths = new ObservableCollection<LibraryPathItem>(
@@ -138,5 +156,7 @@ namespace MasterPlay.UI.Features.Settings
             if (value != null)
                 LocalizationService.SetLanguage(value.Code);
         }
+
+        partial void OnIsDarkModeChanged(bool value) => ThemeService.Apply(value);
     }
 }

@@ -9,5 +9,9 @@ public partial class Theme
 
     public string Name { get; set; } = null!;
 
+    public string? IconData { get; set; }
+
+    public int SortOrder { get; set; }
+
     public virtual ICollection<Game> Games { get; set; } = new List<Game>();
 }

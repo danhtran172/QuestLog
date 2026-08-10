@@ -7,6 +7,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace MasterPlay.UI.Features.Library
 {
@@ -175,6 +176,14 @@ namespace MasterPlay.UI.Features.Library
             {
                 switch (e.Key)
                 {
+                    case Key.K:
+                        if (!_viewModel.IsPlayQueueMode)
+                        {
+                            SearchBox.Focus();
+                            SearchBox.SelectAll();
+                        }
+                        e.Handled = true;
+                        break;
                     case Key.D1:
                         _viewModel.ShowAllCommand.Execute(null);
                         e.Handled = true;
@@ -201,10 +210,21 @@ namespace MasterPlay.UI.Features.Library
             FilterToggleButton.IsChecked = false;
         }
 
+        private void FilterPopup_Opened(object? sender, EventArgs e)
+        {
+            Dispatcher.BeginInvoke(FilterPanel.FocusSearchBox, DispatcherPriority.Input);
+        }
+
         private void FilterBackdrop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             FilterPanel_CloseRequested(null, EventArgs.Empty);
             e.Handled = true;
+        }
+
+        private void GameCard_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is FrameworkElement gameCard)
+                gameCard.BringIntoView();
         }
     }
 }

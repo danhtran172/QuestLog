@@ -4,10 +4,11 @@
         xmlns:vm="clr-namespace:MasterPlay.UI.Features.Library"
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         xmlns:shared="clr-namespace:MasterPlay.UI.Shared.Controls"
-        Title="MasterPlay"
+        xmlns:input="clr-namespace:MasterPlay.UI.Services.Input"
+        Title="Questory"
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
-        Background="#F8F9FA" FontFamily="Segoe UI, Segoe UI Emoji"
+        Background="{DynamicResource WindowBackgroundBrush}" FontFamily="Segoe UI, Segoe UI Emoji"
         KeyDown="Window_KeyDown"
         xmlns:local="clr-namespace:MasterPlay.UI.Features.Queue"
         xmlns:controls="clr-namespace:MasterPlay.UI.Features.Library"
@@ -17,8 +18,25 @@
 
     <Window.Resources>
 
-        <Color x:Key="HighlightColor">#FFFFE0</Color>
-        <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource HighlightColor}" Opacity="0.5"/>
+        <SolidColorBrush x:Key="HighlightBrush" Color="Transparent"/>
+
+        <DataTemplate x:Key="GameGenrePillTemplate">
+            <Border Background="#EDF7EB" BorderBrush="#B9DAB4" BorderThickness="1" CornerRadius="10" Padding="5,2" Margin="0,0,4,4">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="{Binding IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="12" Height="12" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#315A2B" ToolTip="{Binding Name}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="GameThemePillTemplate">
+            <Border Background="#F1F0FA" BorderBrush="#C7C3E7" BorderThickness="1" CornerRadius="10" Padding="5,2" Margin="0,0,4,4">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="{Binding IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="12" Height="12" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#4D4A82" ToolTip="{Binding Name}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
 
 
         <Style x:Key="SortComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}">
@@ -28,14 +46,14 @@
                         <Grid>
                             <ToggleButton x:Name="ToggleButton"
                                   Background="{TemplateBinding Background}"
-                                  BorderBrush="#E0E0E0" BorderThickness="0"
+                                  BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="0"
                                   Focusable="False"
                                   IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                   ClickMode="Press">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
                                         <Border Background="{TemplateBinding Background}"
-                                        BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="18">
+                                        BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="18">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -53,7 +71,7 @@
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 <Path Grid.Column="2"
                                               Data="M 0 0 L 3.5 3.5 L 7 0 Z"
-                                              Fill="#666" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                              Fill="{DynamicResource FieldTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Border>
                                         <ControlTemplate.Triggers>
@@ -72,8 +90,8 @@
                            AllowsTransparency="True"
                            PopupAnimation="Slide"
                            Focusable="False">
-                                <Border Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="12"
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="12"
                                 Margin="0,5,0,0" MinWidth="{TemplateBinding ActualWidth}">
                                     <StackPanel>
 
@@ -104,7 +122,7 @@
         </Grid.RowDefinitions>
 
 
-        <Border Grid.Row="0" Background="White">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}">
             <Border.Effect>
                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
             </Border.Effect>
@@ -271,8 +289,9 @@
                StaysOpen="False"
                PopupAnimation="Slide"
                AllowsTransparency="True"
+               Opened="FilterPopup_Opened"
                IsOpen="{Binding IsChecked, ElementName=FilterToggleButton, Mode=TwoWay}">
-            <controls:FilterPanel CloseRequested="FilterPanel_CloseRequested"/>
+            <controls:FilterPanel x:Name="FilterPanel" CloseRequested="FilterPanel_CloseRequested"/>
         </Popup>
 
 
@@ -291,12 +310,28 @@
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:GameViewModel}">
-                            <Border Width="270"
+                            <Border x:Name="GameCard"
+                                    Width="270"
                                     Margin="6"
-                                    Background="White"
-                                    BorderBrush="#E4E4E4"
-                                    BorderThickness="1"
-                                    CornerRadius="14">
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    CornerRadius="14"
+                                    Focusable="True"
+                                    KeyboardNavigation.IsTabStop="True"
+                                    GotKeyboardFocus="GameCard_GotKeyboardFocus"
+                                    input:ControllerNavigationProperties.SelectCommand="{Binding DataContext.EditGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    input:ControllerNavigationProperties.PlayCommand="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="#E4E4E4"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter Property="BorderBrush" Value="#5B9BD5"/>
+                                                <Setter Property="BorderThickness" Value="3"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -355,7 +390,7 @@
                                                         <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="{DynamicResource MainTextBrush}" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
@@ -378,6 +413,16 @@
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource PlaytimeLabel}" FontWeight="Bold" FontSize="12"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowFinishedIn, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{DynamicResource FinishedInLabel}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
 
@@ -525,7 +570,10 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <Image Source="{Binding Game.Ownership.IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding Game.Ownership.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,5,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <emoji:TextBlock Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    </StackPanel>
                                                 </Grid>
 
 
@@ -549,6 +597,36 @@
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowGenres, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="◇" FontSize="14" Foreground="#6A9B62" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Genre}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardGenres}" ItemTemplate="{StaticResource GameGenrePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowThemes, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="✦" FontSize="14" Foreground="#7B78B8" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Theme}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardThemes}" ItemTemplate="{StaticResource GameThemePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
 
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
@@ -556,7 +634,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ProgressLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal"><Image Source="{Binding Game.Progress.IconData, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding Game.Progress.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/><TextBlock Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis"/></StackPanel>
                                                 </Grid>
                                             </StackPanel>
 
@@ -575,9 +653,19 @@
                                                         <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="{DynamicResource MainTextBrush}" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowFinishedIn, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{DynamicResource FinishedInLabel}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayFinishedIn}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
 
@@ -607,7 +695,10 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <Image Source="{Binding Game.Ownership.IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding Game.Ownership.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,5,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <emoji:TextBlock Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    </StackPanel>
                                                 </Grid>
 
 
@@ -737,6 +828,36 @@
                                                     <TextBlock Grid.Column="1" Text="{Binding DisplayAvgPlayTime}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                                 </Grid>
 
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowGenres, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="◇" FontSize="14" Foreground="#6A9B62" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Genre}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardGenres}" ItemTemplate="{StaticResource GameGenrePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowThemes, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="✦" FontSize="14" Foreground="#7B78B8" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Theme}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardThemes}" ItemTemplate="{StaticResource GameThemePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
 
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
@@ -744,7 +865,7 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource ProgressLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal"><Image Source="{Binding Game.Progress.IconData, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding Game.Progress.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/><TextBlock Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis"/></StackPanel>
                                                 </Grid>
                                             </StackPanel>
 
@@ -763,7 +884,7 @@
                                                         <TextBlock Text="{DynamicResource MetaScoreLabel}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                         <Border Background="{Binding Game.MetaScore, Converter={StaticResource MetaScoreColorConverter}}"
                                                                 CornerRadius="4" Padding="4,1" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="#2C3E50" FontSize="12" FontWeight="Bold" Padding="2,0"/>
+                                                            <TextBlock Text="{Binding DisplayMetaScore}" Foreground="{DynamicResource MainTextBrush}" FontSize="12" FontWeight="Bold" Padding="2,0"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
@@ -901,9 +1022,55 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{DynamicResource OwnershipLabel}" FontWeight="Bold" FontSize="12"/>
-                                                    <emoji:TextBlock Grid.Column="1" Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <Image Source="{Binding Game.Ownership.IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding Game.Ownership.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,5,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <emoji:TextBlock Text="{Binding DisplayOwnership}" Foreground="{Binding Game.Ownership, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Ownership}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontFamily="Segoe UI Emoji"/>
+                                                    </StackPanel>
                                                 </Grid>
 
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowGenres, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="◇" FontSize="14" Foreground="#6A9B62" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Genre}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardGenres}" ItemTemplate="{StaticResource GameGenrePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowThemes, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                        <TextBlock Text="✦" FontSize="14" Foreground="#7B78B8" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{DynamicResource Theme}" FontWeight="Bold" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding CardThemes}" ItemTemplate="{StaticResource GameThemePillTemplate}">
+                                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </Grid>
+
+
+                                                <Grid Margin="0,0,0,10"
+                                                      Visibility="{Binding DataContext.ShouldShowProgress, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{DynamicResource ProgressLabel}" FontWeight="Bold" FontSize="12"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <Image Source="{Binding Game.Progress.IconData, Converter={StaticResource Base64ImageConverter}}" Visibility="{Binding Game.Progress.IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <TextBlock Text="{Binding DisplayProgress}" Foreground="{Binding Game.Progress, Converter={StaticResource SelectionColorConverter}, ConverterParameter=Progress}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                </Grid>
 
                                                 <Grid Margin="0,0,0,16">
                                                     <Grid.ColumnDefinitions>
@@ -936,6 +1103,7 @@
             Command="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
             CommandParameter="{Binding}"
             Margin="0,0,10,0"
+            Focusable="False"
             Visibility="{Binding HasPlayableExe, Converter={StaticResource BoolToVis}}"
             IsEnabled="{Binding IsGameRunning, Converter={StaticResource BoolInverse}}">
                                                     <Image Width="16" Height="16"
@@ -944,7 +1112,8 @@
                                                 </Button>
                                                 <Button Style="{StaticResource InfoButtonStyle}"
                                                         Command="{Binding DataContext.EditGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}">
+                                                        CommandParameter="{Binding}"
+                                                        Focusable="False">
                                                     <Image Source="/Assets/Info.png" Width="17" Height="17" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Button>
                                             </StackPanel>
@@ -967,7 +1136,7 @@
         </Grid>
 
 
-        <Border Grid.Row="2" Background="White">
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}">
             <Border.Effect>
                 <DropShadowEffect Color="Black" Direction="90" ShadowDepth="4" BlurRadius="12" Opacity="0.15"/>
             </Border.Effect>
@@ -1005,7 +1174,7 @@
                        Margin="10,0"
                        FontSize="12"
                        FontWeight="SemiBold"
-                       Foreground="#555555"/>
+                       Foreground="{DynamicResource FieldTextBrush}"/>
                     <Button x:Name="NextPageButton"
                     Style="{StaticResource PaginationButtonStyle}"
                     Content="{DynamicResource Next}"
@@ -1018,7 +1187,7 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center">
-                    <TextBlock Text="MasterPlay by Vidagrr @2026" FontSize="12" Foreground="#666666"/>
+                    <TextBlock Text="Questory by Vidagrr @2026" FontSize="12" Foreground="#666666"/>
                     <TextBlock Text=" | " Margin="10,0" Foreground="#666666"/>
                     <TextBlock Text="Version 1.3" FontSize="12" Foreground="#666666"/>
                 </StackPanel>

@@ -58,7 +58,7 @@ namespace MasterPlay.TrayApp
             _trayIcon = new NotifyIcon
             {
                 Icon = appIcon,
-                Text = "MasterPlay Tray",
+                Text = "Questory Tray",
                 Visible = true
             };
 
@@ -83,7 +83,7 @@ namespace MasterPlay.TrayApp
                     : "NewGameDetected";
                 _trayIcon.ShowBalloonTip(
                     5000,
-                    "MasterPlay",
+                    "Questory",
                     LocalizationService.Get(localizationKey, notification.GameName),
                     ToolTipIcon.Info);
             }
@@ -182,7 +182,7 @@ namespace MasterPlay.TrayApp
         {
             if (_isSyncingImages)
             {
-                _trayIcon.ShowBalloonTip(3000, "MasterPlay", LocalizationService.Get("ImageSyncAlreadyRunning"), ToolTipIcon.Info);
+                _trayIcon.ShowBalloonTip(3000, "Questory", LocalizationService.Get("ImageSyncAlreadyRunning"), ToolTipIcon.Info);
                 return;
             }
 
@@ -191,7 +191,7 @@ namespace MasterPlay.TrayApp
             _syncImagesMenuItem.Text = LocalizationService.Get("SyncingImages");
 
             _logger.LogInformation("Cloudinary image sync started from tray menu.");
-            _trayIcon.ShowBalloonTip(3000, "MasterPlay", LocalizationService.Get("StartingImageSync"), ToolTipIcon.Info);
+            _trayIcon.ShowBalloonTip(3000, "Questory", LocalizationService.Get("StartingImageSync"), ToolTipIcon.Info);
 
             try
             {
@@ -206,6 +206,9 @@ namespace MasterPlay.TrayApp
                     result.GalleryUploaded,
                     result.GalleryAlreadySynced,
                     result.GalleryMissing,
+                    result.SteamLibraryUploaded,
+                    result.SteamLibraryAlreadySynced,
+                    result.SteamLibraryMissing,
                     result.Failed,
                     result.TotalGames);
 
@@ -262,7 +265,7 @@ namespace MasterPlay.TrayApp
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Could not open MasterPlay UI.");
+                _logger.LogError(ex, "Could not open Questory UI.");
                 MessageBox.Show(
                     LocalizationService.Get("CannotOpenMasterPlay", ex.Message),
                     LocalizationService.Get("Error"),

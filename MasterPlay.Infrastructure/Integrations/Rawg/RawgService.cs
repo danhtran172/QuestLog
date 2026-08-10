@@ -11,7 +11,6 @@ namespace MasterPlay.Infrastructure.Integrations.Rawg
     public class RawgService
     {
         private const string rawgApiKey = "cbf5c4560d9d4e388d1294afe77d574d";
-        private const string geminiApiKey = "AIzaSyAtWwdGUXOIBNQhTjhm74DJV4wlEbP7Pb8";
         private static readonly HttpClient client = new HttpClient();
         private static readonly string _dbPath = Path.Combine(
                             System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
@@ -102,6 +101,60 @@ namespace MasterPlay.Infrastructure.Integrations.Rawg
 
         public static async Task<string> GetGalleryImage(string gameName)
         {
+            var appId = await GetSteamAppId(gameName);
+            return appId.HasValue
+                ? $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg"
+                : null;
+        }
+
+        public static async Task<string> GetSteamLibraryImage(string gameName)
+        {
+            var appId = await GetSteamAppId(gameName);
+            if (!appId.HasValue)
+                return null;
+
+            var inputJson = JsonSerializer.Serialize(new
+            {
+                ids = new[] { new { appid = appId.Value } },
+                context = new { country_code = "US" },
+                data_request = new { include_assets = true }
+            });
+            var url = "https://api.steampowered.com/IStoreBrowseService/GetItems/v1/?input_json=" +
+                      Uri.EscapeDataString(inputJson);
+
+            using var steamClient = new HttpClient();
+            try
+            {
+                using var response = await steamClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                using var document = JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
+                var storeItems = document.RootElement
+                    .GetProperty("response")
+                    .GetProperty("store_items");
+
+                if (storeItems.GetArrayLength() == 0)
+                    return null;
+
+                var assets = storeItems[0].GetProperty("assets");
+                if (!assets.TryGetProperty("asset_url_format", out var formatElement) ||
+                    !assets.TryGetProperty("library_capsule_2x", out var fileNameElement))
+                    return null;
+
+                var assetPath = formatElement.GetString()?.Replace("${FILENAME}", fileNameElement.GetString());
+                return string.IsNullOrWhiteSpace(assetPath)
+                    ? null
+                    : $"https://shared.cloudflare.steamstatic.com/store_item_assets/{assetPath}";
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static async Task<int?> GetSteamAppId(string gameName)
+        {
             if (string.IsNullOrWhiteSpace(gameName))
             {
                 return null;
@@ -125,14 +178,9 @@ namespace MasterPlay.Infrastructure.Integrations.Rawg
             var regex = new Regex(@"data-ds-appid=""(\d+)""", RegexOptions.IgnoreCase);
             var match = regex.Match(html);
 
-            if (match.Success)
-            {
-                var appId = int.Parse(match.Groups[1].Value);
-                string imageUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg";
-                return imageUrl;
-            }
-
-            return null;
+            return match.Success && int.TryParse(match.Groups[1].Value, out var appId)
+                ? appId
+                : null;
         }
     }
 }

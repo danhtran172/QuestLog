@@ -40,6 +40,15 @@ namespace MasterPlay.Infrastructure.Data.Services
                     context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
                     context.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
                     context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=10000;");
+                    EnsureColumn(context, "Genres", "IconData", "TEXT NULL");
+                    EnsureColumn(context, "Genres", "SortOrder", "INTEGER NOT NULL DEFAULT 0");
+                    EnsureColumn(context, "Themes", "IconData", "TEXT NULL");
+                    EnsureColumn(context, "Themes", "SortOrder", "INTEGER NOT NULL DEFAULT 0");
+                    EnsureColumn(context, "ProgressStatus", "IconData", "TEXT NULL");
+                    EnsureColumn(context, "OwnershipStatus", "IconData", "TEXT NULL");
+                    EnsureColumn(context, "Games", "SteamLibraryImagePath", "TEXT NULL");
+                    EnsureColumn(context, "Games", "IsDlc", "INTEGER NOT NULL DEFAULT 0");
+                    EnsureColumn(context, "Games", "BaseGameId", "TEXT NULL");
                     context.Database.ExecuteSqlRaw(
                         """
                         CREATE TABLE IF NOT EXISTS GameOwnershipInfo (
@@ -55,6 +64,18 @@ namespace MasterPlay.Infrastructure.Data.Services
                                 FOREIGN KEY (GameId) REFERENCES Games (Id) ON DELETE CASCADE
                         );
                         """);
+                    context.Database.ExecuteSqlRaw(
+                        """
+                        CREATE TABLE IF NOT EXISTS GameFinishes (
+                            Id INTEGER NOT NULL CONSTRAINT PK_GameFinishes PRIMARY KEY AUTOINCREMENT,
+                            GameId TEXT NOT NULL,
+                            FinishedAt TEXT NOT NULL,
+                            Score REAL NULL,
+                            CONSTRAINT FK_GameFinishes_Games_GameId
+                                FOREIGN KEY (GameId) REFERENCES Games (Id) ON DELETE CASCADE
+                        );
+                        """);
+                    MigrateLegacyFinishData(context);
                     context.Database.ExecuteSqlRaw(
                         """
                         INSERT OR IGNORE INTO OwnershipStatus (Id, Name, SortOrder, ColorCode)
@@ -132,6 +153,64 @@ namespace MasterPlay.Infrastructure.Data.Services
             }
         }
 
+        private static void EnsureColumn(MasterPlayContext context, string table, string column, string definition)
+        {
+            using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = $"PRAGMA table_info([{table}]);";
+            context.Database.OpenConnection();
+            using var reader = command.ExecuteReader();
+            var found = false;
+            while (reader.Read())
+                found |= string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase);
+            context.Database.CloseConnection();
+            if (!found)
+                context.Database.ExecuteSqlRaw($"ALTER TABLE [{table}] ADD COLUMN [{column}] {definition};");
+        }
+
+        private static void MigrateLegacyFinishData(MasterPlayContext context)
+        {
+            var finishedGameIds = context.GameFinishes
+                .Select(finish => finish.GameId)
+                .ToHashSet();
+
+            var legacyFinishes = context.Games
+                .AsNoTracking()
+                .Where(game => !string.IsNullOrWhiteSpace(game.FinishedIn))
+                .Select(game => new { game.Id, game.FinishedIn, game.Score })
+                .ToList();
+
+            foreach (var legacyFinish in legacyFinishes)
+            {
+                if (finishedGameIds.Contains(legacyFinish.Id)
+                    || !int.TryParse(legacyFinish.FinishedIn, out var year)
+                    || year is < 1 or > 9999)
+                {
+                    continue;
+                }
+
+                context.GameFinishes.Add(new GameFinish
+                {
+                    GameId = legacyFinish.Id,
+                    FinishedAt = new DateTime(year, 1, 1),
+                    Score = legacyFinish.Score
+                });
+            }
+
+            context.SaveChanges();
+        }
+
+        public static void AddGameFinish(string gameId, double? score, DateTime finishedAt)
+        {
+            using var context = new MasterPlayContext();
+            context.GameFinishes.Add(new GameFinish
+            {
+                GameId = gameId,
+                Score = score,
+                FinishedAt = finishedAt
+            });
+            context.SaveChanges();
+        }
+
         public static async Task RecordPlaytimeAsync(
             IReadOnlyDictionary<string, int> elapsedSeconds,
             CancellationToken cancellationToken = default)
@@ -145,8 +224,13 @@ namespace MasterPlay.Infrastructure.Data.Services
 
             foreach (var entry in elapsedSeconds.Where(x => x.Value > 0))
             {
+                var game = await context.Games
+                    .SingleOrDefaultAsync(game => game.Id == entry.Key, cancellationToken);
+                if (game == null || game.IsDlc)
+                    continue;
+
                 await context.Database.ExecuteSqlInterpolatedAsync(
-                    $"UPDATE Games SET TotalPlayTimeSeconds = COALESCE(TotalPlayTimeSeconds, 0) + {entry.Value} WHERE Id = {entry.Key}",
+                    $"UPDATE Games SET TotalPlayTimeSeconds = COALESCE(TotalPlayTimeSeconds, 0) + {entry.Value} WHERE Id = {entry.Key} AND IsDlc = 0",
                     cancellationToken);
 
                 var diary = await context.PlayDiaries
@@ -304,7 +388,7 @@ namespace MasterPlay.Infrastructure.Data.Services
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
-                return uow.Genres.GetAll().ToList();
+                return uow.Genres.GetAll().OrderBy(g => g.SortOrder).ThenBy(g => g.Name).ToList();
             }
         }
 
@@ -312,7 +396,7 @@ namespace MasterPlay.Infrastructure.Data.Services
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
             {
-                return uow.Themes.GetAll().ToList();
+                return uow.Themes.GetAll().OrderBy(t => t.SortOrder).ThenBy(t => t.Name).ToList();
             }
         }
 
@@ -547,6 +631,16 @@ namespace MasterPlay.Infrastructure.Data.Services
 
             foreach (var game in games)
             {
+                if (game.IsDlc)
+                {
+                    if (game.Ready)
+                    {
+                        game.Ready = false;
+                        UpdateGame(game);
+                    }
+                    continue;
+                }
+
                 try
                 {
                     string processName = game.ExeName?.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) == true
@@ -582,7 +676,7 @@ namespace MasterPlay.Infrastructure.Data.Services
 
         public static bool CreateBackupFolder(Game game)
         {
-            if (game == null) return false;
+            if (game == null || game.IsDlc) return false;
 
             if (!string.IsNullOrWhiteSpace(game.BackupFolderPath) && Directory.Exists(game.BackupFolderPath))
                 return true;
@@ -818,7 +912,7 @@ namespace MasterPlay.Infrastructure.Data.Services
         }
         public static bool UpdateSaveLocationFile(Game game)
         {
-            if (game == null || string.IsNullOrWhiteSpace(game.BackupFolderPath) || !Directory.Exists(game.BackupFolderPath))
+            if (game == null || game.IsDlc || string.IsNullOrWhiteSpace(game.BackupFolderPath) || !Directory.Exists(game.BackupFolderPath))
                 return false;
 
             if (string.IsNullOrWhiteSpace(game.SaveFolderPath))

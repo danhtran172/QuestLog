@@ -1,7 +1,12 @@
+using MasterPlay.Core.Entities;
 using MasterPlay.UI.Shared.ViewModels;
+using System.Collections;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace MasterPlay.UI.Features.Library;
 
@@ -9,9 +14,24 @@ public partial class FilterPanel : UserControl
 {
     public event EventHandler? CloseRequested;
 
+    private ICollectionView? _genreOptionsView;
+    private ICollectionView? _themeOptionsView;
+
     public FilterPanel()
     {
         InitializeComponent();
+        DataContextChanged += (_, _) => ConfigureTagOptionViews();
+    }
+
+    private void FilterPanel_Loaded(object sender, RoutedEventArgs e)
+    {
+        ConfigureTagOptionViews();
+    }
+
+    public void FocusSearchBox()
+    {
+        GenreSearchBox.Focus();
+        GenreSearchBox.SelectAll();
     }
 
     private void Clear_Click(object sender, RoutedEventArgs e)
@@ -28,6 +48,8 @@ public partial class FilterPanel : UserControl
         ScoreValue.Clear();
         PlayTimeOperator.SelectedIndex = 0;
         PlayTimeValue.Clear();
+        GenreSearchBox.Clear();
+        ThemeSearchBox.Clear();
 
         foreach (var checkBox in GetFilterCheckBoxes())
             checkBox.IsChecked = false;
@@ -73,14 +95,15 @@ public partial class FilterPanel : UserControl
             (ProgressDrop, 5),
             (ProgressPending, 6));
 
-        ReplaceSelection(
-            filter.SelectedOwnershipIds,
-            (OwnReady, 1),
-            (OwnPirated, 2),
-            (OwnGamePass, 3),
-            (OwnNotOwned, 4),
-            (OwnPSRequired, 5),
-            (OwnSteamOff, 6));
+        filter.SelectedOwnershipIds.Clear();
+        foreach (var checkBox in GetOwnershipCheckBoxes())
+        {
+            if (checkBox.IsChecked == true && checkBox.Tag is int id)
+                filter.SelectedOwnershipIds.Add(id);
+        }
+
+        UpdateSelectionFromVisibleCheckBoxes(filter.SelectedGenreIds, GetGenreCheckBoxes());
+        UpdateSelectionFromVisibleCheckBoxes(filter.SelectedThemeIds, GetThemeCheckBoxes());
 
         ReplaceSelection(
             filter.SelectedMetaScores,
@@ -110,15 +133,104 @@ public partial class FilterPanel : UserControl
         e.Handled = true;
     }
 
+    private void GenreSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _genreOptionsView?.Refresh();
+    }
+
+    private void ThemeSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _themeOptionsView?.Refresh();
+    }
+
+    private void ConfigureTagOptionViews()
+    {
+        _genreOptionsView = CreateFilteredView(GenreOptionsList.ItemsSource, MatchesGenreSearch);
+        _themeOptionsView = CreateFilteredView(ThemeOptionsList.ItemsSource, MatchesThemeSearch);
+    }
+
+    private static ICollectionView? CreateFilteredView(IEnumerable? source, Predicate<object> filter)
+    {
+        if (source == null)
+            return null;
+
+        var view = CollectionViewSource.GetDefaultView(source);
+        view.Filter = filter;
+        return view;
+    }
+
+    private bool MatchesGenreSearch(object item) =>
+        item is Genre genre && MatchesSearchText(genre.Name, GenreSearchBox.Text);
+
+    private bool MatchesThemeSearch(object item) =>
+        item is Theme theme && MatchesSearchText(theme.Name, ThemeSearchBox.Text);
+
+    private static bool MatchesSearchText(string? value, string searchText) =>
+        string.IsNullOrWhiteSpace(searchText)
+        || (value?.Contains(searchText.Trim(), StringComparison.OrdinalIgnoreCase) ?? false);
+
     private IEnumerable<CheckBox> GetFilterCheckBoxes()
     {
-        return
-        [
+        var checkBoxes = new List<CheckBox>
+        {
             AvgVeryLong, AvgLong, AvgMedium, AvgShort, AvgVeryShort, AvgNone,
             ProgressNextPlay, ProgressDone, ProgressPlaying, ProgressIntended, ProgressDrop, ProgressPending,
-            OwnReady, OwnPirated, OwnGamePass, OwnNotOwned, OwnPSRequired, OwnSteamOff,
             MetaVeryHigh, MetaHigh, MetaMedium, MetaLow, MetaVeryLow, MetaNone
-        ];
+        };
+        checkBoxes.AddRange(GetOwnershipCheckBoxes());
+        checkBoxes.AddRange(GetGenreCheckBoxes());
+        checkBoxes.AddRange(GetThemeCheckBoxes());
+        return checkBoxes;
+    }
+
+    private IEnumerable<CheckBox> GetOwnershipCheckBoxes() =>
+        FindVisualChildren<CheckBox>(OwnershipOptionsList);
+
+    private IEnumerable<CheckBox> GetGenreCheckBoxes() =>
+        FindVisualChildren<CheckBox>(GenreOptionsList);
+
+    private IEnumerable<CheckBox> GetThemeCheckBoxes() =>
+        FindVisualChildren<CheckBox>(ThemeOptionsList);
+
+    private void OwnershipCheckBox_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is CheckBox { Tag: int id } checkBox &&
+            DataContext is MainWindowViewModel viewModel)
+        {
+            checkBox.IsChecked = viewModel.CurrentFilter.SelectedOwnershipIds.Contains(id);
+        }
+    }
+
+    private void GenreCheckBox_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is CheckBox { Tag: int id } checkBox &&
+            DataContext is MainWindowViewModel viewModel)
+        {
+            checkBox.IsChecked = viewModel.CurrentFilter.SelectedGenreIds.Contains(id);
+        }
+    }
+
+    private void ThemeCheckBox_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is CheckBox { Tag: int id } checkBox &&
+            DataContext is MainWindowViewModel viewModel)
+        {
+            checkBox.IsChecked = viewModel.CurrentFilter.SelectedThemeIds.Contains(id);
+        }
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent)
+        where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match)
+                yield return match;
+
+            foreach (var descendant in FindVisualChildren<T>(child))
+                yield return descendant;
+        }
     }
 
     private static string GetOperator(ComboBox comboBox)
@@ -140,6 +252,22 @@ public partial class FilterPanel : UserControl
         {
             if (selection.CheckBox.IsChecked == true)
                 destination.Add(selection.Value);
+        }
+    }
+
+    private static void UpdateSelectionFromVisibleCheckBoxes(ICollection<int> destination, IEnumerable<CheckBox> checkBoxes)
+    {
+        var visibleCheckBoxes = checkBoxes
+            .Where(checkBox => checkBox.Tag is int)
+            .ToList();
+
+        foreach (var id in visibleCheckBoxes.Select(checkBox => (int)checkBox.Tag))
+            destination.Remove(id);
+
+        foreach (var checkBox in visibleCheckBoxes)
+        {
+            if (checkBox.IsChecked == true && checkBox.Tag is int id)
+                destination.Add(id);
         }
     }
 }

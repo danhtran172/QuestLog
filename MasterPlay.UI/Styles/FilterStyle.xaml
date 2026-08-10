@@ -46,7 +46,7 @@
                                                                   Margin="4,0,0,0"/>
                                             <Path Grid.Column="1"
                                                       Data="M0,0 L4,4 L8,0 Z"
-                                                      Fill="#666"
+                                                      Fill="{DynamicResource FieldTextBrush}"
                                                       Width="8"
                                                       Height="4"
                                                       Margin="0,0,8,0"
@@ -70,8 +70,8 @@
                                    AllowsTransparency="True"
                                    Focusable="False"
                                    PopupAnimation="Slide">
-                            <Border Background="White"
-                                        BorderBrush="#DDDDDD"
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
                                         Margin="0,2,0,0"

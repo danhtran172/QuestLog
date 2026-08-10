@@ -63,6 +63,9 @@ namespace MasterPlay.UI.Features.Library
             _actions = actions ?? new MainWindowActions();
             Games = new ObservableCollection<GameViewModel>();
             _progressStatuses = DataService.LoadProgressList();
+            OwnershipStatuses = new ObservableCollection<OwnershipStatus>(DataService.LoadOwnershipList());
+            Genres = new ObservableCollection<Genre>(DataService.LoadGenresList());
+            Themes = new ObservableCollection<Theme>(DataService.LoadThemesList());
 
             ApplyFilterCommand = new RelayCommand(ApplyFilter);
             ClearFilterCommand = new RelayCommand(ClearFilter);
@@ -71,6 +74,9 @@ namespace MasterPlay.UI.Features.Library
 
 
         public ObservableCollection<GameViewModel> Games { get; }
+        public ObservableCollection<OwnershipStatus> OwnershipStatuses { get; }
+        public ObservableCollection<Genre> Genres { get; }
+        public ObservableCollection<Theme> Themes { get; }
 
 
         public bool IsAllMode => string.Equals(_viewMode, "All", StringComparison.OrdinalIgnoreCase);
@@ -82,11 +88,18 @@ namespace MasterPlay.UI.Features.Library
         public bool ShouldShowSeries => SearchBy == "Series";
         public bool ShouldShowDeveloper => SearchBy == "Developer";
         public bool ShouldShowPublisher => SearchBy == "Publisher" && !IsAllMode;
-        public bool ShouldShowPlaytime => SortIndex == 3 && !IsAllMode;
-        public bool ShouldShowExcited => SortIndex == 6 && !IsPlanMode;
-        public bool ShouldShowScore => SortIndex == 7 && !IsFinishMode;
-        public bool ShouldShowOwnership => SortIndex == 8 && !IsPlanMode;
-        public bool ShouldShowAvgPlaytime => SortIndex == 10 && !IsFinishMode;
+        public bool ShouldShowFinishedIn => !IsFinishMode && CurrentFilter.ValueFinish.HasValue;
+        public bool ShouldShowPlaytime => (SortIndex == 3 && !IsAllMode) || CurrentFilter.ValuePlayTime.HasValue;
+        public bool ShouldShowExcited => (SortIndex == 6 && !IsPlanMode) || CurrentFilter.ValueExcited.HasValue;
+        public bool ShouldShowScore => (SortIndex == 7 && !IsFinishMode) || CurrentFilter.ValueScore.HasValue;
+        public bool ShouldShowOwnership => (SortIndex == 8 && !IsPlanMode) || CurrentFilter.SelectedOwnershipIds.Count > 0;
+        public bool ShouldShowAvgPlaytime => (SortIndex == 10 && !IsFinishMode)
+            || CurrentFilter.SelectedAvgPlays.Count > 0
+            || IncludeAvgPlayNone;
+        public bool ShouldShowProgress => (SortIndex == 1 && IsFinishMode)
+            || CurrentFilter.SelectedProgressIds.Count > 0;
+        public bool ShouldShowGenres => CurrentFilter.SelectedGenreIds.Count > 0;
+        public bool ShouldShowThemes => CurrentFilter.SelectedThemeIds.Count > 0;
 
 
         public string SearchText
@@ -126,6 +139,8 @@ namespace MasterPlay.UI.Features.Library
                     OnPropertyChanged(nameof(ShouldShowScore));
                     OnPropertyChanged(nameof(ShouldShowOwnership));
                     OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
+                    OnPropertyChanged(nameof(ShouldShowFinishedIn));
+                    OnPropertyChanged(nameof(ShouldShowProgress));
                 }
             }
         }
@@ -156,6 +171,7 @@ namespace MasterPlay.UI.Features.Library
                     OnPropertyChanged(nameof(ShouldShowScore));
                     OnPropertyChanged(nameof(ShouldShowOwnership));
                     OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
+                    OnPropertyChanged(nameof(ShouldShowProgress));
                 }
             }
         }
@@ -194,6 +210,8 @@ namespace MasterPlay.UI.Features.Library
                     || CurrentFilter.SelectedAvgPlays.Count > 0
                     || CurrentFilter.SelectedProgressIds.Count > 0
                     || CurrentFilter.SelectedOwnershipIds.Count > 0
+                    || CurrentFilter.SelectedGenreIds.Count > 0
+                    || CurrentFilter.SelectedThemeIds.Count > 0
                     || CurrentFilter.SelectedMetaScores.Count > 0
                     || IncludeMetaScoreNone
                     || IncludeAvgPlayNone;
@@ -204,6 +222,15 @@ namespace MasterPlay.UI.Features.Library
         public void LoadGamesData()
         {
             CancelPendingSearch();
+            OwnershipStatuses.Clear();
+            foreach (var ownership in DataService.LoadOwnershipList())
+                OwnershipStatuses.Add(ownership);
+            Genres.Clear();
+            foreach (var genre in DataService.LoadGenresList())
+                Genres.Add(genre);
+            Themes.Clear();
+            foreach (var theme in DataService.LoadThemesList())
+                Themes.Add(theme);
             _allGamesCache = DataService.LoadGames()
                 .Where(g => !g.IsDisabled)
                 .Select(g => new GameViewModel(g))
@@ -510,12 +537,15 @@ namespace MasterPlay.UI.Features.Library
             CurrentFilter.SelectedAvgPlays.Clear();
             CurrentFilter.SelectedProgressIds.Clear();
             CurrentFilter.SelectedOwnershipIds.Clear();
+            CurrentFilter.SelectedGenreIds.Clear();
+            CurrentFilter.SelectedThemeIds.Clear();
             CurrentFilter.SelectedMetaScores.Clear();
             CurrentFilter.IsReverse = false;
             IncludeMetaScoreNone = false;
             IncludeAvgPlayNone = false;
 
             OnPropertyChanged(nameof(HasActiveFilter));
+            NotifyCardFieldVisibilityChanged();
         }
 
         private IQueryable<GameViewModel> ApplyViewModeFilter(IQueryable<GameViewModel> source)
@@ -677,6 +707,8 @@ namespace MasterPlay.UI.Features.Library
                 || filter.SelectedAvgPlays.Count > 0
                 || filter.SelectedProgressIds.Count > 0
                 || filter.SelectedOwnershipIds.Count > 0
+                || filter.SelectedGenreIds.Count > 0
+                || filter.SelectedThemeIds.Count > 0
                 || filter.SelectedMetaScores.Count > 0
                 || IncludeMetaScoreNone
                 || IncludeAvgPlayNone;
@@ -720,6 +752,13 @@ namespace MasterPlay.UI.Features.Library
 
             if (filter.SelectedOwnershipIds.Count > 0)
                 matches = matches && filter.SelectedOwnershipIds.Contains(game.OwnershipId ?? 0);
+
+            if (filter.SelectedGenreIds.Count > 0 || filter.SelectedThemeIds.Count > 0)
+            {
+                bool matchesSelectedTag = game.GameGenres.Any(gg => filter.SelectedGenreIds.Contains(gg.GenreId))
+                    || game.GameThemes.Any(gt => filter.SelectedThemeIds.Contains(gt.ThemeId));
+                matches = matches && matchesSelectedTag;
+            }
 
 
             bool metaPass = true;
@@ -1003,6 +1042,20 @@ namespace MasterPlay.UI.Features.Library
         public void NotifyHasActiveFilterChanged()
         {
             OnPropertyChanged(nameof(HasActiveFilter));
+            NotifyCardFieldVisibilityChanged();
+        }
+
+        private void NotifyCardFieldVisibilityChanged()
+        {
+            OnPropertyChanged(nameof(ShouldShowFinishedIn));
+            OnPropertyChanged(nameof(ShouldShowPlaytime));
+            OnPropertyChanged(nameof(ShouldShowExcited));
+            OnPropertyChanged(nameof(ShouldShowScore));
+            OnPropertyChanged(nameof(ShouldShowOwnership));
+            OnPropertyChanged(nameof(ShouldShowAvgPlaytime));
+            OnPropertyChanged(nameof(ShouldShowProgress));
+            OnPropertyChanged(nameof(ShouldShowGenres));
+            OnPropertyChanged(nameof(ShouldShowThemes));
         }
 
         partial void OnIsReverseSortChanged(bool value)
@@ -1026,6 +1079,7 @@ namespace MasterPlay.UI.Features.Library
         partial void OnIncludeAvgPlayNoneChanged(bool value)
         {
             OnPropertyChanged(nameof(HasActiveFilter));
+            NotifyCardFieldVisibilityChanged();
         }
     }
 }

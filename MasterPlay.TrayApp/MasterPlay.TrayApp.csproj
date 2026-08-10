@@ -6,6 +6,8 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyTitle>Questory Tray</AssemblyTitle>
+		<Product>Questory</Product>
 	</PropertyGroup>
 
 	<ItemGroup>

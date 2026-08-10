@@ -17,7 +17,11 @@ namespace MasterPlay.UI.Features.Settings
                 DialogResult = result;
                 Close();
             };
-            Closed += (_, _) => viewModel.RestoreLanguage();
+            Closed += (_, _) =>
+            {
+                viewModel.RestoreLanguage();
+                viewModel.RestoreTheme();
+            };
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

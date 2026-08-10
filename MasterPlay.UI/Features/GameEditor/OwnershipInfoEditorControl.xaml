@@ -13,7 +13,7 @@
                 <TextBlock Text="{DynamicResource SteamOffInformation}"
                            FontSize="14"
                            FontWeight="SemiBold"
-                           Foreground="#2C3E50"
+                           Foreground="{DynamicResource MainTextBrush}"
                            Margin="0,0,0,12"/>
 
                 <Grid Margin="0,0,0,12">
@@ -45,7 +45,7 @@
                 <StackPanel Visibility="{Binding HasUbisoftPublisher, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{DynamicResource UbisoftConnectAccount}"
                                FontWeight="SemiBold"
-                               Foreground="#2C3E50"
+                               Foreground="{DynamicResource MainTextBrush}"
                                Margin="0,0,0,12"/>
 
                     <Grid Margin="0,0,0,12">
@@ -115,7 +115,7 @@
                 <TextBlock Text="{DynamicResource PiratedInformation}"
                            FontSize="14"
                            FontWeight="SemiBold"
-                           Foreground="#2C3E50"
+                           Foreground="{DynamicResource MainTextBrush}"
                            Margin="0,0,0,12"/>
 
                 <Grid Margin="0,0,0,12">

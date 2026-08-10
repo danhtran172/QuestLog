@@ -22,6 +22,7 @@ namespace MasterPlay.Infrastructure.Data
         public virtual DbSet<Theme> Themes { get; set; }
         public DbSet<GameGenre> GameGenres { get; set; }
         public DbSet<GameTheme> GameThemes { get; set; }
+        public virtual DbSet<GameFinish> GameFinishes { get; set; }
         public virtual DbSet<PlayDiary> PlayDiaries { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,7 +49,9 @@ namespace MasterPlay.Infrastructure.Data
                 entity.Property(e => e.AvgPlayTime).HasDefaultValue(0);
                 entity.Property(e => e.Excited).HasDefaultValue(0.0);
                 entity.Property(e => e.GImagePath).HasColumnName("GImagePath");
+                entity.Property(e => e.SteamLibraryImagePath).HasColumnName("SteamLibraryImagePath");
                 entity.Property(e => e.IsDisabled).HasDefaultValue(0);
+                entity.Property(e => e.IsDlc).HasDefaultValue(0);
                 entity.Property(e => e.MetaScore).HasDefaultValue(0);
                 entity.Property(e => e.Ready).HasDefaultValue(0);
                 entity.Property(e => e.Score).HasDefaultValue(0.0);
@@ -93,18 +96,22 @@ namespace MasterPlay.Infrastructure.Data
             modelBuilder.Entity<Genre>(entity =>
             {
                 entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.IconData);
+                entity.Property(e => e.SortOrder).HasDefaultValue(0);
             });
 
             modelBuilder.Entity<OwnershipStatus>(entity =>
             {
                 entity.ToTable("OwnershipStatus");
                 entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.IconData);
             });
 
             modelBuilder.Entity<ProgressStatus>(entity =>
             {
                 entity.ToTable("ProgressStatus");
                 entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.IconData);
             });
 
             modelBuilder.Entity<Series>(entity =>
@@ -115,6 +122,8 @@ namespace MasterPlay.Infrastructure.Data
             modelBuilder.Entity<Theme>(entity =>
             {
                 entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.IconData);
+                entity.Property(e => e.SortOrder).HasDefaultValue(0);
             });
 
             modelBuilder.Entity<GameGenre>(entity =>
@@ -135,6 +144,18 @@ namespace MasterPlay.Infrastructure.Data
                 entity.HasOne(d => d.Game)
                     .WithMany()
                     .HasForeignKey(d => d.GameId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<GameFinish>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.FinishedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.Finishes)
+                    .HasForeignKey(e => e.GameId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

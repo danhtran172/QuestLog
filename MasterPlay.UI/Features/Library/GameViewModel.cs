@@ -126,6 +126,10 @@ namespace MasterPlay.UI.Features.Library
             }
         }
 
+        public IReadOnlyList<Genre> CardGenres => _gameGenres;
+
+        public IReadOnlyList<Theme> CardThemes => _gameThemes;
+
         public string DisplayProgress =>
             LocalizationService.GetDataValue(Game?.Progress?.Name);
 
@@ -154,8 +158,28 @@ namespace MasterPlay.UI.Features.Library
         public string DisplayAvgPlayTime =>
             (Game?.AvgPlayTime ?? 0) > 0 ? $"{Game.AvgPlayTime}h" : "--";
 
-        public string DisplayFinishedIn =>
-            string.IsNullOrWhiteSpace((string?)(Game?.FinishedIn)) ? "--" : Game.FinishedIn;
+        public string DisplayFinishedIn
+        {
+            get
+            {
+                var finishes = Game?.Finishes?
+                    .OrderByDescending(finish => finish.FinishedAt)
+                    .Select(finish => $"{finish.FinishedAt:yyyy-MM-dd} · {FormatFinishScore(finish.Score)}")
+                    .ToList();
+
+                if (finishes?.Count > 0)
+                    return string.Join(Environment.NewLine, finishes);
+
+                return string.IsNullOrWhiteSpace(Game?.FinishedIn) ? "--" : Game.FinishedIn;
+            }
+        }
+
+        private static string FormatFinishScore(double? score) => score switch
+        {
+            null or <= 0 => "--",
+            999 => "10",
+            _ => score.Value.ToString()
+        };
 
         public string DisplayProcessName =>
             FormatExeDisplayName(Game?.ExeName);
@@ -183,6 +207,9 @@ namespace MasterPlay.UI.Features.Library
 
         public string GetLaunchProcessPath()
         {
+            if (Game?.IsDlc == true)
+                return string.Empty;
+
             var detectedProcesses = DataService.LoadDetectedProcesses();
 
             try
@@ -315,16 +342,31 @@ namespace MasterPlay.UI.Features.Library
 
         partial void OnGameChanged(Game value)
         {
-            HasPlayableExe = value?.Ready ?? false;
+            HasPlayableExe = value?.Ready == true && !value.IsDlc;
 
             if (value != null)
             {
-                _gameGenres = DataService.GetGameGenres(value.Id);
-                _gameThemes = DataService.GetGameThemes(value.Id);
+                _gameGenres = value.GameGenres
+                    .Select(gameGenre => gameGenre.Genre)
+                    .Where(genre => genre != null)
+                    .Cast<Genre>()
+                    .ToList();
+                _gameThemes = value.GameThemes
+                    .Select(gameTheme => gameTheme.Theme)
+                    .Where(theme => theme != null)
+                    .Cast<Theme>()
+                    .ToList();
+
+                if (_gameGenres.Count == 0)
+                    _gameGenres = DataService.GetGameGenres(value.Id);
+                if (_gameThemes.Count == 0)
+                    _gameThemes = DataService.GetGameThemes(value.Id);
                 RebuildSearchIndex();
 
                 OnPropertyChanged(nameof(DisplayGenres));
                 OnPropertyChanged(nameof(DisplayThemes));
+                OnPropertyChanged(nameof(CardGenres));
+                OnPropertyChanged(nameof(CardThemes));
             }
         }
     }

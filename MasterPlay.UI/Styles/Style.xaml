@@ -20,6 +20,7 @@
     <converters:LongTextFontSizeConverter x:Key="LongTextFontSizeConverter"/>
     <converters:StringToStringConverter x:Key="StringToStringConverter"/>
     <converters:SteamImageConverter x:Key="SteamImgConv"/>
+    <converters:Base64ImageConverter x:Key="Base64ImageConverter"/>
     <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter"/>
 
 
@@ -98,12 +99,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="border" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="18" Background="{TemplateBinding Background}">
+                    <Border x:Name="border" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="18" Background="{TemplateBinding Background}">
                         <Grid>
                             <Image Source="/Assets/Search.png" Width="14" Height="14" HorizontalAlignment="Left" Margin="12,0,0,0"
                                    Opacity="0.5" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="HighQuality"/>
                             <ScrollViewer x:Name="PART_ContentHost" Margin="32,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="txtPlaceholder" Text="{DynamicResource SearchPlaceholder}" Foreground="#999" IsHitTestVisible="False"
+                            <TextBlock x:Name="txtPlaceholder" Text="{DynamicResource SearchPlaceholder}" Foreground="{DynamicResource SubTextBrush}" IsHitTestVisible="False"
                                        VerticalAlignment="Center" Margin="35,0" Visibility="Collapsed"/>
                         </Grid>
                     </Border>
@@ -128,12 +129,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="border" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Background="{TemplateBinding Background}">
+                    <Border x:Name="border" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="8" Background="{TemplateBinding Background}">
                         <Grid>
                             <Image Source="/Assets/Search.png" Width="14" Height="14" HorizontalAlignment="Left" Margin="8,0,0,0"
                                    Opacity="0.5" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="HighQuality"/>
                             <ScrollViewer x:Name="PART_ContentHost" Margin="30,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="txtPlaceholder" Text="{DynamicResource SearchPlaceholder}" Foreground="#999" IsHitTestVisible="False"
+                            <TextBlock x:Name="txtPlaceholder" Text="{DynamicResource SearchPlaceholder}" Foreground="{DynamicResource SubTextBrush}" IsHitTestVisible="False"
                                        VerticalAlignment="Center" Margin="35,0" Visibility="Collapsed"/>
                         </Grid>
                     </Border>
@@ -410,14 +411,14 @@
                     <Grid>
                         <ToggleButton x:Name="ToggleButton"
                                   Background="{TemplateBinding Background}"
-                                  BorderBrush="#E0E0E0" BorderThickness="0"
+                                  BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="0"
                                   Focusable="False"
                                   IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                   ClickMode="Press">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border Background="{TemplateBinding Background}"
-                                        BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="18">
+                                        BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="18">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -435,7 +436,7 @@
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             <Path Grid.Column="2"
                                               Data="M 0 0 L 3.5 3.5 L 7 0 Z"
-                                              Fill="#666" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Fill="{DynamicResource FieldTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                               Opacity="0.8"/>
                                         </Grid>
                                     </Border>
@@ -454,8 +455,8 @@
                            IsOpen="{TemplateBinding IsDropDownOpen}"
                            AllowsTransparency="True"
                            PopupAnimation="Slide">
-                            <Border Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="12"
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1" CornerRadius="12"
                                 Margin="0,5,0,0" MinWidth="{TemplateBinding ActualWidth}">
                                 <ScrollViewer Margin="2">
                                     <StackPanel IsItemsHost="True"/>
@@ -543,8 +544,8 @@
                                    AllowsTransparency="True"
                                    PopupAnimation="Slide"
                                    Focusable="False">
-                                <Border Background="White"
-                                        BorderBrush="#DDDDDD"
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="5"
                                         Margin="0,2,0,0"
@@ -609,7 +610,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <TextBlock Text="✕" FontSize="12" Foreground="#666"
+                    <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource FieldTextBrush}"
                                VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </ControlTemplate>
             </Setter.Value>
@@ -769,7 +770,7 @@
                             HorizontalAlignment="Center"
                             Margin="2">
                         <TextBlock Text="{Binding Name}"
-                                   Foreground="#2C3E50"
+                                   Foreground="{DynamicResource MainTextBrush}"
                                    FontSize="13"
                                    VerticalAlignment="Center"/>
                     </Border>
@@ -811,7 +812,7 @@
                                     Margin="2"
                                     Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}">
                                 <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
-                                           Foreground="#2C3E50"
+                                           Foreground="{DynamicResource MainTextBrush}"
                                            FontSize="13"
                                            VerticalAlignment="Center"/>
                             </Border>
@@ -834,8 +835,8 @@
                                    AllowsTransparency="True"
                                    PopupAnimation="Slide"
                                    Focusable="False">
-                                <Border Background="White"
-                                        BorderBrush="#DDDDDD"
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="5"
                                         Margin="0,2,0,0"
@@ -881,10 +882,7 @@
                         Background="{Binding Converter={StaticResource SelectionGlassColorConverter}, ConverterParameter=Ownership}"
                         HorizontalAlignment="Center"
                         Margin="2">
-                        <TextBlock Text="{Binding Name}"
-                               Foreground="#2C3E50"
-                               FontSize="13"
-                               VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal"><Image Source="{Binding IconData, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding IconData, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/><TextBlock Text="{Binding Name}" Foreground="{DynamicResource MainTextBrush}" FontSize="13" VerticalAlignment="Center"/></StackPanel>
                     </Border>
                 </DataTemplate>
             </Setter.Value>
@@ -908,10 +906,7 @@
                                 Margin="2"
                                 Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 IsHitTestVisible="False">
-                                <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
-                                       Foreground="#2C3E50"
-                                       FontSize="13"
-                                       VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal"><Image Source="{Binding SelectedItem.IconData, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Base64ImageConverter}}" RenderOptions.BitmapScalingMode="Fant" SnapsToDevicePixels="True" UseLayoutRounding="True" Visibility="{Binding SelectedItem.IconData, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" Width="16" Height="16" Margin="0,0,4,0"/><TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}" Foreground="{DynamicResource MainTextBrush}" FontSize="13" VerticalAlignment="Center"/></StackPanel>
                             </Border>
 
 
@@ -947,8 +942,8 @@
                                AllowsTransparency="True"
                                PopupAnimation="Slide"
                                Focusable="False">
-                                <Border Background="White"
-                                    BorderBrush="#DDDDDD"
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="5"
                                     Margin="0,2,0,0"
@@ -994,7 +989,7 @@
                         HorizontalAlignment="Center"
                         Margin="2">
                         <TextBlock Text="{Binding Name}"
-                               Foreground="#2C3E50"
+                               Foreground="{DynamicResource MainTextBrush}"
                                FontSize="13"
                                VerticalAlignment="Center"/>
                     </Border>
@@ -1021,7 +1016,7 @@
                                 Visibility="{Binding SelectedItem, Converter={StaticResource StringToStringConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 IsHitTestVisible="False">
                                 <TextBlock Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource TemplatedParent}}"
-                                       Foreground="#2C3E50"
+                                       Foreground="{DynamicResource MainTextBrush}"
                                        FontSize="13"
                                        VerticalAlignment="Center"/>
                             </Border>
@@ -1059,8 +1054,8 @@
                                AllowsTransparency="True"
                                PopupAnimation="Slide"
                                Focusable="False">
-                                <Border Background="White"
-                                    BorderBrush="#DDDDDD"
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="5"
                                     Margin="0,2,0,0"

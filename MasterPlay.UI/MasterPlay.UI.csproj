@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <AssemblyTitle>Questory</AssemblyTitle>
+    <Product>Questory</Product>
 	  <ApplicationIcon>Assets\MasterPlayIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
