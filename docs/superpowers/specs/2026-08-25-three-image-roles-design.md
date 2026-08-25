@@ -52,7 +52,7 @@ Each sync returns the refreshed `GameDetail` on success. Failures use the standa
 
 `metadata` queries all three sources and persists every successfully resolved role:
 
-- IGDB is required for canonical metadata and `portraitCoverPath`; an unavailable IGDB configuration or no IGDB match returns an error.
+- IGDB is used for canonical metadata and `portraitCoverPath` when configured. A missing IGDB configuration does not block general metadata sync; only the dedicated portrait-cover sync requires it.
 - RAWG supplies `coverPath`, slug, Metacritic score and average playtime. A missing RAWG result leaves those values unchanged.
 - Steam supplies `cardCoverPath`. A missing Steam result leaves it unchanged.
 - Gemini remains best-effort for `exeName`.
