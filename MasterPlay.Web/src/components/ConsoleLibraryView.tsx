@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Gamepad2, RotateCcw } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Gamepad2, RotateCcw } from "lucide-react";
 import type { GameListItem } from "@/lib/api/domain";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,38 @@ function ConsoleCover({
   );
 }
 
+function ConsoleContinuationCard({
+  offset,
+  direction,
+  moreGamesLabel,
+  continueLabel,
+}: {
+  offset: number;
+  direction: "previous" | "next";
+  moreGamesLabel: string;
+  continueLabel: string;
+}) {
+  const DirectionIcon = direction === "previous" ? ChevronsLeft : ChevronsRight;
+
+  return (
+    <div
+      role="group"
+      aria-label={`${moreGamesLabel}. ${continueLabel}`}
+      data-offset={offset}
+      className="console-cover console-continuation absolute left-1/2 top-[15%] aspect-[2/3] overflow-hidden rounded-2xl border border-white/14 bg-[#252a30] shadow-2xl"
+    >
+      <span aria-hidden className="console-cover-backing absolute inset-0 bg-[#20252b]" />
+      <span className="console-cover-artwork absolute inset-0 flex flex-col items-center justify-center gap-5 p-7 text-center">
+        <DirectionIcon aria-hidden size={46} strokeWidth={1.8} className="text-primary" />
+        <span className="text-[clamp(1.15rem,2vw,1.65rem)] font-extrabold leading-tight text-white">
+          {moreGamesLabel}
+        </span>
+        <span className="text-sm font-bold text-white/62">{continueLabel}</span>
+      </span>
+    </div>
+  );
+}
+
 export function ConsoleLibraryView({
   games,
   selectedGameId,
@@ -66,6 +98,12 @@ export function ConsoleLibraryView({
   emptyTitle,
   emptyDescription,
   retryLabel,
+  previousGameCount,
+  remainingGameCount,
+  previousGamesLabel,
+  browseBackLabel,
+  moreGamesLabel,
+  continueLabel,
   onSelectGame,
   onOpenGame,
   onRetry,
@@ -78,6 +116,12 @@ export function ConsoleLibraryView({
   emptyTitle: string;
   emptyDescription: string;
   retryLabel: string;
+  previousGameCount: number;
+  remainingGameCount: number;
+  previousGamesLabel: string;
+  browseBackLabel: string;
+  moreGamesLabel: string;
+  continueLabel: string;
   onSelectGame: (gameId: string) => void;
   onOpenGame: (gameId: string) => void;
   onRetry: () => void;
@@ -92,6 +136,10 @@ export function ConsoleLibraryView({
       .filter(({ offset }) => Math.abs(offset) <= 3),
     [games, selectedIndex],
   );
+  const previousOffset = previousGameCount > 0 ? -selectedIndex - 1 : null;
+  const nextOffset = remainingGameCount > 0 ? games.length - selectedIndex : null;
+  const showPrevious = previousOffset != null && Math.abs(previousOffset) <= 3;
+  const showNext = nextOffset != null && nextOffset <= 3;
 
   useEffect(() => {
     for (let index = Math.max(0, selectedIndex - 2); index <= Math.min(games.length - 1, selectedIndex + 2); index += 1) {
@@ -162,6 +210,22 @@ export function ConsoleLibraryView({
                 onOpen={() => onOpenGame(game.id)}
               />
             ))}
+            {showPrevious ? (
+              <ConsoleContinuationCard
+                offset={previousOffset}
+                direction="previous"
+                moreGamesLabel={previousGamesLabel}
+                continueLabel={browseBackLabel}
+              />
+            ) : null}
+            {showNext ? (
+              <ConsoleContinuationCard
+                offset={nextOffset}
+                direction="next"
+                moreGamesLabel={moreGamesLabel}
+                continueLabel={continueLabel}
+              />
+            ) : null}
           </section>
           {selectedGame ? (
             <div className="pointer-events-none absolute inset-x-0 bottom-[11%] z-20 px-6 text-center">

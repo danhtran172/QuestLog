@@ -251,6 +251,8 @@ export default function App() {
   /* Khoang dang hien o footer. Queue khong phan trang nen luon la tron bo. */
   const firstItem = totalItems === 0 ? 0 : tab === "queue" ? 1 : (page - 1) * PAGE_SIZE + 1;
   const lastItem = tab === "queue" ? totalItems : Math.min(page * PAGE_SIZE, totalItems);
+  const previousGameCount = tab === "queue" ? 0 : Math.max(0, firstItem - 1);
+  const remainingGameCount = tab === "queue" ? 0 : Math.max(0, totalItems - lastItem);
   const activeFilterCount = data?.activeFilterCount ?? 0;
 
   const openDetail = useCallback((gameId: string) => {
@@ -359,6 +361,12 @@ export default function App() {
             emptyTitle={t(tab === "queue" ? "empty.queue" : "empty.noGames")}
             emptyDescription={t(tab === "queue" ? "empty.queueDesc" : "empty.noGamesDesc")}
             retryLabel={t("error.retry")}
+            previousGameCount={previousGameCount}
+            remainingGameCount={remainingGameCount}
+            previousGamesLabel={t("controller.previousGames").replace("{count}", String(previousGameCount))}
+            browseBackLabel={t("controller.browseBack")}
+            moreGamesLabel={t("controller.moreGames").replace("{count}", String(remainingGameCount))}
+            continueLabel={t("controller.continueBrowsing")}
             onSelectGame={controller.setSelectedGameId}
             onOpenGame={openDetail}
             onRetry={() => void refreshCurrentView()}
