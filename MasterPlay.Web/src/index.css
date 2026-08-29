@@ -1,0 +1,980 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/manrope";
+@import "./jungle/jungle.css";
+
+/*
+  QuestLog — he mau + he hieu ung.
+
+  HIEU UNG: port tu ban Lovable (surface-card, glass-panel, glass-surface,
+  stone-slab, rune-etch, bo tone-*, nen van gradient).
+
+  MAU: viet lai cho DIU HON ban Lovable.
+  Van de cua ban goc: foreground qua sang (oklch 0.905) tren nen qua toi
+  (oklch 0.176) -> chenh lech ~0.73, choi mat khi nhin lau.
+  Ban nay: fg 0.86 tren bg 0.205 -> chenh ~0.655, van dat chuan doc
+  nhung mem hon han. Vien va muted cung duoc keo lai gan nen.
+*/
+
+@theme {
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius: 0.875rem;
+  --radius-card: calc(var(--radius) + 4px);
+
+  --shadow-soft: 0 1px 2px oklch(0.12 0.01 150 / 0.28), 0 8px 24px oklch(0.1 0.01 150 / 0.3);
+  --shadow-lift: 0 2px 6px oklch(0.12 0.01 150 / 0.32), 0 20px 44px oklch(0.08 0.01 150 / 0.45);
+}
+
+/* Tailwind v4 chi sinh utility mau tu token nam trong @theme.
+   Palette runtime dung namespace rieng de light/dark co the doi mau ma
+   utility van tham chieu dung gia tri hien tai. */
+@theme inline {
+  --color-bg: var(--questory-bg);
+  --color-surface: var(--questory-surface);
+  --color-surface-2: var(--questory-surface-2);
+  --color-fg: var(--questory-fg);
+  --color-muted-fg: var(--questory-muted-fg);
+  --color-muted: var(--questory-muted);
+  --color-border: var(--questory-border);
+  --color-primary: var(--questory-primary);
+  --color-primary-fg: var(--questory-primary-fg);
+  --color-primary-deep: var(--questory-primary-deep);
+  --color-accent: var(--questory-accent);
+  --color-highlight: var(--questory-highlight);
+  --color-warning: var(--questory-warning);
+  --color-success: var(--questory-success);
+  --color-danger: var(--questory-danger);
+}
+
+/*
+  ── TOI (mac dinh) ──────────────────────────────────────────────
+  Thiet ke lai hoan toan, KHONG phai chinh nhe ban Lovable.
+
+  Van de cua ban Lovable: nen xanh reu (hue 145-152) lam moi thu ngA vang
+  buon, chu qua sang (0.905), va cac bac be mat qua sat nhau (0.176 / 0.232 /
+  0.278) nen card gan nhu chim vao nen.
+
+  Huong moi:
+    - Nen xanh mUC (hue 258) trung tinh, lanh nhe -> anh game len mau dung hon.
+    - Bac be mat tach ro: 0.185 / 0.235 / 0.285 -> co chieu sau that.
+    - Chu 0.885 tren nen 0.185: du doc ma khong choi.
+    - Diem nhan xanh lam-luc (hue 172) thay xanh reu -> tuoi va sach hon,
+      van du toi de khong loe tren nen toi.
+*/
+:root {
+  /* Nen than chi sang, chu xam am -> tuong phan ~8:1.
+     Van dat WCAG AAA (>=7:1) nhung diu hon han kieu "chu trang tren nen den".
+     Doc lau khong moi mat la uu tien cao hon la tuong phan cang cao cang tot. */
+  --questory-bg: oklch(0.292 0.008 258);
+  --questory-surface: oklch(0.338 0.01 258);
+  --questory-surface-2: oklch(0.385 0.011 258);
+
+  --questory-fg: oklch(0.825 0.005 250);
+  --questory-muted-fg: oklch(0.675 0.009 252);
+  --questory-muted: oklch(0.395 0.01 258);
+
+  --questory-border: oklch(0.425 0.011 258);
+
+  --questory-primary: oklch(0.7 0.105 172);
+  --questory-primary-fg: oklch(0.17 0.02 200);
+  --questory-primary-deep: oklch(0.26 0.03 200);
+
+  --questory-accent: oklch(0.68 0.09 205);
+  --questory-highlight: oklch(0.78 0.08 180);
+
+  --questory-warning: oklch(0.78 0.11 72);
+  --questory-success: oklch(0.72 0.1 158);
+  --questory-danger: oklch(0.65 0.14 22);
+
+  /* Dai MetaScore — khoi phuc dung bang mau WPF cu.
+     Nguong 90/80/70/50 van do BACKEND quyet dinh (DOMAIN_RULES §5.5). */
+  --color-meta-veryhigh: rgb(0 206 122 / 88%);
+  --color-meta-high: rgb(0 206 122 / 88%);
+  --color-meta-medium: rgb(255 189 63 / 88%);
+  --color-meta-low: rgb(255 189 63 / 88%);
+  --color-meta-verylow: rgb(255 104 116 / 88%);
+  --color-meta-fg: oklch(0.16 0.02 258);
+
+  /* Tone hanh dong — kinh mau ban trong */
+  --tone-play: oklch(0.72 0.12 158);
+  --tone-edit: oklch(0.7 0.1 245);
+  --tone-finish: oklch(0.74 0.09 305);
+  --tone-danger: oklch(0.66 0.13 22);
+  --tone-open: oklch(0.78 0.11 78);
+  --tone-add: oklch(0.73 0.1 195);
+  --tone-file: oklch(0.62 0.012 258);
+}
+
+/* ── Sang ── */
+:root[data-theme="light"] {
+  --questory-bg: oklch(0.966 0.006 122);
+  --questory-surface: oklch(0.995 0.003 110);
+  --questory-surface-2: oklch(0.938 0.009 128);
+
+  --questory-fg: oklch(0.3 0.018 145);
+  --questory-muted-fg: oklch(0.52 0.015 145);
+  --questory-muted: oklch(0.94 0.008 128);
+
+  --questory-border: oklch(0.885 0.012 130);
+
+  --questory-primary: oklch(0.5 0.05 141);
+  --questory-primary-fg: oklch(0.975 0.008 120);
+  --questory-primary-deep: oklch(0.31 0.03 148);
+
+  --questory-accent: oklch(0.7 0.045 130);
+  --questory-highlight: oklch(0.86 0.05 128);
+
+  --questory-warning: oklch(0.66 0.11 76);
+  --questory-success: oklch(0.56 0.09 150);
+  --questory-danger: oklch(0.52 0.14 25);
+
+  --color-meta-fg: oklch(0.99 0.004 120);
+  --shadow-soft: 0 1px 2px oklch(0.25 0.03 145 / 0.06), 0 8px 24px oklch(0.25 0.03 145 / 0.08);
+  --shadow-lift: 0 2px 6px oklch(0.25 0.03 145 / 0.1), 0 18px 40px oklch(0.25 0.03 145 / 0.16);
+}
+
+/* ── Rung ram ── */
+:root[data-theme="jungle"] {
+  /*
+    He mau lay tu CL-01 trong thu vien asset (Bang mau 4 tong xanh) cong voi den.
+    Bon moc GOC — khong duoc doi:
+      #9CB080  oklch(0.729 0.070 126)   "Khac 2"  sang nhat
+      #618764  oklch(0.585 0.068 147)   "Khac 1"
+      #2B5748  oklch(0.420 0.056 169)   "Nen"
+      #273338  oklch(0.312 0.018 225)   "Card"
+      #000000                            den
+
+    Theo dung nhan cua bang mau: CARD TOI HON NEN. Card chim vao trang chu
+    khong noi len — nguoc voi thoi quen, nhung do la y do cua bang mau.
+
+    Cac gia tri khac deu SUY RA tu bon moc do: giu nguyen goc mau (H), chi keo
+    do sang (L). Rieng --questory-fg phai keo sang qua khoi "Khac 2" vi
+    0.729 tren nen card 0.312 chi chenh 0.42 — du cho chu phu, khong du cho
+    chu chinh doc lau.
+  */
+  --questory-bg: oklch(0.42 0.056 169);        /* Nen — nguyen ban */
+  --questory-surface: oklch(0.312 0.018 225);  /* Card — nguyen ban */
+  --questory-surface-2: oklch(0.38 0.036 196); /* suy ra: giua Card va Nen */
+
+  --questory-fg: oklch(0.945 0.032 122);       /* suy ra: keo sang tu Khac 2 */
+  --questory-muted-fg: oklch(0.729 0.07 126);  /* Khac 2 — nguyen ban */
+  --questory-muted: oklch(0.355 0.03 200);     /* suy ra */
+  --questory-border: oklch(0.585 0.068 147);   /* Khac 1 — nguyen ban */
+
+  --questory-primary: oklch(0.729 0.07 126);   /* Khac 2 — nguyen ban */
+  --questory-primary-fg: oklch(0.14 0.012 225);/* gan den, de chu tren nut ro */
+  --questory-primary-deep: oklch(0.312 0.018 225);
+  --questory-accent: oklch(0.585 0.068 147);   /* Khac 1 */
+  --questory-highlight: oklch(0.845 0.075 118);/* suy ra: sang hon Khac 2 */
+
+  /*
+    Ba mau bao trang thai KHONG lay tu bang mau: canh bao va loi ma cung tong
+    xanh thi mat khong bat duoc. Chung giu goc mau rieng nhung ha do bao hoa
+    cho hoa vao he.
+  */
+  --questory-warning: oklch(0.8 0.105 84);
+  --questory-success: oklch(0.729 0.07 126);
+  --questory-danger: oklch(0.66 0.13 28);
+
+  --tone-play: oklch(0.729 0.07 126);
+  --tone-edit: oklch(0.66 0.055 196);
+  --tone-finish: oklch(0.8 0.09 108);
+  --tone-open: oklch(0.82 0.085 100);
+  --tone-add: oklch(0.68 0.062 158);
+  --tone-file: oklch(0.5 0.04 190);
+
+  /* Bong do lay tu DEN, khong pha xanh — nen moi giu duoc chieu sau */
+  --shadow-soft:
+    0 1px 2px oklch(0 0 0 / 0.5),
+    0 12px 30px oklch(0 0 0 / 0.45);
+  --shadow-lift:
+    0 8px 18px oklch(0 0 0 / 0.52),
+    0 28px 60px oklch(0 0 0 / 0.66);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  /*
+    Full HD tren laptop thuong chay Windows scale 125-150%, nen WebView chi
+    con khoang 600-800 CSS px theo chieu cao. Giam mat do theo viewport thay
+    vi khoa app vao mot ti le zoom, de man hinh lon van giu dung kich thuoc.
+  */
+  @media (max-height: 820px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (max-height: 650px) {
+    html {
+      font-size: 14px;
+    }
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    -webkit-font-smoothing: antialiased;
+    transition:
+      background-color 220ms ease,
+      color 220ms ease;
+
+    /* Van nen — hai quang sang rat nhe o hai goc, giu cho nen phang bot chet */
+    background-image:
+      radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--color-accent) 6%, transparent), transparent 45%),
+      radial-gradient(circle at 88% 82%, color-mix(in oklab, var(--color-primary) 5%, transparent), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  :root[data-theme="jungle"] body {
+    /* Tu "Nen" o dinh keo dan ve gan DEN o day — cho luoi card co chieu sau */
+    background-image:
+      radial-gradient(ellipse at 50% -14%, oklch(0.585 0.068 147 / 0.34), transparent 46%),
+      linear-gradient(180deg, oklch(0.42 0.056 169), oklch(0.17 0.016 214) 62%, oklch(0.11 0.01 220));
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
+  }
+}
+
+@layer components {
+  :root[data-theme="jungle"] .app-shell {
+    background-color: transparent;
+  }
+
+  .console-backdrop {
+    filter: blur(34px) saturate(1.15);
+    transform: scale(1.08);
+  }
+
+  .console-cover {
+    width: clamp(13rem, 20vw, 22rem);
+    transform: translate3d(-50%, 0, 0) scale(1);
+    opacity: 1;
+    z-index: 4;
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      filter 220ms ease,
+      border-color 180ms ease;
+  }
+
+  .console-cover[data-offset="-1"] {
+    transform: translate3d(calc(-50% - clamp(10rem, 17vw, 19rem)), 4%, 0) scale(0.78);
+  }
+
+  .console-cover[data-offset="1"] {
+    transform: translate3d(calc(-50% + clamp(10rem, 17vw, 19rem)), 4%, 0) scale(0.78);
+  }
+
+  .console-cover[data-offset="-2"] {
+    transform: translate3d(calc(-50% - clamp(17rem, 29vw, 32rem)), 8%, 0) scale(0.62);
+  }
+
+  .console-cover[data-offset="2"] {
+    transform: translate3d(calc(-50% + clamp(17rem, 29vw, 32rem)), 8%, 0) scale(0.62);
+  }
+
+  .console-cover[data-offset="-3"] {
+    transform: translate3d(calc(-50% - clamp(22rem, 39vw, 43rem)), 10%, 0) scale(0.5);
+  }
+
+  .console-cover[data-offset="3"] {
+    transform: translate3d(calc(-50% + clamp(22rem, 39vw, 43rem)), 10%, 0) scale(0.5);
+  }
+
+  .console-cover:not([data-offset="0"]) {
+    opacity: 0.62;
+    filter: saturate(0.72) brightness(0.78);
+    z-index: 2;
+  }
+
+  .console-cover[data-offset="-2"],
+  .console-cover[data-offset="2"] {
+    opacity: 0.38;
+    z-index: 1;
+  }
+
+  .console-cover[data-offset="-3"],
+  .console-cover[data-offset="3"] {
+    opacity: 0.2;
+    z-index: 0;
+  }
+
+  .controller-button-badge {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 2px 5px rgb(0 0 0 / 0.32);
+  }
+
+  @media (max-width: 760px) {
+    .console-cover[data-offset="-2"],
+    .console-cover[data-offset="2"],
+    .console-cover[data-offset="-3"],
+    .console-cover[data-offset="3"] {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .console-cover {
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .console-backdrop {
+      display: none;
+    }
+
+    .controller-prompt-rail > div {
+      background: #15181d;
+      backdrop-filter: none;
+    }
+  }
+
+}
+
+/* ── Kinh mo co vat canh: dung cho card ── */
+@utility surface-card {
+  position: relative;
+  background-color: color-mix(in oklab, var(--color-surface) 62%, transparent);
+  background-image: linear-gradient(
+    150deg,
+    color-mix(in oklab, white 8%, transparent),
+    transparent 45%,
+    color-mix(in oklab, var(--color-primary) 5%, transparent)
+  );
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in oklab, white 9%, var(--color-border));
+  border-radius: var(--radius-card);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 1px 0 color-mix(in oklab, white 13%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, black 16%, transparent);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    border-color 220ms ease,
+    background-color 220ms ease;
+}
+
+/* ── Chu khac chim ──
+   Ban Lovable dat text-shadow kha nang tay, lam chu bi nhoe vien -> doc lau moi mat.
+   O day chi giu mot vet do rat nhe de tao cam giac khac chim, bo hoan toan vet sang. */
+@utility rune-etch {
+  text-shadow: 0 1px 1px color-mix(in oklab, black 22%, transparent);
+  letter-spacing: 0.015em;
+}
+
+/* ── Phien da: nhom nut, o search ── */
+@utility stone-slab {
+  background-color: color-mix(in oklab, var(--color-surface) 52%, transparent);
+  backdrop-filter: blur(14px) saturate(135%);
+  border: 1px solid color-mix(in oklab, white 7%, var(--color-border));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+    inset 0 -2px 6px color-mix(in oklab, black 14%, transparent);
+}
+
+/* ── Tam kinh mo: header, footer, dialog ── */
+@utility glass-panel {
+  background-color: color-mix(in oklab, var(--color-surface) 34%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  border-color: color-mix(in oklab, white 6%, var(--color-border));
+}
+
+/*
+  ── Nut kinh co VET SANG QUET khi hover ──
+
+  ⚠ KHONG viet cac selector nay trong @utility.
+  Tailwind v4 BO IM LANG moi selector long (&::before, &::after, &:hover)
+  ben trong @utility — utility van sinh ra nhung mat sach hieu ung, khong bao loi.
+  Da kiem chung: dem duoc 0 rule :hover va 0 rule ::after.
+  Vi vay phan nay phai viet bang CSS thuong trong @layer components.
+*/
+@utility glass-surface {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 0;
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 18%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, black 12%, transparent),
+    0 6px 18px -12px color-mix(in oklab, black 50%, transparent);
+  transition:
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer components {
+  .glass-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, white 18%, transparent),
+        color-mix(in oklab, white 4%, transparent) 45%,
+        transparent 55%,
+        color-mix(in oklab, black 12%, transparent)
+      ),
+      linear-gradient(135deg, color-mix(in oklab, white 10%, transparent), transparent 60%);
+    opacity: 0.95;
+    pointer-events: none;
+  }
+
+  /* Vet sang truot ngang khi hover */
+  .glass-surface::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -140%;
+    width: 70%;
+    z-index: -1;
+    transform: skewX(-20deg);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, white 34%, transparent),
+      transparent
+    );
+    transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .glass-surface:hover::after {
+    left: 140%;
+  }
+
+  .glass-surface:hover {
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 26%, transparent),
+      0 10px 28px -14px color-mix(in oklab, black 62%, transparent);
+  }
+
+  .glass-surface:active {
+    transform: translateY(1px);
+  }
+
+  /* Action button tron, trong nhu thuy tinh long va nhuom mau semantic. */
+  .icon-button {
+    --btn-tone: var(--tone-file);
+    color: color-mix(in oklab, var(--btn-tone) 22%, var(--color-fg));
+    background-color: color-mix(in oklab, var(--color-surface) 8%, transparent);
+    outline: none;
+  }
+  .icon-button:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--btn-tone) 7%, transparent);
+  }
+  .icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+  .icon-button[data-tone="play"] { --btn-tone: var(--tone-play); }
+  .icon-button[data-tone="edit"] { --btn-tone: var(--tone-edit); }
+  .icon-button[data-tone="add"] { --btn-tone: var(--tone-add); }
+  .icon-button[data-tone="open"] { --btn-tone: var(--tone-open); }
+  .icon-button[data-tone="finish"] { --btn-tone: var(--tone-finish); }
+  .icon-button[data-tone="danger"] { --btn-tone: var(--tone-danger); }
+
+  /* Card noi len khi hover */
+  .surface-card:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-border));
+  }
+
+  .theme-choice-jungle {
+    background-image:
+      radial-gradient(circle at 50% 18%, oklch(0.89 0.16 118 / 0.18), transparent 42%),
+      linear-gradient(145deg, oklch(0.31 0.08 145 / 0.74), oklch(0.17 0.045 157 / 0.88));
+    border-color: oklch(0.52 0.1 143 / 0.72);
+    color: oklch(0.92 0.03 121);
+  }
+
+  .theme-choice-jungle svg {
+    color: oklch(0.78 0.17 139);
+    filter: drop-shadow(0 0 7px oklch(0.73 0.17 133 / 0.35));
+  }
+
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* An thanh truot NATIVE. Dung khi co mot thanh truot ve tay noi len tren noi
+   dung (xem `OverlayScrollbar`) — thanh native luon chiem cho, se an mat mot
+   dai anh o mep phai. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* User Score material — palette tu lovable-project-497a77b8.zip.
+   Nguong do backend tinh; CSS chi render band. Glow/shine da tiet che theo yeu cau. */
+@keyframes score-material-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes score-black-opal-shift {
+  0% { background-position: 0% 42%; }
+  50% { background-position: 100% 58%; }
+  100% { background-position: 200% 42%; }
+}
+
+@layer components {
+  .score-material-glass,
+  .score-meta-glass {
+    background: linear-gradient(
+      155deg,
+      oklch(0.96 0.006 250 / 0.24),
+      oklch(0.72 0.012 250 / 0.14)
+    );
+    border: 1px solid oklch(0.98 0.004 250 / 0.13);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.2),
+      0 3px 8px -6px color-mix(in oklab, black 55%, transparent);
+    backdrop-filter: blur(7px) saturate(108%);
+  }
+
+  .score-meta-glass {
+    background:
+      linear-gradient(155deg, oklch(1 0 0 / 0.12), transparent 52%),
+      color-mix(in oklab, var(--meta-tone) 80%, transparent);
+    border-color: color-mix(in oklab, white 14%, var(--meta-tone));
+    color: var(--color-meta-fg);
+    text-shadow: none;
+  }
+
+  .score-material-glass {
+    background:
+      linear-gradient(155deg, oklch(1 0 0 / 0.12), transparent 52%),
+      color-mix(in oklab, #44444e 70%, transparent);
+    border-color: color-mix(in oklab, white 14%, #44444e);
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .score-material-chip__text {
+    background-image: linear-gradient(
+      100deg,
+      var(--score-mat-dark) 0%,
+      var(--score-mat-base) 20%,
+      var(--score-mat-light) 38%,
+      var(--score-mat-base) 52%,
+      var(--score-mat-dark) 70%,
+      var(--score-mat-base) 85%,
+      var(--score-mat-light) 100%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    color: transparent;
+    -webkit-background-clip: text;
+    animation: score-material-shine var(--score-mat-speed) linear infinite;
+    filter: drop-shadow(0 1px 2px var(--score-mat-glow));
+  }
+
+  /* Fallback cho backend cu/chua restart: giu diem hien thi, khong tu doan band. */
+  .score-material--fallback {
+    --score-mat-dark: oklch(0.38 0.01 250);
+    --score-mat-base: oklch(0.62 0.01 250);
+    --score-mat-light: oklch(0.86 0.01 250);
+    --score-mat-glow: oklch(0.62 0.01 250 / 0.2);
+    --score-mat-speed: 12s;
+  }
+
+  .score-material--rust {
+    --score-mat-dark: oklch(0.26 0.012 60);
+    --score-mat-base: oklch(0.42 0.07 42);
+    --score-mat-light: oklch(0.58 0.1 52);
+    --score-mat-iron: oklch(0.4 0.008 250);
+    --score-mat-oxide: oklch(0.34 0.09 38);
+    --score-mat-glow: oklch(0.3 0.05 40 / 0.22);
+    --score-mat-speed: 18s;
+  }
+
+  .score-material--rust .score-material-chip__text {
+    background-image:
+      radial-gradient(60% 120% at 20% 30%, var(--score-mat-oxide) 0%, transparent 60%),
+      radial-gradient(50% 100% at 72% 70%, var(--score-mat-light) 0%, transparent 55%),
+      linear-gradient(
+        95deg,
+        var(--score-mat-iron) 0%,
+        var(--score-mat-base) 22%,
+        var(--score-mat-dark) 40%,
+        var(--score-mat-light) 58%,
+        var(--score-mat-iron) 74%,
+        var(--score-mat-base) 100%
+      );
+    filter: drop-shadow(0 1px 1px oklch(0 0 0 / 0.35)) saturate(0.9) contrast(1.05);
+  }
+
+  .score-material--copper {
+    --score-mat-dark: oklch(0.38 0.09 45);
+    --score-mat-base: oklch(0.58 0.13 50);
+    --score-mat-light: oklch(0.8 0.11 65);
+    --score-mat-glow: oklch(0.58 0.13 50 / 0.3);
+    --score-mat-speed: 9s;
+  }
+
+  .score-material--silver {
+    --score-mat-dark: oklch(0.55 0.01 260);
+    --score-mat-base: oklch(0.78 0.008 250);
+    --score-mat-light: oklch(0.97 0.003 250);
+    --score-mat-glow: oklch(0.78 0.008 250 / 0.28);
+    --score-mat-speed: 6.5s;
+  }
+
+  .score-material--gold {
+    --score-mat-dark: oklch(0.55 0.12 78);
+    --score-mat-base: oklch(0.78 0.15 88);
+    --score-mat-light: oklch(0.95 0.09 100);
+    --score-mat-glow: oklch(0.78 0.15 88 / 0.32);
+    --score-mat-speed: 5.2s;
+  }
+
+  .score-material--platinum {
+    --score-mat-dark: oklch(0.62 0.02 210);
+    --score-mat-base: oklch(0.85 0.025 200);
+    --score-mat-light: oklch(0.99 0.01 200);
+    --score-mat-glow: oklch(0.85 0.025 200 / 0.32);
+    --score-mat-speed: 4.6s;
+  }
+
+  .score-material--diamond {
+    --score-mat-dark: oklch(0.62 0.11 230);
+    --score-mat-base: oklch(0.85 0.09 200);
+    --score-mat-light: oklch(0.99 0.04 190);
+    --score-mat-glow: oklch(0.85 0.12 210 / 0.36);
+    --score-mat-speed: 3.4s;
+  }
+
+  .score-material--opal {
+    --score-mat-dark: oklch(0.27 0.025 220);
+    --score-mat-base: oklch(0.43 0.04 215);
+    --score-mat-light: oklch(0.91 0.12 195);
+    --score-mat-glow: oklch(0.79 0.21 205 / 0.62);
+    --score-opal-red: oklch(0.78 0.28 25);
+    --score-opal-orange: oklch(0.89 0.22 65);
+    --score-opal-green: oklch(0.87 0.26 145);
+    --score-opal-cyan: oklch(0.89 0.2 205);
+    --score-opal-blue: oklch(0.74 0.3 265);
+    --score-opal-violet: oklch(0.8 0.28 305);
+  }
+
+  .score-material--opal .score-material-chip__text {
+    background-image:
+      radial-gradient(45% 105% at 8% 35%, var(--score-opal-red) 0 8%, var(--score-opal-orange) 12%, transparent 27%),
+      radial-gradient(40% 95% at 34% 78%, var(--score-opal-green) 0 9%, var(--score-opal-cyan) 14%, transparent 30%),
+      radial-gradient(48% 110% at 62% 18%, var(--score-opal-blue) 0 8%, var(--score-opal-violet) 13%, transparent 28%),
+      radial-gradient(42% 100% at 91% 66%, var(--score-opal-orange) 0 7%, var(--score-opal-red) 12%, transparent 28%),
+      linear-gradient(
+        118deg,
+        var(--score-mat-dark) 0 7%,
+        var(--score-opal-green) 14%,
+        var(--score-mat-dark) 19%,
+        var(--score-opal-blue) 28%,
+        var(--score-opal-violet) 38%,
+        var(--score-mat-base) 43%,
+        var(--score-opal-red) 52%,
+        var(--score-opal-orange) 64%,
+        var(--score-mat-dark) 69%,
+        var(--score-opal-cyan) 79%,
+        var(--score-opal-green) 91%,
+        var(--score-mat-dark) 100%
+      );
+    background-size: 175% 140%;
+    animation: score-black-opal-shift 6.5s ease-in-out infinite;
+    filter:
+      brightness(1.36)
+      contrast(1.1)
+      saturate(1.55)
+      drop-shadow(0 1px 1px oklch(0 0 0 / 0.82))
+      drop-shadow(0 0 2px oklch(0.96 0.04 200 / 0.48))
+      drop-shadow(-1px 0 3px color-mix(in oklab, var(--score-opal-red) 30%, transparent))
+      drop-shadow(1px 0 3px color-mix(in oklab, var(--score-opal-blue) 34%, transparent))
+      drop-shadow(0 0 4px var(--score-mat-glow));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-material-chip__text,
+  .score-material--opal .score-material-chip__text {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
+
+
+/*
+ * ICON BUTTON — liquid glass trong suot theo anh tham chieu.
+ * React gan vi tri/huong sang gia-ngau-nhien qua CSS variables. CSS chi ve
+ * vat lieu: vet sang mem o phia nguon sang, vien khuc xa va mau semantic.
+ */
+.icon-button {
+  --liquid-light-angle: 315deg;
+  --liquid-light-x: 22%;
+  --liquid-light-y: 22%;
+  --liquid-shadow-x: 1.7px;
+  --liquid-shadow-y: 1.7px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid color-mix(in oklab, white 28%, transparent);
+  background-image:
+    radial-gradient(
+      circle at var(--liquid-light-x) var(--liquid-light-y),
+      color-mix(in oklab, white 38%, transparent) 0%,
+      color-mix(in oklab, white 9%, transparent) 18%,
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at calc(100% - var(--liquid-light-x)) calc(100% - var(--liquid-light-y)),
+      color-mix(in oklab, var(--btn-tone) 11%, transparent),
+      transparent 52%
+    ),
+    linear-gradient(
+      var(--liquid-light-angle),
+      color-mix(in oklab, white 8%, transparent),
+      transparent 44%,
+      color-mix(in oklab, var(--btn-tone) 7%, transparent)
+    );
+  background-blend-mode: screen, normal, normal;
+  backdrop-filter: blur(14px) saturate(110%);
+  -webkit-backdrop-filter: blur(14px) saturate(110%);
+  box-shadow:
+    0 8px 18px -10px color-mix(in oklab, black 38%, transparent),
+    inset var(--liquid-shadow-x) var(--liquid-shadow-y) 5px color-mix(in oklab, white 22%, transparent),
+    inset calc(var(--liquid-shadow-x) * -1) calc(var(--liquid-shadow-y) * -1) 6px color-mix(in oklab, black 14%, transparent);
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.icon-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse 70% 45% at var(--liquid-light-x) var(--liquid-light-y),
+    color-mix(in oklab, white 54%, transparent),
+    color-mix(in oklab, white 10%, transparent) 42%,
+    transparent 72%
+  );
+  opacity: 0.66;
+  mix-blend-mode: screen;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.icon-button > svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px color-mix(in oklab, black 38%, transparent));
+}
+
+.icon-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, white 40%, transparent);
+  box-shadow:
+    0 12px 24px -11px color-mix(in oklab, black 44%, transparent),
+    inset var(--liquid-shadow-x) var(--liquid-shadow-y) 6px color-mix(in oklab, white 30%, transparent),
+    inset calc(var(--liquid-shadow-x) * -1) calc(var(--liquid-shadow-y) * -1) 7px color-mix(in oklab, black 17%, transparent);
+}
+
+.icon-button:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.icon-button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
+  box-shadow:
+    0 4px 10px -7px color-mix(in oklab, black 52%, transparent),
+    inset var(--liquid-shadow-x) var(--liquid-shadow-y) 7px color-mix(in oklab, white 17%, transparent),
+    inset calc(var(--liquid-shadow-x) * -1) calc(var(--liquid-shadow-y) * -1) 8px color-mix(in oklab, black 22%, transparent);
+}
+
+.icon-button:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--color-bg),
+    0 0 0 6px color-mix(in oklab, var(--btn-tone) 48%, transparent),
+    inset var(--liquid-shadow-x) var(--liquid-shadow-y) 5px color-mix(in oklab, white 28%, transparent),
+    inset calc(var(--liquid-shadow-x) * -1) calc(var(--liquid-shadow-y) * -1) 6px color-mix(in oklab, black 16%, transparent);
+}
+
+.icon-button:disabled {
+  border-color: color-mix(in oklab, white 12%, transparent);
+  box-shadow: inset 0 0 5px color-mix(in oklab, black 12%, transparent);
+}
+
+.icon-button:disabled::before {
+  opacity: 0.22;
+}
+
+/* ===========================================================================
+   Excited thermal system — hieu ung theo dai nhiet do cua diem Excited.
+   Cung ky thuat voi score-material (chu gradient cat + shine chay), nhung theo
+   chu de nong/lanh. Nguong o format.ts::excitedBandOf. Bang hien chu (so),
+   icon ngon lua tinh ben canh. Chi phan so nhan chat lieu theo band.
+   =========================================================================== */
+@keyframes excited-thermal-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Dung nham chay: nhieu vet mau do/cam/vang truot cham qua chu. */
+@keyframes excited-lava-shift {
+  0% { background-position: 0% 42%; }
+  50% { background-position: 100% 58%; }
+  100% { background-position: 200% 42%; }
+}
+
+@layer components {
+  .excited-thermal {
+    /* Mac dinh trung tinh; tung band ghi de bien ben duoi. */
+    --exc-dark: oklch(0.5 0.01 250);
+    --exc-base: oklch(0.7 0.012 250);
+    --exc-light: oklch(0.88 0.01 250);
+    --exc-glow: oklch(0.7 0.012 250 / 0.25);
+    --exc-speed: 10s;
+  }
+
+  .excited-thermal__text {
+    background-image: linear-gradient(
+      100deg,
+      var(--exc-dark) 0%,
+      var(--exc-base) 20%,
+      var(--exc-light) 38%,
+      var(--exc-base) 52%,
+      var(--exc-dark) 70%,
+      var(--exc-base) 85%,
+      var(--exc-light) 100%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: excited-thermal-shine var(--exc-speed) linear infinite;
+    filter: drop-shadow(0 1px 2px var(--exc-glow));
+  }
+
+  .excited-thermal__icon {
+    color: currentColor;
+    animation: none;
+    filter: none;
+    transform: none;
+  }
+
+  /* --- 1–3: Extreme cold — bang tuyet sau, xanh trang lanh buot --- */
+  .excited-band--extreme-cold {
+    --exc-dark: oklch(0.62 0.11 245);
+    --exc-base: oklch(0.82 0.11 230);
+    --exc-light: oklch(0.98 0.045 215);
+    --exc-glow: oklch(0.82 0.13 235 / 0.45);
+    --exc-speed: 9s;
+  }
+
+  /* --- 3–6: Cold Iced — xanh cyan diu --- */
+  .excited-band--cold {
+    --exc-dark: oklch(0.6 0.09 215);
+    --exc-base: oklch(0.82 0.1 200);
+    --exc-light: oklch(0.97 0.045 195);
+    --exc-glow: oklch(0.82 0.1 205 / 0.36);
+    --exc-speed: 8s;
+  }
+
+  /* --- 6–8: Neutral — tram, gan nhu khong hieu ung (co tinh, de "nhat") --- */
+  .excited-band--neutral {
+    --exc-dark: oklch(0.52 0.012 250);
+    --exc-base: oklch(0.72 0.014 250);
+    --exc-light: oklch(0.88 0.01 250);
+    --exc-glow: oklch(0.72 0.012 250 / 0.18);
+    --exc-speed: 16s;
+  }
+
+  /* --- 8–9: Fire — cam am --- */
+  .excited-band--fire {
+    --exc-dark: oklch(0.56 0.16 48);
+    --exc-base: oklch(0.73 0.19 58);
+    --exc-light: oklch(0.9 0.16 78);
+    --exc-glow: oklch(0.72 0.19 55 / 0.42);
+    --exc-speed: 5.5s;
+  }
+
+  /* --- 9–10: Extreme fire — do cam gay gat, sang manh --- */
+  .excited-band--extreme-fire {
+    --exc-dark: oklch(0.54 0.21 32);
+    --exc-base: oklch(0.69 0.25 38);
+    --exc-light: oklch(0.88 0.19 62);
+    --exc-glow: oklch(0.68 0.26 36 / 0.55);
+    --exc-speed: 3.8s;
+  }
+
+  /* --- Peak Score 11: Lava — nham chay, nhieu vet do/cam/vang truot, glow manh nhat --- */
+  .excited-band--lava {
+    --exc-dark: oklch(0.32 0.09 35);
+    --exc-base: oklch(0.55 0.2 42);
+    --exc-light: oklch(0.9 0.19 78);
+    --exc-glow: oklch(0.72 0.26 45 / 0.7);
+    --exc-lava-crust: oklch(0.28 0.07 30);
+    --exc-lava-red: oklch(0.62 0.26 28);
+    --exc-lava-orange: oklch(0.78 0.22 55);
+    --exc-lava-gold: oklch(0.9 0.18 88);
+  }
+  .excited-band--lava .excited-thermal__text {
+    background-image:
+      radial-gradient(48% 110% at 12% 30%, var(--exc-lava-gold) 0 8%, var(--exc-lava-orange) 13%, transparent 30%),
+      radial-gradient(44% 100% at 46% 82%, var(--exc-lava-orange) 0 9%, var(--exc-lava-red) 14%, transparent 32%),
+      radial-gradient(50% 115% at 84% 22%, var(--exc-lava-red) 0 8%, var(--exc-lava-orange) 13%, transparent 30%),
+      linear-gradient(
+        116deg,
+        var(--exc-lava-crust) 0 7%,
+        var(--exc-lava-red) 16%,
+        var(--exc-lava-orange) 30%,
+        var(--exc-lava-gold) 42%,
+        var(--exc-lava-orange) 56%,
+        var(--exc-lava-crust) 68%,
+        var(--exc-lava-red) 82%,
+        var(--exc-lava-orange) 92%,
+        var(--exc-lava-crust) 100%
+      );
+    background-size: 190% 150%;
+    animation: excited-lava-shift 6s ease-in-out infinite;
+    filter:
+      brightness(1.2) contrast(1.08) saturate(1.35)
+      drop-shadow(0 1px 1px oklch(0 0 0 / 0.55))
+      drop-shadow(0 0 4px var(--exc-glow));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .excited-thermal__text,
+  .excited-band--lava .excited-thermal__text {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
