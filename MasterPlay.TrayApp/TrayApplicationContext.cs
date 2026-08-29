@@ -239,7 +239,7 @@ namespace MasterPlay.TrayApp
         {
             try
             {
-                using var runningProcess = Process.GetProcessesByName("MasterPlay.UI")
+                using var runningProcess = Process.GetProcessesByName("QuestLog")
                     .FirstOrDefault(process => process.Id != Environment.ProcessId);
                 if (runningProcess != null)
                 {
@@ -279,8 +279,8 @@ namespace MasterPlay.TrayApp
             var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             var candidates = new List<string>
             {
-                Path.Combine(baseDirectory, "MasterPlay.UI.exe"),
-                Path.Combine(baseDirectory, "UI", "MasterPlay.UI.exe")
+                Path.Combine(baseDirectory, "QuestLog.exe"),
+                Path.Combine(baseDirectory, "Shell", "QuestLog.exe")
             };
 
             var outputDirectory = new DirectoryInfo(baseDirectory);
@@ -290,11 +290,11 @@ namespace MasterPlay.TrayApp
             {
                 candidates.Add(Path.Combine(
                     repositoryDirectory.FullName,
-                    "MasterPlay.UI",
+                    "MasterPlay.Shell",
                     "bin",
                     configurationDirectory.Name,
                     "net8.0-windows",
-                    "MasterPlay.UI.exe"));
+                    "QuestLog.exe"));
             }
 
             return candidates.FirstOrDefault(File.Exists);

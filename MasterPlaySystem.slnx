@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="MasterPlay.Core/MasterPlay.Core.csproj" />
+  <Project Path="MasterPlay.Host/MasterPlay.Host.csproj" />
   <Project Path="MasterPlay.Infrastructure/MasterPlay.Infrastructure.csproj" />
+  <Project Path="MasterPlay.Shell/MasterPlay.Shell.csproj" />
   <Project Path="MasterPlay.TrayApp/MasterPlay.TrayApp.csproj" Id="0329ee31-a89d-4eb0-83b1-ffb75eae9661" />
-  <Project Path="MasterPlay.UI/MasterPlay.UI.csproj" Id="94031e00-5cae-45dd-9131-63d30db14742" />
 </Solution>
