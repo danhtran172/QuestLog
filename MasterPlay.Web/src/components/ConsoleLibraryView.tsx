@@ -35,21 +35,24 @@ function ConsoleCover({
         selected ? "border-primary" : "border-white/14",
       )}
     >
-      {game.imagePath && !imageFailed ? (
-        <img
-          src={game.imagePath}
-          alt={game.name}
-          draggable={false}
-          onError={() => setImageFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <span className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#252a30] p-5 text-center text-[#d9dde0]">
-          <Gamepad2 aria-hidden size={42} />
-          <span className="line-clamp-3 text-sm font-bold">{game.name}</span>
-        </span>
-      )}
-      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/8" />
+      <span aria-hidden className="console-cover-backing absolute inset-0 bg-[#20252b]" />
+      <span className="console-cover-artwork absolute inset-0 block">
+        {game.imagePath && !imageFailed ? (
+          <img
+            src={game.imagePath}
+            alt={game.name}
+            draggable={false}
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#252a30] p-5 text-center text-[#d9dde0]">
+            <Gamepad2 aria-hidden size={42} />
+            <span className="line-clamp-3 text-sm font-bold">{game.name}</span>
+          </span>
+        )}
+        <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/8" />
+      </span>
     </button>
   );
 }

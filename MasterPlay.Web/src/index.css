@@ -261,13 +261,16 @@
   .console-cover {
     width: clamp(13rem, 20vw, 22rem);
     transform: translate3d(-50%, 0, 0) scale(1);
-    opacity: 1;
+    isolation: isolate;
     z-index: 4;
     transition:
       transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 220ms ease,
-      filter 220ms ease,
       border-color 180ms ease;
+  }
+
+  .console-cover-artwork {
+    opacity: 1;
+    transition: opacity 220ms ease, filter 220ms ease;
   }
 
   .console-cover[data-offset="-1"] {
@@ -295,21 +298,32 @@
   }
 
   .console-cover:not([data-offset="0"]) {
+    z-index: 2;
+  }
+
+  .console-cover:not([data-offset="0"]) .console-cover-artwork {
     opacity: 0.62;
     filter: saturate(0.72) brightness(0.78);
-    z-index: 2;
   }
 
   .console-cover[data-offset="-2"],
   .console-cover[data-offset="2"] {
-    opacity: 0.38;
     z-index: 1;
+  }
+
+  .console-cover[data-offset="-2"] .console-cover-artwork,
+  .console-cover[data-offset="2"] .console-cover-artwork {
+    opacity: 0.38;
   }
 
   .console-cover[data-offset="-3"],
   .console-cover[data-offset="3"] {
-    opacity: 0.2;
     z-index: 0;
+  }
+
+  .console-cover[data-offset="-3"] .console-cover-artwork,
+  .console-cover[data-offset="3"] .console-cover-artwork {
+    opacity: 0.2;
   }
 
   .controller-button-badge {
@@ -333,7 +347,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .console-cover {
+    .console-cover,
+    .console-cover-artwork {
       transition: none;
     }
   }
