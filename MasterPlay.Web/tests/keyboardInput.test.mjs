@@ -5,6 +5,8 @@ import { getConsoleKeyboardAction } from "../src/lib/keyboardInput.ts";
 const reading = (key, overrides = {}) => ({
   key,
   consoleSession: true,
+  consoleVisible: true,
+  overlayOpen: false,
   editing: false,
   ...overrides,
 });
@@ -14,6 +16,21 @@ test("maps arrows and WASD to the horizontal console carousel", () => {
   assert.equal(getConsoleKeyboardAction(reading("w")), "moveLeft");
   assert.equal(getConsoleKeyboardAction(reading("ArrowDown")), "moveRight");
   assert.equal(getConsoleKeyboardAction(reading("D")), "moveRight");
+});
+
+test("uses spatial directions in gallery and overlays", () => {
+  assert.equal(
+    getConsoleKeyboardAction(reading("ArrowUp", { consoleVisible: false })),
+    "moveUp",
+  );
+  assert.equal(
+    getConsoleKeyboardAction(reading("s", { overlayOpen: true })),
+    "moveDown",
+  );
+  assert.equal(
+    getConsoleKeyboardAction(reading("Tab", { overlayOpen: true })),
+    null,
+  );
 });
 
 test("maps console commands to keyboard actions", () => {

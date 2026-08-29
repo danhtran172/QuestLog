@@ -3,6 +3,8 @@ import type { ControllerAction } from "./controllerInput";
 export type ConsoleKeyboardReading = Readonly<{
   key: string;
   consoleSession: boolean;
+  consoleVisible: boolean;
+  overlayOpen: boolean;
   editing: boolean;
   repeat?: boolean;
   altKey?: boolean;
@@ -10,15 +12,18 @@ export type ConsoleKeyboardReading = Readonly<{
   metaKey?: boolean;
 }>;
 
-const CONSOLE_KEY_ACTIONS: Readonly<Record<string, ControllerAction>> = {
+const SPATIAL_KEY_ACTIONS: Readonly<Record<string, ControllerAction>> = {
   ArrowLeft: "moveLeft",
   ArrowRight: "moveRight",
-  ArrowUp: "moveLeft",
-  ArrowDown: "moveRight",
+  ArrowUp: "moveUp",
+  ArrowDown: "moveDown",
   a: "moveLeft",
   d: "moveRight",
-  w: "moveLeft",
-  s: "moveRight",
+  w: "moveUp",
+  s: "moveDown",
+};
+
+const CONSOLE_KEY_ACTIONS: Readonly<Record<string, ControllerAction>> = {
   Enter: "activate",
   " ": "activate",
   Escape: "back",
@@ -41,7 +46,29 @@ export function getConsoleKeyboardAction(
   if (reading.altKey || reading.ctrlKey || reading.metaKey) return null;
   if (reading.editing && normalizedKey !== "Escape") return null;
 
-  const action = CONSOLE_KEY_ACTIONS[normalizedKey] ?? null;
-  if (reading.repeat && action !== "moveLeft" && action !== "moveRight") return null;
+  const spatialAction = SPATIAL_KEY_ACTIONS[normalizedKey] ?? null;
+  const carouselAction = reading.consoleVisible && !reading.overlayOpen
+    ? spatialAction === "moveUp"
+      ? "moveLeft"
+      : spatialAction === "moveDown"
+        ? "moveRight"
+        : spatialAction
+    : spatialAction;
+  const commandAction = CONSOLE_KEY_ACTIONS[normalizedKey] ?? null;
+  const action = carouselAction ?? commandAction;
+  if (reading.overlayOpen && action != null && ![
+    "activate",
+    "back",
+    "moveUp",
+    "moveDown",
+    "moveLeft",
+    "moveRight",
+  ].includes(action)) return null;
+  if (reading.repeat && ![
+    "moveUp",
+    "moveDown",
+    "moveLeft",
+    "moveRight",
+  ].includes(action ?? "")) return null;
   return action;
 }

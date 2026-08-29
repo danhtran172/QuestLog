@@ -4,6 +4,7 @@ import type { ControllerPrompt } from "@/components/ControllerPrompts";
 import type { GameListItem, Tab } from "./api/domain";
 import { TABS } from "./api/domain";
 import type { ControllerAction } from "./controllerInput";
+import { getConsoleKeyboardAction } from "./keyboardInput";
 import {
   setConsoleFullscreen,
   subscribeConsoleToggle,
@@ -38,6 +39,11 @@ type ControllerExperienceOptions = Readonly<{
   onRefresh: () => void;
   onLeaveDashboard: () => void;
 }>;
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+}
 
 export function useControllerExperience({
   games,
@@ -96,17 +102,6 @@ export function useControllerExperience({
       window.removeEventListener("wheel", usePointer);
     };
   }, []);
-
-  useEffect(() => {
-    const useKeyboard = (event: KeyboardEvent) => {
-      setInputModality("keyboard");
-      if (event.key !== "F10") return;
-      event.preventDefault();
-      toggleConsoleSession();
-    };
-    window.addEventListener("keydown", useKeyboard);
-    return () => window.removeEventListener("keydown", useKeyboard);
-  }, [toggleConsoleSession]);
 
   useEffect(() => {
     if (loading) return;
@@ -239,6 +234,28 @@ export function useControllerExperience({
     onAction: handleAction,
     onGamepadInput: () => setInputModality("gamepad"),
   });
+
+  useEffect(() => {
+    const useKeyboard = (event: KeyboardEvent) => {
+      setInputModality("keyboard");
+      const action = getConsoleKeyboardAction({
+        key: event.key,
+        consoleSession,
+        consoleVisible,
+        overlayOpen: hasOverlay,
+        editing: isEditableTarget(event.target),
+        repeat: event.repeat,
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+      });
+      if (!action) return;
+      event.preventDefault();
+      handleAction(action);
+    };
+    window.addEventListener("keydown", useKeyboard);
+    return () => window.removeEventListener("keydown", useKeyboard);
+  }, [consoleSession, consoleVisible, handleAction, hasOverlay]);
 
   const prompts = useMemo<ControllerPrompt[]>(() => {
     if (hasOverlay) {
