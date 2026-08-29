@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowDownWideNarrow,
   ArrowUpDown,
@@ -27,19 +27,11 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useGames } from "@/lib/useGames";
 import { usePlayQueue } from "@/lib/usePlayQueue";
-import { useGamepadController } from "@/lib/useGamepadController";
+import { useControllerExperience } from "@/lib/useControllerExperience";
 import { useViewSortProfiles, type ConfigurableView } from "@/lib/useViewSortProfiles";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api/client";
 import { gameDetailApi } from "@/lib/gameDetailApi";
-import { setConsoleFullscreen, subscribeFullscreenState } from "@/lib/desktopBridge";
-import type { ControllerAction } from "@/lib/controllerInput";
-import {
-  activateFocusedControl,
-  moveSpatialFocus,
-  scrollControllerSurface,
-  type SpatialDirection,
-} from "@/lib/spatialNavigation";
 import {
   PAGE_SIZE,
   SEARCH_DEBOUNCE_MS,
@@ -51,7 +43,7 @@ import {
   type Tab,
 } from "@/lib/api/domain";
 import { GameCard, GameCardSkeleton } from "@/components/GameCard";
-import { ControllerPrompts, type ControllerPrompt } from "@/components/ControllerPrompts";
+import { ControllerPrompts } from "@/components/ControllerPrompts";
 import { GameTable, QUEUE_MAX_ROWS } from "@/components/GameTable";
 import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { AddGameMethodDialog } from "@/components/AddGameMethodDialog";
@@ -122,12 +114,6 @@ export default function App() {
   /* Che do hien thi cua ba tab dau. KHONG luu localStorage — DOMAIN_RULES §15
      bat moi thiet lap phai di qua config dung chung voi Tray. */
   const [layout, setLayout] = useState<"card" | "list">("card");
-  const [inputModality, setInputModality] = useState<"pointer" | "keyboard" | "gamepad">("pointer");
-  const [consoleSession, setConsoleSession] = useState(false);
-  const [consoleVisible, setConsoleVisible] = useState(true);
-  const [fullscreenActive, setFullscreenActive] = useState(false);
-  const [controllerSelectedGameId, setControllerSelectedGameId] = useState<string | null>(null);
-  const [pendingConsoleEdge, setPendingConsoleEdge] = useState<"first" | "last" | null>(null);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -203,33 +189,6 @@ export default function App() {
     setSortProfileView(null);
   }, []);
 
-  const toggleConsoleSession = useCallback(() => {
-    setConsoleSession((current) => {
-      const next = !current;
-      if (next) setConsoleVisible(true);
-      void setConsoleFullscreen(next).catch((fullscreenError) => {
-        toast.error(
-          fullscreenError instanceof Error
-            ? fullscreenError.message
-            : t("controller.fullscreenError"),
-        );
-      });
-      return next;
-    });
-  }, [t]);
-
-  useEffect(() => subscribeFullscreenState(setFullscreenActive), []);
-
-  useEffect(() => {
-    const usePointer = () => setInputModality("pointer");
-    window.addEventListener("pointerdown", usePointer, { passive: true });
-    window.addEventListener("wheel", usePointer, { passive: true });
-    return () => {
-      window.removeEventListener("pointerdown", usePointer);
-      window.removeEventListener("wheel", usePointer);
-    };
-  }, []);
-
   useEffect(() => {
     if (tab !== "queue") return;
     setSortOpen(false);
@@ -239,15 +198,11 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      setInputModality("keyboard");
       const el = e.target as HTMLElement | null;
       const typing =
         !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
 
-      if (e.key === "F10") {
-        e.preventDefault();
-        toggleConsoleSession();
-      } else if (e.key === "F5") {
+      if (e.key === "F5") {
         e.preventDefault();
         void refreshCurrentView();
       } else if (e.key === "F6") {
@@ -280,7 +235,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [refreshCurrentView, resetAll, toggleConsoleSession]);
+  }, [refreshCurrentView, resetAll]);
 
   // A19 — scroll len dau khi doi trang (ban Lovable thieu).
   const goToPage = useCallback((next: number) => {
@@ -326,65 +281,9 @@ export default function App() {
       ? controllerErrorValue.message
       : String(controllerErrorValue)
     : null;
-  const controllerSelectedGame = controllerGames.find(
-    (game) => game.id === controllerSelectedGameId,
-  ) ?? controllerGames[0] ?? null;
   const hasControllerSurface =
     settingsOpen || accountOpen || addMethodOpen || metadataPickerOpen || tagsOpen || trayOpen ||
     detailOpen || filterOpen || sortOpen || sortProfileView != null || shortcutsOpen;
-  const showConsole = consoleSession && consoleVisible;
-
-  useEffect(() => {
-    if (controllerLoading) return;
-    if (controllerGames.length === 0) {
-      setControllerSelectedGameId(null);
-      setPendingConsoleEdge(null);
-      return;
-    }
-    if (pendingConsoleEdge) {
-      const game = pendingConsoleEdge === "first"
-        ? controllerGames[0]
-        : controllerGames[controllerGames.length - 1];
-      setControllerSelectedGameId(game?.id ?? null);
-      setPendingConsoleEdge(null);
-      return;
-    }
-    if (!controllerGames.some((game) => game.id === controllerSelectedGameId)) {
-      setControllerSelectedGameId(controllerGames[0]?.id ?? null);
-    }
-  }, [controllerGames, controllerLoading, controllerSelectedGameId, pendingConsoleEdge]);
-
-  const selectAdjacentTab = useCallback((change: -1 | 1) => {
-    const currentIndex = TABS.indexOf(tab);
-    const nextIndex = (currentIndex + change + TABS.length) % TABS.length;
-    const nextTab = TABS[nextIndex];
-    if (!nextTab) return;
-    setTab(nextTab);
-    setPage(1);
-    setControllerSelectedGameId(null);
-    setPendingConsoleEdge("first");
-    setDashboardOpen(false);
-  }, [tab]);
-
-  const moveConsoleSelection = useCallback((change: -1 | 1) => {
-    if (controllerGames.length === 0) return;
-    const currentIndex = Math.max(
-      0,
-      controllerGames.findIndex((game) => game.id === controllerSelectedGameId),
-    );
-    const nextIndex = currentIndex + change;
-    if (nextIndex >= 0 && nextIndex < controllerGames.length) {
-      setControllerSelectedGameId(controllerGames[nextIndex]?.id ?? null);
-      return;
-    }
-    if (tab !== "queue" && change > 0 && page < totalPages) {
-      setPendingConsoleEdge("first");
-      setPage((current) => current + 1);
-    } else if (tab !== "queue" && change < 0 && page > 1) {
-      setPendingConsoleEdge("last");
-      setPage((current) => current - 1);
-    }
-  }, [controllerGames, controllerSelectedGameId, page, tab, totalPages]);
 
   const closeTopControllerSurface = useCallback(() => {
     if (metadataPickerOpen) setMetadataPickerOpen(false);
@@ -412,150 +311,55 @@ export default function App() {
     trayOpen,
   ]);
 
-  const focusSpatialTarget = useCallback((direction: SpatialDirection) => {
-    const target = moveSpatialFocus(direction);
-    const gameId = target?.closest<HTMLElement>("[data-game-id]")?.dataset.gameId;
-    if (gameId) setControllerSelectedGameId(gameId);
-  }, []);
-
-  const handleControllerAction = useCallback((action: ControllerAction) => {
-    if (action === "toggleConsole") {
-      toggleConsoleSession();
-      return;
-    }
-    if (hasControllerSurface) {
-      if (action === "activate") activateFocusedControl();
-      else if (action === "back") closeTopControllerSurface();
-      else if (action === "moveUp") focusSpatialTarget("up");
-      else if (action === "moveDown") focusSpatialTarget("down");
-      else if (action === "moveLeft") focusSpatialTarget("left");
-      else if (action === "moveRight") focusSpatialTarget("right");
-      else if (action === "scrollUp") scrollControllerSurface("up");
-      else if (action === "scrollDown") scrollControllerSurface("down");
-      return;
-    }
-
-    if (action === "toggleSurface" && consoleSession) setConsoleVisible((current) => !current);
-    else if (action === "openSettings") {
+  const controller = useControllerExperience({
+    games: controllerGames,
+    loading: controllerLoading,
+    error: controllerError,
+    tab,
+    page,
+    totalPages,
+    layout,
+    hasOverlay: hasControllerSurface,
+    t,
+    onTabChange: (nextTab) => {
+      setTab(nextTab);
+      setPage(1);
+      setDashboardOpen(false);
+    },
+    onPageChange: setPage,
+    onLayoutChange: setLayout,
+    onCloseOverlay: closeTopControllerSurface,
+    onOpenSettings: () => {
       setSettingsSection("general");
       setSettingsOpen(true);
-    } else if (action === "previousTab") selectAdjacentTab(-1);
-    else if (action === "nextTab") selectAdjacentTab(1);
-    else if (action === "moveLeft" && showConsole) moveConsoleSelection(-1);
-    else if (action === "moveRight" && showConsole) moveConsoleSelection(1);
-    else if (action === "moveUp") focusSpatialTarget("up");
-    else if (action === "moveDown") focusSpatialTarget("down");
-    else if (action === "moveLeft") focusSpatialTarget("left");
-    else if (action === "moveRight") focusSpatialTarget("right");
-    else if (action === "activate") {
-      const focusedGameId = document.activeElement instanceof HTMLElement
-        ? document.activeElement.closest<HTMLElement>("[data-game-id]")?.dataset.gameId
-        : null;
-      if (controllerError) void refreshCurrentView();
-      else if (showConsole && controllerSelectedGame) openDetail(controllerSelectedGame.id);
-      else if (focusedGameId) openDetail(focusedGameId);
-      else activateFocusedControl();
-    } else if (action === "back" && showConsole) {
-      setConsoleVisible(false);
-    } else if (action === "play") {
-      const focusedGameId = document.activeElement instanceof HTMLElement
-        ? document.activeElement.closest<HTMLElement>("[data-game-id]")?.dataset.gameId
-        : null;
-      const game = showConsole
-        ? controllerSelectedGame
-        : controllerGames.find((item) => item.id === focusedGameId);
-      if (game?.canLaunch) launchGame.mutate(game.id);
-    } else if (action === "refresh") {
-      void refreshCurrentView();
-    } else if (action === "toggleLayout") {
-      setDashboardOpen(false);
-      if (showConsole) {
-        setConsoleVisible(false);
-        setLayout("list");
-      } else if (tab !== "queue") {
-        setLayout((current) => current === "card" ? "list" : "card");
-      }
-    } else if (action === "addGame") openAdd();
-    else if (action === "scrollUp") scrollControllerSurface("up");
-    else if (action === "scrollDown") scrollControllerSurface("down");
-  }, [
-    closeTopControllerSurface,
-    consoleSession,
-    controllerError,
-    controllerGames,
-    controllerSelectedGame,
-    focusSpatialTarget,
-    hasControllerSurface,
-    launchGame,
-    moveConsoleSelection,
-    openAdd,
-    openDetail,
-    refreshCurrentView,
-    selectAdjacentTab,
-    showConsole,
-    tab,
-    toggleConsoleSession,
-  ]);
-
-  const gamepad = useGamepadController({
-    onAction: handleControllerAction,
-    onGamepadInput: () => setInputModality("gamepad"),
+    },
+    onOpenGame: openDetail,
+    onAddGame: openAdd,
+    onLaunchGame: (gameId) => launchGame.mutate(gameId),
+    onRefresh: () => void refreshCurrentView(),
+    onLeaveDashboard: () => setDashboardOpen(false),
   });
-
-  const controllerPrompts = useMemo<ControllerPrompt[]>(() => {
-    if (hasControllerSurface) {
-      return [
-        { button: "A", label: t("controller.select") },
-        { button: "B", label: t("controller.back") },
-        { button: "RS", label: t("controller.scroll") },
-      ];
-    }
-    if (controllerError) return [{ button: "A", label: t("error.retry") }];
-    const prompts: ControllerPrompt[] = [
-      { button: "A", label: t("action.details") },
-      { button: "LB/RB", label: t("controller.changeTab") },
-      { button: "L3", label: t("controller.changeLayout") },
-      { button: "R3", label: t("action.addGame") },
-      { button: "View", label: t("settings.title") },
-    ];
-    if (controllerSelectedGame?.canLaunch) {
-      prompts.splice(1, 0, { button: "X", label: t("action.play") });
-    }
-    if (consoleSession) {
-      prompts.push({
-        button: "Menu",
-        label: t(showConsole ? "controller.gallery" : "controller.console"),
-      });
-    }
-    return prompts;
-  }, [
-    consoleSession,
-    controllerError,
-    controllerSelectedGame?.canLaunch,
-    hasControllerSurface,
-    showConsole,
-    t,
-  ]);
+  const showConsole = controller.showConsole;
 
   return (
     <div
       className="app-shell relative min-h-screen bg-bg"
-      data-controller-connected={gamepad.connected ? "true" : "false"}
-      data-input-modality={inputModality}
-      data-console-fullscreen={fullscreenActive ? "true" : "false"}
+      data-controller-connected={controller.connected ? "true" : "false"}
+      data-input-modality={controller.inputModality}
+      data-console-fullscreen={controller.fullscreenActive ? "true" : "false"}
     >
       {showConsole ? (
         <Suspense fallback={<div aria-busy="true" className="fixed inset-0 z-30 bg-[#171a1f]" />}>
           <ConsoleLibraryView
             games={controllerGames}
-            selectedGameId={controllerSelectedGameId}
+            selectedGameId={controller.selectedGameId}
             tabLabel={t(`nav.${tab}`)}
             isLoading={controllerLoading}
             error={controllerError}
             emptyTitle={t(tab === "queue" ? "empty.queue" : "empty.noGames")}
             emptyDescription={t(tab === "queue" ? "empty.queueDesc" : "empty.noGamesDesc")}
             retryLabel={t("error.retry")}
-            onSelectGame={setControllerSelectedGameId}
+            onSelectGame={controller.setSelectedGameId}
             onOpenGame={openDetail}
             onRetry={() => void refreshCurrentView()}
           />
@@ -1062,8 +866,8 @@ export default function App() {
       </footer>
 
       <ControllerPrompts
-        visible={inputModality === "gamepad" && gamepad.connected}
-        prompts={controllerPrompts}
+        visible={controller.inputModality === "gamepad" && controller.connected}
+        prompts={controller.prompts}
         ariaLabel={t("controller.controls")}
       />
 

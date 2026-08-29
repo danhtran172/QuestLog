@@ -328,6 +328,7 @@
     .console-cover[data-offset="3"] {
       opacity: 0;
       pointer-events: none;
+      visibility: hidden;
     }
   }
 

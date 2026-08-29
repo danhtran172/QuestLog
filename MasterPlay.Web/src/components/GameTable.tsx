@@ -283,6 +283,7 @@ export function GameTable({
                   key={game.id}
                   data-game-id={game.id}
                   data-gamepad-focusable="true"
+                  data-game-primary="true"
                   draggable={draggable && !isSaving}
                   onDragStart={draggable ? (event) => {
                     setDragId(game.id);

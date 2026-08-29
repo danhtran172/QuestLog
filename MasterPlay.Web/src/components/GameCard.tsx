@@ -95,6 +95,7 @@ export function GameCard({
     >
       <div
         role="button"
+        data-game-primary="true"
         tabIndex={0}
         aria-label={`${t("action.details")}: ${game.name}`}
         onClick={onOpen}
