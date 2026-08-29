@@ -66,7 +66,11 @@ function isFocusable(element: HTMLElement): boolean {
 function activeNavigationRoot(): ParentNode {
   const dialogs = Array.from(document.querySelectorAll<HTMLElement>("[role='dialog'][data-state='open']"))
     .filter(isFocusable);
-  return dialogs.at(-1) ?? document;
+  if (dialogs.length > 0) return dialogs.at(-1)!;
+  const popups = Array.from(document.querySelectorAll<HTMLElement>(
+    "[role='menu'][data-state='open'], [role='listbox'][data-state='open'], [data-radix-popper-content-wrapper] > [data-state='open']",
+  )).filter(isFocusable);
+  return popups.at(-1) ?? document;
 }
 
 export function moveSpatialFocus(direction: SpatialDirection): HTMLElement | null {

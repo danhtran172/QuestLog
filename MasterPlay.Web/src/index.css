@@ -316,6 +316,11 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 2px 5px rgb(0 0 0 / 0.32);
   }
 
+  [data-input-modality="gamepad"] :focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+
   @media (max-width: 760px) {
     .console-cover[data-offset="-2"],
     .console-cover[data-offset="2"],

@@ -103,7 +103,7 @@ export function ConsoleLibraryView({
   }, [games, selectedIndex]);
 
   return (
-    <main className="console-library fixed inset-0 z-[60] min-h-[100dvh] overflow-hidden bg-[#171a1f] text-[#f1f3f4]">
+    <main className="console-library fixed inset-0 z-30 min-h-[100dvh] overflow-hidden bg-[#171a1f] text-[#f1f3f4]">
       <AnimatePresence initial={false}>
         {backdrop ? (
           <motion.div
