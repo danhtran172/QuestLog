@@ -55,3 +55,17 @@ export function subscribeFullscreenState(listener: (fullscreen: boolean) => void
   webview.addEventListener("message", onMessage);
   return () => webview.removeEventListener("message", onMessage);
 }
+
+export function subscribeConsoleToggle(listener: () => void): () => void {
+  const webview = window.chrome?.webview;
+  if (!webview) return () => {};
+
+  const onMessage = (event: WebViewMessageEvent) => {
+    const message = event.data;
+    if (!message || typeof message !== "object") return;
+    if (!("type" in message) || message.type !== "questlog.console-toggle") return;
+    listener();
+  };
+  webview.addEventListener("message", onMessage);
+  return () => webview.removeEventListener("message", onMessage);
+}

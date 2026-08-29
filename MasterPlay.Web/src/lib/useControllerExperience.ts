@@ -4,7 +4,11 @@ import type { ControllerPrompt } from "@/components/ControllerPrompts";
 import type { GameListItem, Tab } from "./api/domain";
 import { TABS } from "./api/domain";
 import type { ControllerAction } from "./controllerInput";
-import { setConsoleFullscreen, subscribeFullscreenState } from "./desktopBridge";
+import {
+  setConsoleFullscreen,
+  subscribeConsoleToggle,
+  subscribeFullscreenState,
+} from "./desktopBridge";
 import {
   activateFocusedControl,
   moveSpatialFocus,
@@ -77,6 +81,11 @@ export function useControllerExperience({
   }, [t]);
 
   useEffect(() => subscribeFullscreenState(setFullscreenActive), []);
+
+  useEffect(() => subscribeConsoleToggle(() => {
+    setInputModality("keyboard");
+    toggleConsoleSession();
+  }), [toggleConsoleSession]);
 
   useEffect(() => {
     const usePointer = () => setInputModality("pointer");

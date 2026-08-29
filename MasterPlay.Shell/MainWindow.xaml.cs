@@ -391,11 +391,25 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        // F11 toan man hinh — giu dung thoi quen cua ban WPF cu.
-        if (e.Key != Key.F11) return;
-        e.Handled = true;
-        ToggleFullscreen();
-        PostFullscreenState();
+        if (e.Key == Key.F10)
+        {
+            // WebView2 chuyen accelerator sang WPF truoc khi web content nhan
+            // keydown. Shell gui mot message ro rang de F10 luon hoat dong.
+            e.Handled = true;
+            if (!e.IsRepeat && Web.CoreWebView2 != null)
+            {
+                Web.CoreWebView2.PostWebMessageAsJson(
+                    JsonSerializer.Serialize(new { type = "questlog.console-toggle" }));
+            }
+            return;
+        }
+
+        if (e.Key == Key.F11)
+        {
+            e.Handled = true;
+            ToggleFullscreen();
+            PostFullscreenState();
+        }
     }
 
     private void ToggleFullscreen()
