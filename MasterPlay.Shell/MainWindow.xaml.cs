@@ -391,7 +391,9 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F10)
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.F10)
         {
             // WebView2 chuyen accelerator sang WPF truoc khi web content nhan
             // keydown. Shell gui mot message ro rang de F10 luon hoat dong.
@@ -404,7 +406,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.F11)
+        if (key == Key.F11)
         {
             e.Handled = true;
             ToggleFullscreen();
