@@ -273,7 +273,7 @@ Toggle 3 service (Playtime Tracking / Library Scanner / Backup Service), Open ap
 | M36 | **Ngôn ngữ** | Mã culture `en-US`/`vi-VN`, đổi `CurrentCulture`+`CurrentUICulture`, ghi vào `config.json`, **tray theo dõi config và tự reload sau 500 ms** | `"en"`/`"vi"` trong `localStorage`, tray không biết |
 | M37 | **Theme** | `config.json` → tray dùng chung | `localStorage`, chỉ trong web |
 | ~~M38~~ | **Ảnh trên card** — ❌ **GHI SAI, ĐÃ ĐÍNH CHÍNH 2026-08-14** | Card **và** Queue đều dùng `GImagePath` (gallery), decode 460px — `ImagePath` (cover) **không dùng ở XAML nào** | Card cũng dùng `gallery`, cùng kích thước 270×126.2 → **KHỚP**, không phải mismatch. Xem `DOMAIN_RULES.md` §12 |
-| M39 | **Màu MetaScore chip** | Bảng màu riêng theo dải 90/80/70/50 | `≥75` xanh, `≥50` vàng, còn lại đỏ | 
+| M39 | **Màu MetaScore chip** | Bảng màu riêng theo dải 90/80/70/50 | `≥75` xanh, `≥50` vàng, còn lại đỏ |
 | M40 | **Refresh xuyên tiến trình** | `WeakReferenceMessenger` + `GlobalEvents` → tray báo UI reload | Không có cơ chế nào |
 
 ---
