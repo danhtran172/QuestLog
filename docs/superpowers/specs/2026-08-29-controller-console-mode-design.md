@@ -40,7 +40,7 @@ Controller navigation is always enabled when controller input is readable. A use
 
 Console session state is UI-only session state. It is not written to `localStorage` or the settings API. The selected game is tracked by game ID where possible so list refreshes do not silently move selection to a different game.
 
-The right Menu button toggles the visible library presentation between Console and Gallery while preserving the console session and fullscreen state. Leaving the console session with `F10` or `LB + RB + A` exits fullscreen and restores the window state that existed before the session.
+Updated 2026-09-04: Console sessions always show the Console presentation. Menu and L3 cannot switch to desktop Gallery/List, the former L keyboard shortcut is inactive, and prompts omit these desktop actions. Leaving the console session with `F10` or `LB + RB + A` restores the fullscreen and window state that existed before the session. Entering Console automatically requests native fullscreen using full monitor bounds, including the taskbar area; F11 uses the same native window path.
 
 ## 4. Input Mapping
 
@@ -50,17 +50,19 @@ Standard Gamepad API button indices are used. Input is edge-triggered, with cont
 |---|---|
 | `F10` | Enter or leave console session |
 | `LB + RB + A` | Enter or leave console session once per chord press |
-| Menu, right system button | Toggle Console and Gallery during a console session |
+| Menu, right system button | Inactive in Console |
 | View, left system button | Open Settings |
 | `LB` / `RB` | Move to the previous or next library tab |
-| D-pad / left stick | Move focus or move the selected game |
+| D-pad / left stick | Move focus or move the selected game; at the Console root, D-pad Up opens the controls popup and D-pad Down closes it |
 | `A` | Activate the focused control or open the selected game |
-| `B` | Close the topmost dialog, go back, or cancel the current surface |
+| `B` | Close the topmost dialog immediately; at the Console root, hold for 900 ms to leave the console session |
 | `X` | Launch the selected game only when the API returns `canLaunch: true` |
 | `Y` | Refresh the current server-backed view |
-| `L3` | Toggle Card and List in Gallery; from Console, open Gallery in List view |
+| `L3` | Toggle Card and List in desktop Gallery; inactive in Console |
 | `R3` | Open the existing Add Game flow |
 | Right stick | Scroll the active scroll container |
+
+Console keyboard controls use `Tab` for Detail, `Enter` for Play when `canLaunch` is true, `Shift` to toggle the controls popup, and hold `Escape` for 900 ms to leave the console session. Releasing `Escape` or `B` early cancels the exit. While a dialog is open, `Escape` and `B` retain their immediate Back behavior.
 
 When the user opens Settings, Detail, Add Game, or another dialog, contextual navigation takes precedence over actions targeting the library behind the dialog. Closing the dialog restores focus to the previously selected game or control.
 
@@ -75,7 +77,7 @@ The hook emits semantic actions only when:
 - a held directional input reaches its initial-delay and repeat interval;
 - the full activation chord transitions from incomplete to complete.
 
-The activation chord consumes its component button presses for that poll cycle. Pressing `LB + RB + A` must not also change a tab or open a game. Disconnecting a controller clears held-button and repeat state so reconnecting cannot trigger stale actions.
+The activation chord consumes its component button presses for that poll cycle. Pressing `LB + RB + A` must not also change a tab or open a game. Disconnecting a controller clears held-button, exit-hold, and repeat state so reconnecting cannot trigger stale actions. The Console root tracks the press and release edges of `Escape`/`B`; completing the 900 ms hold exits both the presentation and its fullscreen session rather than merely revealing Gallery underneath fullscreen.
 
 Meaningful controller input changes the active input modality to gamepad. Pointer movement, pointer down, wheel, or non-synthetic keyboard input changes it away from gamepad. Merely connecting a controller does not cover the interface with prompts before the user touches it.
 
@@ -95,29 +97,29 @@ The `B` action targets the topmost dismissible surface first. It does not close 
 
 ### 7.1 Backdrop
 
-The selected game's `gImagePath` is preferred for the wide backdrop. `imagePath` is the fallback. The image uses cover cropping, strong blur, a dark scrim, and a subtle color wash derived from the existing theme tokens. When neither image exists, the current theme background is used.
+The selected game's `bannerPath` is preferred for the wide backdrop. `posterPath` is the fallback. The image uses cover cropping, strong blur, a dark scrim, and a subtle color wash derived from the existing theme tokens. When neither image exists, the current theme background is used.
 
 Changing selection crossfades the backdrop. Only opacity and transform are animated. Reduced-motion users receive an immediate image change.
 
 ### 7.2 Cover sequence
 
-The selected game uses its vertical `imagePath` as the primary cover. The visible sequence shows the current game and nearby games, with the selected cover largest and fully opaque. Neighboring covers are progressively smaller and slightly muted. The selected cover has a clearly visible primary-colored frame and elevated shadow.
+The selected game uses its IGDB-only `posterPath` as the primary cover, then falls back to RAWG `backdropPath` and Steam `bannerPath`. The visible sequence shows the current game and nearby games, with the selected cover largest and fully opaque. Neighboring covers are progressively smaller and slightly muted. The selected cover has a clearly visible primary-colored frame and elevated shadow.
 
-If `imagePath` is absent or fails to load, the cover displays a gamepad icon and the real game name. It does not fabricate artwork.
+If `posterPath` is absent or fails to load, the cover displays a gamepad icon and the real game name. It does not fabricate artwork.
 
 The selected game's name appears below the cover. Progress and ownership may also appear using only `displayName`, `iconData`, and `colorCode` returned by the API. No `systemKey` list is hardcoded to infer presentation or behavior.
 
 ### 7.3 Context and prompts
 
-The current localized tab name is shown near the top. A contextual prompt rail is shown near the bottom whenever the active input modality is gamepad.
+The current localized tab name is shown near the top. Contextual prompts are hidden by default inside one popup at the bottom-right corner. A low-emphasis `Shift` or `D-pad Up` badge remains as the dynamic input hint beside a localized `Open controls` label, so the shortcut's purpose is explicit. `Shift` toggles the popup, D-pad Up opens it, and D-pad Down closes it. Pointer input hides both the popup and hint.
 
-The rail contains only actions valid in the current context. Examples:
+The popup stacks its actions vertically and contains only actions valid in the current context. Examples:
 
-- Library game: `A Details`, `X Play` when `canLaunch`, `LB/RB Change tab`, `R3 Add game`.
-- Dialog: `A Select`, `B Back`, `Right Stick Scroll` when scroll is available.
+- Keyboard Console: `Tab Details`, `Enter Play` when `canLaunch`, `Q/E Change tab`, `N Add game`.
+- Gamepad Console: `A Details`, `X Play` when `canLaunch`, `LB/RB Change tab`, `R3 Add game`.
 - Error: `A Retry`.
 
-Prompts use compact controller-button badges and localized text. They disappear when the user returns to mouse or keyboard input and reappear automatically on the next meaningful controller input.
+Any other action closes the popup before continuing that action. Opening a Detail view, Settings, Add Game, or another overlay also closes it. Exit is not listed in the popup. Starting an exit hold displays only the active `Esc` or `B` badge with a circular 900 ms progress indicator; releasing early removes it. Other prompts use compact button badges and localized text and switch automatically between keyboard and gamepad.
 
 ## 8. Server Data and Pagination
 
@@ -181,7 +183,7 @@ Implementation verification must cover:
 
 1. Button edge detection, directional repeat, dead-zone behavior, and chord consumption.
 2. Always-on navigation before, during, and after a console session.
-3. Input-modality switching and automatic contextual prompt visibility.
+3. Input-modality switching, the faded `Shift`/D-pad hint, and contextual popup open/close behavior.
 4. All mappings, including `L3` Card/List and `R3` Add Game.
 5. Tab and server-page boundaries without client-side reordering.
 6. Console loading, empty, API error, image failure, and launch failure states.
@@ -197,11 +199,13 @@ Implementation verification must cover:
 The feature is complete when:
 
 - a connected controller can operate the existing app without entering console presentation;
-- controller input automatically reveals correct contextual prompts;
+- `Shift` or D-pad Up reveals the correct contextual prompt popup, D-pad Down closes it, and other actions close it without being swallowed;
 - `F10` and `LB + RB + A` enter and leave fullscreen console presentation exactly once per press;
 - every approved input mapping works in its intended context;
 - console covers, backdrop, selection frame, motion, loading, empty, and error states are present;
 - all displayed game data traces to generated API types;
+- `Tab`/`A` open Detail, while `Enter`/`X` and the visible Play button launch only games with `canLaunch: true`;
+- holding `Escape`/`B` for 900 ms leaves the Console fullscreen session without leaking its viewport state into Gallery;
 - no client-side domain filtering, sorting, thresholds, ranking, or capability guessing is introduced;
 - the appropriate controller-mode line in `docs/PARITY_CHECKLIST.md` is updated;
 - typecheck, build, tests, and focused manual controller verification pass.

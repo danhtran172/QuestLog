@@ -1,7 +1,9 @@
-using MasterPlay.Infrastructure.FileSystem;
+﻿using MasterPlay.Infrastructure.FileSystem;
 using MasterPlay.Infrastructure.Configuration;
+using MasterPlay.Core;
 using MasterPlay.Core.Entities;
 using MasterPlay.Infrastructure.Data.Repositories;
+using MasterPlay.Infrastructure.Data.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 using System;
@@ -20,13 +22,11 @@ namespace MasterPlay.Infrastructure.Data.Services
             try
             {
 
-                string appDataDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "MasterPlay");
-                Directory.CreateDirectory(appDataDir);
+                // `AppPaths` lo luon viec di doi thu muc/CSDL tu ten cu MasterPlay.
+                string appDataDir = AppPaths.GetDataDirectory();
 
-                string dbPath = Path.Combine(appDataDir, "MasterPlay.db");
-                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MasterPlay.Template.db");
+                string dbPath = Path.Combine(appDataDir, AppPaths.DatabaseFileName);
+                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AppPaths.DatabaseTemplateFileName);
 
                 if (!File.Exists(dbPath) && File.Exists(templatePath))
                 {
@@ -46,9 +46,67 @@ namespace MasterPlay.Infrastructure.Data.Services
                     EnsureColumn(context, "Themes", "SortOrder", "INTEGER NOT NULL DEFAULT 0");
                     EnsureColumn(context, "ProgressStatus", "IconData", "TEXT NULL");
                     EnsureColumn(context, "OwnershipStatus", "IconData", "TEXT NULL");
-                    EnsureColumn(context, "Games", "SteamLibraryImagePath", "TEXT NULL");
+                    // Taxonomy theo chu so huu + nhom theme (dung lai bang Themes/Genres,
+                    // co sao luu). Phai sau hai EnsureColumn IconData/SortOrder o tren.
+                    ThemeGroupsMigration.Apply(context);
+                    // Ba vai tro anh doi ten: chu "cover" truoc day xuat hien o ca ba nen
+                    // khong doc luot ra duoc cai nao la cai nao. Xem DOMAIN_RULES §12.
+                    //   CardCoverPath     -> BannerPath    (Steam, ngang, CO ten game in san)
+                    //   CoverPath         -> BackdropPath  (RAWG, ngang, SACH — phu chu duoc)
+                    //   PortraitCoverPath -> PosterPath    (IGDB, doc)
+                    // Phai chay TRUOC EnsureColumn ben duoi, neu khong se tao cot moi rong
+                    // ben canh cot cu con du lieu.
+                    RenameColumn(context, "Games", "CardCoverPath", "BannerPath");
+                    RenameColumn(context, "Games", "CoverPath", "BackdropPath");
+                    RenameColumn(context, "Games", "PortraitCoverPath", "PosterPath");
+
+                    EnsureColumn(context, "Games", "BannerPath", "TEXT NULL");
+                    EnsureColumn(context, "Games", "BackdropPath", "TEXT NULL");
+                    EnsureColumn(context, "Games", "PosterPath", "TEXT NULL");
+
+                    // == Gom ANH ve dung BA cot, roi bo het cot cu ==============
+                    //
+                    // The he 2 — CUU DB DA HONG: mot ban truoc goi RenameColumn voi ten
+                    // nguon TRUNG ten dich nen khong doi duoc gi, roi EnsureColumn tao ba
+                    // cot moi RONG ben canh ba cot cu con nguyen du lieu — dung cai bay ma
+                    // chu thich cua RenameColumn da canh bao. Tren nhung DB ay RenameColumn
+                    // vo dung vinh vien, vi cot dich da ton tai.
+                    AdoptLegacyColumn(context, "Games", "CardCoverPath", "BannerPath");
+                    AdoptLegacyColumn(context, "Games", "CoverPath", "BackdropPath");
+                    AdoptLegacyColumn(context, "Games", "PortraitCoverPath", "PosterPath");
+
+                    // The he 1 — chua bao gio duoc chuyen sang. Vai tro xac dinh bang cach
+                    // DO anh that, khong doan theo ten cot:
+                    //   GImagePath            460x215  ngang, co ten game  -> banner
+                    //   ImagePath            1920x1080 ngang, sach         -> backdrop
+                    //   SteamLibraryImagePath 600x900  doc                 -> poster
+                    AdoptLegacyColumn(context, "Games", "GImagePath", "BannerPath");
+                    AdoptLegacyColumn(context, "Games", "ImagePath", "BackdropPath");
+                    AdoptLegacyColumn(context, "Games", "SteamLibraryImagePath", "PosterPath");
                     EnsureColumn(context, "Games", "IsDlc", "INTEGER NOT NULL DEFAULT 0");
                     EnsureColumn(context, "Games", "BaseGameId", "TEXT NULL");
+                    EnsureColumn(context, "Games", "LaunchTargetKind", "TEXT NULL");
+                    EnsureColumn(context, "Games", "LaunchTargetPath", "TEXT NULL");
+                    EnsureColumn(context, "Games", "IgdbId", "INTEGER NULL");
+                    EnsureColumn(context, "Games", "LibraryOwnerKey", "TEXT NOT NULL DEFAULT 'legacy:local'");
+                    EnsureColumn(context, "Games", "MetadataGameId", "INTEGER NULL");
+                    EnsureColumn(context, "Games", "MetadataRevision", "INTEGER NULL");
+                    EnsureColumn(context, "Games", "MetadataSyncedAt", "TEXT NULL");
+                    // Gia tri kho o lan dong bo truoc, dang JSON. NULL = chua tung
+                    // dong bo; lan dong bo dau tien chi dien vao o dang trong chu
+                    // khong ghi de (xem LibraryMetadataMerge).
+                    EnsureColumn(context, "Games", "MetadataBaseline", "TEXT NULL");
+                    EnsureColumn(context, "Games", "LastPlayedAt", "TEXT NULL");
+                    // Ban Cloudinary <- link goc cua tung o anh. Xem Game.ImageSources.
+                    EnsureColumn(context, "Games", "ImageSources", "TEXT NULL");
+                    context.Database.ExecuteSqlRaw(
+                        "UPDATE Games SET LibraryOwnerKey = 'legacy:local' WHERE LibraryOwnerKey IS NULL OR trim(LibraryOwnerKey) = '';" );
+                    context.Database.ExecuteSqlRaw(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS IX_Games_LibraryOwnerKey_MetadataGameId ON Games (LibraryOwnerKey, MetadataGameId) WHERE MetadataGameId IS NOT NULL;" );
+                    context.Database.ExecuteSqlRaw(
+                        "CREATE INDEX IF NOT EXISTS IX_Games_LibraryOwnerKey_IsDisabled ON Games (LibraryOwnerKey, IsDisabled);" );
+                    context.Database.ExecuteSqlRaw(
+                        "CREATE INDEX IF NOT EXISTS IX_Games_MetadataGameId ON Games (MetadataGameId);" );
                     context.Database.ExecuteSqlRaw(
                         """
                         CREATE TABLE IF NOT EXISTS GameOwnershipInfo (
@@ -70,11 +128,21 @@ namespace MasterPlay.Infrastructure.Data.Services
                             Id INTEGER NOT NULL CONSTRAINT PK_GameFinishes PRIMARY KEY AUTOINCREMENT,
                             GameId TEXT NOT NULL,
                             FinishedAt TEXT NOT NULL,
+                            HasMonth INTEGER NOT NULL DEFAULT 1,
                             Score REAL NULL,
                             CONSTRAINT FK_GameFinishes_Games_GameId
                                 FOREIGN KEY (GameId) REFERENCES Games (Id) ON DELETE CASCADE
                         );
                         """);
+                    // Rating contract v2: replace the legacy out-of-band sentinel with
+                    // the user-editable Peak Score value. These updates are idempotent.
+                    context.Database.ExecuteSqlRaw("UPDATE Games SET Score = 11 WHERE Score = 999;");
+                    context.Database.ExecuteSqlRaw("UPDATE Games SET Excited = 11 WHERE Excited = 999;");
+                    // Moc cu deu duoc coi la CO thang. Khong suy dien nguoc rang
+                    // "ngay 1 thang 1" nghia la khong nho thang — lam vay se doi
+                    // nghia du lieu that cua nguoi dung mot cach am tham.
+                    EnsureColumn(context, "GameFinishes", "HasMonth", "INTEGER NOT NULL DEFAULT 1");
+                    context.Database.ExecuteSqlRaw("UPDATE GameFinishes SET Score = 11 WHERE Score = 999;");
                     MigrateLegacyFinishData(context);
                     context.Database.ExecuteSqlRaw(
                         """
@@ -109,6 +177,11 @@ namespace MasterPlay.Infrastructure.Data.Services
         }
 
         #region Games
+        public static void EnsureInitialized()
+        {
+            // Calling this method intentionally runs the static schema initializer above.
+        }
+
         public static List<Game> LoadGames()
         {
             using (var uow = new UnitOfWork(new MasterPlayContext()))
@@ -153,7 +226,56 @@ namespace MasterPlay.Infrastructure.Data.Services
             }
         }
 
-        private static void EnsureColumn(MasterPlayContext context, string table, string column, string definition)
+        /// <summary>
+        /// Doi ten cot neu ten CU con ton tai va ten MOI chua co.
+        ///
+        /// PHAI goi TRUOC moi <see cref="EnsureColumn"/> cua cung bang: neu chay sau,
+        /// EnsureColumn se tao cot moi RONG ben canh cot cu con nguyen du lieu, va
+        /// app doc cot moi nen toan bo anh "bien mat" ma khong bao loi gi.
+        /// </summary>
+        private static void RenameColumn(MasterPlayContext context, string table, string from, string to)
+        {
+            if (!ColumnExists(context, table, from) || ColumnExists(context, table, to))
+                return;
+
+            context.Database.ExecuteSqlRaw($"ALTER TABLE [{table}] RENAME COLUMN [{from}] TO [{to}];");
+        }
+
+        /// <summary>
+        /// Chep du lieu tu cot CU sang cot MOI o nhung dong cot moi con trong, roi BO
+        /// cot cu. Danh cho DB da lo tao cot moi rong ben canh cot cu — luc do
+        /// <see cref="RenameColumn"/> khong con cuu duoc vi cot moi da ton tai.
+        ///
+        /// Bo cot cu khong phai de don dep: no LA dau moc. Con cot cu = chua chep,
+        /// het cot cu = chep xong. Nho vay buoc nay khong can bang trang thai rieng, va
+        /// khong the chay lan hai de ghi de len chinh sua sau nay cua nguoi dung.
+        ///
+        /// Chi dung duoc cho cot khong con nam trong mo hinh EF va khong co index nao
+        /// tro toi — dung ba cot anh the he cu.
+        /// </summary>
+        private static void AdoptLegacyColumn(MasterPlayContext context, string table, string legacy, string target)
+        {
+            if (!ColumnExists(context, table, legacy) || !ColumnExists(context, table, target))
+                return;
+
+            context.Database.ExecuteSqlRaw(
+                $"UPDATE [{table}] SET [{target}] = [{legacy}] " +
+                $"WHERE ([{target}] IS NULL OR trim([{target}]) = '') " +
+                $"AND [{legacy}] IS NOT NULL AND trim([{legacy}]) <> '';");
+
+            context.Database.ExecuteSqlRaw($"ALTER TABLE [{table}] DROP COLUMN [{legacy}];");
+        }
+
+        private static bool EnsureColumn(MasterPlayContext context, string table, string column, string definition)
+        {
+            if (ColumnExists(context, table, column))
+                return false;
+
+            context.Database.ExecuteSqlRaw($"ALTER TABLE [{table}] ADD COLUMN [{column}] {definition};");
+            return true;
+        }
+
+        private static bool ColumnExists(MasterPlayContext context, string table, string column)
         {
             using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText = $"PRAGMA table_info([{table}]);";
@@ -163,8 +285,7 @@ namespace MasterPlay.Infrastructure.Data.Services
             while (reader.Read())
                 found |= string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase);
             context.Database.CloseConnection();
-            if (!found)
-                context.Database.ExecuteSqlRaw($"ALTER TABLE [{table}] ADD COLUMN [{column}] {definition};");
+            return found;
         }
 
         private static void MigrateLegacyFinishData(MasterPlayContext context)
@@ -192,6 +313,8 @@ namespace MasterPlay.Infrastructure.Data.Services
                 {
                     GameId = legacyFinish.Id,
                     FinishedAt = new DateTime(year, 1, 1),
+                    // Cot cu `FinishedIn` chi chua NAM, khong bao gio co thang.
+                    HasMonth = false,
                     Score = legacyFinish.Score
                 });
             }
@@ -254,6 +377,33 @@ namespace MasterPlay.Infrastructure.Data.Services
             }
 
             await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        public static async Task RecordLastPlayedAsync(
+            IReadOnlyCollection<string> gameIds,
+            DateTime lastPlayedAtUtc,
+            CancellationToken cancellationToken = default)
+        {
+            var utcTimestamp = lastPlayedAtUtc.Kind == DateTimeKind.Utc
+                ? lastPlayedAtUtc
+                : lastPlayedAtUtc.ToUniversalTime();
+            var ids = gameIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            if (ids.Length == 0)
+                return;
+
+            await using var context = new MasterPlayContext();
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+            foreach (var gameId in ids)
+            {
+                await context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE Games SET LastPlayedAt = {utcTimestamp} WHERE Id = {gameId} AND IsDlc = 0",
+                    cancellationToken);
+            }
+
             await transaction.CommitAsync(cancellationToken);
         }
 
@@ -676,6 +826,8 @@ namespace MasterPlay.Infrastructure.Data.Services
 
         public static bool CreateBackupFolder(Game game)
         {
+            // Tinh nang backup dang tat: khong tu tao thu muc (scan thu vien, Ready).
+            if (!FeatureFlags.GameBackup) return false;
             if (game == null || game.IsDlc) return false;
 
             if (!string.IsNullOrWhiteSpace(game.BackupFolderPath) && Directory.Exists(game.BackupFolderPath))

@@ -1,0 +1,107 @@
+---
+// Diem cuoi tuyen duong: dau X tren ban do kho bau = noi tai app.
+// Nen la tam ban do o man hinh dang nhap cua app, dat sao cho dau X cua ban do
+// nam dung duoi dau X phat sang.
+import { Image } from "astro:assets";
+import questMap from "../assets/brand/quest-map.webp";
+import { ui, type Locale } from "../i18n/ui";
+import { DOWNLOAD_URL } from "../site";
+
+interface Props {
+  lang: Locale;
+}
+
+const t = ui[Astro.props.lang].download;
+---
+
+<section id="download" class="relative isolate z-[2] overflow-hidden pt-36 pb-32 text-center lg:pt-48 lg:pb-44" aria-labelledby="download-title">
+  <div class="glow" aria-hidden="true"></div>
+  <!-- Diem re: tuyen duong di het duong ray roi moi vong ra dau X. -->
+  <div class="pointer-events-none absolute inset-x-0 top-0" aria-hidden="true">
+    <div class="container-page grid grid-cols-[var(--rail)_1fr]">
+      <div class="relative"><span class="absolute top-0 left-1/2 h-px w-px" data-route-point></span></div>
+    </div>
+  </div>
+  <div class="container-page flex flex-col items-center">
+    <div class="relative">
+      <Image src={questMap} alt="" aria-hidden="true" widths={[700, 1200]} sizes="1000px" class="map" />
+      <svg class="x-mark relative" data-route-point viewBox="0 0 100 100" aria-hidden="true">
+        <path pathLength="1" d="M24 25 Q48 47 77 76"></path>
+        <path pathLength="1" d="M76 23 Q53 49 25 77"></path>
+      </svg>
+    </div>
+    <p class="eyebrow mt-10" data-reveal>◆ {t.eyebrow}</p>
+    <h2 id="download-title" class="display mt-5 text-[clamp(2.9rem,7.4vw,5.8rem)] text-balance" data-reveal style="--d:80ms">
+      {t.title}
+    </h2>
+    <p class="mt-6 max-w-[30rem] text-lg leading-relaxed text-mist/80" data-reveal style="--d:160ms">{t.body}</p>
+    <div class="mt-10" data-reveal style="--d:240ms">
+      <a href={DOWNLOAD_URL} class="btn-primary !px-8 !py-4 text-lg">
+        <svg class="btn-icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"></path>
+        </svg>
+        {t.cta}
+      </a>
+    </div>
+    <p class="mt-5 font-mono text-xs tracking-wider text-fog" data-reveal style="--d:300ms">{t.requirements}</p>
+  </div>
+</section>
+
+<style>
+  .glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(34% 30% at 50% 32%, color-mix(in oklab, var(--color-mark) 13%, transparent), transparent 70%),
+      radial-gradient(60% 50% at 50% 72%, color-mix(in oklab, var(--color-quest) 12%, transparent), transparent 75%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 22%);
+  }
+
+  /* Dau X cua ban do nam o (27.9%, 39.2%) cua anh: dich anh de diem do trung tam X. */
+  .map {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -1;
+    width: min(1000px, 190vw);
+    max-width: none;
+    height: auto;
+    translate: -27.9% -39.2%;
+    opacity: 0.11;
+    filter: saturate(0.55);
+    pointer-events: none;
+    mask-image: radial-gradient(closest-side at 28% 40%, #000 30%, transparent 100%);
+  }
+
+  .x-mark {
+    width: 5.5rem;
+    height: 5.5rem;
+    overflow: visible;
+    fill: none;
+    stroke: var(--color-mark);
+    stroke-width: 11;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 18px color-mix(in oklab, var(--color-mark) 55%, transparent));
+  }
+
+  /* Co JS: X chi duoc ve khi tuyen duong cham toi. */
+  :global(.route-live) .x-mark path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  :global(.route-live) .x-mark:global(.is-reached) path {
+    animation: draw 0.5s var(--ease-out-quint) forwards;
+  }
+
+  :global(.route-live) .x-mark:global(.is-reached) path + path {
+    animation-delay: 0.28s;
+  }
+
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+</style>

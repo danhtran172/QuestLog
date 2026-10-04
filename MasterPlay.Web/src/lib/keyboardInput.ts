@@ -24,16 +24,15 @@ const SPATIAL_KEY_ACTIONS: Readonly<Record<string, ControllerAction>> = {
 };
 
 const CONSOLE_KEY_ACTIONS: Readonly<Record<string, ControllerAction>> = {
-  Enter: "activate",
+  Enter: "play",
   " ": "activate",
   Escape: "back",
   q: "previousTab",
   e: "nextTab",
   v: "openSettings",
-  l: "toggleLayout",
   n: "addGame",
-  p: "play",
-  Tab: "toggleSurface",
+  Tab: "activate",
+  Shift: "togglePrompts",
 };
 
 export function getConsoleKeyboardAction(
@@ -45,6 +44,8 @@ export function getConsoleKeyboardAction(
   if (!reading.consoleSession) return null;
   if (reading.altKey || reading.ctrlKey || reading.metaKey) return null;
   if (reading.editing && normalizedKey !== "Escape") return null;
+  if (normalizedKey === "Tab" && (!reading.consoleVisible || reading.overlayOpen)) return null;
+  if (normalizedKey === "Shift" && (!reading.consoleVisible || reading.overlayOpen)) return null;
 
   const spatialAction = SPATIAL_KEY_ACTIONS[normalizedKey] ?? null;
   const carouselAction = reading.consoleVisible && !reading.overlayOpen
@@ -54,7 +55,9 @@ export function getConsoleKeyboardAction(
         ? "moveRight"
         : spatialAction
     : spatialAction;
-  const commandAction = CONSOLE_KEY_ACTIONS[normalizedKey] ?? null;
+  const commandAction = reading.overlayOpen && normalizedKey === "Enter"
+    ? "activate"
+    : CONSOLE_KEY_ACTIONS[normalizedKey] ?? null;
   const action = carouselAction ?? commandAction;
   if (reading.overlayOpen && action != null && ![
     "activate",

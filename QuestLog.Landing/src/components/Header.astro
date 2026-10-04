@@ -1,0 +1,64 @@
+---
+import { localePath, ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang].nav;
+const otherLang: Locale = lang === "vi" ? "en" : "vi";
+---
+
+<header class="site-header fixed inset-x-0 top-0 z-50" data-header>
+  <nav aria-label={t.menu} class="container-page flex h-16 items-center justify-between gap-4">
+    <a href={localePath[lang]} class="flex items-center gap-2.5">
+      <img src="/favicon.png" alt="" width="28" height="28" />
+      <span class="font-display text-[1.45rem] font-extrabold tracking-[0.04em] uppercase">QuestLog</span>
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2">
+      <a href="#journey" class="nav-link hidden md:inline-flex">{t.journey}</a>
+      <a href="#console" class="nav-link hidden md:inline-flex">{t.console}</a>
+      <a
+        href={localePath[otherLang]}
+        hreflang={otherLang}
+        lang={otherLang}
+        aria-label={t.switchLang}
+        class="nav-link font-mono text-xs tracking-[0.16em] uppercase"
+      >
+        {otherLang}
+      </a>
+      <a href="#download" class="btn-primary ml-1 !px-4 !py-2 text-sm">{t.download}</a>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid transparent;
+    transition:
+      background-color 0.35s,
+      border-color 0.35s,
+      backdrop-filter 0.35s;
+  }
+
+  .site-header[data-scrolled] {
+    border-color: color-mix(in oklab, var(--color-line) 70%, transparent);
+    background: color-mix(in oklab, var(--color-abyss) 74%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  .nav-link {
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-fog);
+    transition: color 0.2s;
+  }
+
+  .nav-link:hover {
+    color: var(--color-mist);
+  }
+</style>

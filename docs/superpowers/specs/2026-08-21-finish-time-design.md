@@ -2,9 +2,9 @@
 
 ## Goal
 
-Replace the Gallery and Detail presentation of a finish year with a finish time that includes month and year. Publish dates display the complete day, month, and year. The Questory Web editor must support editing every finish-history entry by month and year only, while the Finish action records the current time automatically.
+Replace the Gallery and Detail presentation of a finish year with a finish time that includes month and year. Publish dates display the complete day, month, and year. The QuestLog Web editor must support editing every finish-history entry by month and year only, while the Finish action records the current time automatically.
 
-This design applies to the current Questory Web application (`MasterPlay.Web` hosted by `MasterPlay.Shell`) and its local API (`MasterPlay.Host`). The legacy `MasterPlay.UI` WPF surface is outside this change.
+This design applies to the current QuestLog Web application (`MasterPlay.Web` hosted by `MasterPlay.Shell`) and its local API (`MasterPlay.Host`). The legacy `MasterPlay.UI` WPF surface is outside this change.
 
 ## Canonical data
 
@@ -35,7 +35,7 @@ Add:
 POST /api/games/{gameId}/finishes
 ```
 
-The request contains the user's score. Score validation follows the canonical game-score contract: half-point values from `0` through `10`, plus sentinel `999`. The endpoint executes one backend transaction:
+The request contains the user's score. Score validation follows the canonical game-score contract: half-point values from `0` through `11`; `11` is Peak Score and displays as `10+`. The endpoint executes one backend transaction:
 
 1. Load the game and the catalog entry whose system key is `Done`; never hardcode a catalog numeric ID.
 2. Update the game's current score.
@@ -70,7 +70,7 @@ The publish-date editor remains a normal date input because publish date still i
 
 ## Detail actions
 
-Move Edit into a fixed action group at the lower-right corner of the Detail popup and place Finish beside it. Both actions are icon-only buttons with localized tooltips, matching the existing Questory action-button system.
+Move Edit into a fixed action group at the lower-right corner of the Detail popup and place Finish beside it. Both actions are icon-only buttons with localized tooltips, matching the existing QuestLog action-button system.
 
 - Edit uses the existing pencil action.
 - Finish uses a trophy/finish icon.

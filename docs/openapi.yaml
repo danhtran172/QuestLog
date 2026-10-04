@@ -1,0 +1,3024 @@
+openapi: 3.1.0
+
+info:
+  title: QuestLog API
+  version: 1.0.0
+  description: |
+    Hợp đồng dữ liệu giữa backend (C#) và frontend.
+
+    SỞ HỮU: backend. Frontend KHÔNG được sửa file này hoặc type sinh ra từ nó.
+    Quy tắc nghiệp vụ nằm ở docs/DOMAIN_RULES.md — file này chỉ mô tả hình dạng.
+
+    ĐƠN VỊ: mọi field thời lượng mang hậu tố đơn vị trong tên
+    (totalPlaytimeSeconds, avgPlaytimeHours, timeSpentMinutes).
+    Không có field nào tên trần kiểu "playtime".
+
+servers:
+  - url: http://127.0.0.1:{port}
+    description: Local API (desktop, đủ endpoint native)
+    variables:
+      port: { default: "0" }
+  - url: https://api.questory.app
+    description: Hosted API (web, endpoint native trả 501)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+  - name: account
+  - name: library
+  - name: game
+  - name: queue
+  - name: taxonomy
+  - name: catalog
+  - name: metadata
+  - name: native
+  - name: admin
+  - name: settings
+  - name: system
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Supabase JWT cho tài khoản. Local API cũng chấp nhận desktop guest token
+        ngắn hạn do Shell cấp; Hosted API không bao giờ cấp hoặc chấp nhận token này.
+
+  parameters:
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      schema: { type: string, enum: [en-US, vi-VN], default: en-US }
+      description: Quyết định giá trị displayName trả về.
+
+  schemas:
+
+    # ---------- authentication ----------
+
+    AuthConfig:
+      type: object
+      required: [configured, registrationEnabled, googleEnabled]
+      properties:
+        configured: { type: boolean }
+        registrationEnabled: { type: boolean }
+        googleEnabled: { type: boolean }
+
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+          description: Username hoặc email. Backend tự phân giải, không trả email nội bộ cho client.
+        password: { type: string, format: password }
+
+    SignupRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 32 }
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+
+    SignupResponse:
+      type: object
+      required: [requiresEmailVerification, email]
+      properties:
+        requiresEmailVerification: { type: boolean }
+        email: { type: string, format: email }
+
+    ChangePasswordRequest:
+      type: object
+      required: [newPassword]
+      properties:
+        newPassword: { type: string, format: password, minLength: 12 }
+        reauthTicket:
+          type: string
+          description: Ticket từ POST /api/auth/reauth/verify. Bắt buộc, trừ khi mustChangePassword = true.
+        currentPassword:
+          type: string
+          format: password
+          description: Chỉ được chấp nhận khi account.mustChangePassword = true (bootstrap admin đổi mật khẩu lần đầu).
+
+    ChangeUsernameRequest:
+      type: object
+      required: [username, reauthTicket]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          pattern: '^[A-Za-z0-9_.-]+$'
+        reauthTicket: { type: string }
+
+    ChangeEmailRequest:
+      type: object
+      required: [email, reauthTicket]
+      properties:
+        email: { type: string, format: email }
+        reauthTicket: { type: string }
+
+    UsernameClaimRequest:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          pattern: '^[A-Za-z0-9_.-]+$'
+
+    GoogleStartRequest:
+      type: object
+      required: [client]
+      properties:
+        client:
+          type: string
+          enum: [web, desktop]
+          description: desktop yêu cầu thêm header X-QuestLog-Desktop-Token (chỉ WebView2 + Local API loopback).
+
+    GoogleStartResponse:
+      type: object
+      required: [flowId, authorizeUrl, expiresAt]
+      properties:
+        flowId:
+          type: string
+          description: Bí mật của app đã khởi tạo flow. Không bao giờ đặt lên URL.
+        authorizeUrl:
+          type: string
+          format: uri
+          description: Mở bằng popup (Web) hoặc trình duyệt hệ thống (Desktop).
+        expiresAt: { type: string, format: date-time }
+
+    GoogleCompleteRequest:
+      type: object
+      required: [flowId]
+      properties:
+        flowId: { type: string }
+
+    GoogleCompleteResponse:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [pending, completed] }
+        session:
+          allOf: [{ $ref: '#/components/schemas/AuthSession' }]
+          description: Có khi status = completed. Refresh token nằm trong HttpOnly cookie.
+
+    ForgotPasswordRequest:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          description: Username hoặc email. Không bao giờ tiết lộ tài khoản có tồn tại hay không.
+
+    ForgotPasswordResponse:
+      type: object
+      required: [sent]
+      properties:
+        sent: { type: boolean }
+
+    VerifyResetCodeRequest:
+      type: object
+      required: [identifier, code]
+      properties:
+        identifier: { type: string }
+        code: { type: string, pattern: '^[0-9]{6,10}$' }
+
+    ResetTicketResponse:
+      type: object
+      required: [resetTicket, expiresAt]
+      properties:
+        resetTicket:
+          type: string
+          description: Chỉ cấp sau khi mã email đúng. Dùng một lần, sống 10 phút.
+        expiresAt: { type: string, format: date-time }
+
+    ResetPasswordRequest:
+      type: object
+      required: [resetTicket, newPassword]
+      properties:
+        resetTicket: { type: string }
+        newPassword: { type: string, format: password, minLength: 12 }
+
+    ReauthCodeResponse:
+      type: object
+      required: [sent, resendAvailableAt]
+      properties:
+        sent: { type: boolean }
+        resendAvailableAt: { type: string, format: date-time }
+
+    ReauthVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: '^[0-9]{6,10}$' }
+
+    ReauthTicketResponse:
+      type: object
+      required: [reauthTicket, expiresAt]
+      properties:
+        reauthTicket:
+          type: string
+          description: Dùng một lần, sống 5 phút, gắn với account và phiên hiện tại.
+        expiresAt: { type: string, format: date-time }
+
+    EmailChangeResponse:
+      type: object
+      required: [requiresConfirmation, email]
+      properties:
+        requiresConfirmation: { type: boolean }
+        email: { type: string, format: email }
+
+    AuthAccount:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - role
+        - status
+        - emailVerified
+        - mustChangePassword
+        - mfaRequired
+        - onboarding
+        - hasPassword
+      properties:
+        id: { type: string, format: uuid }
+        username:
+          type: [string, 'null']
+          description: null khi tài khoản Google chưa chọn username (onboarding = usernameRequired).
+        email: { type: string, format: email }
+        role: { type: string, enum: [admin, user] }
+        status: { type: string, enum: [active, locked] }
+        emailVerified: { type: boolean }
+        mustChangePassword: { type: boolean }
+        mfaRequired: { type: boolean }
+        onboarding:
+          type: string
+          enum: [complete, usernameRequired]
+          description: usernameRequired chặn mọi domain endpoint (403 USERNAME_REQUIRED) cho tới khi claim username.
+        hasPassword:
+          type: boolean
+          description: false với tài khoản chỉ đăng ký bằng Google và chưa đặt mật khẩu.
+
+    AuthSession:
+      type: object
+      required: [account, accessToken, expiresAt]
+      properties:
+        account: { $ref: '#/components/schemas/AuthAccount' }
+        accessToken:
+          type: string
+          description: JWT ngắn hạn, chỉ giữ trong memory của frontend.
+        expiresAt: { type: string, format: date-time }
+
+    GuestSession:
+      type: object
+      required: [accessToken, expiresAt]
+      properties:
+        accessToken:
+          type: string
+          description: Token ngẫu nhiên theo lần chạy, chỉ hợp lệ trên Local API loopback.
+        expiresAt: { type: string, format: date-time }
+
+    # ---------- primitives ----------
+
+    CompareOp:
+      type: string
+      enum: [gt, gte, eq, lte, lt]
+      description: Ánh xạ ">" ">=" "=" "<=" "<". So sánh với null luôn trả false.
+
+    AvgBand:
+      type: string
+      enum: [VeryShort, Short, Medium, Long, VeryLong]
+      description: |
+        Ngưỡng (giờ): VeryLong>=80 · Long 60-79 · Medium 35-59 · Short 20-34 · VeryShort 1-19.
+        "None" KHÔNG nằm trong enum này — dùng cờ riêng includeAvgNone.
+
+    MetaBand:
+      type: string
+      enum: [VeryLow, Low, Medium, High, VeryHigh]
+      description: |
+        Ngưỡng: VeryHigh>=90 · High 80-89 · Medium 70-79 · Low 50-69 · VeryLow 1-49.
+
+    ScoreMaterialBand:
+      type: string
+      enum: [Rust, Copper, Silver, Gold, Platinum, Diamond, Opal]
+      description: |
+        Backend suy ra từ score: Rust <3 · Copper 3-<6 · Silver 6-<8 · Gold 8-<9 ·
+        Platinum 9-<10 · Diamond 10 · Opal Peak Score 11. Client chỉ map band sang style.
+        LƯU Ý ranh giới Low/VeryLow là 50, KHÔNG phải 60.
+        "None" dùng cờ riêng includeMetaNone.
+
+    ProgressKey:
+      type: string
+      enum: [Done, Playing, Nextplay, Planned, Drop, Pending]
+      description: |
+        SystemKey bất biến. Code chỉ dùng field này, không dùng id số.
+        ĐÃ ĐỐI CHIẾU DB THẬT (2026-08-14): tên thực tế là
+        Done | Drop | Nextplay | Pending | Planned | Playing.
+        (Bản nháp trước ghi "Dropped"/"Intended" — SAI, đã sửa.)
+
+    OwnershipKey:
+      type: string
+      enum: [Owned, Shared, Subscription, Exclusive, Picklocked, Wishlist]
+      description: |
+        ĐÃ ĐỐI CHIẾU DB THẬT (2026-08-14). Tập giá trị thực tế khác HOÀN TOÀN
+        so với bản nháp trước (Ready/Pirated/GamePass/NotOwned/PSRequired/SteamOff — SAI).
+        Giá trị thật: Exclusive | Owned | Picklocked | Shared | Subscription | Wishlist.
+
+    SortKey:
+      type: string
+      enum: [default, status, name, playTime, publish, finishTime, metaScore, excited, score, ownership, progress, avgPlaytime]
+
+    ProfileSortKey:
+      type: string
+      enum: [status, name, playTime, publish, finishTime, metaScore, excited, score, ownership, progress, avgPlaytime]
+
+    SortDirection:
+      type: string
+      enum: [asc, desc]
+
+    SortRule:
+      type: object
+      required: [key, direction]
+      properties:
+        key: { $ref: '#/components/schemas/ProfileSortKey' }
+        direction: { $ref: '#/components/schemas/SortDirection' }
+
+    ViewSortProfile:
+      type: object
+      required: [view, rules, customized]
+      properties:
+        view: { type: string, enum: [all, planning, finished] }
+        rules:
+          type: array
+          items: { $ref: '#/components/schemas/SortRule' }
+        customized:
+          type: boolean
+          description: false khi rules đang lấy từ chuỗi mặc định hệ thống.
+
+    ViewSortProfiles:
+      type: object
+      required: [profiles]
+      properties:
+        profiles:
+          type: array
+          items: { $ref: '#/components/schemas/ViewSortProfile' }
+
+    UpdateViewSortProfile:
+      type: object
+      required: [rules]
+      properties:
+        rules:
+          type: array
+          description: Mảng rỗng hợp lệ và có nghĩa là Name tăng dần.
+          items: { $ref: '#/components/schemas/SortRule' }
+
+    Tab:
+      type: string
+      enum: [all, planning, finished, queue, console]
+
+    SearchScope:
+      type: string
+      enum: [all, name, series, publisher, developer, releaseYear]
+
+    # ---------- shared objects ----------
+
+    CatalogItem:
+      type: object
+      required: [id, systemKey, name, displayName, colorCode, sortOrder]
+      properties:
+        id: { type: integer }
+        systemKey:
+          type: string
+          description: BẤT BIẾN. Không nằm trong payload ghi — server từ chối nếu client gửi.
+        name: { type: string, description: Người dùng sửa được. }
+        displayName: { type: string, description: Đã localize theo Accept-Language. }
+        colorCode: { type: string }
+        iconData: { type: [string, "null"], description: base64 PNG data URL. }
+        sortOrder: { type: integer, description: Nguồn thứ hạng sort. KHÔNG hardcode ở client. }
+
+    TaxonomyItem:
+      type: object
+      description: >
+        Genre/theme/series. key, scope, editable, groupId do server điền (spec 2026-10-04-theme-groups);
+        khi là body của request thì bị bỏ qua — client không gửi chủ sở hữu hay quyền.
+      required: [id, name, sortOrder]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        iconData: { type: [string, "null"] }
+        sortOrder: { type: integer }
+        key: { type: [string, "null"], description: Tên đã chuẩn hoá (trim, casefold, gộp khoảng trắng) }
+        scope: { type: [string, "null"], enum: [shared, personal, null] }
+        editable: { type: boolean, description: Server tính theo endpoint + role + scope. Client không tự suy ra quyền. }
+        groupId: { type: [integer, "null"], description: Chỉ có với theme. null = chưa phân nhóm. }
+
+    ThemeGroup:
+      type: object
+      required: [id, scope, nameEn, nameVi, displayName, sortOrder, editable]
+      properties:
+        id: { type: integer }
+        scope: { type: string, enum: [shared, personal] }
+        nameEn: { type: string }
+        nameVi: { type: string }
+        displayName: { type: string, description: Theo Accept-Language (vi → nameVi, còn lại → nameEn) }
+        sortOrder: { type: integer }
+        editable: { type: boolean }
+
+    ThemeGroupBucket:
+      type: object
+      required: [group, themes]
+      properties:
+        group:
+          description: null = mục "chưa phân nhóm"
+          oneOf:
+            - { $ref: '#/components/schemas/ThemeGroup' }
+            - { type: 'null' }
+        themes:
+          type: array
+          items: { $ref: '#/components/schemas/TaxonomyItem' }
+
+    GroupedThemes:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          description: >
+            Server sắp xếp: nhóm chung → nhóm cá nhân → chưa phân nhóm; trong nhóm theme chung trước
+            theme cá nhân. Client chỉ render.
+          items: { $ref: '#/components/schemas/ThemeGroupBucket' }
+
+    ThemeOrderRequest:
+      type: object
+      required: [ids]
+      properties:
+        groupId: { type: [integer, "null"], description: Nhóm đích; null = chưa phân nhóm }
+        ids:
+          type: array
+          description: Theme sửa được của người gọi, theo thứ tự hiển thị trong nhóm đích
+          items: { type: integer }
+
+    ThemeGroupWrite:
+      type: object
+      properties:
+        nameEn: { type: [string, "null"] }
+        nameVi: { type: [string, "null"] }
+        sortOrder: { type: [integer, "null"] }
+
+    IdOrder:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items: { type: integer }
+
+    BaseGameCandidate:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+
+    MetadataGameCandidate:
+      type: object
+      required: [id, name, isDlc, isUpcoming, revision, libraryStatus]
+      properties:
+        id: { type: integer, format: int64, description: ID trong metadata catalog dùng để import. }
+        igdbId: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        developer: { type: [string, "null"] }
+        publisher: { type: [string, "null"] }
+        summary: { type: [string, "null"] }
+        publishDate: { type: [string, "null"], format: date }
+        isDlc: { type: boolean }
+        isUpcoming: { type: boolean, readOnly: true }
+        baseMetadataGameId: { type: [integer, "null"], format: int64 }
+        # Ba vai tro anh — DOMAIN_RULES §12. Khong dung lan nhau.
+        #   bannerUrl   Steam, ngang, CO ten game in san -> khong phu chu len
+        #   backdropUrl RAWG, ngang, SACH -> phu chu duoc
+        #   posterUrl   IGDB, DOC
+        bannerUrl:   { type: [string, "null"], format: uri }
+        backdropUrl: { type: [string, "null"], format: uri }
+        posterUrl:   { type: [string, "null"], format: uri }
+        metaScore: { type: [integer, "null"] }
+        avgPlaytimeHours: { type: [integer, "null"] }
+        seriesId: { type: [integer, "null"], format: int64 }
+        revision: { type: integer, format: int64 }
+        libraryStatus:
+          type: string
+          enum: [notInLibrary, active, disabled]
+
+    MetadataSearchResponse:
+      type: object
+      required: [items, pageSize, hasMore, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/MetadataGameCandidate' } }
+        nextCursor: { type: [string, "null"] }
+        pageSize: { type: integer }
+        hasMore: { type: boolean }
+        totalItems: { type: integer, format: int64 }
+
+    # ---------- admin crawler ----------
+
+    AdminCrawlerRun:
+      type: object
+      required: [id, startedAt, status, inserted, refreshed, errors, report]
+      properties:
+        id: { type: string, format: uuid }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: [string, "null"], format: date-time }
+        status: { type: string, enum: [running, completed, partial, failed, interrupted] }
+        inserted: { type: integer, minimum: 0, maximum: 100 }
+        refreshed: { type: integer, minimum: 0, maximum: 10 }
+        errors: { type: integer, minimum: 0 }
+        report: { type: object, additionalProperties: true }
+
+    AdminCrawlerCron:
+      type: [object, "null"]
+      properties:
+        schedule: { type: string }
+        active: { type: boolean }
+        lastRunStatus: { type: [string, "null"] }
+        lastRunAt: { type: [string, "null"], format: date-time }
+
+    AdminCrawlerStatus:
+      type: object
+      required: [enabled, discoveryId, releaseCursorAt, queueDepth, trackedGames, databaseBytes, databaseCapBytes, discoveryBudgetBytes, discoveryHeadroomBytes, cron, latestRun]
+      properties:
+        enabled: { type: boolean }
+        leaseId: { type: [string, "null"], format: uuid }
+        leaseUntil: { type: [string, "null"], format: date-time }
+        nextRunAt: { type: string, format: date-time }
+        discoveryId: { type: integer, format: int64 }
+        releaseCursorAt:
+          type: integer
+          format: int64
+          description: Unix timestamp of the release-date discovery checkpoint.
+        queueDepth: { type: integer, minimum: 0 }
+        trackedGames: { type: integer, minimum: 0 }
+        databaseBytes: { type: integer, format: int64, minimum: 0 }
+        databaseCapBytes: { type: integer, format: int64, minimum: 1 }
+        discoveryBudgetBytes: { type: integer, format: int64, minimum: 1 }
+        discoveryHeadroomBytes: { type: integer, format: int64, minimum: 0 }
+        cron: { $ref: '#/components/schemas/AdminCrawlerCron' }
+        latestRun: { anyOf: [{ $ref: '#/components/schemas/AdminCrawlerRun' }, { type: "null" }] }
+
+    AdminCrawlerEnabledRequest:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+
+    AdminCrawlerRunRequest:
+      type: object
+      required: [requestId]
+      properties:
+        requestId: { type: integer, format: int64 }
+
+    AdminCrawlerRunPage:
+      type: object
+      required: [items, nextCursor, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminCrawlerRun' } }
+        nextCursor: { type: [string, "null"], description: Opaque server cursor. }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+
+    AdminCrawlerRunItem:
+      type: object
+      required: [gameId, name, action, recordedAt]
+      properties:
+        gameId: { type: integer, format: int64 }
+        igdbId: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        publishDate: { type: [string, "null"], format: date }
+        action: { type: string, enum: [inserted, refreshed] }
+        recordedAt: { type: string, format: date-time }
+
+    AdminCrawlerRunItemPage:
+      type: object
+      required: [items, nextCursor, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminCrawlerRunItem' } }
+        nextCursor: { type: [string, "null"], description: Opaque server cursor. }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+
+    AdminCrawlerTrackedGame:
+      type: object
+      required: [gameId, name, queued]
+      properties:
+        gameId: { type: integer, format: int64 }
+        igdbId: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        publishDate: { type: [string, "null"], format: date }
+        checkedAt: { type: [string, "null"], format: date-time }
+        missingSince: { type: [string, "null"], format: date-time }
+        queued: { type: boolean }
+
+    AdminCrawlerTrackedGamePage:
+      type: object
+      required: [items, nextCursor, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminCrawlerTrackedGame' } }
+        nextCursor: { type: [string, "null"], description: Opaque server cursor. }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+
+    LibraryGameImportUserData:
+      type: object
+      properties:
+        score: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+        excited: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+        totalPlaytimeSeconds: { type: [integer, "null"] }
+        progressId: { type: [integer, "null"] }
+        ownershipId: { type: [integer, "null"] }
+        exeName: { type: [string, "null"] }
+        launchTarget: { $ref: '#/components/schemas/LaunchTarget' }
+        saveFolderPath: { type: [string, "null"] }
+        backupFolderPath: { type: [string, "null"] }
+        ownershipInfo: { $ref: '#/components/schemas/OwnershipInfo' }
+
+    LibraryGameImportItem:
+      type: object
+      required: [metadataGameId]
+      properties:
+        metadataGameId: { type: integer, format: int64 }
+        userData: { $ref: '#/components/schemas/LibraryGameImportUserData' }
+
+    LibraryGameImportResultItem:
+      type: object
+      required: [metadataGameId, status]
+      properties:
+        metadataGameId: { type: integer, format: int64 }
+        status:
+          type: string
+          enum: [imported, alreadyInLibrary, restoreRequired, invalid]
+        gameId: { type: [string, "null"] }
+        message: { type: [string, "null"] }
+
+    LibraryGameImportRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/LibraryGameImportItem' }
+
+    LibraryGameImportResponse:
+      type: object
+      required: [items, importedCount, duplicateCount, restoreRequiredCount]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/LibraryGameImportResultItem' } }
+        importedCount: { type: integer }
+        duplicateCount: { type: integer }
+        restoreRequiredCount: { type: integer }
+
+    LibraryMetadataRefreshRequest:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+          description: Tính ra thay đổi mà không ghi. Mặc định `false`.
+        force:
+          type: boolean
+          description: Bỏ qua cửa chặn 10 phút và gọi kho ngay.
+
+    LibraryMetadataRefreshGame:
+      type: object
+      required: [gameId, name, metadataGameId, updated, kept]
+      properties:
+        gameId: { type: string }
+        name: { type: string }
+        metadataGameId: { type: integer, format: int64 }
+        updated:
+          type: array
+          items: { type: string }
+          description: Field đã lấy giá trị mới từ kho.
+        kept:
+          type: array
+          items: { type: string }
+          description: Field kho đang nói khác nhưng giữ lại vì người dùng đã sửa tay.
+
+    LibraryMetadataRefreshResponse:
+      type: object
+      required: [dryRun, skipped, linked, checked, updated, fieldsUpdated, fieldsKept, missing, games]
+      properties:
+        dryRun: { type: boolean }
+        skipped:
+          type: boolean
+          description: Không gọi kho vì mọi dòng vừa đồng bộ xong. Gửi `force` để bỏ qua.
+        linked: { type: integer }
+        checked: { type: integer }
+        updated:
+          type: integer
+          description: Số game có ít nhất một field đổi.
+        fieldsUpdated: { type: integer }
+        fieldsKept: { type: integer }
+        missing:
+          type: integer
+          description: Dòng đã nối nhưng kho không trả về — bị gỡ xuất bản hoặc đã xoá. Không đụng tới.
+        games: { type: array, items: { $ref: '#/components/schemas/LibraryMetadataRefreshGame' } }
+
+    UserDataPatch:
+      type: object
+      properties:
+        score: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+        excited: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+        totalPlaytimeSeconds: { type: [integer, "null"] }
+        progressId: { type: [integer, "null"] }
+        ownershipId: { type: [integer, "null"] }
+        exeName: { type: [string, "null"] }
+        launchTarget: { $ref: '#/components/schemas/LaunchTarget' }
+        saveFolderPath: { type: [string, "null"] }
+        backupFolderPath: { type: [string, "null"] }
+        ownershipInfo: { $ref: '#/components/schemas/OwnershipInfo' }
+
+    LaunchTarget:
+      type: [object, "null"]
+      required: [kind, path]
+      properties:
+        kind:
+          type: string
+          enum: [exe, shortcut]
+        path:
+          type: string
+          description: Đường dẫn TUYỆT ĐỐI tới .exe hoặc .lnk. Thay thế InitExeName cũ.
+
+    GameFinishEntry:
+      type: object
+      required: [id, finishedAt, hasMonth]
+      properties:
+        id: { type: integer }
+        finishedAt: { type: string, format: date-time }
+        hasMonth:
+          type: boolean
+          description: |
+            false = nguoi choi chi nho NAM. `finishedAt` van la ngay day du (1
+            thang 1 cua nam do) de sort/filter khong doi, nhung UI phai hien
+            "2019" chu khong phai "01/2019". Xem DOMAIN_RULES §9.1.
+        score: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+
+    FinishGameRequest:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 11
+          multipleOf: 0.5
+          description: Thang 0-11 buoc 0.5. Gia tri 11 la Peak Score va hien thi "10+".
+        finishedYear:
+          type: [integer, "null"]
+          minimum: 1970
+          example: 2026
+          description: Bo trong = dung thoi diem hien tai cua backend.
+        finishedMonth:
+          type: [integer, "null"]
+          minimum: 1
+          maximum: 12
+          example: 8
+          description: Bo trong = chi nho nam (`hasMonth` se la false).
+
+    UpdateFinishTimeRequest:
+      type: object
+      required: [finishedYear]
+      properties:
+        finishedYear:
+          type: integer
+          minimum: 1970
+          example: 2026
+        finishedMonth:
+          type: [integer, "null"]
+          minimum: 1
+          maximum: 12
+          example: 8
+          description: Bo trong = chi nho nam.
+
+    OwnershipInfo:
+      type: [object, "null"]
+      properties:
+        steamAccount: { type: [string, "null"] }
+        steamPassword: { type: [string, "null"], description: Mã hoá at-rest. Không log, không có trong list response. }
+        ubisoftAccount: { type: [string, "null"] }
+        ubisoftPassword: { type: [string, "null"] }
+        supportDocumentUrl: { type: [string, "null"] }
+        downloadUrl: { type: [string, "null"] }
+        note: { type: [string, "null"] }
+
+    GameListItem:
+      type: object
+      required: [id, name, isDlc, isUpcoming, ready, isRunning, canLaunch]
+      properties:
+        id: { type: string }
+        metadataGameId: { type: [integer, "null"], format: int64, readOnly: true }
+        metadataRevision: { type: [integer, "null"], format: int64, readOnly: true }
+        metadataSyncedAt: { type: [string, "null"], format: date-time, readOnly: true }
+        isMetadataDerived: { type: boolean, readOnly: true }
+        name: { type: string }
+        developer: { type: [string, "null"] }
+        publisher: { type: [string, "null"] }
+        series:
+          oneOf:
+            - { $ref: '#/components/schemas/TaxonomyItem' }
+            - { type: "null" }
+          description: Game có thể chưa gán series.
+        bannerPath:
+          type: [string, "null"]
+          description: |
+            BANNER từ Steam header.jpg (ngang 460x215) — **đã có tên game in trong ảnh**.
+            Card trong lưới và hàng trong Play Queue dùng field này.
+            Không bao giờ phủ thêm chữ lên ảnh này.
+        posterPath:
+          type: [string, "null"]
+          description: POSTER dọc từ IGDB t_cover_big_2x cho Console mode. Không lấy từ Steam.
+        backdropPath:
+          type: [string, "null"]
+          description: |
+            BACKDROP ngang từ RAWG background_image — **ảnh sạch, không có chữ**.
+            Dùng cho detail hero và fallback Console; phủ chữ lên được.
+        progress:
+          oneOf:
+            - { $ref: '#/components/schemas/CatalogItem' }
+            - { type: "null" }
+          description: Null khi game chưa gán progress — sort xếp cuối (DOMAIN_RULES §3.2).
+        ownership:
+          oneOf:
+            - { $ref: '#/components/schemas/CatalogItem' }
+            - { type: "null" }
+          description: Null khi game chưa gán ownership — sort xếp cuối.
+        metaScore: { type: [integer, "null"] }
+        metaScoreBand:
+          oneOf:
+            - { $ref: '#/components/schemas/MetaBand' }
+            - { type: "null" }
+          description: |
+            Backend suy ra theo ngưỡng 90/80/70/50 (DOMAIN_RULES §5.5).
+            Client CHỈ map band -> màu, KHÔNG tự so sánh số.
+            Ngăn tái diễn mismatch M16/M39.
+        excited:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 11
+          multipleOf: 0.5
+          description: |
+            Thang 0-11 BƯỚC 0.5 (có giá trị lẻ: 1.5, 4.5, 7.5, 9.5).
+            11 = Peak Score, hiển thị "10+". Dữ liệu legacy 999 được migrate thành 11.
+            Đã đối chiếu DB thật 2026-08-14. KHÔNG ép về 0-5, KHÔNG làm tròn.
+            0 = chưa đánh giá, hiển thị "—".
+        score:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 11
+          multipleOf: 0.5
+          description: |
+            Thang 0-11 BƯỚC 0.5. 11 = Peak Score, hiển thị "10+".
+            Dữ liệu legacy 999 được migrate thành 11.
+            (Bản nháp trước ghi 0-100 — SAI.)
+            0 = chưa chấm điểm, hiển thị "—".
+        scoreMaterialBand:
+          oneOf:
+            - { $ref: '#/components/schemas/ScoreMaterialBand' }
+            - { type: "null" }
+          description: Backend suy ra từ score. Client KHÔNG tự tính ngưỡng.
+        totalPlaytimeSeconds: { type: [integer, "null"], description: GIÂY. }
+        avgPlaytimeHours: { type: [integer, "null"], description: GIỜ. Nguồn sự thật. }
+        avgPlaytimeBand:
+          oneOf:
+            - { $ref: '#/components/schemas/AvgBand' }
+            - { type: "null" }
+          description: Backend suy ra từ avgPlaytimeHours. Client KHÔNG tự tính.
+        publishDate: { type: [string, "null"], format: date }
+        lastFinishedAt:
+          type: [string, "null"]
+          format: date-time
+          description: MAX(GameFinish.FinishedAt) — nguồn hiển thị MM/yyyy và sort finishTime.
+        lastPlayedAt:
+          type: [string, "null"]
+          format: date-time
+          readOnly: true
+          description: UTC timestamp của phiên gần nhất do Tray Playtime Service phát hiện; nguồn sort cố định cho view console.
+        isDlc: { type: boolean }
+        isUpcoming:
+          type: boolean
+          readOnly: true
+          description: Backend tính `publishDate > ngày hiện tại`; client chỉ hiển thị.
+        ready: { type: boolean, description: Kết quả scan. UI KHÔNG sửa được. }
+        isRunning: { type: boolean, description: Từ process monitor, đẩy qua SSE. }
+        canLaunch: { type: boolean, description: Backend quyết định. UI chỉ hiện/ẩn nút Play. }
+        folderWarning: { type: [string, "null"], description: Đã localize. }
+        baseGameId: { type: [string, "null"], description: DLC → id base game (card đổi ngày phát hành thành chip base game). }
+        baseGameName: { type: [string, "null"], description: DLC → tên base game để hiển thị chip trên card. }
+
+    GameDetail:
+      allOf:
+        - $ref: '#/components/schemas/GameListItem'
+        - type: object
+          properties:
+            slugName: { type: [string, "null"] }
+            exeName:
+              type: [string, "null"]
+              description: TÊN PROCESS để tracking playtime. KHÔNG phải thứ dùng để launch.
+            launchTarget: { $ref: '#/components/schemas/LaunchTarget' }
+            saveFolderPath: { type: [string, "null"] }
+            backupFolderPath: { type: [string, "null"] }
+            genres: { type: array, items: { $ref: '#/components/schemas/TaxonomyItem' } }
+            themes: { type: array, items: { $ref: '#/components/schemas/TaxonomyItem' } }
+            baseGameId: { type: [string, "null"] }
+            baseGameName: { type: [string, "null"] }
+            finishes:
+              type: array
+              items: { $ref: '#/components/schemas/GameFinishEntry' }
+            ownershipInfo: { $ref: '#/components/schemas/OwnershipInfo' }
+            createAt: { type: [string, "null"], format: date-time }
+            metadataGameId: { type: [integer, "null"], format: int64, readOnly: true }
+            metadataRevision: { type: [integer, "null"], format: int64, readOnly: true }
+            metadataSyncedAt: { type: [string, "null"], format: date-time, readOnly: true }
+            isMetadataDerived: { type: boolean, readOnly: true }
+
+    GameSyncSource:
+      type: string
+      enum: [metadata, card-cover, cover, portrait-cover]
+
+    GameMetadataPreviewRequest:
+      type: object
+      required: [name, source]
+      properties:
+        name: { type: string, minLength: 1 }
+        source: { $ref: '#/components/schemas/GameSyncSource' }
+
+    GameMetadataPreview:
+      type: object
+      description: Dữ liệu preview từ provider ngoài, chỉ để điền draft. Endpoint không ghi DB.
+      properties:
+        name: { type: [string, "null"] }
+        developer: { type: [string, "null"] }
+        publisher: { type: [string, "null"] }
+        slugName: { type: [string, "null"] }
+        publishDate: { type: [string, "null"], format: date }
+        metaScore: { type: [integer, "null"] }
+        avgPlaytimeHours: { type: [integer, "null"] }
+        exeName: { type: [string, "null"] }
+        isDlc: { type: [boolean, "null"] }
+        bannerPath:   { type: [string, "null"], format: uri }
+        backdropPath:
+          type: [string, "null"]
+          format: uri
+          description: RAWG background_image; RAWG không có thì Steam library_hero (cũng là ảnh sạch, không chữ).
+        posterPath:   { type: [string, "null"], format: uri }
+        series:
+          description: >
+            Chỉ có với source=metadata. Series ĐÃ CÓ trong thư viện khớp collection/franchise của IGDB
+            (cùng quy tắc với sync IGDB). null = không khớp series nào.
+          oneOf:
+            - $ref: '#/components/schemas/TaxonomyItem'
+            - type: "null"
+        seriesName:
+          type: [string, "null"]
+          description: >
+            Tên series IGDB gợi ý. Có giá trị mà series = null nghĩa là thư viện chưa có series này —
+            preview không tạo; client muốn dùng thì gọi POST /api/taxonomy/series.
+
+    CardHints:
+      type: object
+      description: Backend tính theo sort/filter đang bật. Client KHÔNG tự suy.
+      properties:
+        showDeveloper: { type: boolean }
+        showPublisher: { type: boolean }
+        showFinishTime: { type: boolean }
+        showPlaytime: { type: boolean }
+        showExcited: { type: boolean }
+        showScore: { type: boolean }
+        showOwnership: { type: boolean }
+        showMetaScore: { type: boolean }
+        showAvgPlaytime: { type: boolean }
+        showPublishDate: { type: boolean }
+        showSeries: { type: boolean }
+        showProgress: { type: boolean }
+
+    GameListResponse:
+      type: object
+      required: [items, page, pageSize, totalItems, totalPages, activeFilterCount, cardHints]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/GameListItem' } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalItems: { type: integer }
+        totalPages: { type: integer }
+        activeFilterCount: { type: integer, description: Backend đếm. Client chỉ vẽ badge. }
+        cardHints: { $ref: '#/components/schemas/CardHints' }
+
+    Capabilities:
+      type: object
+      required: [mode, features]
+      properties:
+        mode: { type: string, enum: [local, hosted] }
+        features:
+          type: object
+          properties:
+            launch: { type: boolean }
+            filePicker: { type: boolean }
+            revealFolder: { type: boolean }
+            tray: { type: boolean }
+            scanner: { type: boolean }
+            controller: { type: boolean }
+            imageSync:
+              type: boolean
+              description: Host có credential Cloudinary và chạy được POST /api/tray/sync-images (không cần tiến trình Tray).
+            backup:
+              type: boolean
+              description: Tính năng backup save game đang bật (thư mục backup gốc, thư mục backup từng game, POST /api/games/{id}/backup-folder/generate). Hiện tạm tắt → false; client ẩn mọi UI backup.
+
+    ImageSyncRoleCounts:
+      type: object
+      required: [uploaded, alreadySynced, missing]
+      properties:
+        uploaded: { type: integer }
+        alreadySynced: { type: integer }
+        missing: { type: integer }
+
+    ImageSyncFailure:
+      type: object
+      required: [gameId, gameName, role, reason]
+      properties:
+        gameId: { type: string }
+        gameName: { type: string }
+        role: { type: string, enum: [banner, backdrop, poster] }
+        reason: { type: string, description: Lý do từ Cloudinary hoặc tầng mạng, không localize. }
+
+    ImageSyncReport:
+      type: object
+      required: [totalGames, banner, backdrop, poster, failed, failures]
+      properties:
+        totalGames: { type: integer }
+        banner: { $ref: '#/components/schemas/ImageSyncRoleCounts' }
+        backdrop: { $ref: '#/components/schemas/ImageSyncRoleCounts' }
+        poster: { $ref: '#/components/schemas/ImageSyncRoleCounts' }
+        failed: { type: integer }
+        failures:
+          type: array
+          items: { $ref: '#/components/schemas/ImageSyncFailure' }
+
+    # ---------- Admin integrations ----------
+
+    IntegrationProvider:
+      type: string
+      enum: [rawg, igdb, steam, cloudinary, gemini]
+
+    IntegrationLastTest:
+      type: object
+      required: [status, testedAt, errorCode]
+      properties:
+        status: { type: string, enum: [never_tested, passed, failed] }
+        testedAt: { type: [string, "null"], format: date-time }
+        errorCode:
+          type: [string, "null"]
+          description: Mã lỗi an toàn; không bao giờ chuyển nguyên văn lỗi upstream.
+
+    IntegrationSummary:
+      type: object
+      required: [provider, configured, requiredFields, configuredFields, revision, lastTest, updatedAt, updatedBy]
+      properties:
+        provider: { $ref: '#/components/schemas/IntegrationProvider' }
+        configured: { type: boolean }
+        requiredFields:
+          type: array
+          description: Field names the backend requires for a complete replacement.
+          items: { type: string }
+        configuredFields:
+          type: array
+          description: Chỉ tên field đã được lưu, không chứa giá trị hay ciphertext.
+          items: { type: string }
+        revision: { type: integer, format: int64, minimum: 0 }
+        lastTest: { $ref: '#/components/schemas/IntegrationLastTest' }
+        updatedAt: { type: [string, "null"], format: date-time }
+        updatedBy: { type: [string, "null"], format: uuid }
+        identifiers:
+          type: object
+          additionalProperties: { type: string }
+          description: |
+            Giá trị của field định danh công khai, không phải secret: `cloudName`
+            (Cloudinary) và `clientId` (IGDB). Mọi field khác không bao giờ được trả về.
+
+    IntegrationCredentialsWrite:
+      type: object
+      required: [values]
+      properties:
+        values:
+          type: object
+          minProperties: 1
+          maxProperties: 3
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 4096
+          writeOnly: true
+          description: |
+            Bộ credential đầy đủ của provider. API chỉ nhận để thay thế; không bao giờ
+            trả lại, log, hoặc lưu trên browser. Field bắt buộc theo provider được backend kiểm tra.
+
+    Settings:
+      type: object
+      properties:
+        language: { type: string, enum: [en-US, vi-VN], default: en-US }
+        themeMode:
+          type: string
+          enum: [light, dark, system, jungle]
+          description: Thay cho bool isDarkMode cũ. Dùng chung với Tray — KHÔNG lưu localStorage.
+        jungleFx:
+          type: string
+          enum: [auto, off, medium, full]
+          default: auto
+          description: Cường độ hiệu ứng động của theme jungle. Chỉ có tác dụng khi themeMode=jungle.
+        jungleWeather:
+          type: string
+          enum: [clear, rain]
+          default: clear
+          description: Chế độ thời tiết của theme jungle (mưa + vũng nước). Chỉ khi themeMode=jungle.
+        backupRootPath: { type: string }
+        databasePath: { type: string }
+        libraries:
+          type: object
+          description: Tách CONFIG khỏi RUNTIME. Không gộp làm một như bản Lovable.
+          properties:
+            paths:
+              type: array
+              items: { type: string }
+              description: CONFIG — người dùng sửa.
+            runtime:
+              type: array
+              readOnly: true
+              description: RUNTIME — scanner ghi, read-only.
+              items:
+                type: object
+                properties:
+                  path: { type: string }
+                  valid: { type: boolean }
+                  exeCount: { type: integer }
+        cloudinary:
+          type: object
+          properties:
+            cloudName: { type: string }
+            configured: { type: boolean, readOnly: true }
+        rawg:
+          type: object
+          properties:
+            configured: { type: boolean, readOnly: true }
+      description: |
+        API key KHÔNG BAO GIỜ được trả về client — chỉ trả cờ `configured`.
+
+    NamedCount:
+      type: object
+      required: [name, count]
+      properties:
+        name: { type: string }
+        count: { type: integer }
+
+    CatalogBreakdown:
+      description: |
+        Mot lat cat theo Progress/Ownership. `colorCode` lay TU CATALOG nen doi
+        mau trong Settings la bieu do doi theo (DOMAIN_RULES §3, §14).
+      type: object
+      required: [name, systemKey, count]
+      properties:
+        name: { type: string }
+        systemKey: { type: string }
+        colorCode: { type: [string, "null"] }
+        count: { type: integer }
+
+    DashboardStats:
+      type: object
+      properties:
+        totalGames: { type: integer }
+        finishedGames: { type: integer }
+        playingGames: { type: integer }
+        queuedGames: { type: integer }
+        totalPlaytimeSeconds: { type: integer }
+        averageScore: { type: [number, "null"] }
+        topPlayed:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              bannerPath: { type: [string, "null"] }
+              totalPlaytimeSeconds: { type: integer }
+
+        finishesByYear:
+          description: Dem TUNG LAN hoan thanh, khong phai so game.
+          type: array
+          items:
+            type: object
+            required: [year, count]
+            properties:
+              year: { type: integer }
+              count: { type: integer }
+
+        progressBreakdown:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogBreakdown' }
+        ownershipBreakdown:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogBreakdown' }
+
+        topGenres:
+          type: array
+          items: { $ref: '#/components/schemas/NamedCount' }
+        topSeries:
+          type: array
+          items: { $ref: '#/components/schemas/NamedCount' }
+        topPublishers:
+          type: array
+          items: { $ref: '#/components/schemas/NamedCount' }
+        topDevelopers:
+          type: array
+          items: { $ref: '#/components/schemas/NamedCount' }
+
+        scoreVsCritics:
+          description: |
+            Chi tinh game co CA score lan metaScore. Peak Score 11 bi loai vi no
+            la danh dau dac biet, khong nam tren thang 10 de so sanh.
+          type: object
+          properties:
+            pairedGames: { type: integer }
+            averageMine: { type: [number, "null"] }
+            averageCritic: { type: [number, "null"], description: MetaScore da chia 10. }
+            higher: { type: integer }
+            lower: { type: integer }
+            equal: { type: integer }
+            points:
+              type: array
+              items:
+                type: object
+                required: [name, mine, critic]
+                properties:
+                  name: { type: string }
+                  mine: { type: number }
+                  critic: { type: number }
+
+        scoreDistribution:
+          description: Peak Score 11 duoc gop vao coc 10 de giu bieu do tren thang 10.
+          type: array
+          items:
+            type: object
+            required: [score, count]
+            properties:
+              score: { type: number }
+              count: { type: integer }
+
+        gamesByReleaseYear:
+          type: array
+          items:
+            type: object
+            required: [year, count]
+            properties:
+              year: { type: integer }
+              count: { type: integer }
+
+        upcoming:
+          description: Game co publishDate o tuong lai, gan nhat truoc.
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              bannerPath: { type: [string, "null"] }
+              publishDate: { type: string, format: date }
+              daysLeft: { type: integer }
+
+        dataHealth:
+          description: Moi truong la mot viec can lam kem so game dang dinh.
+          type: object
+          properties:
+            activeGames: { type: integer }
+            missingSeries: { type: integer }
+            missingGenres: { type: integer }
+            missingSlug: { type: integer }
+            missingBanner: { type: integer }
+            missingPoster: { type: integer }
+            missingPublishDate: { type: integer }
+            missingProgress: { type: integer }
+            missingOwnership: { type: integer }
+            doneWithoutFinish: { type: integer }
+            disabledGames: { type: integer }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string, description: Đã localize. }
+            details: { type: object, additionalProperties: true }
+
+  responses:
+    BadRequest:
+      description: Payload sai shape hoặc validate thất bại
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    UnprocessableEntity:
+      description: Payload hợp lệ về shape nhưng không hợp lệ về nghiệp vụ
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Thiếu hoặc sai JWT
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Có request nhưng không được phép dùng chức năng này
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Username hoặc email đã tồn tại
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Locked:
+      description: Tài khoản đã bị khóa
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ServiceUnavailable:
+      description: Auth chưa cấu hình hoặc nhà cung cấp tạm thời không khả dụng
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Không tìm thấy
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotImplementedOnHosted:
+      description: Endpoint native gọi trên Hosted API. Client nên ẩn nút dựa vào /api/capabilities.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    UpstreamError:
+      description: Dịch vụ ngoài lỗi (RAWG / Cloudinary / Gemini)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+paths:
+
+  /api/auth/config:
+    get:
+      tags: [auth]
+      summary: Trạng thái cấu hình auth công khai, không chứa key
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthConfig' }
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Đăng nhập bằng username hoặc email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Đăng nhập thành công; refresh token được đặt trong HttpOnly cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/signup:
+    post:
+      tags: [auth]
+      summary: Tự đăng ký tài khoản user và gửi email xác minh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignupRequest' }
+      responses:
+        '200':
+          description: Đã nhận đăng ký
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SignupResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/guest:
+    post:
+      tags: [auth]
+      summary: Cấp phiên guest chỉ cho Desktop Shell đang kết nối Local API
+      description: |
+        Yêu cầu desktop handshake token do Shell inject vào WebView2. Trình duyệt
+        và Hosted API không có token này. Phiên guest chỉ truy cập userdata local.
+      security: []
+      parameters:
+        - name: X-QuestLog-Desktop-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 32 }
+      responses:
+        '200':
+          description: Phiên guest theo lần chạy desktop
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GuestSession' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/auth/session:
+    post:
+      tags: [auth]
+      summary: Khôi phục/refresh session từ HttpOnly cookie
+      security: []
+      responses:
+        '200':
+          description: Session mới
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/me:
+    get:
+      tags: [account]
+      summary: Hồ sơ account của session hiện tại
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthAccount' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/change-password:
+    post:
+      tags: [account]
+      summary: Đặt/đổi mật khẩu sau khi xác thực lại bằng mã email (reauthTicket)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '200':
+          description: Password đã đổi và session mới đã được cấp
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { description: Quá nhiều yêu cầu }
+
+  /api/auth/account/username:
+    patch:
+      tags: [account]
+      summary: Đổi username sau khi xác thực lại bằng mã email (reauthTicket)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangeUsernameRequest' }
+      responses:
+        '200':
+          description: Username đã được cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthAccount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '429': { description: Quá nhiều yêu cầu }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/account/email-change:
+    post:
+      tags: [account]
+      summary: Yêu cầu đổi email sau khi xác thực lại bằng mã email (reauthTicket)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangeEmailRequest' }
+      responses:
+        '200':
+          description: Yêu cầu đổi email đã được gửi; email cũ còn hiệu lực cho đến khi xác nhận
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmailChangeResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '429': { description: Quá nhiều yêu cầu }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/account/username-claim:
+    post:
+      tags: [account]
+      summary: Chọn username lần đầu cho tài khoản Google (onboarding = usernameRequired)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UsernameClaimRequest' }
+      responses:
+        '200':
+          description: Username đã được gán; onboarding = complete
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthAccount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/google/start:
+    post:
+      tags: [auth]
+      summary: Bắt đầu đăng ký/đăng nhập bằng Google (Host giữ PKCE verifier)
+      security: []
+      parameters:
+        - name: X-QuestLog-Desktop-Token
+          in: header
+          required: false
+          description: Bắt buộc khi client = desktop.
+          schema: { type: string, minLength: 32 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoogleStartRequest' }
+      responses:
+        '200':
+          description: Flow đã tạo. Web nhận thêm cookie HttpOnly questlog_oauth_flow.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoogleStartResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { description: Quá nhiều flow đang chờ }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/google/callback:
+    get:
+      tags: [auth]
+      summary: Supabase redirect về đây; chỉ gắn code vào flow và trả trang tĩnh
+      security: []
+      parameters:
+        - { name: state, in: query, required: true, schema: { type: string } }
+        - { name: code, in: query, required: false, schema: { type: string } }
+        - { name: error, in: query, required: false, schema: { type: string } }
+      responses:
+        '200':
+          description: Trang HTML tĩnh "quay lại QuestLog"
+          content:
+            text/html:
+              schema: { type: string }
+
+  /api/auth/google/complete:
+    post:
+      tags: [auth]
+      summary: App hỏi kết quả flow Google mỗi 1,5 giây; lần đầu sau callback mới đổi code
+      security: []
+      parameters:
+        - name: X-QuestLog-Desktop-Token
+          in: header
+          required: false
+          description: Bắt buộc với flow desktop.
+          schema: { type: string, minLength: 32 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoogleCompleteRequest' }
+      responses:
+        '200':
+          description: pending, hoặc completed kèm session (refresh token trong HttpOnly cookie)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoogleCompleteResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { description: OAUTH_FLOW_EXPIRED — flow không tồn tại, hết hạn hoặc đã dùng }
+        '423': { $ref: '#/components/responses/Locked' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/password/forgot:
+    post:
+      tags: [auth]
+      summary: Gửi mã 6 số đặt lại mật khẩu qua email
+      description: Luôn trả 202, kể cả khi tài khoản không tồn tại hoặc đang trong cooldown 60 giây.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ForgotPasswordRequest' }
+      responses:
+        '202':
+          description: Đã nhận yêu cầu
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ForgotPasswordResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { description: Quá nhiều yêu cầu }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/password/verify-code:
+    post:
+      tags: [auth]
+      summary: Kiểm tra mã email đặt lại mật khẩu; đúng thì cấp reset ticket
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyResetCodeRequest' }
+      responses:
+        '200':
+          description: Mã đúng; dùng ticket ở POST /api/auth/password/reset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResetTicketResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '429': { description: CODE_ATTEMPTS_EXCEEDED hoặc quá nhiều yêu cầu }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/password/reset:
+    post:
+      tags: [auth]
+      summary: Đặt mật khẩu mới bằng reset ticket; đăng nhập luôn và thu hồi các phiên khác
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResetPasswordRequest' }
+      responses:
+        '200':
+          description: Mật khẩu đã đặt; refresh token trong HttpOnly cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { description: RESET_TICKET_INVALID — ticket sai, hết hạn hoặc đã dùng }
+        '423': { $ref: '#/components/responses/Locked' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/reauth/email:
+    post:
+      tags: [account]
+      summary: Gửi mã 6 số xác thực lại tới email của tài khoản đang đăng nhập
+      responses:
+        '202':
+          description: Đã gửi mã
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReauthCodeResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { description: CODE_RESEND_COOLDOWN — error.details.resendAvailableAt }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/reauth/verify:
+    post:
+      tags: [account]
+      summary: Đổi mã email lấy reauth ticket (5 phút, dùng một lần)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReauthVerifyRequest' }
+      responses:
+        '200':
+          description: Ticket cho change-password, account/username, account/email-change
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReauthTicketResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { description: CODE_ATTEMPTS_EXCEEDED }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: Đăng xuất phiên hiện tại (scope local) và xóa refresh cookie
+      security: []
+      responses:
+        '204': { description: Đã đăng xuất }
+
+  /api/library/sort-profiles:
+    get:
+      tags: [library]
+      summary: Lấy chuỗi sort mặc định hiệu lực của All, Planning và Finished
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ViewSortProfiles' }
+
+  /api/library/sort-profiles/{view}:
+    put:
+      tags: [library]
+      summary: Lưu toàn bộ chuỗi sort mặc định của một view
+      parameters:
+        - name: view
+          in: path
+          required: true
+          schema: { type: string, enum: [all, planning, finished] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateViewSortProfile' }
+      responses:
+        '200':
+          description: Profile đã lưu
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ViewSortProfile' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    delete:
+      tags: [library]
+      summary: Reset view về chuỗi sort mặc định hệ thống
+      parameters:
+        - name: view
+          in: path
+          required: true
+          schema: { type: string, enum: [all, planning, finished] }
+      responses:
+        '200':
+          description: Profile mặc định đã khôi phục
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ViewSortProfile' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/health:
+    get:
+      tags: [system]
+      security: []
+      summary: Readiness probe, không cần auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { status: { type: string } }
+
+  /api/capabilities:
+    get:
+      tags: [system]
+      summary: Cho client biết đang nói chuyện với Local hay Hosted API
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Capabilities' }
+
+  /api/games:
+    get:
+      tags: [library]
+      summary: Danh sách game — TOÀN BỘ lọc/sort/phân trang chạy ở server
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+        - { name: tab, in: query, schema: { $ref: '#/components/schemas/Tab' } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: scope, in: query, schema: { $ref: '#/components/schemas/SearchScope' } }
+        - { name: sort, in: query, schema: { $ref: '#/components/schemas/SortKey' } }
+        - name: reverseSort
+          in: query
+          schema: { type: boolean, default: false }
+          description: Đảo TOÀN BỘ list sau khi sort xong, không nhân hướng vào comparator.
+        - name: reverseFilter
+          in: query
+          schema: { type: boolean, default: false }
+          description: |
+            Kiểm tra hasAnyFilter TRƯỚC khi đảo.
+            Chưa bật filter nào + reverse=true => trả TOÀN BỘ (không phải rỗng).
+        - { name: finishedYearOp, in: query, schema: { $ref: '#/components/schemas/CompareOp' } }
+        - name: finishedYearValue
+          in: query
+          schema: { type: integer }
+          description: Khớp nếu CÓ ÍT NHẤT MỘT bản ghi GameFinish thoả (ANY).
+        - { name: excitedOp, in: query, schema: { $ref: '#/components/schemas/CompareOp' } }
+        - { name: excitedValue, in: query, schema: { type: number } }
+        - { name: scoreOp, in: query, schema: { $ref: '#/components/schemas/CompareOp' } }
+        - { name: scoreValue, in: query, schema: { type: number } }
+        - { name: playtimeOp, in: query, schema: { $ref: '#/components/schemas/CompareOp' } }
+        - name: playtimeSeconds
+          in: query
+          schema: { type: integer }
+          description: GIÂY. Người dùng nhập giờ, client nhân 3600 TRƯỚC khi gửi.
+        - name: avgBands
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/AvgBand' } }
+          style: form
+          explode: false
+        - { name: includeAvgNone, in: query, schema: { type: boolean, default: false } }
+        - name: metaBands
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/MetaBand' } }
+          style: form
+          explode: false
+        - { name: includeMetaNone, in: query, schema: { type: boolean, default: false } }
+        - name: progressKeys
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/ProgressKey' } }
+          style: form
+          explode: false
+        - name: ownershipKeys
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/OwnershipKey' } }
+          style: form
+          explode: false
+        - name: genreIds
+          in: query
+          schema: { type: array, items: { type: integer } }
+          style: form
+          explode: false
+          description: Quan hệ OR với themeIds (không phải AND).
+        - name: themeIds
+          in: query
+          schema: { type: array, items: { type: integer } }
+          style: form
+          explode: false
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 30 }
+          description: Tab "queue" bỏ qua phân trang, luôn trả toàn bộ; tab "console" phân trang sau playable filter và recent-play sort cố định.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameListResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [game]
+      summary: Tạo game mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameDetail' }
+      responses:
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/metadata/games:
+    get:
+      tags: [metadata]
+      summary: Tìm game trong metadata catalog dùng chung
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 120 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+      responses:
+        '200':
+          description: Kết quả tìm kiếm metadata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MetadataSearchResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/library/game-imports:
+    post:
+      tags: [library]
+      summary: Import nhiều game từ metadata catalog vào thư viện local của owner hiện tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LibraryGameImportRequest' }
+      responses:
+        '201':
+          description: Import thành công hoặc một phần
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LibraryGameImportResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/library/metadata-refresh:
+    post:
+      tags: [library]
+      summary: Kéo thay đổi metadata từ kho về thư viện, giữ nguyên field người dùng đã sửa tay
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LibraryMetadataRefreshRequest' }
+      responses:
+        '200':
+          description: Báo cáo hợp nhất
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LibraryMetadataRefreshResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/games/{id}/userdata:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [game]
+      summary: Cập nhật userdata/device của game thuộc owner hiện tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserDataPatch' }
+      responses:
+        '200':
+          description: Game sau khi cập nhật userdata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  /api/games/base-candidates:
+    get:
+      tags: [game]
+      summary: Danh sách game hợp lệ để chọn làm base game cho DLC.
+      parameters:
+        - { name: excludeId, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BaseGameCandidate' }
+
+  /api/games/disabled:
+    get:
+      tags: [game]
+      summary: Danh sách game đã disable (màn Restore)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameListResponse' }
+
+  /api/games/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [game]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [game]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameDetail' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/games/{id}/disable:
+    post:
+      tags: [game]
+      summary: Soft delete. Hệ thống KHÔNG có hard delete.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: OK }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/games/{id}/restore:
+    post:
+      tags: [game]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: OK }
+
+  /api/games/{gameId}/finishes:
+    post:
+      tags: [game]
+      summary: Hoàn thành game
+      description: |
+        Trong một transaction: set score, set progress=Done, thêm GameFinish,
+        rồi trả GameDetail mới. Thời điểm hoàn thành lấy từ `finishedYear` /
+        `finishedMonth`; bỏ trống cả hai thì dùng thời gian hiện tại của backend.
+      parameters:
+        - { name: gameId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FinishGameRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Không tìm thấy trạng thái hệ thống Done để hoàn tất transaction.
+
+  /api/games/{gameId}/finishes/{finishId}:
+    put:
+      tags: [game]
+      summary: Sửa tháng và năm của một lần hoàn thành
+      parameters:
+        - { name: gameId, in: path, required: true, schema: { type: string } }
+        - { name: finishId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateFinishTimeRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [game]
+      summary: Xoá một lần hoàn thành
+      description: |
+        Xoá đúng một bản ghi GameFinish. Score của game **giữ nguyên** — nó là
+        đánh giá, không phải bằng chứng hoàn thành. Nếu game không còn bản ghi
+        nào, Progress được **bỏ trống** (không đoán sang trạng thái khác).
+        Xem DOMAIN_RULES §9.6.
+      parameters:
+        - { name: gameId, in: path, required: true, schema: { type: string } }
+        - { name: finishId, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/games/{id}/promote:
+    post:
+      tags: [queue]
+      summary: Promote to Next Play — server chạy lại toàn bộ quy tắc queue
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Queue sau khi áp quy tắc
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GameListItem' }
+
+  /api/games/{id}/playtime:
+    post:
+      tags: [game]
+      summary: Cộng/trừ thời gian chơi
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deltaMinutes]
+              properties:
+                deltaMinutes:
+                  type: integer
+                  description: Số PHÚT cộng thêm (âm để trừ). Server quy đổi ra giây.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameDetail' }
+
+  /api/games/{id}/external-links:
+    get:
+      tags: [metadata]
+      summary: URL HowLongToBeat / Metacritic do BACKEND dựng
+      description: Client KHÔNG hardcode các URL này trên object game.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hltbUrl: { type: string }
+                  metacriticUrl: { type: string }
+
+  /api/game-metadata/preview:
+    post:
+      tags: [metadata]
+      summary: Resolve metadata theo tên để điền draft; không ghi DB.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GameMetadataPreviewRequest' }
+      responses:
+        '200':
+          description: Preview metadata không persist
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameMetadataPreview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /api/queue:
+    get:
+      tags: [queue]
+      summary: Toàn bộ queue, đã chuẩn hoá + persist thứ tự. Không phân trang.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GameListItem' }
+
+  /api/queue/order:
+    put:
+      tags: [queue]
+      summary: Đổi thứ tự queue
+      description: |
+        Client CHỈ gửi thứ tự mới. Server áp quy tắc DOMAIN_RULES §8.2:
+        game Playing giữ nguyên progress; trong nhóm non-playing, 3 game ĐẦU → NextPlay,
+        còn lại → Intended; persist CẢ PlayOrder LẪN ProgressId.
+        Client KHÔNG được tự tính NextPlay/Intended.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gameIds]
+              properties:
+                gameIds: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Queue sau khi áp quy tắc
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GameListItem' }
+
+  /api/taxonomy/{kind}:
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema: { type: string, enum: [series, genres, themes] }
+    get:
+      tags: [taxonomy]
+      parameters:
+        - name: q
+          in: query
+          description: Tìm theo tên; backend thực hiện lọc.
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TaxonomyItem' }
+    post:
+      tags: [taxonomy]
+      summary: Tạo genre/theme CÁ NHÂN của người gọi (iconData bị bỏ qua); series giữ hành vi cũ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaxonomyItem' }
+      responses:
+        '409': { $ref: '#/components/responses/Conflict' }
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaxonomyItem' }
+
+  /api/taxonomy/{kind}/{id}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [series, genres, themes] } }
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    put:
+      tags: [taxonomy]
+      summary: Sửa genre/theme cá nhân (hàng chung → 403 TAXONOMY_NOT_EDITABLE). Không đổi nhóm — dùng /themes/order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaxonomyItem' }
+      responses:
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaxonomyItem' }
+    delete:
+      tags: [taxonomy]
+      summary: Xoá genre/theme cá nhân (hàng chung → 403) — association xử lý trong MỘT transaction
+      responses:
+        '204': { description: OK }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/taxonomy/themes/grouped:
+    get:
+      tags: [taxonomy]
+      summary: Theme chung + cá nhân của người gọi, gom theo nhóm (server sắp xếp, khử trùng, lọc)
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+        - name: q
+          in: query
+          description: Có q → lọc theo tên phía server và bỏ nhóm rỗng. Không q → giữ cả nhóm rỗng.
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GroupedThemes' }
+
+  /api/taxonomy/themes/order:
+    put:
+      tags: [taxonomy]
+      summary: Chuyển theme cá nhân vào nhóm và đặt thứ tự trong một transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeOrderRequest' }
+      responses:
+        '204': { description: OK }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/taxonomy/theme-groups:
+    post:
+      tags: [taxonomy]
+      summary: Tạo nhóm theme cá nhân (cần ít nhất một tên)
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeGroupWrite' }
+      responses:
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/taxonomy/theme-groups/order:
+    put:
+      tags: [taxonomy]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdOrder' }
+      responses:
+        '204': { description: OK }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/taxonomy/theme-groups/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    put:
+      tags: [taxonomy]
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeGroupWrite' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [taxonomy]
+      summary: Xoá nhóm; theme trong nhóm về chưa phân nhóm
+      responses:
+        '204': { description: OK }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/taxonomy/themes/grouped:
+    get:
+      tags: [admin]
+      summary: Nhóm + theme chung (admin-only)
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GroupedThemes' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+
+  /api/admin/taxonomy/themes/order:
+    put:
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeOrderRequest' }
+      responses:
+        '204': { description: OK }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { description: Admin required }
+
+  /api/admin/taxonomy/genres/order:
+    put:
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdOrder' }
+      responses:
+        '204': { description: OK }
+        '403': { description: Admin required }
+
+  /api/admin/taxonomy/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [genres, themes] } }
+    get:
+      tags: [admin]
+      summary: Genre/theme chung (admin-only)
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TaxonomyItem' }
+        '403': { description: Admin required }
+    post:
+      tags: [admin]
+      summary: Tạo genre/theme chung; được đặt iconData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaxonomyItem' }
+      responses:
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaxonomyItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { description: Admin required }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/admin/taxonomy/{kind}/{id}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [genres, themes] } }
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    put:
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaxonomyItem' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaxonomyItem' }
+        '403': { description: Admin required }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [admin]
+      responses:
+        '204': { description: OK }
+        '403': { description: Admin required }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/taxonomy/theme-groups:
+    post:
+      tags: [admin]
+      summary: Tạo nhóm chung (bắt buộc cả nameEn và nameVi)
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeGroupWrite' }
+      responses:
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { description: Admin required }
+
+  /api/admin/taxonomy/theme-groups/order:
+    put:
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdOrder' }
+      responses:
+        '204': { description: OK }
+        '403': { description: Admin required }
+
+  /api/admin/taxonomy/theme-groups/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    put:
+      tags: [admin]
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThemeGroupWrite' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ThemeGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { description: Admin required }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [admin]
+      summary: Xoá nhóm chung; mọi theme trong nhóm về chưa phân nhóm
+      responses:
+        '204': { description: OK }
+        '403': { description: Admin required }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/catalog/{kind}:
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema: { type: string, enum: [progress, ownership] }
+    get:
+      tags: [catalog]
+      parameters:
+        - { $ref: '#/components/parameters/AcceptLanguage' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CatalogItem' }
+
+  /api/catalog/{kind}/{id}:
+    put:
+      tags: [catalog]
+      summary: Sửa name/iconData/colorCode/sortOrder
+      description: systemKey KHÔNG nằm trong payload — server từ chối nếu client gửi.
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [progress, ownership] } }
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                iconData: { type: [string, "null"] }
+                colorCode: { type: string }
+                sortOrder: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/catalog/{kind}/order:
+    put:
+      tags: [catalog]
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [progress, ownership] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids: { type: array, items: { type: integer } }
+      responses:
+        '204': { description: OK }
+
+  /api/admin/metadata/crawler:
+    get:
+      tags: [admin]
+      summary: Trạng thái vận hành crawler IGDB (admin-only)
+      responses:
+        '200':
+          description: Trạng thái, ngân sách database và lịch cron hiện tại.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/metadata/crawler/enabled:
+    put:
+      tags: [admin]
+      summary: Bật hoặc tạm dừng crawler (admin-only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminCrawlerEnabledRequest' }
+      responses:
+        '200':
+          description: Trạng thái crawler sau khi đổi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/metadata/crawler/run:
+    post:
+      tags: [admin]
+      summary: Xếp một crawler run ngay (admin-only)
+      responses:
+        '202':
+          description: Request đã được gửi vào pg_net; crawler chạy bất đồng bộ.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerRunRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '409': { description: Crawler đang pause hoặc đã có run hoạt động. }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/metadata/crawler/runs:
+    get:
+      tags: [admin]
+      summary: Lịch sử crawler run, phân trang keyset từ server (admin-only)
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+          description: Opaque cursor từ nextCursor của trang trước.
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Lịch sử run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerRunPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/metadata/crawler/runs/{runId}/games:
+    get:
+      tags: [admin]
+      summary: Game đã được thêm/làm mới trong một crawler run (admin-only)
+      parameters:
+        - { name: runId, in: path, required: true, schema: { type: string, format: uuid } }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+      responses:
+        '200':
+          description: Audit items của run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerRunItemPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/metadata/crawler/games:
+    get:
+      tags: [admin]
+      summary: Các metadata game crawler đang theo dõi (admin-only)
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+      responses:
+        '200':
+          description: Game đã có source snapshot crawler.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCrawlerTrackedGamePage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/integrations:
+    get:
+      tags: [admin]
+      summary: Liệt kê trạng thái cấu hình integration (admin-only)
+      responses:
+        '200':
+          description: Chỉ metadata an toàn, không bao giờ có credential.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/IntegrationSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/integrations/{provider}:
+    put:
+      tags: [admin]
+      summary: Thay thế trọn bộ credential của một provider (admin-only)
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/IntegrationProvider' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IntegrationCredentialsWrite' }
+      responses:
+        '200':
+          description: Metadata sau khi thay thế; không có credential.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IntegrationSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/admin/integrations/{provider}/test:
+    post:
+      tags: [admin]
+      summary: Chạy kiểm tra kết nối read-only cho một provider (admin-only)
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/IntegrationProvider' }
+      responses:
+        '200':
+          description: Metadata chứa kết quả test an toàn.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IntegrationSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { description: Quá nhiều lần test }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/settings:
+    get:
+      tags: [settings]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+    put:
+      tags: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Settings' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+
+  /api/settings/test-cloudinary:
+    post:
+      tags: [settings]
+      summary: Ping Cloudinary thật
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  message: { type: string }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /api/dashboard/stats:
+    get:
+      tags: [system]
+      summary: Thống kê — BACKEND tính, không tính ở client
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardStats' }
+
+  /api/events:
+    get:
+      tags: [system]
+      summary: SSE stream
+      description: |
+        Sự kiện: runningProcesses, refresh, trayNotification, syncProgress.
+        Thay thế cơ chế WeakReferenceMessenger + GlobalEvents của bản WPF (mismatch M40).
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  # ---------- NATIVE — chỉ Local API. Hosted trả 501 ----------
+
+  /api/games/{id}/launch:
+    post:
+      tags: [native]
+      summary: Khởi chạy game
+      description: |
+        Thứ tự: isDlc → chặn; có launchTarget → Process.Start(path, UseShellExecute=true);
+        không có → tra DetectedProcess theo "{exeName}.exe".
+        Không tìm thấy → lỗi có localize, KHÔNG im lặng.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Đã khởi chạy }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/fs/pick-file:
+    post:
+      tags: [native]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filter]
+              properties:
+                filter:
+                  type: string
+                  enum: [exe-or-shortcut, database, json]
+      responses:
+        '200':
+          description: Đường dẫn đã chọn (null nếu người dùng huỷ)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path: { type: [string, "null"] }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/fs/pick-folder:
+    post:
+      tags: [native]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path: { type: [string, "null"] }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/fs/reveal:
+    post:
+      tags: [native]
+      summary: Mở Explorer tại đường dẫn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path: { type: string }
+      responses:
+        '204': { description: OK }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/games/{id}/backup-folder/generate:
+    post:
+      tags: [native]
+      summary: Tạo backup folder tên duy nhất + ghi SaveLocation.txt
+      description: Trả 501 `FEATURE_DISABLED` khi `capabilities.features.backup` là false (đang tạm tắt).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backupFolderPath: { type: string }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/tray/status:
+    get:
+      tags: [native]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: { type: string, enum: [playtime, scanner, backup] }
+                        enabled: { type: boolean }
+                        lastRunAt: { type: [string, "null"], format: date-time }
+                        detail: { type: object, additionalProperties: true }
+                  startWithWindows: { type: boolean }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/tray/services/{name}:
+    post:
+      tags: [native]
+      parameters:
+        - { name: name, in: path, required: true, schema: { type: string, enum: [playtime, scanner, backup] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        '204': { description: OK }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
+
+  /api/tray/sync-images:
+    post:
+      tags: [native]
+      summary: Đưa ảnh banner/backdrop/poster trong thư viện của người đang đăng nhập lên Cloudinary
+      description: |
+        Chạy trong Host, không cần tiến trình Tray. Đồng bộ (trả báo cáo khi xong),
+        chưa qua /api/events. Chỉ thay đúng cột ảnh và chỉ khi giá trị chưa đổi
+        trong lúc chạy. Ảnh đã nằm trong thư mục QuestLog/ (hoặc MasterPlay/ cũ) bỏ qua.
+      responses:
+        '200':
+          description: Báo cáo, kèm lý do từng ảnh lỗi
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImageSyncReport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: Đang có một lần đồng bộ ảnh khác chạy (IMAGE_SYNC_RUNNING)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+        '422':
+          description: Chưa cấu hình Cloudinary (INTEGRATION_NOT_CONFIGURED)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  /api/tray/{action}:
+    post:
+      tags: [native]
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [scan-now, backup-now, open-logs, startup]
+      responses:
+        '202': { description: Đã nhận, tiến độ đẩy qua /api/events }
+        '501': { $ref: '#/components/responses/NotImplementedOnHosted' }

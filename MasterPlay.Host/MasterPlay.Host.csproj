@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MasterPlay.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MasterPlay.Core\MasterPlay.Core.csproj" />
+    <ProjectReference Include="..\MasterPlay.Infrastructure\MasterPlay.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

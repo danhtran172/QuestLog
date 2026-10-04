@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using MasterPlay.Core.Entities;
+using MasterPlay.Core.Taxonomy;
 using MasterPlay.Infrastructure.Configuration;
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MasterPlay.Infrastructure.Data
 {
@@ -20,6 +23,7 @@ namespace MasterPlay.Infrastructure.Data
         public virtual DbSet<ProgressStatus> ProgressStatuses { get; set; }
         public virtual DbSet<Series> Series { get; set; }
         public virtual DbSet<Theme> Themes { get; set; }
+        public virtual DbSet<ThemeGroup> ThemeGroups { get; set; }
         public DbSet<GameGenre> GameGenres { get; set; }
         public DbSet<GameTheme> GameThemes { get; set; }
         public virtual DbSet<GameFinish> GameFinishes { get; set; }
@@ -46,16 +50,35 @@ namespace MasterPlay.Infrastructure.Data
 
             modelBuilder.Entity<Game>(entity =>
             {
+                entity.Property(e => e.LibraryOwnerKey)
+                    .HasColumnName("LibraryOwnerKey")
+                    .HasDefaultValue("legacy:local")
+                    .IsRequired();
+                entity.Property(e => e.MetadataGameId).HasColumnName("MetadataGameId");
+                entity.Property(e => e.MetadataRevision).HasColumnName("MetadataRevision");
+                entity.Property(e => e.MetadataSyncedAt).HasColumnName("MetadataSyncedAt");
+                entity.Property(e => e.MetadataBaseline).HasColumnName("MetadataBaseline");
+                entity.HasIndex(e => new { e.LibraryOwnerKey, e.MetadataGameId })
+                    .HasDatabaseName("IX_Games_LibraryOwnerKey_MetadataGameId")
+                    .HasFilter("MetadataGameId IS NOT NULL")
+                    .IsUnique();
+                entity.HasIndex(e => new { e.LibraryOwnerKey, e.IsDisabled })
+                    .HasDatabaseName("IX_Games_LibraryOwnerKey_IsDisabled");
+                entity.HasIndex(e => e.MetadataGameId)
+                    .HasDatabaseName("IX_Games_MetadataGameId");
                 entity.Property(e => e.AvgPlayTime).HasDefaultValue(0);
                 entity.Property(e => e.Excited).HasDefaultValue(0.0);
-                entity.Property(e => e.GImagePath).HasColumnName("GImagePath");
-                entity.Property(e => e.SteamLibraryImagePath).HasColumnName("SteamLibraryImagePath");
+                entity.Property(e => e.BannerPath).HasColumnName("BannerPath");
+                entity.Property(e => e.BackdropPath).HasColumnName("BackdropPath");
+                entity.Property(e => e.PosterPath).HasColumnName("PosterPath");
+                entity.Property(e => e.ImageSources).HasColumnName("ImageSources");
                 entity.Property(e => e.IsDisabled).HasDefaultValue(0);
                 entity.Property(e => e.IsDlc).HasDefaultValue(0);
                 entity.Property(e => e.MetaScore).HasDefaultValue(0);
                 entity.Property(e => e.Ready).HasDefaultValue(0);
                 entity.Property(e => e.Score).HasDefaultValue(0.0);
                 entity.Property(e => e.TotalPlayTimeSeconds).HasDefaultValue(0);
+                entity.Property(e => e.LastPlayedAt).HasColumnName("LastPlayedAt");
 
                 entity.Property(e => e.PublishDate)
                     .HasConversion(
@@ -95,9 +118,15 @@ namespace MasterPlay.Infrastructure.Data
 
             modelBuilder.Entity<Genre>(entity =>
             {
-                entity.HasIndex(e => e.Name).IsUnique();
+                // Unique theo (chu so huu, ten da chuan hoa) — khong con unique tren Name.
+                // Xem spec 2026-10-04-theme-groups-design §4.1.
+                entity.HasIndex(e => new { e.LibraryOwnerKey, e.NameKey })
+                    .HasDatabaseName("IX_Genres_LibraryOwnerKey_NameKey")
+                    .IsUnique();
                 entity.Property(e => e.IconData);
                 entity.Property(e => e.SortOrder).HasDefaultValue(0);
+                entity.Property(e => e.LibraryOwnerKey).HasDefaultValue(TaxonomyRules.SharedOwnerKey).IsRequired();
+                entity.Property(e => e.NameKey).IsRequired();
             });
 
             modelBuilder.Entity<OwnershipStatus>(entity =>
@@ -121,9 +150,27 @@ namespace MasterPlay.Infrastructure.Data
 
             modelBuilder.Entity<Theme>(entity =>
             {
-                entity.HasIndex(e => e.Name).IsUnique();
+                entity.HasIndex(e => new { e.LibraryOwnerKey, e.NameKey })
+                    .HasDatabaseName("IX_Themes_LibraryOwnerKey_NameKey")
+                    .IsUnique();
                 entity.Property(e => e.IconData);
                 entity.Property(e => e.SortOrder).HasDefaultValue(0);
+                entity.Property(e => e.LibraryOwnerKey).HasDefaultValue(TaxonomyRules.SharedOwnerKey).IsRequired();
+                entity.Property(e => e.NameKey).IsRequired();
+                entity.HasOne(e => e.Group).WithMany(g => g.Themes)
+                    .HasForeignKey(e => e.GroupId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<ThemeGroup>(entity =>
+            {
+                entity.ToTable("ThemeGroups");
+                entity.Property(e => e.LibraryOwnerKey).HasDefaultValue(TaxonomyRules.SharedOwnerKey).IsRequired();
+                entity.Property(e => e.NameEn).IsRequired();
+                entity.Property(e => e.NameVi).IsRequired();
+                entity.Property(e => e.SortOrder).HasDefaultValue(0);
+                entity.HasIndex(e => new { e.LibraryOwnerKey, e.SortOrder })
+                    .HasDatabaseName("IX_ThemeGroups_LibraryOwnerKey_SortOrder");
             });
 
             modelBuilder.Entity<GameGenre>(entity =>
@@ -152,6 +199,7 @@ namespace MasterPlay.Infrastructure.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.FinishedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(e => e.HasMonth).HasDefaultValue(true);
 
                 entity.HasOne(e => e.Game)
                     .WithMany(e => e.Finishes)
@@ -163,5 +211,36 @@ namespace MasterPlay.Infrastructure.Data
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+        // NameKey luon tinh tu Name o MOT cho, cho moi duong ghi (Host, WPF, Tray):
+        // de ai do quen gan thi unique index (owner, NameKey) se va nhau tren chuoi rong.
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            SyncTaxonomyNameKeys();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            SyncTaxonomyNameKeys();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        private void SyncTaxonomyNameKeys()
+        {
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
+                switch (entry.Entity)
+                {
+                    case Theme theme:
+                        theme.NameKey = TaxonomyRules.NormalizeName(theme.Name);
+                        break;
+                    case Genre genre:
+                        genre.NameKey = TaxonomyRules.NormalizeName(genre.Name);
+                        break;
+                }
+            }
+        }
     }
 }

@@ -1,3 +1,4 @@
+using MasterPlay.Core;
 using MasterPlay.Infrastructure.Configuration;
 using MasterPlay.Infrastructure.Data.Services;
 using MasterPlay.Core.Entities;
@@ -10,6 +11,7 @@ public sealed class LibraryService : IDisposable
 {
     private static readonly TimeSpan FullScanInterval = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan ChangeDebounce = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(15);
     private static readonly EnumerationOptions ScanOptions = new()
     {
         RecurseSubdirectories = true,
@@ -21,9 +23,11 @@ public sealed class LibraryService : IDisposable
     private readonly IGameMetadataResolver _metadataResolver;
     private readonly SemaphoreSlim _scanLock = new(1, 1);
     private readonly List<FileSystemWatcher> _watchers = [];
+    private readonly object _watcherGate = new();
+    private readonly object _lifecycleGate = new();
     private CancellationTokenSource? _cancellation;
-    private CancellationTokenSource? _debounceCancellation;
     private Task? _worker;
+    private long _debounceGeneration;
 
     public LibraryService(
         ILogger<LibraryService> logger,
@@ -37,92 +41,246 @@ public sealed class LibraryService : IDisposable
 
     public void Start()
     {
-        if (_worker is { IsCompleted: false })
-            return;
+        lock (_lifecycleGate)
+        {
+            if (_worker is { IsCompleted: false })
+                return;
 
-        _cancellation = new CancellationTokenSource();
-        ConfigureWatchers();
-        _worker = RunAsync(_cancellation.Token);
-        _logger.LogInformation("Library monitoring started");
+            var cancellation = new CancellationTokenSource();
+            _cancellation = cancellation;
+            ConfigureWatchers();
+
+            // Xem ghi chu trong PlayTimeService.Start: worker phai bat dau tren
+            // thread pool, neu khong Stop() tu menu tray se treo.
+            _worker = Task.Run(() => RunAsync(cancellation.Token));
+            _logger.LogInformation("Library monitoring started");
+        }
     }
 
     public void Stop()
     {
-        _cancellation?.Cancel();
-        _debounceCancellation?.Cancel();
+        CancellationTokenSource cancellation;
+        Task? worker;
+
+        lock (_lifecycleGate)
+        {
+            if (_cancellation == null)
+                return;
+
+            cancellation = _cancellation;
+            worker = _worker;
+            _cancellation = null;
+            _worker = null;
+        }
+
+        cancellation.Cancel();
+        DisposeWatchers();
 
         try
         {
-            _worker?.GetAwaiter().GetResult();
+            if (worker != null && !worker.Wait(StopTimeout))
+                _logger.LogWarning("Library worker did not stop within {Timeout}", StopTimeout);
         }
-        catch (OperationCanceledException)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Library worker ended with an error");
         }
 
-        foreach (var watcher in _watchers)
-            watcher.Dispose();
-        _watchers.Clear();
-        _cancellation?.Dispose();
-        _debounceCancellation?.Dispose();
-        _cancellation = null;
-        _debounceCancellation = null;
-        _worker = null;
+        cancellation.Dispose();
         _logger.LogInformation("Library monitoring stopped");
     }
 
-    private async Task RunAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Quet ngay, khong doi het chu ky 15 phut. Dung cho muc "Quet ngay" o menu
+    /// tray. Tra ve false khi service dang tat.
+    /// </summary>
+    public bool RequestScanNow()
     {
-        await ScanAsync(cancellationToken);
-        using var timer = new PeriodicTimer(FullScanInterval);
-        while (await timer.WaitForNextTickAsync(cancellationToken))
-            await ScanAsync(cancellationToken);
-    }
-
-    private void ConfigureWatchers()
-    {
-        foreach (var library in GetValidLibraries())
-        {
-            var watcher = new FileSystemWatcher(library, "*.exe")
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite
-            };
-            watcher.Created += OnLibraryChanged;
-            watcher.Deleted += OnLibraryChanged;
-            watcher.Renamed += OnLibraryChanged;
-            watcher.EnableRaisingEvents = true;
-            _watchers.Add(watcher);
-        }
-    }
-
-    private void OnLibraryChanged(object sender, FileSystemEventArgs e)
-    {
-        var parentToken = _cancellation?.Token ?? CancellationToken.None;
-        _debounceCancellation?.Cancel();
-        _debounceCancellation?.Dispose();
-        _debounceCancellation = CancellationTokenSource.CreateLinkedTokenSource(parentToken);
-        var token = _debounceCancellation.Token;
+        var cancellation = _cancellation;
+        if (cancellation == null)
+            return false;
 
         _ = Task.Run(async () =>
         {
             try
             {
+                await ScanAsync(cancellation.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Manual library scan failed");
+            }
+        });
+
+        return true;
+    }
+
+    private async Task RunAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ScanAsync(cancellationToken);
+            using var timer = new PeriodicTimer(FullScanInterval);
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+                await ScanAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Library worker stopped unexpectedly");
+        }
+    }
+
+    private void ConfigureWatchers()
+    {
+        List<string> libraries;
+        try
+        {
+            libraries = GetValidLibraries().ToList();
+        }
+        catch (Exception ex)
+        {
+            // config.json hong khong duoc lam chet Start(): tray van phai song va hai
+            // service con lai van phai chay.
+            _logger.LogError(ex, "Could not read the library list from config");
+            return;
+        }
+
+        lock (_watcherGate)
+        {
+            DisposeWatchersLocked();
+
+            foreach (var library in libraries)
+            {
+                try
+                {
+                    var watcher = new FileSystemWatcher(library, "*.exe")
+                    {
+                        IncludeSubdirectories = true,
+                        NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite
+                    };
+                    watcher.Created += OnLibraryChanged;
+                    watcher.Deleted += OnLibraryChanged;
+                    watcher.Renamed += OnLibraryChanged;
+                    watcher.Error += OnWatcherError;
+                    watcher.EnableRaisingEvents = true;
+                    _watchers.Add(watcher);
+                }
+                catch (Exception ex)
+                {
+                    // O dia bi rut, duong dan qua dai, het handle: bo qua thu muc do
+                    // thay vi lam hong ca service.
+                    _logger.LogWarning(ex, "Unable to monitor library {Library}", library);
+                }
+            }
+        }
+    }
+
+    // Watcher tu tat khi bo dem tran hoac thu muc bien mat. Khong bat su kien nay
+    // thi quet theo su kien chet im, chi con lan quet dinh ky moi 15 phut.
+    private void OnWatcherError(object sender, System.IO.ErrorEventArgs e)
+    {
+        _logger.LogWarning(e.GetException(), "A library watcher reported an error; rebuilding watchers");
+
+        if (_cancellation == null)
+            return;
+
+        try
+        {
+            ConfigureWatchers();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not rebuild the library watchers");
+        }
+    }
+
+    private void DisposeWatchers()
+    {
+        lock (_watcherGate)
+            DisposeWatchersLocked();
+    }
+
+    private void DisposeWatchersLocked()
+    {
+        foreach (var watcher in _watchers)
+        {
+            try
+            {
+                watcher.EnableRaisingEvents = false;
+                watcher.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not dispose a library watcher");
+            }
+        }
+
+        _watchers.Clear();
+    }
+
+    private void OnLibraryChanged(object sender, FileSystemEventArgs e)
+    {
+        var cancellation = _cancellation;
+        if (cancellation == null)
+            return;
+
+        // So sanh "the he" thay cho mot CancellationTokenSource dung chung. Ban cu
+        // huy va dispose CTS ngay trong handler, ma FileSystemWatcher goi handler
+        // tu nhieu thread cung luc: mot thread dispose xong thi thread kia cham vao
+        // Token cua CTS da chet -> ObjectDisposedException nem tren thread cua
+        // watcher -> khong ai bat -> sap tien trinh tray.
+        var generation = Interlocked.Increment(ref _debounceGeneration);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var token = cancellation.Token;
                 await Task.Delay(ChangeDebounce, token);
+
+                if (Interlocked.Read(ref _debounceGeneration) != generation)
+                    return;
+
                 await ScanAsync(token);
             }
             catch (OperationCanceledException)
             {
             }
-        }, token);
+            catch (ObjectDisposedException)
+            {
+                // Service dung giua chung, token khong con dung duoc nua.
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Debounced library scan failed");
+            }
+        });
     }
 
     private async Task ScanAsync(CancellationToken cancellationToken)
     {
-        if (!await _scanLock.WaitAsync(0, cancellationToken))
+        // Khong truyen token vao WaitAsync: chi can biet co lan quet khac dang chay
+        // hay khong, huy service da duoc kiem tra ngay ben duoi.
+        if (!await _scanLock.WaitAsync(0))
             return;
 
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             var detected = await Task.Run(() =>
                 GetValidLibraries()
                     .SelectMany(EnumerateExecutables)
@@ -132,7 +290,12 @@ public sealed class LibraryService : IDisposable
                         ExeName = Path.GetFileName(path),
                         FullPath = path
                     })
-                    .ToList(), cancellationToken);
+                    .ToList());
+
+            // Duyet o dia co the mat vai giay. Dung service trong luc do thi khong
+            // duoc ghi gi xuong CSDL nua.
+            if (cancellationToken.IsCancellationRequested)
+                return;
 
             var current = DataService.LoadDetectedProcesses();
             var currentPaths = current.Select(x => x.FullPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -148,10 +311,14 @@ public sealed class LibraryService : IDisposable
             DataService.SyncDetectedProcesses(detected);
             DataService.SyncGameStatus();
 
-            foreach (var game in DataService.LoadActiveGames())
+            // Backup dang tam tat (FeatureFlags.GameBackup): khong tu tao thu muc backup.
+            if (FeatureFlags.GameBackup)
             {
-                if (string.IsNullOrWhiteSpace(game.BackupFolderPath) || !Directory.Exists(game.BackupFolderPath))
-                    DataService.CreateBackupFolder(game);
+                foreach (var game in DataService.LoadActiveGames())
+                {
+                    if (string.IsNullOrWhiteSpace(game.BackupFolderPath) || !Directory.Exists(game.BackupFolderPath))
+                        DataService.CreateBackupFolder(game);
+                }
             }
 
             foreach (var notification in notifications)
@@ -234,7 +401,18 @@ public sealed class LibraryService : IDisposable
                 continue;
             }
 
-            DataService.AddGame(game);
+            // Mot game trung Id khong duoc lam hong ca lan quet: truoc day AddGame
+            // nem ra ngoai la bo luon buoc dong bo DetectedProcesses ben duoi.
+            try
+            {
+                DataService.AddGame(game);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not add the detected game {GameName}", game.Name);
+                continue;
+            }
+
             games.Add(game);
             AddNotification(
                 notifications,

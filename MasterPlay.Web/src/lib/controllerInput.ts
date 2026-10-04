@@ -15,12 +15,19 @@ export type ControllerAction =
   | "toggleLayout"
   | "addGame"
   | "scrollUp"
-  | "scrollDown";
+  | "scrollDown"
+  | "openPrompts"
+  | "closePrompts"
+  | "togglePrompts";
 
 export type ControllerReading = Readonly<{
   buttons: readonly boolean[];
   axes: readonly number[];
 }>;
+
+export function isControllerActionAvailable(action: ControllerAction, consoleSession: boolean): boolean {
+  return !consoleSession || (action !== "toggleLayout" && action !== "toggleSurface");
+}
 
 type RepeatDirection = "up" | "down" | "left" | "right" | "scrollUp" | "scrollDown";
 
@@ -50,9 +57,9 @@ function justPressed(state: ControllerInputState, reading: ControllerReading, in
   return pressed(reading, index) && state.buttons[index] !== true;
 }
 
-function readDirection(reading: ControllerReading): RepeatDirection | null {
-  if (pressed(reading, 12) || (reading.axes[1] ?? 0) <= -DEAD_ZONE) return "up";
-  if (pressed(reading, 13) || (reading.axes[1] ?? 0) >= DEAD_ZONE) return "down";
+function readDirection(reading: ControllerReading, reserveVerticalDpad: boolean): RepeatDirection | null {
+  if ((!reserveVerticalDpad && pressed(reading, 12)) || (reading.axes[1] ?? 0) <= -DEAD_ZONE) return "up";
+  if ((!reserveVerticalDpad && pressed(reading, 13)) || (reading.axes[1] ?? 0) >= DEAD_ZONE) return "down";
   if (pressed(reading, 14) || (reading.axes[0] ?? 0) <= -DEAD_ZONE) return "left";
   if (pressed(reading, 15) || (reading.axes[0] ?? 0) >= DEAD_ZONE) return "right";
   if ((reading.axes[3] ?? 0) <= -DEAD_ZONE) return "scrollUp";
@@ -73,14 +80,17 @@ export function processControllerReading(
   previous: ControllerInputState,
   reading: ControllerReading,
   now: number,
-): { state: ControllerInputState; actions: ControllerAction[] } {
+  options: Readonly<{ promptPopupControls?: boolean }> = {},
+): { state: ControllerInputState; actions: ControllerAction[]; backPressed: boolean } {
   const actions: ControllerAction[] = [];
   const chordPressed = pressed(reading, 0) && pressed(reading, 4) && pressed(reading, 5);
+  const backPressed = pressed(reading, 1);
 
   if (chordPressed) {
     if (!previous.chordPressed) actions.push("toggleConsole");
     return {
       actions,
+      backPressed,
       state: { buttons: [...reading.buttons], chordPressed: true, direction: null, nextRepeatAt: 0 },
     };
   }
@@ -102,8 +112,10 @@ export function processControllerReading(
   }
   if (!shouldersTogether && justPressed(previous, reading, 4)) actions.push("previousTab");
   if (!shouldersTogether && justPressed(previous, reading, 5)) actions.push("nextTab");
+  if (options.promptPopupControls && justPressed(previous, reading, 12)) actions.push("openPrompts");
+  if (options.promptPopupControls && justPressed(previous, reading, 13)) actions.push("closePrompts");
 
-  const direction = readDirection(reading);
+  const direction = readDirection(reading, options.promptPopupControls === true);
   let nextRepeatAt = 0;
   if (direction) {
     if (direction !== previous.direction) {
@@ -119,6 +131,7 @@ export function processControllerReading(
 
   return {
     actions,
+    backPressed,
     state: { buttons: [...reading.buttons], chordPressed: false, direction, nextRepeatAt },
   };
 }

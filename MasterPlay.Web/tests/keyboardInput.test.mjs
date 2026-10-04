@@ -31,19 +31,30 @@ test("uses spatial directions in gallery and overlays", () => {
     getConsoleKeyboardAction(reading("Tab", { overlayOpen: true })),
     null,
   );
+  assert.equal(
+    getConsoleKeyboardAction(reading("Enter", { overlayOpen: true })),
+    "activate",
+  );
 });
 
 test("maps console commands to keyboard actions", () => {
-  assert.equal(getConsoleKeyboardAction(reading("Enter")), "activate");
+  assert.equal(getConsoleKeyboardAction(reading("Enter")), "play");
   assert.equal(getConsoleKeyboardAction(reading(" ")), "activate");
   assert.equal(getConsoleKeyboardAction(reading("Escape")), "back");
   assert.equal(getConsoleKeyboardAction(reading("q")), "previousTab");
   assert.equal(getConsoleKeyboardAction(reading("e")), "nextTab");
   assert.equal(getConsoleKeyboardAction(reading("v")), "openSettings");
-  assert.equal(getConsoleKeyboardAction(reading("l")), "toggleLayout");
+  assert.equal(getConsoleKeyboardAction(reading("l")), null);
   assert.equal(getConsoleKeyboardAction(reading("n")), "addGame");
-  assert.equal(getConsoleKeyboardAction(reading("p")), "play");
-  assert.equal(getConsoleKeyboardAction(reading("Tab")), "toggleSurface");
+  assert.equal(getConsoleKeyboardAction(reading("p")), null);
+  assert.equal(getConsoleKeyboardAction(reading("Tab")), "activate");
+  assert.equal(getConsoleKeyboardAction(reading("Shift")), "togglePrompts");
+});
+
+test("keeps Tab available for normal focus navigation outside the console surface", () => {
+  assert.equal(getConsoleKeyboardAction(reading("Tab", { consoleVisible: false })), null);
+  assert.equal(getConsoleKeyboardAction(reading("Shift", { consoleVisible: false })), null);
+  assert.equal(getConsoleKeyboardAction(reading("Shift", { overlayOpen: true })), null);
 });
 
 test("keeps console shortcuts inactive outside a console session", () => {
@@ -61,6 +72,7 @@ test("allows held navigation but suppresses repeated commands", () => {
   assert.equal(getConsoleKeyboardAction(reading("ArrowRight", { repeat: true })), "moveRight");
   assert.equal(getConsoleKeyboardAction(reading("Enter", { repeat: true })), null);
   assert.equal(getConsoleKeyboardAction(reading("F10", { repeat: true })), null);
+  assert.equal(getConsoleKeyboardAction(reading("Shift", { repeat: true })), null);
 });
 
 test("keeps F10 available with or without an active console session", () => {

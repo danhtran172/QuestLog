@@ -6,8 +6,8 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<AssemblyTitle>Questory Tray</AssemblyTitle>
-		<Product>Questory</Product>
+		<AssemblyTitle>QuestLog Tray</AssemblyTitle>
+		<Product>QuestLog</Product>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -30,7 +30,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Resource Include="Assets\TrayIcon.ico" />
+	  <!-- TrayApplicationContext doc thang file nay tu thu muc chay, nen no phai
+	       duoc CHEP RA output. `Resource` (khai niem cua WPF) khong lam viec do,
+	       thieu file thi tray phai lui ve icon 32px moc tu exe. -->
+	  <Content Include="Assets\TrayIcon.ico">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 	<PropertyGroup>
 		<ApplicationIcon>Assets\TrayIcon.ico</ApplicationIcon>

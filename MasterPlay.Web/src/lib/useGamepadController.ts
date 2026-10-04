@@ -9,6 +9,8 @@ import {
 type UseGamepadControllerOptions = Readonly<{
   onAction: (action: ControllerAction) => void;
   onGamepadInput: () => void;
+  onBackHoldChange: (pressed: boolean) => void;
+  promptPopupControls: boolean;
 }>;
 
 function findStandardGamepad(): Gamepad | null {
@@ -21,15 +23,22 @@ function findStandardGamepad(): Gamepad | null {
 export function useGamepadController({
   onAction,
   onGamepadInput,
+  onBackHoldChange,
+  promptPopupControls,
 }: UseGamepadControllerOptions): { connected: boolean } {
   const [connected, setConnected] = useState(false);
   const connectedRef = useRef(false);
   const inputStateRef = useRef<ControllerInputState>(INITIAL_CONTROLLER_STATE);
   const actionRef = useRef(onAction);
   const gamepadInputRef = useRef(onGamepadInput);
+  const backHoldRef = useRef(onBackHoldChange);
+  const promptPopupControlsRef = useRef(promptPopupControls);
+  const backPressedRef = useRef(false);
 
   actionRef.current = onAction;
   gamepadInputRef.current = onGamepadInput;
+  backHoldRef.current = onBackHoldChange;
+  promptPopupControlsRef.current = promptPopupControls;
 
   useEffect(() => {
     let frameId = 0;
@@ -40,12 +49,19 @@ export function useGamepadController({
       setConnected(next);
     };
 
+    const updateBackPressed = (next: boolean) => {
+      if (backPressedRef.current === next) return;
+      backPressedRef.current = next;
+      backHoldRef.current(next);
+    };
+
     const poll = (now: number) => {
       const canReadInput = document.visibilityState === "visible" && document.hasFocus();
       const gamepad = canReadInput ? findStandardGamepad() : null;
       updateConnected(gamepad != null);
 
       if (!gamepad) {
+        updateBackPressed(false);
         inputStateRef.current = INITIAL_CONTROLLER_STATE;
       } else {
         const result = processControllerReading(
@@ -55,7 +71,9 @@ export function useGamepadController({
             axes: gamepad.axes,
           },
           now,
+          { promptPopupControls: promptPopupControlsRef.current },
         );
+        updateBackPressed(result.backPressed);
         inputStateRef.current = result.state;
         if (result.actions.length > 0) {
           gamepadInputRef.current();
@@ -67,7 +85,10 @@ export function useGamepadController({
     };
 
     frameId = window.requestAnimationFrame(poll);
-    return () => window.cancelAnimationFrame(frameId);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      backPressedRef.current = false;
+    };
   }, []);
 
   return { connected };

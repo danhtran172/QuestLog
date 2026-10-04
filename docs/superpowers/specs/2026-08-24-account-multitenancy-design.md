@@ -206,19 +206,23 @@ The endpoint is rate limited by IP, account signal, and device context. Repeated
 
 ### Password, email, and username changes
 
-- Password changes require the current password or a recent reauthentication and invalidate other sessions according to the user's choice.
-- Forgotten passwords use Supabase's email reset flow and a strict allowlist of redirect URLs.
+> Amended by [`2026-10-04-google-signup-email-recovery-design.md`](2026-10-04-google-signup-email-recovery-design.md): reauthentication is a 6-digit email code for every account, and forgot-password uses an emailed code rather than a redirect link.
+
+- Password changes require a recent email-code reauthentication and invalidate other sessions according to the user's choice.
+- Forgotten passwords use Supabase's email recovery with a 6-digit code.
 - Email changes require verification of the new address before it becomes the login identity.
 - Username changes run entirely through the backend under the database uniqueness constraint. A collision returns a structured conflict error.
 - Every successful or failed sensitive change emits a redacted audit event and appropriate security notification.
 
 ### Google identity linking
 
+> Amended by [`2026-10-04-google-signup-email-recovery-design.md`](2026-10-04-google-signup-email-recovery-design.md): Google sign-up/sign-in, the Host-brokered PKCE flow, Supabase automatic linking for verified emails, and email-code reauthentication. That document takes precedence where the two differ.
+
 Google linking uses OAuth Authorization Code with PKCE and an allowlisted redirect.
 
 - Hosted Web returns through the hosted auth callback.
-- Desktop opens the system browser and returns through an approved deep link or loopback callback owned by the Shell.
-- Linking and unlinking require recent reauthentication.
+- Desktop opens the system browser; the callback lands on the loopback Host, which hands the session back to WebView2.
+- Manual linking and unlinking from settings require recent reauthentication.
 - QuestLog cannot unlink the last usable sign-in identity.
 - Linking never creates a second QuestLog profile or library for the same authenticated user.
 

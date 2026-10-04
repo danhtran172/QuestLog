@@ -17,8 +17,9 @@ The feature must preserve these invariants:
    are never returned, logged, rendered after saving, placed in browser storage, or
    included in telemetry.
 2. The client receives metadata only: configured fields, revision, updater, last test
-   outcome, and safe error code. It never receives a raw credential, partial secret,
-   or encrypted ciphertext.
+   outcome, safe error code, and the provider's public identifiers (Cloudinary
+   `cloudName`, IGDB `clientId`) — values that already appear in image URLs and request
+   headers. It never receives a secret, partial secret, or encrypted ciphertext.
 3. A provider change is atomic: either all required values for that provider become
    the next configuration revision, or the existing configuration remains active.
 4. Host provider calls and the IGDB crawler resolve the same active configuration.
@@ -167,8 +168,14 @@ Add an **Integrations** section to Admin Console, not the per-user Settings dial
 It renders five provider cards from `GET /api/admin/integrations`.
 
 Each card displays provider name, required credential labels, configuration status,
-last test result/time, and safe error message. Secret inputs are blank on every render;
-the only indication of an existing value is its configured-field badge. Submitting a
+last test result/time, and safe error message. Public identifier inputs show their
+saved value; saved secret inputs render a fixed mask (`••••`) plus the configured-field
+badge — the mask never derives from the secret.
+
+On startup the Host seeds a provider that has no Vault revision from its legacy source
+(`RAWG_API_KEY`, `GEMINI_API_KEY`, `STEAM_API_KEY`, `IGDB_CLIENT_ID`/`IGDB_CLIENT_SECRET`,
+or the Cloudinary/IGDB columns of `config.json`). Only a complete set is imported, with a
+`null` actor in the audit trail. Submitting a
 card replaces its complete credential set. A separate **Test connection** control is
 disabled while that card has an in-flight save or test.
 

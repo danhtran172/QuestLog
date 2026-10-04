@@ -37,6 +37,16 @@ export async function setConsoleFullscreen(enabled: boolean): Promise<void> {
   }
 }
 
+export async function toggleFullscreen(): Promise<void> {
+  const webview = window.chrome?.webview;
+  if (webview) {
+    webview.postMessage({ type: "questlog.fullscreen-toggle" });
+    return;
+  }
+
+  await setConsoleFullscreen(document.fullscreenElement == null);
+}
+
 export function subscribeFullscreenState(listener: (fullscreen: boolean) => void): () => void {
   const webview = window.chrome?.webview;
   if (!webview) {

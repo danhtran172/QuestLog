@@ -12,10 +12,14 @@ public sealed class PlayTimeService : IDisposable
     private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan GameRefreshInterval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(10);
+
     private readonly ILogger<PlayTimeService> _logger;
     private readonly ConcurrentDictionary<string, int> _pendingSeconds = new();
-    private readonly HashSet<string> _runningGameIds = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Game> _runningGames = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _flushLock = new(1, 1);
+    private readonly object _lifecycleGate = new();
     private CancellationTokenSource? _cancellation;
     private Task? _worker;
     private List<Game> _games = [];
@@ -45,32 +49,65 @@ public sealed class PlayTimeService : IDisposable
 
     public void Start()
     {
-        if (_worker is { IsCompleted: false })
-            return;
+        lock (_lifecycleGate)
+        {
+            if (_worker is { IsCompleted: false })
+                return;
 
-        _cancellation = new CancellationTokenSource();
-        _worker = RunAsync(_cancellation.Token);
-        _logger.LogInformation("Playtime tracking started");
+            var cancellation = new CancellationTokenSource();
+            _cancellation = cancellation;
+
+            // Task.Run la BAT BUOC. Start() duoc goi tu UI thread cua WinForms, noi
+            // da co SynchronizationContext. Neu goi thang RunAsync thi moi doan sau
+            // "await" bi day nguoc ve UI thread; Stop() dung tren UI thread cho worker
+            // xong -> hai ben cho nhau -> tray dong bang vinh vien.
+            _worker = Task.Run(() => RunAsync(cancellation.Token));
+            _logger.LogInformation("Playtime tracking started");
+        }
     }
 
     public void Stop()
     {
-        if (_cancellation == null)
-            return;
+        CancellationTokenSource cancellation;
+        Task? worker;
 
-        _cancellation.Cancel();
+        lock (_lifecycleGate)
+        {
+            if (_cancellation == null)
+                return;
+
+            cancellation = _cancellation;
+            worker = _worker;
+            _cancellation = null;
+            _worker = null;
+        }
+
+        cancellation.Cancel();
+
+        // RunAsync khong nem ra ngoai nen Wait chi cho worker ket thuc. Van dat han
+        // de mot lan treo bat ngo khong khoa luon menu tray.
         try
         {
-            _worker?.GetAwaiter().GetResult();
+            if (worker != null && !worker.Wait(StopTimeout))
+                _logger.LogWarning("Playtime worker did not stop within {Timeout}", StopTimeout);
         }
-        catch (OperationCanceledException)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Playtime worker ended with an error");
         }
 
-        FlushAsync(CancellationToken.None).GetAwaiter().GetResult();
-        _cancellation.Dispose();
-        _cancellation = null;
-        _worker = null;
+        // Lan flush cuoi cung cung phai roi khoi UI thread, vi no await xuong CSDL.
+        try
+        {
+            if (!Task.Run(() => FlushAsync(CancellationToken.None)).Wait(StopTimeout))
+                _logger.LogWarning("Final playtime flush did not finish within {Timeout}", StopTimeout);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Final playtime flush failed");
+        }
+
+        cancellation.Dispose();
         _logger.LogInformation("Playtime tracking stopped");
     }
 
@@ -80,31 +117,72 @@ public sealed class PlayTimeService : IDisposable
         var refreshAt = DateTimeOffset.MinValue;
         var flushAt = DateTimeOffset.UtcNow + FlushInterval;
 
-        while (await timer.WaitForNextTickAsync(cancellationToken))
+        try
         {
-            var now = DateTimeOffset.UtcNow;
-            if (now >= refreshAt)
+            while (await timer.WaitForNextTickAsync(cancellationToken))
             {
-                _games = DataService.LoadActiveGames();
-                refreshAt = now + GameRefreshInterval;
-            }
+                var now = DateTimeOffset.UtcNow;
 
-            SampleGames(now);
+                if (now >= refreshAt)
+                {
+                    // Mot tick hong khong duoc giet ca vong lap. Truoc day CSDL ban
+                    // khoa mot lan la worker chet am tham, menu van hien dang bat va
+                    // khong con giay choi nao duoc ghi cho den khi khoi dong lai.
+                    refreshAt = TryRefreshGames()
+                        ? now + GameRefreshInterval
+                        : now + SampleInterval;
+                }
 
-            if (now >= flushAt)
-            {
-                await FlushAsync(cancellationToken);
-                flushAt = now + FlushInterval;
+                await SampleGamesSafeAsync(now, cancellationToken);
+
+                if (now >= flushAt)
+                {
+                    await FlushAsync(cancellationToken);
+                    flushAt = now + FlushInterval;
+                }
             }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Playtime worker stopped unexpectedly");
         }
     }
 
-    private void SampleGames(DateTimeOffset now)
+    private bool TryRefreshGames()
+    {
+        try
+        {
+            _games = DataService.LoadActiveGames();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not refresh the active game list");
+            return false;
+        }
+    }
+
+    private async Task SampleGamesSafeAsync(DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await SampleGamesAsync(now, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Playtime sampling failed for this tick");
+        }
+    }
+
+    private async Task SampleGamesAsync(DateTimeOffset now, CancellationToken cancellationToken)
     {
         var foregroundWindow = GetForegroundWindow();
         GetWindowThreadProcessId(foregroundWindow, out var foregroundProcessId);
-        var userIsActive = GetIdleTime() < TimeSpan.FromSeconds(30);
-        var currentlyRunning = new HashSet<string>(StringComparer.Ordinal);
+        var userIsActive = GetIdleTime() < IdleThreshold;
+        var currentlyRunning = new Dictionary<string, Game>(StringComparer.Ordinal);
 
         foreach (var game in _games)
         {
@@ -127,7 +205,7 @@ public sealed class PlayTimeService : IDisposable
                 if (processes.Length == 0)
                     continue;
 
-                currentlyRunning.Add(game.Id);
+                currentlyRunning[game.Id] = game;
                 if (userIsActive && processes.Any(x => x.Id == foregroundProcessId))
                     _pendingSeconds.AddOrUpdate(game.Id, (int)SampleInterval.TotalSeconds, (_, value) => value + (int)SampleInterval.TotalSeconds);
             }
@@ -138,20 +216,61 @@ public sealed class PlayTimeService : IDisposable
             }
         }
 
-        foreach (var stoppedId in _runningGameIds.Except(currentlyRunning).ToArray())
+        // Giu ca doi tuong Game chu khong chi Id: game vua bi go khoi danh sach
+        // active van phai bao duoc da tat de BackupService kip sao luu save cuoi.
+        foreach (var stopped in _runningGames.Where(entry => !currentlyRunning.ContainsKey(entry.Key)).ToArray())
+            RaiseGameStopped(new GameActivity(stopped.Value, now));
+
+        var startedGameIds = currentlyRunning.Keys
+            .Where(id => !_runningGames.ContainsKey(id))
+            .ToArray();
+
+        if (startedGameIds.Length > 0)
         {
-            var game = _games.FirstOrDefault(x => x.Id == stoppedId);
-            if (game != null)
-                GameStopped?.Invoke(this, new GameActivity(game, now));
+            try
+            {
+                await DataService.RecordLastPlayedAsync(startedGameIds, now.UtcDateTime, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Failed to persist last-played timestamps");
+            }
         }
 
-        _runningGameIds.Clear();
-        _runningGameIds.UnionWith(currentlyRunning);
+        _runningGames.Clear();
+        foreach (var entry in currentlyRunning)
+            _runningGames[entry.Key] = entry.Value;
+    }
+
+    // Mot handler nem loi (vi du BackupService) khong duoc keo theo ca vong lap dem
+    // gio, va cung khong duoc chan cac handler con lai.
+    private void RaiseGameStopped(GameActivity activity)
+    {
+        var handlers = GameStopped?.GetInvocationList()
+            .Cast<EventHandler<GameActivity>>() ?? [];
+
+        foreach (var handler in handlers)
+        {
+            try
+            {
+                handler(this, activity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "A game-stopped handler failed for {GameName}", activity.Game.Name);
+            }
+        }
     }
 
     private async Task FlushAsync(CancellationToken cancellationToken)
     {
-        if (_pendingSeconds.IsEmpty || !await _flushLock.WaitAsync(0, cancellationToken))
+        if (_pendingSeconds.IsEmpty)
+            return;
+
+        // Khong truyen token vao WaitAsync: luc dung service token da bi huy, cho
+        // token vao day thi lan flush cuoi nem OperationCanceledException va toan bo
+        // so giay dang cho bi vut di.
+        if (!await _flushLock.WaitAsync(0))
             return;
 
         try
@@ -162,6 +281,9 @@ public sealed class PlayTimeService : IDisposable
                 if (_pendingSeconds.TryRemove(entry.Key, out var seconds))
                     batch[entry.Key] = seconds;
             }
+
+            if (batch.Count == 0)
+                return;
 
             try
             {

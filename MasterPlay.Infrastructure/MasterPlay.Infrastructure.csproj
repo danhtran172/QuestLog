@@ -27,7 +27,7 @@
     <PackageReference Include="System.Text.Json" Version="10.0.2" />
   </ItemGroup>
 	<ItemGroup>
-		<None Update="Data\Database\MasterPlay.Template.db">
+		<None Update="Data\Database\QuestLog.Template.db">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

@@ -1,0 +1,10 @@
+/*
+  Nguon anh cho la dung trong hieu ung bui bung ra.
+  Chi con bon la don — cac asset khac (day leo, reu, canh, khom) van nam
+  trong public/assets/jungle/ nhung hien khong duoc dung o dau.
+*/
+
+.j-a-pl-01 { --src: url("/assets/jungle/pl-01.webp"); }
+.j-a-pl-02 { --src: url("/assets/jungle/pl-02.webp"); }
+.j-a-pl-05 { --src: url("/assets/jungle/pl-05.webp"); }
+.j-a-pl-06 { --src: url("/assets/jungle/pl-06.webp"); }

@@ -4,6 +4,7 @@ import {
   ArrowUpDown,
   ArrowUpNarrowWide,
   BarChart3,
+  Check,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -17,6 +18,7 @@ import {
   Rows3,
   Search,
   Settings as SettingsIcon,
+  ShieldCheck,
   Tags,
   UserRound,
   X,
@@ -26,10 +28,18 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useGames } from "@/lib/useGames";
+import { useLibraryMetadataRefresh } from "@/lib/useLibraryMetadataRefresh";
 import { usePlayQueue } from "@/lib/usePlayQueue";
 import { useControllerExperience } from "@/lib/useControllerExperience";
+import { toggleFullscreen } from "@/lib/desktopBridge";
 import { useViewSortProfiles, type ConfigurableView } from "@/lib/useViewSortProfiles";
 import { useAuth } from "@/lib/auth";
+import {
+  ADMIN_SECTIONS,
+  DEFAULT_ADMIN_SECTION,
+  type AdminSection,
+  type WorkspaceMode,
+} from "@/lib/workspace";
 import { api } from "@/lib/api/client";
 import { gameDetailApi } from "@/lib/gameDetailApi";
 import {
@@ -67,6 +77,7 @@ import {
   SelectValue,
   Tooltip,
 } from "@/components/ui";
+import { AdminConsoleView } from "@/components/AdminConsoleView";
 import { SettingsDialog, type SectionKey } from "@/components/SettingsDialog";
 import { DashboardView } from "@/components/DashboardView";
 import { ManageTagsDialog } from "@/components/ManageTagsDialog";
@@ -115,6 +126,18 @@ export default function App() {
      bat moi thiet lap phai di qua config dung chung voi Tray. */
   const [layout, setLayout] = useState<"card" | "list">("card");
 
+  /* Workspace mode — spec 2026-09-14 §2. State cua PHIEN, khong persist: reload
+     hay dang nhap lai deu ve `library`. */
+  const [workspace, setWorkspace] = useState<WorkspaceMode>("library");
+  const [adminSection, setAdminSection] = useState<AdminSection>(DEFAULT_ADMIN_SECTION);
+
+  const isAdmin = authStatus === "signedIn" && account?.role === "admin";
+  const adminConsoleActive = workspace === "adminConsole" && isAdmin;
+
+  /* Kho dung chung sua metadata thi thu vien doi theo — tru field nguoi dung da
+     sua tay. Guest cung co thu vien noi vao kho nen cung phai chay. */
+  useLibraryMetadataRefresh(authStatus === "signedIn" || authStatus === "guest");
+
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [addMethodOpen, setAddMethodOpen] = useState(false);
@@ -130,6 +153,7 @@ export default function App() {
 
   const searchRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const tabBeforeConsoleRef = useRef<Tab>("all");
 
   // Debounce 280ms — DOMAIN_RULES §6.1.
   useEffect(() => {
@@ -159,16 +183,17 @@ export default function App() {
   const { data, isPending, isError, error, refetch } = useGames(
     {
       tab,
-      q: query,
+      q: tab === "console" ? "" : query,
       scope,
-      sort,
-      reverseSort,
+      sort: tab === "console" ? "default" : sort,
+      reverseSort: tab === "console" ? false : reverseSort,
       page,
-      filter: filterToQuery(filters),
+      filter: tab === "console" ? undefined : filterToQuery(filters),
     },
-    tab !== "queue",
+    /* Admin Console thay toan bo vung thu vien — khong fetch thu vien o nen. */
+    tab !== "queue" && !adminConsoleActive,
   );
-  const queue = usePlayQueue(tab === "queue");
+  const queue = usePlayQueue(tab === "queue" && !adminConsoleActive);
   const viewSortProfiles = useViewSortProfiles();
 
   const refreshCurrentView = useCallback(() => {
@@ -207,24 +232,43 @@ export default function App() {
         void refreshCurrentView();
       } else if (e.key === "F6") {
         e.preventDefault();
-        resetAll();
+        /* Reset library khong co nghia trong Admin Console — spec §12.5. */
+        if (!adminConsoleActive) resetAll();
       } else if (e.key === "F11") {
         e.preventDefault();
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void document.documentElement.requestFullscreen().catch(() => {});
+        if (e.repeat) return;
+        void toggleFullscreen().catch((fullscreenError) => {
+          toast.error(fullscreenError instanceof Error ? fullscreenError.message : t("controller.fullscreenError"));
+        });
       } else if (e.key === "k" && (e.ctrlKey || e.metaKey)) {
         // A18 — WPF co Ctrl+K, ban Lovable thieu.
         e.preventDefault();
+        if (adminConsoleActive) return;
         searchRef.current?.focus();
         searchRef.current?.select();
       } else if (e.key === "`" && !typing) {
         e.preventDefault();
+        /* Trong Admin Console, `\`` se mo editor metadata (luong C, spec §12.7).
+           Editor do thuoc giai doan 3 — chua co gi de mo, nen khong lam gi ca
+           thay vi mo nham editor game cua thu vien. */
+        if (adminConsoleActive) return;
         setSelectedGameId(null);
         setDetailMode("add");
         setDetailOpen(true);
-      } else if (e.ctrlKey && ["1", "2", "3", "4"].includes(e.key)) {
+      } else if (
+        e.ctrlKey
+        /* So phim khop so muc that — doi ADMIN_SECTIONS la phim tat theo ngay. */
+        && /^[1-9]$/.test(e.key)
+        && Number(e.key) <= (adminConsoleActive ? ADMIN_SECTIONS.length : TABS.length)
+      ) {
         e.preventDefault();
-        const next = TABS[Number(e.key) - 1];
+        const index = Number(e.key) - 1;
+        if (adminConsoleActive) {
+          const nextSection = ADMIN_SECTIONS[index];
+          if (nextSection) setAdminSection(nextSection);
+          return;
+        }
+        const next = TABS[index];
         if (next) {
           setTab(next);
           setPage(1);
@@ -235,7 +279,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [refreshCurrentView, resetAll]);
+  }, [adminConsoleActive, refreshCurrentView, resetAll, t]);
 
   // A19 — scroll len dau khi doi trang (ban Lovable thieu).
   const goToPage = useCallback((next: number) => {
@@ -322,6 +366,8 @@ export default function App() {
     totalPages,
     layout,
     hasOverlay: hasControllerSurface,
+    /* Console (controller) va Admin Console khong duoc chong nhau — spec §2.1. */
+    suspended: adminConsoleActive,
     t,
     onTabChange: (nextTab) => {
       setTab(nextTab);
@@ -340,16 +386,69 @@ export default function App() {
     onLaunchGame: (gameId) => launchGame.mutate(gameId),
     onRefresh: () => void refreshCurrentView(),
     onLeaveDashboard: () => setDashboardOpen(false),
+    onEnterConsoleSession: () => {
+      if (tab !== "console") tabBeforeConsoleRef.current = tab;
+      setTab("console");
+      setPage(1);
+      setDashboardOpen(false);
+    },
+    onExitConsoleSession: () => {
+      setTab(tabBeforeConsoleRef.current);
+      setPage(1);
+      setDashboardOpen(false);
+    },
   });
   const showConsole = controller.showConsole;
+  /* Ca hai surface fullscreen deu an chrome thu vien. */
+  const hideLibraryChrome = showConsole || adminConsoleActive;
+
+  const enterAdminConsole = useCallback(() => {
+    /* Thoat console session dang chay truoc, de tra lai window state — neu khong
+       Admin Console se ve ben duoi mot fullscreen con treo. */
+    if (controller.consoleSession) controller.toggleConsoleSession();
+    setAdminSection(DEFAULT_ADMIN_SECTION);
+    setDashboardOpen(false);
+    setSettingsOpen(false);
+    setAccountOpen(false);
+    setTagsOpen(false);
+    setTrayOpen(false);
+    setDetailOpen(false);
+    setFilterOpen(false);
+    setSortOpen(false);
+    setAddMethodOpen(false);
+    setMetadataPickerOpen(false);
+    setWorkspace("adminConsole");
+  }, [controller]);
+
+  const exitAdminConsole = useCallback(() => setWorkspace("library"), []);
+
+  /* Mat quyen admin (dang xuat, doi tai khoan, bi khoa) thi roi ve library ngay.
+     Mode khong duoc song sot qua mot phien khac. */
+  useEffect(() => {
+    if (!isAdmin && workspace !== "library") setWorkspace("library");
+  }, [isAdmin, workspace]);
 
   return (
     <div
-      className="app-shell relative min-h-screen bg-bg"
+      className={cn(
+        "app-shell relative min-h-screen bg-bg",
+        /* Vien khung — tin hieu con thay duoc ke ca khi da cuon sau (spec §3). */
+        adminConsoleActive && "ring-1 ring-inset ring-primary/60",
+      )}
+      data-workspace={adminConsoleActive ? "admin" : undefined}
       data-controller-connected={controller.connected ? "true" : "false"}
       data-input-modality={controller.inputModality}
       data-console-fullscreen={controller.fullscreenActive ? "true" : "false"}
     >
+      {adminConsoleActive ? (
+        <AdminConsoleView
+          section={adminSection}
+          onSectionChange={setAdminSection}
+          username={account?.username ?? ""}
+          onExit={exitAdminConsole}
+        />
+      ) : null}
+
       {showConsole ? (
         <Suspense fallback={<div aria-busy="true" className="fixed inset-0 z-30 bg-[#171a1f]" />}>
           <ConsoleLibraryView
@@ -358,8 +457,8 @@ export default function App() {
             tabLabel={t(`nav.${tab}`)}
             isLoading={controllerLoading}
             error={controllerError}
-            emptyTitle={t(tab === "queue" ? "empty.queue" : "empty.noGames")}
-            emptyDescription={t(tab === "queue" ? "empty.queueDesc" : "empty.noGamesDesc")}
+            emptyTitle={t(tab === "queue" ? "empty.queue" : tab === "console" ? "empty.console" : "empty.noGames")}
+            emptyDescription={t(tab === "queue" ? "empty.queueDesc" : tab === "console" ? "empty.consoleDesc" : "empty.noGamesDesc")}
             retryLabel={t("error.retry")}
             previousGameCount={previousGameCount}
             remainingGameCount={remainingGameCount}
@@ -367,14 +466,19 @@ export default function App() {
             browseBackLabel={t("controller.browseBack")}
             moreGamesLabel={t("controller.moreGames").replace("{count}", String(remainingGameCount))}
             continueLabel={t("controller.continueBrowsing")}
+            playLabel={t("action.play")}
+            exitHoldLabel={t("controller.holdToExit")}
+            exitHoldSource={controller.exitHoldSource}
+            exitHoldDurationMs={controller.exitHoldDurationMs}
             onSelectGame={controller.setSelectedGameId}
             onOpenGame={openDetail}
+            onPlayGame={(gameId) => launchGame.mutate(gameId)}
             onRetry={() => void refreshCurrentView()}
           />
         </Suspense>
       ) : null}
 
-      <header className={cn("glass-panel sticky top-0 z-40 border-b", showConsole && "hidden")}>
+      <header className={cn("glass-panel sticky top-0 z-40 border-b", hideLibraryChrome && "hidden")}>
         <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-3 px-4 py-2.5">
           <nav className="stone-slab flex shrink-0 items-center gap-1 rounded-xl p-1">
             {TABS.map((key, i) => {
@@ -518,7 +622,7 @@ export default function App() {
               >
                 {/* Canh phai VUONG va thut -16px vao duoi nut sort (nut ban kinh
                     18px) — nut tron de len, khong con thay duong noi. */}
-                <span className="stone-slab -mr-4 flex h-9 shrink-0 items-center gap-1.5 rounded-l-xl rounded-r-none py-0 pl-3 pr-6 text-xs font-bold text-fg">
+                <span className="stone-slab -mr-4 flex h-9 shrink-0 items-center gap-1.5 rounded-l-xl rounded-r-none !border-r-0 py-0 pl-3 pr-6 text-xs font-bold text-fg">
                   {reverseSort ? (
                     <ArrowDownWideNarrow size={14} className="shrink-0 text-primary" />
                   ) : (
@@ -546,10 +650,20 @@ export default function App() {
                 />
               </PopoverTrigger>
               <PopoverContent align="end" className="w-60">
+                <div className="mb-2 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-2">
+                  <p className="text-[11px] font-semibold text-muted-fg">{t("sort.current")}</p>
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-sm font-bold text-fg">{t(`sort.${sort}`)}</span>
+                    <IconButton
+                      onClick={() => setReverseSort((v) => !v)}
+                      label={reverseSort ? t("sort.desc") : t("sort.asc")}
+                      icon={reverseSort ? <ArrowDownWideNarrow /> : <ArrowUpNarrowWide />}
+                      size="compact"
+                    />
+                  </div>
+                </div>
                 <div className="mb-1 flex items-center justify-between gap-2 px-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-muted-fg">
-                    {t("action.sort")}
-                  </span>
+                  <span className="text-xs font-semibold text-muted-fg">{t("sort.choose")}</span>
                   <div className="flex items-center gap-1">
                     <IconButton
                       onClick={() => {
@@ -563,31 +677,28 @@ export default function App() {
                       size="compact"
                       disabled={sort === "default" && !reverseSort}
                     />
-                    <IconButton
-                      onClick={() => setReverseSort((v) => !v)}
-                      label={reverseSort ? t("sort.desc") : t("sort.asc")}
-                      icon={reverseSort ? <ArrowDownWideNarrow /> : <ArrowUpNarrowWide />}
-                      size="compact"
-                    />
                   </div>
                 </div>
                 <div className="space-y-0.5">
                   {SORT_KEYS.map((k) => (
                     <button
                       key={k}
+                      type="button"
+                      aria-current={sort === k ? "true" : undefined}
                       onClick={() => {
                         setSort(k);
                         setPage(1);
                         setSortOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-center rounded-lg px-2.5 py-1.5 text-sm font-semibold transition-colors",
+                        "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary",
                         sort === k
-                          ? "bg-primary/70 text-primary-fg"
-                          : "text-muted-fg hover:bg-surface-2/70",
+                          ? "bg-primary/18 text-fg"
+                          : "text-muted-fg hover:bg-surface-2/70 hover:text-fg",
                       )}
                     >
-                      {t(`sort.${k}`)}
+                      <span>{t(`sort.${k}`)}</span>
+                      {sort === k ? <Check size={15} className="text-primary" aria-hidden="true" /> : null}
                     </button>
                   ))}
                 </div>
@@ -662,6 +773,16 @@ export default function App() {
                 <DropdownMenuItem onSelect={() => setTagsOpen(true)}>
                   <Tags size={15} /> {t("menu.manageTags")}
                 </DropdownMenuItem>
+                {/* Chi admin. User va guest KHONG render muc nay (khong phai disable)
+                    — spec 2026-09-14 §2.1. */}
+                {isAdmin ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={enterAdminConsole}>
+                      <ShieldCheck size={15} /> {t("menu.adminConsole")}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -670,7 +791,7 @@ export default function App() {
 
       <main
         ref={gridRef}
-        className={cn("relative z-10 mx-auto max-w-[1800px] px-4 py-5 pb-20", showConsole && "hidden")}
+        className={cn("relative z-10 mx-auto max-w-[1800px] px-4 py-5 pb-20", hideLibraryChrome && "hidden")}
       >
         {dashboardOpen ? (
           <DashboardView onClose={() => setDashboardOpen(false)} />
@@ -768,7 +889,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className={cn("glass-panel fixed inset-x-0 bottom-0 z-40 border-t", showConsole && "hidden")}>
+      <footer className={cn("glass-panel fixed inset-x-0 bottom-0 z-40 border-t", hideLibraryChrome && "hidden")}>
         <div className="mx-auto grid max-w-[1800px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2 text-xs text-muted-fg">
           {/* Trai: khoang item dang hien. Trang thai tray KHONG lap lai o day —
               nut Tray goc phai da co cham xanh/xam cho viec do. */}
@@ -874,7 +995,13 @@ export default function App() {
       </footer>
 
       <ControllerPrompts
-        visible={controller.inputModality === "gamepad" && controller.connected}
+        visible={controller.promptPopupAvailable && controller.exitHoldSource == null && (
+          controller.inputModality === "keyboard" ||
+          (controller.inputModality === "gamepad" && controller.connected)
+        )}
+        open={controller.promptsOpen}
+        triggerButton={controller.promptTriggerButton}
+        triggerLabel={t("controller.openControls")}
         prompts={controller.prompts}
         ariaLabel={t("controller.controls")}
       />

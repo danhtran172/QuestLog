@@ -1,0 +1,131 @@
+---
+// Dai tran vien: anh chup che do console lam nen. Phim/nut tay cam lay dung
+// theo app: F10 hoac A + LB + RB de bat, A = chi tiet, X = choi, LB/RB = doi tab.
+import { Image } from "astro:assets";
+import { shot } from "../shots";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang].console;
+const alt = ui[lang].shots.console;
+---
+
+<section id="console" class="band relative isolate overflow-hidden" aria-labelledby="console-title">
+  <Image
+    src={shot(lang, "console")}
+    alt={alt}
+    widths={[960, 1600, 2400, 3200]}
+    sizes="(min-width: 1024px) 72vw, 100vw"
+    class="band-img absolute inset-y-0 right-0 -z-20 h-full object-cover"
+  />
+  <div class="band-shade -z-10" aria-hidden="true"></div>
+
+  <div class="container-page grid grid-cols-[var(--rail)_1fr] py-24 lg:py-28">
+    <div></div>
+    <div class="max-w-[28rem]" data-reveal>
+      <p class="eyebrow">◆ {t.eyebrow}</p>
+      <h2 id="console-title" class="display mt-5 text-[clamp(2.7rem,6vw,4.8rem)] text-balance">{t.title}</h2>
+      <p class="mt-6 text-lg leading-relaxed text-mist/80">{t.body}</p>
+      <ul class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4 text-sm font-semibold text-mist">
+        <li class="prompt"><span class="pad pad-a">A</span>{t.details}</li>
+        <li class="prompt"><span class="pad pad-x">X</span>{t.play}</li>
+        <li class="prompt">
+          <span class="bumper">LB</span><span class="bumper">RB</span>{t.changeTab}
+        </li>
+        <li class="prompt"><kbd class="key">F10</kbd>{t.keyboard}</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .band {
+    margin-block: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  /* Anh neo ben phai, mo dan ve trai de chu nam tren nen toi, khong de len bang chuyen bia. */
+  .band-img {
+    width: 72%;
+    object-position: 50% 45%;
+    mask-image: linear-gradient(90deg, transparent 0%, #000 36%);
+  }
+
+  .band-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--color-abyss) 0%, transparent 16%, transparent 80%, var(--color-abyss) 100%);
+  }
+
+  /* Man hep: chu nam de len anh, nen anh chi con la khong khi. */
+  @media (max-width: 1023px) {
+    .band-img {
+      width: 100%;
+      object-position: 58% 40%;
+      opacity: 0.2;
+      mask-image: none;
+    }
+  }
+
+  .prompt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .pad {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-abyss);
+  }
+
+  .pad-a {
+    background: #5cc46a;
+  }
+
+  .pad-x {
+    background: #4c8df0;
+  }
+
+  .bumper {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.3rem;
+    height: 1.55rem;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 0.55rem 0.55rem 0.4rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-mist);
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .bumper + .bumper {
+    margin-left: -0.25rem;
+  }
+
+  .key {
+    display: inline-grid;
+    place-items: center;
+    height: 1.7rem;
+    padding: 0 0.55rem;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-bottom-width: 3px;
+    border-radius: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-mist);
+    background: rgb(255 255 255 / 0.06);
+  }
+</style>

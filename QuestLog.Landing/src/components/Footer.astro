@@ -1,0 +1,29 @@
+---
+import { localePath, ui, type Locale } from "../i18n/ui";
+import { RELEASES_URL } from "../site";
+
+interface Props {
+  lang: Locale;
+}
+
+const t = ui[Astro.props.lang].footer;
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-line/70">
+  <div class="container-page flex flex-col gap-6 py-10 text-sm text-fog md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span class="flex items-center gap-2 text-mist">
+        <img src="/favicon.png" alt="" width="22" height="22" />
+        <span class="font-display text-lg font-extrabold tracking-[0.04em] uppercase">QuestLog</span>
+      </span>
+      <span>{t.tagline}</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <a href={RELEASES_URL} class="hover:text-mist">{t.releases}</a>
+      <a href={localePath.vi} lang="vi" hreflang="vi" class="hover:text-mist">Tiếng Việt</a>
+      <a href={localePath.en} lang="en" hreflang="en" class="hover:text-mist">English</a>
+      <span>© {year} QuestLog</span>
+    </div>
+  </div>
+</footer>

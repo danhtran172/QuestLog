@@ -338,9 +338,9 @@ export function GameTable({
                   </span>
 
                   <div className="relative h-12 w-[88px] overflow-hidden rounded-md bg-muted">
-                    {game.gImagePath ? (
+                    {game.bannerPath ? (
                       <img
-                        src={game.gImagePath}
+                        src={game.bannerPath}
                         alt=""
                         loading="lazy"
                         className="h-full w-full object-cover"

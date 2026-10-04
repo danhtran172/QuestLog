@@ -66,7 +66,7 @@ For custom profiles:
 
 ## UI design
 
-The editor is a small glass surface matching Questory. It uses text only for rule labels; all actions are icon-only with tooltips.
+The editor is a small glass surface matching QuestLog. It uses text only for rule labels; all actions are icon-only with tooltips.
 
 - Rows are vertically draggable and expose a visible grip.
 - Direction is an icon toggle showing ascending or descending state.

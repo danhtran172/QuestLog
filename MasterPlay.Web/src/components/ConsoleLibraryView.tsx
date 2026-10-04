@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronsLeft, ChevronsRight, Gamepad2, RotateCcw } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Gamepad2, Play, RotateCcw } from "lucide-react";
 import type { GameListItem } from "@/lib/api/domain";
 import { cn } from "@/lib/utils";
 
@@ -17,9 +17,12 @@ function ConsoleCover({
   onSelect: () => void;
   onOpen: () => void;
 }) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const sources = [game.posterPath, game.backdropPath, game.bannerPath]
+    .filter((source): source is string => Boolean(source));
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const source = sources[sourceIndex];
 
-  useEffect(() => setImageFailed(false), [game.imagePath]);
+  useEffect(() => setSourceIndex(0), [game.id, game.posterPath, game.backdropPath, game.bannerPath]);
 
   return (
     <button
@@ -37,12 +40,12 @@ function ConsoleCover({
     >
       <span aria-hidden className="console-cover-backing absolute inset-0 bg-[#20252b]" />
       <span className="console-cover-artwork absolute inset-0 block">
-        {game.imagePath && !imageFailed ? (
+        {source ? (
           <img
-            src={game.imagePath}
+            src={source}
             alt={game.name}
             draggable={false}
-            onError={() => setImageFailed(true)}
+            onError={() => setSourceIndex((current) => current + 1)}
             className="h-full w-full object-cover"
           />
         ) : (
@@ -89,6 +92,48 @@ function ConsoleContinuationCard({
   );
 }
 
+function ConsoleExitHoldIndicator({
+  source,
+  durationMs,
+  label,
+}: {
+  source: "keyboard" | "gamepad" | null;
+  durationMs: number;
+  label: string;
+}) {
+  if (!source) return null;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[80] grid place-items-center" role="status" aria-label={label}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative grid h-24 w-24 place-items-center rounded-full border border-white/15 bg-[#15181d]/88 shadow-2xl backdrop-blur-xl"
+      >
+        <svg aria-hidden viewBox="0 0 88 88" className="absolute inset-1 h-[88px] w-[88px] -rotate-90">
+          <circle cx="44" cy="44" r="38" fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="4" />
+          <motion.circle
+            key={source}
+            cx="44"
+            cy="44"
+            r="38"
+            fill="none"
+            stroke="var(--color-primary)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: durationMs / 1_000, ease: "linear" }}
+          />
+        </svg>
+        <kbd className="relative grid h-11 min-w-11 place-items-center rounded-full border border-white/25 bg-white/10 px-2 font-sans text-sm font-black text-white">
+          {source === "keyboard" ? "Esc" : "B"}
+        </kbd>
+      </motion.div>
+    </div>
+  );
+}
+
 export function ConsoleLibraryView({
   games,
   selectedGameId,
@@ -104,8 +149,13 @@ export function ConsoleLibraryView({
   browseBackLabel,
   moreGamesLabel,
   continueLabel,
+  playLabel,
+  exitHoldLabel,
+  exitHoldSource,
+  exitHoldDurationMs,
   onSelectGame,
   onOpenGame,
+  onPlayGame,
   onRetry,
 }: {
   games: readonly GameListItem[];
@@ -122,14 +172,19 @@ export function ConsoleLibraryView({
   browseBackLabel: string;
   moreGamesLabel: string;
   continueLabel: string;
+  playLabel: string;
+  exitHoldLabel: string;
+  exitHoldSource: "keyboard" | "gamepad" | null;
+  exitHoldDurationMs: number;
   onSelectGame: (gameId: string) => void;
   onOpenGame: (gameId: string) => void;
+  onPlayGame: (gameId: string) => void;
   onRetry: () => void;
 }) {
   const reduceMotion = useReducedMotion();
   const selectedIndex = Math.max(0, games.findIndex((game) => game.id === selectedGameId));
   const selectedGame = games[selectedIndex] ?? null;
-  const backdrop = selectedGame?.gImagePath || selectedGame?.imagePath || null;
+  const backdrop = selectedGame?.backdropPath || selectedGame?.bannerPath || selectedGame?.posterPath || null;
   const visibleGames = useMemo(
     () => games
       .map((game, index) => ({ game, offset: index - selectedIndex }))
@@ -144,7 +199,7 @@ export function ConsoleLibraryView({
   useEffect(() => {
     for (let index = Math.max(0, selectedIndex - 2); index <= Math.min(games.length - 1, selectedIndex + 2); index += 1) {
       const game = games[index];
-      const sources = game ? [game.imagePath, game.gImagePath] : [];
+      const sources = game ? [game.posterPath, game.backdropPath, game.bannerPath] : [];
       sources.forEach((source) => {
         if (!source) return;
         const image = new Image();
@@ -170,6 +225,8 @@ export function ConsoleLibraryView({
         ) : null}
       </AnimatePresence>
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,14,17,.7),rgba(12,14,17,.2)_42%,rgba(12,14,17,.86))]" />
+
+      <ConsoleExitHoldIndicator source={exitHoldSource} durationMs={exitHoldDurationMs} label={exitHoldLabel} />
 
       <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-[clamp(1.5rem,5vw,5rem)] py-[clamp(1.25rem,4vh,3rem)]">
         <span className="text-sm font-extrabold uppercase tracking-[0.16em] text-white/72">QuestLog</span>
@@ -242,6 +299,16 @@ export function ConsoleLibraryView({
                   </span>
                 ) : null}
               </div>
+              {selectedGame.canLaunch ? (
+                <button
+                  type="button"
+                  onClick={() => onPlayGame(selectedGame.id)}
+                  className="pointer-events-auto mx-auto mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/45 bg-primary px-4 py-2 text-sm font-black text-primary-fg shadow-lg outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-white/70"
+                >
+                  <Play aria-hidden size={16} fill="currentColor" />
+                  {playLabel}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </>

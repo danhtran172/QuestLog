@@ -193,6 +193,61 @@
     0 28px 60px oklch(0 0 0 / 0.66);
 }
 
+/*
+  ── ADMIN CONSOLE — signature xanh duong ────────────────────────
+  Spec 2026-09-14 §3.
+
+  `@theme inline` o tren khien utility Tailwind tham chieu THANG toi
+  `--questory-*` tai cho dung, nen ghi de o day la du: moi IconButton, pill,
+  focus ring deu doi theo ma KHONG phai sua tung component.
+
+  Mau KHONG duoc la tin hieu duy nhat — chu "ADMIN CONSOLE" trong band moi la
+  phan bat buoc (nguoi mu mau, screenshot den trang).
+
+  Phai dinh nghia du cho ca 4 theme mode. Khong hardcode hex trong component.
+*/
+[data-workspace="admin"] {
+  --questory-primary: oklch(0.68 0.13 255);
+  --questory-primary-fg: oklch(0.16 0.03 255);
+  --questory-primary-deep: oklch(0.28 0.06 255);
+  --questory-accent: oklch(0.66 0.11 248);
+  --questory-highlight: oklch(0.76 0.1 250);
+
+  --tone-add: oklch(0.7 0.12 255);
+  --tone-edit: oklch(0.72 0.11 238);
+
+  --admin-band: oklch(0.4 0.09 258);
+  --admin-band-fg: oklch(0.96 0.02 255);
+}
+
+:root[data-theme="light"] [data-workspace="admin"] {
+  --questory-primary: oklch(0.47 0.14 260);
+  --questory-primary-fg: oklch(0.985 0.006 258);
+  --questory-primary-deep: oklch(0.3 0.09 260);
+  --questory-accent: oklch(0.5 0.12 252);
+  --questory-highlight: oklch(0.58 0.11 252);
+
+  --tone-add: oklch(0.5 0.13 258);
+  --tone-edit: oklch(0.52 0.12 240);
+
+  --admin-band: oklch(0.42 0.12 260);
+  --admin-band-fg: oklch(0.985 0.006 258);
+}
+
+:root[data-theme="jungle"] [data-workspace="admin"] {
+  --questory-primary: oklch(0.7 0.11 252);
+  --questory-primary-fg: oklch(0.14 0.025 252);
+  --questory-primary-deep: oklch(0.3 0.05 252);
+  --questory-accent: oklch(0.66 0.09 246);
+  --questory-highlight: oklch(0.76 0.08 250);
+
+  --tone-add: oklch(0.7 0.1 252);
+  --tone-edit: oklch(0.71 0.1 236);
+
+  --admin-band: oklch(0.38 0.08 254);
+  --admin-band-fg: oklch(0.95 0.02 252);
+}
+
 @layer base {
   html,
   body,
@@ -202,6 +257,24 @@
 
   html {
     font-family: var(--font-sans);
+
+    /*
+      Chan cuon NGANG do trang tri sinh ra. Card hover thi phong to va (o theme
+      jungle) bui la bung ra ngoai vien — o cot cuoi ben phai, phan tho ra vuot
+      qua le trang va de trang sinh ra mot thanh cuon ngang chi de xem cho
+      trong. `clip` chu khong phai `hidden`: `hidden` bien html thanh khung
+      cuon, pha vo sticky/fixed; `clip` chi cat, khong tao khung cuon nao.
+    */
+    overflow-x: clip;
+  }
+
+  /*
+    WebView2/Edge tu chen nut "hien mat khau" (va nut xoa) vao o password. App da
+    co nut hien/an rieng, nen an nut cua trinh duyet de khong co hai con mat.
+  */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
   }
 
   /*
@@ -766,7 +839,8 @@
   --liquid-light-y: 22%;
   --liquid-shadow-x: 1.7px;
   --liquid-shadow-y: 1.7px;
-  position: relative;
+  /* position dat bang class `relative` trong IconButton: rule khong-layer nay
+     se thang `absolute` cua Tailwind va day nut ra khoi cho can dat. */
   overflow: hidden;
   isolation: isolate;
   border: 1px solid color-mix(in oklab, white 28%, transparent);

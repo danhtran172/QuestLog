@@ -2,3 +2,11 @@
 [Bb]in/
 [Oo]bj/
 *.user
+auth.local.json
+auth.local.example.json
+.artifacts/
+.codex-build/
+.claude/settings.local.json
+supabase/.temp/
+*.tsbuildinfo
+desktop.ini

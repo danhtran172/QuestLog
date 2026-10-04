@@ -34,7 +34,7 @@ Tên field là `LibraryOwnerKey`, không nhận từ payload. Game metadata đư
 - `igdb_id` bigint nullable, unique khi có; dành cho crawler tương lai.
 - `name` bắt buộc; `developer`, `publisher`, `summary` nullable.
 - `publish_date`, `is_dlc`, `base_metadata_game_id`.
-- `cover_url`, `gallery_url`, `steam_library_image_url`.
+- `cover_url`, `gallery_url`, `banner_url`.
 - `meta_score`, `avg_playtime_hours`, `series_id`.
 - `revision`, `created_at`, `updated_at`.
 - `search_vector` sinh từ name, developer, publisher và series.

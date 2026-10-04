@@ -1,0 +1,76 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "./Header.astro";
+import Hero from "./Hero.astro";
+import Showcase from "./Showcase.astro";
+import Journey from "./Journey.astro";
+import Download from "./Download.astro";
+import Footer from "./Footer.astro";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const { meta } = ui[lang];
+---
+
+<Base lang={lang} title={meta.title} description={meta.description}>
+  <Header lang={lang} />
+  <main>
+    <Hero lang={lang} />
+    <Showcase lang={lang} />
+    <!-- Tuyen duong ban do: noi cac moc [data-route-point] tu Journey toi dau X o Download. -->
+    <div class="route relative" data-route>
+      <svg class="route-svg" aria-hidden="true">
+        <path class="route-ahead"></path>
+        <path class="route-done"></path>
+        <circle class="route-head" r="5"></circle>
+      </svg>
+      <Journey lang={lang} />
+      <Download lang={lang} />
+    </div>
+  </main>
+  <Footer lang={lang} />
+</Base>
+
+<script>
+  import { initLanding } from "../scripts/landing";
+  initLanding();
+</script>
+
+<style>
+  .route-svg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .route-ahead {
+    fill: none;
+    stroke: color-mix(in oklab, var(--color-parchment) 42%, transparent);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 7 11;
+  }
+
+  .route-done {
+    fill: none;
+    stroke: var(--color-quest);
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-quest) 70%, transparent));
+  }
+
+  .route-head {
+    fill: var(--color-quest);
+    opacity: 0;
+    filter: drop-shadow(0 0 8px var(--color-quest));
+    transition: opacity 0.3s;
+  }
+</style>

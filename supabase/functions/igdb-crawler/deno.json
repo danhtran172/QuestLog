@@ -1,0 +1,10 @@
+{
+  "compilerOptions": { "strict": true },
+  "imports": {
+    "@electric-sql/pglite": "npm:@electric-sql/pglite@0.5.8"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-env --allow-sys . ../../tests",
+    "check": "deno check index.ts core.ts"
+  }
+}

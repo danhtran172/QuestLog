@@ -38,6 +38,8 @@ public partial class MainWindow : Window
         Environment.GetEnvironmentVariable("QUESTORY_URL") ?? "http://localhost:5173/";
 
     private WindowState _stateBeforeFullscreen = WindowState.Normal;
+    private Rect _boundsBeforeFullscreen;
+    private WindowChrome? _chromeBeforeFullscreen;
     private bool _isFullscreen;
     private bool _consoleFullscreenSession;
     private bool _fullscreenBeforeConsoleSession;
@@ -110,6 +112,10 @@ public partial class MainWindow : Window
         };
 
         await WaitForServerAsync(AppUrl);
+        // run-web.cmd khoi dong lai Host moi lan mo app trong khi Vite van chay san.
+        // Cho ca API (qua proxy cua Vite) de man dang nhap khong goi vao Host chua len
+        // va nhan 500 tu proxy. Het thoi gian thi van mo app; frontend tu thu lai.
+        await WaitForServerAsync(new Uri(new Uri(AppUrl), "/api/health").ToString());
         core.Navigate(AppUrl);
     }
 
@@ -119,8 +125,16 @@ public partial class MainWindow : Window
         {
             using var message = JsonDocument.Parse(e.WebMessageAsJson);
             var root = message.RootElement;
-            if (!root.TryGetProperty("type", out var type) ||
-                type.GetString() != "questlog.console-fullscreen" ||
+            if (!root.TryGetProperty("type", out var type) || type.ValueKind != JsonValueKind.String) return;
+
+            if (type.GetString() == "questlog.fullscreen-toggle")
+            {
+                ToggleFullscreen();
+                PostFullscreenState();
+                return;
+            }
+
+            if (type.GetString() != "questlog.console-fullscreen" ||
                 !root.TryGetProperty("enabled", out var enabled) ||
                 enabled.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
             {
@@ -265,6 +279,17 @@ public partial class MainWindow : Window
         var monitorInfo = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref monitorInfo)) return;
 
+        if (_isFullscreen)
+        {
+            // Fullscreen uses physical monitor bounds, including the taskbar area.
+            // Keep this window non-topmost so launched games can take focus normally.
+            var bounds = monitorInfo.MonitorArea;
+            SetWindowPos(handle, IntPtr.Zero, bounds.Left, bounds.Top,
+                bounds.Right - bounds.Left, bounds.Bottom - bounds.Top,
+                SwpNoZOrder | SwpNoActivate);
+            return;
+        }
+
         var dpiScale = GetDpiForWindow(handle) / 96d;
         if (dpiScale <= 0) dpiScale = VisualTreeHelper.GetDpi(this).DpiScaleX;
 
@@ -383,7 +408,7 @@ public partial class MainWindow : Window
         AutomationProperties.SetName(MaximizeButton, isMaximized ? "Restore" : "Maximize");
         ApplyWindowCornerPreference();
 
-        if (WindowState == WindowState.Normal && !_isFullscreen)
+        if (WindowState == WindowState.Normal)
         {
             Dispatcher.BeginInvoke(() => FitWindowToCurrentMonitor(usePreferredSize: false));
         }
@@ -409,6 +434,7 @@ public partial class MainWindow : Window
         if (key == Key.F11)
         {
             e.Handled = true;
+            if (e.IsRepeat) return;
             ToggleFullscreen();
             PostFullscreenState();
         }
@@ -416,30 +442,40 @@ public partial class MainWindow : Window
 
     private void ToggleFullscreen()
     {
-        var chrome = WindowChrome.GetWindowChrome(this);
-
         if (_isFullscreen)
         {
             _isFullscreen = false;
+            WindowState = WindowState.Normal;
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.CanResize;
             TitleBar.Visibility = Visibility.Visible;
             TitleBarRow.Height = new GridLength(36);
-            if (chrome is not null) chrome.CaptionHeight = 36;
+            WindowChrome.SetWindowChrome(this, _chromeBeforeFullscreen);
+            Left = _boundsBeforeFullscreen.Left;
+            Top = _boundsBeforeFullscreen.Top;
+            Width = _boundsBeforeFullscreen.Width;
+            Height = _boundsBeforeFullscreen.Height;
             WindowState = _stateBeforeFullscreen;
             Dispatcher.BeginInvoke(() => FitWindowToCurrentMonitor(usePreferredSize: false));
         }
         else
         {
             _stateBeforeFullscreen = WindowState;
+            _boundsBeforeFullscreen = RestoreBounds;
+            _chromeBeforeFullscreen = WindowChrome.GetWindowChrome(this);
             _isFullscreen = true;
             TitleBar.Visibility = Visibility.Collapsed;
             TitleBarRow.Height = new GridLength(0);
-            if (chrome is not null) chrome.CaptionHeight = 0;
+            // WindowChrome/maximize can constrain the client area to the work area.
+            // A borderless normal window can cover the entire monitor instead.
+            WindowChrome.SetWindowChrome(this, null);
+            WindowState = WindowState.Normal;
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
-            WindowState = WindowState.Maximized;
+            FitWindowToCurrentMonitor(usePreferredSize: false);
         }
+
+        ApplyWindowCornerPreference();
     }
 
     [DllImport("user32.dll")]

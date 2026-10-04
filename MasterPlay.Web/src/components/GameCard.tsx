@@ -38,8 +38,8 @@ export function GameCardSkeleton() {
  *
  * Kich thuoc 270 x 126.2 khop CHINH XAC voi WPF (MainWindow.xaml:314,341).
  *
- * ANH: dung `gImagePath` (gallery, ngang 460x215) — GIONG WPF hien tai
- * (MainWindow.xaml:348) va giong ban Lovable. `imagePath` (cover, doc)
+ * ANH: dung `bannerPath` (Steam header ngang 460x215).
+ * `posterPath` chi dung cho be mat doc nhu Console mode.
  * KHONG dung o card; no danh cho hero o man chi tiet.
  *
  * `hints` quyet dinh field nao hien — do BACKEND tinh theo sort/filter dang bat
@@ -100,7 +100,14 @@ export function GameCard({
         aria-label={`${t("action.details")}: ${game.name}`}
         onClick={onOpen}
         onKeyDown={handleOpenKeyDown}
-        className="flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
+        /*
+          `relative` la thu BAT BUOC: vet sang ben duoi la absolute, ma
+          `overflow-hidden` chi cat duoc phan tu absolute khi chinh no la khoi
+          chua (containing block) cua phan tu do. Thieu `relative` thi khoi
+          chua nhay len `article`, vet sang truot han ra NGOAI card mot chieu
+          rong card — o cot cuoi ben phai no day trang sinh thanh cuon ngang.
+        */
+        className="relative flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/70"
       >
         {/* Vet sang duoc clip ben trong card khi tan la tach ra. */}
         <span className="pointer-events-none absolute inset-0 z-20 -translate-x-full bg-gradient-to-r from-transparent via-fg/8 to-transparent opacity-0 transition-all duration-700 group-hover:translate-x-full group-hover:opacity-100" />
@@ -111,9 +118,9 @@ export function GameCard({
           className="relative w-full shrink-0 overflow-hidden bg-muted"
           style={{ aspectRatio: `${CARD_WIDTH} / ${CARD_IMAGE_HEIGHT}` }}
         >
-          {game.gImagePath ? (
+          {game.bannerPath ? (
             <img
-              src={game.gImagePath}
+              src={game.bannerPath}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -212,13 +219,13 @@ export function GameCard({
               {hasAveragePlaytime ? (
                 <CommunityAveragePlaytime
                   hours={game.avgPlaytimeHours}
-                  className="text-[12px] [&>span]:scale-[1.08]"
+                  className="text-[12px]"
                 />
               ) : null}
               {hasPlayerPlaytime ? (
                 <Tooltip label={t("card.playtime")}>
                   <span className="col-start-2 inline-flex items-center gap-1 justify-self-end">
-                    <PlayerPlaytimeIcon className="scale-[1.08] text-sky-400" />
+                    <PlayerPlaytimeIcon className="text-sky-400" />
                     {formatPlaytimeSeconds(game.totalPlaytimeSeconds)}
                   </span>
                 </Tooltip>

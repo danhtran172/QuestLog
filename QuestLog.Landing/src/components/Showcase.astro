@@ -1,0 +1,185 @@
+---
+// Anh chup thu vien that dat trong khung cua so Windows 11, hai card game
+// cat rieng (cung du lieu that) noi len nhu anh phong to.
+import { Image } from "astro:assets";
+import { shot } from "../shots";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang].shots;
+---
+
+<section class="relative z-10 -mt-36 lg:-mt-48">
+  <div class="container-page">
+    <div class="stage">
+      <figure class="window">
+        <div class="window-bar" aria-hidden="true">
+          <img src="/favicon.png" alt="" width="14" height="14" />
+          <span>QuestLog</span>
+          <span class="ml-auto flex items-center gap-6 text-fog">
+            <svg viewBox="0 0 10 10" class="h-2.5 w-2.5"><path d="M0 5h10" stroke="currentColor"></path></svg>
+            <svg viewBox="0 0 10 10" class="h-2.5 w-2.5"><rect x="0.5" y="0.5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor"></rect></svg>
+            <svg viewBox="0 0 10 10" class="h-2.5 w-2.5"><path d="m0.5 0.5 9 9m0-9-9 9" stroke="currentColor"></path></svg>
+          </span>
+        </div>
+        <Image
+          src={shot(lang, "library")}
+          alt={t.library}
+          widths={[800, 1200, 1600, 2400]}
+          sizes="(min-width: 1200px) 1136px, 94vw"
+          loading="eager"
+          class="block h-auto w-full"
+        />
+      </figure>
+
+      <Image
+        src={shot(lang, "card-playing")}
+        alt=""
+        aria-hidden="true"
+        widths={[300, 604]}
+        sizes="(min-width: 1024px) 240px, 1px"
+        class="cutout cutout-a"
+      />
+      <Image
+        src={shot(lang, "card-done")}
+        alt=""
+        aria-hidden="true"
+        widths={[300, 602]}
+        sizes="(min-width: 1024px) 230px, 1px"
+        class="cutout cutout-b"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .stage {
+    position: relative;
+    perspective: 2400px;
+  }
+
+  /* Quang sang xanh hat len tu duoi cua so. */
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 10% 6% -8%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--color-quest) 38%, transparent), transparent);
+    filter: blur(50px);
+  }
+
+  .window {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.09);
+    border-radius: 14px;
+    background: #1d2025;
+    box-shadow:
+      0 60px 140px -40px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(0 0 0 / 0.45);
+    transform-origin: 50% 100%;
+  }
+
+  /* Vet loa kinh cheo, rat nhe. */
+  .window::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(118deg, rgb(255 255 255 / 0.08), transparent 32%);
+  }
+
+  .window-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.15rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.05);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-fog);
+  }
+
+  .cutout {
+    position: absolute;
+    display: none;
+    height: auto;
+    /* Bo goc dung ti le card trong app (18px tren card 301x344). */
+    border-radius: 5.98% / 5.23%;
+    box-shadow:
+      0 40px 80px -24px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(255 255 255 / 0.07);
+  }
+
+  .cutout-a {
+    left: -3.5%;
+    bottom: -9%;
+    width: 21%;
+    rotate: -5deg;
+  }
+
+  .cutout-b {
+    right: -3%;
+    top: 16%;
+    width: 20%;
+    rotate: 4deg;
+  }
+
+  @media (min-width: 1024px) {
+    .cutout {
+      display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .window {
+        animation: window-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 40%;
+      }
+
+      .cutout-a {
+        animation: float-a linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 60%;
+      }
+
+      .cutout-b {
+        animation: float-b linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 60%;
+      }
+
+      @keyframes window-rise {
+        from {
+          transform: rotateX(18deg) scale(0.93) translateY(30px);
+        }
+      }
+
+      @keyframes float-a {
+        from {
+          transform: translateY(90px);
+        }
+        to {
+          transform: translateY(-50px);
+        }
+      }
+
+      @keyframes float-b {
+        from {
+          transform: translateY(140px);
+        }
+        to {
+          transform: translateY(-90px);
+        }
+      }
+    }
+  }
+</style>

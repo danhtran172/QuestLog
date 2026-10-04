@@ -1,12 +1,11 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using MasterPlay.Infrastructure.Integrations;
 
 namespace MasterPlay.Infrastructure.Integrations.Gemini;
 
 public static class GeminiService
 {
-    // Keep this in an environment variable in production; the fallback preserves the existing app configuration.
-    private const string FallbackApiKey = "AIzaSyAtWwdGUXOIBNQhTjhm74DJV4wlEbP7Pb8";
     private const string Model = "gemini-2.5-flash";
     private static readonly HttpClient Client = new()
     {
@@ -20,9 +19,10 @@ public static class GeminiService
         if (string.IsNullOrWhiteSpace(gameName))
             return null;
 
-        var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-        if (string.IsNullOrWhiteSpace(apiKey))
-            apiKey = FallbackApiKey;
+        var apiKey = RuntimeIntegrationCredentials.TryGet("gemini", "apiKey", out var configured)
+            ? configured
+            : Environment.GetEnvironmentVariable("GEMINI_API_KEY")?.Trim();
+        if (string.IsNullOrWhiteSpace(apiKey)) return null;
 
         try
         {
@@ -88,9 +88,9 @@ public static class GeminiService
 
             return NormalizeExecutableName(executable.GetString());
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[Gemini] Executable lookup skipped: {ex.Message}");
+            Console.WriteLine("[Gemini] Executable lookup skipped.");
             return null;
         }
     }

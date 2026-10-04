@@ -112,7 +112,7 @@ Chạy trong static ctor của `DataService`, idempotent, theo pattern `EnsureCo
    Cập nhật `MasterPlayContext` tương ứng (bỏ `HasIndex(Name).IsUnique()`).
 5. Seed một lần — chỉ khi `ThemeGroups` rỗng: tạo 4 nhóm chung và gán theme theo §4.6 cho các theme
    `system:shared` khớp `NameKey` và đang `GroupId IS NULL`. Theme không có trong bảng → chưa phân nhóm.
-6. Áp dụng tương tự cho `QuestLog.Template.db` (commit file template đã migrate).
+6. `QuestLog.Template.db` **không** sửa: template được copy rồi migration này chạy ngay trên bản copy (chốt khi triển khai).
 
 ### 4.6. Dữ liệu seed
 
@@ -183,7 +183,7 @@ Mọi thao tác ghi chỉ chạm dữ liệu **cá nhân của người gọi** 
 | `GET` | `/api/taxonomy/{genres\|themes}?q=` | Sẵn có. Trả shared + personal của người gọi, đã khử trùng (§4.4). |
 | `GET` | `/api/taxonomy/themes/grouped?q=` | `GroupedThemes`. Có `q` → lọc theo tên phía server, bỏ nhóm rỗng. Không `q` → giữ cả nhóm rỗng. |
 | `POST` | `/api/taxonomy/{genres\|themes}` | Tạo personal. `iconData` bị bỏ qua. Theme nhận `groupId` (kiểm tra I2). Trùng `NameKey` với hàng shared hoặc personal mà người gọi thấy → `409 TAXONOMY_NAME_EXISTS`. |
-| `PUT` | `/api/taxonomy/{genres\|themes}/{id}` | Chỉ hàng personal của người gọi, ngược lại `403 TAXONOMY_NOT_EDITABLE`. Theme nhận `groupId`. |
+| `PUT` | `/api/taxonomy/{genres\|themes}/{id}` | Chỉ hàng personal của người gọi, ngược lại `403 TAXONOMY_NOT_EDITABLE`. **Không** đổi nhóm (chốt khi triển khai: client cũ gửi `groupId` null sẽ vô tình kéo theme ra khỏi nhóm) — chuyển nhóm chỉ qua `…/themes/order`. |
 | `DELETE` | `/api/taxonomy/{genres\|themes}/{id}` | Như trên. Xoá liên kết `GameGenres`/`GameThemes` + hàng trong **một transaction** (đóng PARITY M33). |
 | `PUT` | `/api/taxonomy/themes/order` | `ThemeOrderRequest`. Mọi `ids` phải là theme personal của người gọi; đặt `GroupId = groupId`, `SortOrder = index`. Một transaction. |
 | `POST` | `/api/taxonomy/theme-groups` | Tạo nhóm personal (I6). |
@@ -289,8 +289,8 @@ vào `i18n.tsx` (EN + VI). Tên nhóm/theme lấy từ API (`displayName` / `nam
 
 ## 7. Kiểm thử
 
-- **Backend:** tách logic thuần vào `TaxonomyRules` (normalize, kiểm tra I1/I2/I6, sắp xếp §4.3, khử trùng
-  §4.4). Thêm project `MasterPlay.Host.Tests` (xUnit) chỉ test class này.
+- **Backend:** tách logic thuần vào `MasterPlay.Core/Taxonomy/TaxonomyRules` (normalize, kiểm tra I1/I2/I6, sắp xếp
+  §4.3, khử trùng §4.4) — đặt ở Core để migration (Infrastructure) dùng chung. Project `MasterPlay.Core.Tests` (xUnit).
 - **Migration:** chạy trên **bản sao** DB thật; kiểm tra 42 theme giữ icon, 4 nhóm, phân bổ đúng §4.6, chạy lần
   hai không đổi gì.
 - **Frontend:** `tests/themeBoard.test.mjs` (`node:test`) cho `themeBoard.ts`.

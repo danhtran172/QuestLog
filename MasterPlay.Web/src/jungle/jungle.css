@@ -1,0 +1,172 @@
+/*
+  Jungle theme — hieu ung tren card.
+
+  Chi con MOT hieu ung: bui la bung ra SAU card khi giu chuot 1 giay. Trang tri
+  tinh dat tren mat card va tang cay o nen trang deu da bo theo yeu cau.
+
+  KHONG dat overflow:hidden hay clip-path len phan tu la nao — la phai hien
+  nguyen ven.
+*/
+
+@import "./assets.css";
+
+/* ── Nen anh chung cho moi asset ─────────────────────────────── */
+
+.j-bl {
+  position: absolute;
+  aspect-ratio: var(--ar, 1);
+  background: var(--src) center / contain no-repeat;
+  pointer-events: none;
+}
+
+/* Chi hien o theme jungle */
+.j-bush {
+  display: none;
+}
+
+:root[data-jungle-fx] .j-bush {
+  display: block;
+}
+
+/* ── Lop bao card ────────────────────────────────────────────── */
+
+/*
+  Ton tai chi de bui la nam duoc NGOAI card. Phai KHONG tao ngan xep moi —
+  khong transform, khong z-index, khong opacity — neu khong no lai nhot bui
+  la vao trong dung nhu cu.
+*/
+.j-card-wrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+/* ── Bui la bung ra khi hover ────────────────────────────────── */
+
+/*
+  Bui la la ANH EM dung TRUOC card trong DOM, nen duoc ve truoc. Nen card (94%
+  dac) phu len phan nam trong bao card; chi phan tho ra ngoai vien moi hien.
+  Do la thu lam hieu ung doc ra "card duoc loi khoi bui" chu khong phai "la
+  dan len card".
+
+  KHONG dung z-index: -1 nua. Luc hover card co `scale` va `z-index` nen no
+  thanh mot ngan xep, va con z-index am trong ngan xep lai duoc ve SAU nen cua
+  chinh no — tuc la la se nhay len TRUOC card. Thu tu DOM moi la thu dang tin.
+*/
+.j-bush {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.j-bl {
+  left: 50%;
+  top: 50%;
+  width: var(--w);
+  transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.3);
+  opacity: 0;
+  filter: brightness(1.06) drop-shadow(0 5px 12px oklch(0 0 0 / 0.65));
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 300ms ease;
+}
+
+:root[data-jungle-fx] .j-card-wrap:hover .j-bl,
+:root[data-jungle-fx] .j-card-wrap:focus-within .j-bl {
+  transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+  opacity: 0.95;
+  /*
+    Doi 1 giay moi bung. Luot chuot ngang qua luoi thi khong card nao no ca —
+    chi khi nguoi dung thuc su dung lai. Khong co do tre nay thi ca luoi nhap
+    nhay moi lan re chuot qua.
+  */
+  transition-delay: calc(1s + var(--i) * 40ms);
+}
+
+/* Tha ra thi thu ve ngay va nhanh hon luc bung — bui cay khep lai dut khoat */
+:root[data-jungle-fx] .j-card-wrap:not(:hover):not(:focus-within) .j-bl {
+  transition-duration: 300ms, 220ms;
+  transition-delay: 0ms;
+}
+
+/* ── Hai giai doan cua hover ─────────────────────────────────── */
+
+/*
+  Giai doan 1 — ngay lap tuc: card chi NOI BAT len mot chut. Du de biet con tro
+  dang o dau, khong du de goi la mot hieu ung.
+
+  Giai doan 2 — sau 1 giay: card thuc su bi LOI RA khoi bui, cung luc la bung.
+  Duong cong co vot qua (1.4) nen no giat ra roi moi lang lai, giong bi rut
+  khoi cho dang mac.
+
+  Ky thuat: mot thuoc tinh `transform` khong mang duoc hai do tre khac nhau.
+  Nhung `translate` va `scale` la HAI thuoc tinh CSS rieng, moi cai co do tre
+  cua no, va chung tu hop thanh voi nhau. Nho vay khong phai them lop bao nao
+  vao DOM cua GameCard.
+*/
+:root[data-jungle-fx] .game-card {
+  /* Vo hieu hover cua Tailwind de hai giai doan khong danh nhau */
+  transform: none;
+  transition-property: translate, scale, box-shadow, border-color;
+  transition-duration: 300ms, 620ms, 300ms, 300ms;
+  transition-timing-function:
+    cubic-bezier(0.16, 1, 0.3, 1),
+    cubic-bezier(0.34, 1.4, 0.64, 1),
+    ease,
+    ease;
+  transition-delay: 0ms, 0ms, 0ms, 0ms;
+}
+
+:root[data-jungle-fx] .game-card:hover,
+:root[data-jungle-fx] .game-card:focus-within {
+  z-index: 12;
+  translate: 0 -4px;
+  scale: 1.05;
+  /* Chi RIENG scale doi 1 giay — do la cai "loi ra" */
+  transition-delay: 0ms, 1s, 0ms, 0ms;
+  border-color: color-mix(in oklab, var(--color-highlight) 40%, var(--color-primary));
+  box-shadow:
+    0 20px 44px -18px oklch(0 0 0 / 0.9),
+    0 0 30px -12px oklch(0.78 0.16 138 / 0.45);
+}
+
+/* ── Do dac cua card trong he mau CL-01 ──────────────────────── */
+
+/*
+  Bang mau dat Card o oklch(0.312) va Nen o oklch(0.420) — chenh nhau chi
+  1.58:1. Do la y do cua bang mau (card CHIM vao trang), nhung no co nghia la
+  card khong the dua vao mau nen de tach khoi trang: viec do phai do VIEN va
+  BONG DEN ganh.
+
+  `surface-card` dung chung ca ba theme nen de nguyen o 62%; rieng jungle keo
+  len gan dac, neu khong mep card se bien mat.
+*/
+:root[data-theme="jungle"] .surface-card,
+:root[data-theme="jungle"] .game-card {
+  background-color: color-mix(in oklab, var(--color-surface) 94%, transparent);
+  box-shadow:
+    var(--shadow-soft),
+    0 10px 24px -12px oklch(0 0 0 / 0.7),
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+}
+
+/* ── Ton trong prefers-reduced-motion ────────────────────────── */
+
+/*
+  Ngoai le [data-jungle-motion="forced"]: nguoi dung da vao Settings tu tay bat
+  len du he thong dang giam chuyen dong. Do la lua chon co y thuc, khong bi phu
+  quyet lan nua o tang CSS.
+*/
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-jungle-motion="forced"]) .j-bush {
+    display: none;
+  }
+
+  :root[data-jungle-fx]:not([data-jungle-motion="forced"]) .game-card,
+  :root[data-jungle-fx]:not([data-jungle-motion="forced"]) .game-card:hover,
+  :root[data-jungle-fx]:not([data-jungle-motion="forced"]) .game-card:focus-within {
+    translate: none;
+    scale: none;
+    transition: none;
+  }
+}

@@ -1,11 +1,11 @@
-# Thiết kế hệ action button icon-only cho Questory
+# Thiết kế hệ action button icon-only cho QuestLog
 
 **Ngày:** 2026-08-20  
 **Trạng thái:** Chờ duyệt triển khai
 
 ## 1. Mục tiêu
 
-Chuẩn hóa toàn bộ action button trong Questory thành icon-only có tooltip, dùng cùng một ngôn ngữ glass nhẹ như nút đóng Detail Card. Thay đổi chỉ tác động cách trình bày và khả năng truy cập; không thay đổi hành vi, nghiệp vụ, API hay dữ liệu.
+Chuẩn hóa toàn bộ action button trong QuestLog thành icon-only có tooltip, dùng cùng một ngôn ngữ glass nhẹ như nút đóng Detail Card. Thay đổi chỉ tác động cách trình bày và khả năng truy cập; không thay đổi hành vi, nghiệp vụ, API hay dữ liệu.
 
 ## 2. Phạm vi
 
@@ -65,7 +65,7 @@ Các action button đang viết trực tiếp bằng `<button>` hoặc component
 
 ### Tooltip
 
-- Dùng surface của Questory, chữ ngắn từ i18n, cỡ 11–12 px.
+- Dùng surface của QuestLog, chữ ngắn từ i18n, cỡ 11–12 px.
 - Delay khoảng 300 ms; xuất hiện nhanh hơn khi di chuyển giữa các nút liên tiếp.
 - Hiển thị shortcut trong tooltip khi hành động đã có shortcut.
 - Tooltip render qua portal để không bị cắt bởi dialog/card `overflow-hidden`.

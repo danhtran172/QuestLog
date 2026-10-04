@@ -27,19 +27,18 @@
 
 ---
 
-## 2. Thang giá trị và sentinel
+## 2. Thang giá trị và Peak Score
 
 > ✅ **Mục 2.1 và 2.2 đã được ĐỐI CHIẾU VỚI DB THẬT ngày 2026-08-14** (96 game, qua `GET /api/games`).
 > Bản nháp trước đó dựa trên suy đoán và **sai ở hai điểm**, đã sửa bên dưới.
 
 ### 2.1. `score` (điểm người dùng chấm)
 - Kiểu: `number | null` (double).
-- Miền thực tế: **0–10, bước 0.5**, cộng sentinel **999**.
-  Giá trị quan sát được trong DB: `6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 999`.
-- ❌ **Bản nháp trước ghi "0–100" — SAI.** Không có giá trị nào vượt 10 ngoài sentinel.
+- Miền hợp lệ: **0–11, bước 0.5**; `11` là **Peak Score**.
+- ❌ **Bản nháp trước ghi "0–100" — SAI.** Các điểm thường nằm trên thang 0–10.
 - `0` = **chưa chấm điểm** → hiển thị `—`, không hiển thị số 0.
-- **Sentinel `999`** = "điểm tuyệt đối", hiển thị **`10🔥`**.
-- API trả nguyên giá trị thật (`999`), **không** trả chuỗi đã format.
+- `11` = Peak Score, hiển thị **`10+`**.
+- Dữ liệu legacy `999` được migrate thành `11`; API chỉ trả giá trị số, không trả chuỗi đã format.
 
 #### Chất liệu hiển thị User Score
 
@@ -54,23 +53,21 @@ Backend suy ra `scoreMaterialBand`; frontend chỉ map band sang style, **không
 | `>= 8` và `< 9` | `Gold` |
 | `>= 9` và `< 10` | `Platinum` |
 | `10` | `Diamond` |
-| sentinel `999` | `Opal` |
+| Peak Score `11` | `Opal` |
 
-Gallery hiển thị sentinel `999` thành `10` với chất liệu Opal, không kèm icon lửa. Các màn hình
-khác vẫn dùng quy ước `10🔥` ở trên.
+Mọi màn hình hiển thị Peak Score `11` thành `10+`; Gallery dùng chất liệu Opal.
 
 ### 2.2. `excited` (mức độ háo hức)
 - Kiểu: `number | null` (double).
-- Miền thực tế: **1–10, bước 0.5**, cộng sentinel **999**.
-  Giá trị quan sát được: `1, 1.5, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 999`.
+- Miền hợp lệ: **0–11, bước 0.5**; `11` là **Peak Score**.
 - ❌ **Bản nháp trước ghi "số nguyên" — SAI.** Có giá trị lẻ `.5`, **cấm làm tròn**.
 - `0` = chưa đánh giá → hiển thị `—`.
-- **Sentinel `999`** hiển thị **`10🔥`**, cùng quy ước với `score`.
+- Peak Score `11` hiển thị **`10+`**, cùng quy ước với `score`.
 - ❌ **Lovable sai gấp đôi**: vừa ép thang `0..5` (cắt mất nửa trên), vừa dùng số nguyên
-  (mất toàn bộ phần `.5`), lại còn bỏ sót sentinel 999.
+  (mất toàn bộ phần `.5`).
 - **Cách hiển thị đã chốt:** hiện **số** kèm 1 icon lửa, **không** vẽ dãy 10 icon —
   dãy icon rời rạc không biểu diễn được giá trị `.5`.
-- ✔ Không cần script migrate — dữ liệu vốn đã ở thang này.
+- ✔ Initializer migrate dữ liệu legacy `999 → 11` cho cả game và lịch sử finish.
 
 ### 2.3. `metaScore`
 - Kiểu: `number | null` (int), miền `0–100`.
@@ -123,6 +120,7 @@ Dùng `SystemKey`, không dùng Id:
 | `planning` | `progress.systemKey != "Done"` |
 | `finished` | `progress.systemKey == "Done"` |
 | `queue` | `progress.systemKey ∈ {"Playing", "NextPlay", "Intended"}` |
+| `console` | Chỉ game mà predicate backend trả `canLaunch == true`; view cố định chỉ dùng trong Console Mode |
 
 **Luôn luôn**: chỉ trả game có `IsDisabled == false` (trừ endpoint dành riêng cho màn Restore).
 
@@ -154,8 +152,8 @@ So sánh số nguyên (playtime) dùng phép so sánh thẳng, **không** epsilo
 | Nhóm | So với field | Đơn vị giá trị nhập | Chuyển đổi |
 |---|---|---|---|
 | Finished year | năm hoàn thành | năm (int) | xem §5.6 |
-| Excited | `excited` | 1–10 / 999 | không |
-| Score | `score` | 0–100 / 999 | không |
+| Excited | `excited` | 0–11 bước 0.5 | không |
+| Score | `score` | 0–11 bước 0.5 | không |
 | Total playtime | `totalPlaytimeSeconds` | **người dùng nhập GIỜ** | `hours × 3600` → so sánh với **giây** |
 
 > ⚠️ Mismatch M25: người dùng nhập giờ, hệ thống nhân 3600 rồi so với giây. Lovable đang chia phút cho 60 rồi làm tròn → lệch ở biên. **API nhận `playtimeSeconds` đã quy đổi sẵn**, UI chịu trách nhiệm nhân 3600.
@@ -315,6 +313,7 @@ return games.where(publishDate != null && publishDate.Year == parsedYear)
 | `planning` | `progress.sortOrder↑` → `excited↓` → `avgPlaytimeHours↑` (null→cuối) → `name↑` |
 | `finished` | `progress.sortOrder↑` → `score↓` → `finishTime↓` → `publishDate↓` → `metaScore↓` |
 | `queue` | xem §8.1 |
+| `console` | `lastPlayedAt↓` (null→cuối) → `name↑`; chỉ gồm game có `canLaunch=true` |
 
 > ⚠️ **Mismatch M19–M21.** Lovable chỉ cài 2 khoá cho mỗi tab và sai thứ tự ưu tiên. Bảng trên là bản đúng, đầy đủ.
 > *Lưu ý: hệ thống cũ sort theo `ProgressId`; theo §3.2 đổi sang `SortOrder`. Đây là **thay đổi có chủ ý** — phải seed `SortOrder` khớp với thứ tự Id hiện tại khi migrate để không đổi kết quả.*
@@ -334,6 +333,7 @@ return games.where(publishDate != null && publishDate.Year == parsedYear)
 - Backend thêm `name↑` làm tie-breaker ẩn nếu profile chưa có Name để phân trang ổn định.
 - Reset xoá override và khôi phục chuỗi §7.2.
 - Queue không có sort profile, bỏ qua filter/sort thư viện và giữ `PlayOrder`.
+- Console không có sort profile, bỏ qua search/filter/sort/reverse của toolbar và dùng thứ tự cố định ở §7.2.
 
 ---
 
@@ -392,17 +392,25 @@ kết quả = withOrder ++ withoutOrder, đánh lại PlayOrder = 0,1,2,…
 ## 9. Hoàn thành game (Finish)
 
 ### 9.1. Mô hình — ✅ chốt dùng `GameFinish[]`
-- Một game hoàn thành **nhiều lần** → bảng `GameFinish { Id, GameId, FinishedAt: DateTime, Score: double? }`.
+- Một game hoàn thành **nhiều lần** → bảng `GameFinish { Id, GameId, FinishedAt: DateTime, HasMonth: bool, Score: double? }`.
+- `HasMonth = false` nghĩa là người chơi **chỉ nhớ năm**. `FinishedAt` vẫn là một ngày đầy đủ (1 tháng 1 của năm đó) để §9.3 không phải biết đến chuyện này, nhưng UI phải hiện `2019` chứ không phải `01/2019` — một tháng 1 không có thật.
+- Dữ liệu có sẵn trước khi thêm cột đều mặc định `HasMonth = true`. **Không** suy diễn ngược rằng "ngày 1 tháng 1" nghĩa là không nhớ tháng: làm vậy là đổi nghĩa dữ liệu thật của người dùng một cách âm thầm.
 - Cột cũ `Game.FinishedIn` (string): **loại khỏi mọi API và UI mới**. Giữ cột trong DB để backfill, đánh dấu deprecated, xoá ở bản sau.
 
 ### 9.2. Luồng Finish — thứ tự bắt buộc (giao dịch)
 ```
-1. game.score      = điểm người dùng nhập (0-10 bước 0.5 hoặc 999)
+1. game.score      = điểm người dùng nhập (0-11 bước 0.5; 11 là Peak Score)
 2. game.progress   = "Done"
 3. LƯU game
-4. THÊM bản ghi GameFinish { FinishedAt = now, Score = điểm vừa nhập }
+4. THÊM bản ghi GameFinish { FinishedAt, HasMonth, Score = điểm vừa nhập }
 5. reload
 ```
+Thời điểm ở bước 4 lấy từ `finishedYear` / `finishedMonth` của yêu cầu:
+- có năm + có tháng → `FinishedAt = <năm>-<tháng>-01 00:00`, `HasMonth = true`
+- có năm, không tháng → `FinishedAt = <năm>-01-01 00:00`, `HasMonth = false`
+- không gửi gì → `FinishedAt = now`, `HasMonth = true`
+
+Năm phải nằm trong `[1970, năm hiện tại + 1]`. Chặn năm tương lai xa vì một năm gõ nhầm sẽ trôi lên đầu mọi bảng sort `finishTime` mà không ai hiểu tại sao.
 > ⚠️ **Mismatch M28.** Lovable chỉ patch 4 field trong state, **không ghi lịch sử**. Bước 4 là bắt buộc.
 
 ### 9.3. Finish time dùng cho sort/filter
@@ -410,12 +418,22 @@ Sort `finishTime↓` dùng **thời điểm đầy đủ của lần gần nhấ
 *(Lưu ý phân biệt: **filter** dùng ANY theo năm, **sort** dùng MAX theo thời điểm đầy đủ. Đây là chủ ý, không phải nhầm lẫn.)*
 
 ### 9.4. Sửa thời gian hoàn thành
-UI chỉ cho chọn tháng và năm (`YYYY-MM`). Backend cập nhật đúng một `GameFinish`, chuẩn hoá `FinishedAt` thành ngày đầu tháng lúc `00:00:00`, không sửa score và không thay thế các lịch sử khác.
+**Năm bắt buộc, tháng tuỳ chọn** — cùng quy tắc thời điểm với §9.2. Backend cập nhật đúng một `GameFinish`, chuẩn hoá `FinishedAt` thành ngày đầu tháng lúc `00:00:00`, **không** sửa score và **không** thay thế các lịch sử khác.
+
+Điểm của một lần hoàn thành là **bất biến** sau khi ghi: nó là điểm tại thời điểm đó. Muốn đổi đánh giá hiện tại thì sửa `game.score`.
 
 ### 9.5. Backfill khi migrate
 Với game có `FinishedIn` parse được thành năm và **chưa có** bản ghi `GameFinish` nào:
 tạo 1 bản ghi `GameFinish { FinishedAt = <năm>-01-01, Score = game.Score }`.
+Bản ghi sinh ra từ backfill có `HasMonth = false`: cột cũ chỉ chứa năm, chưa bao giờ có tháng.
 Giá trị `FinishedIn` không parse được → ghi log, bỏ qua, **không** làm hỏng migration.
+
+### 9.6. Xoá một lần hoàn thành
+`DELETE /api/games/{id}/finishes/{finishId}` xoá đúng một bản ghi, trong một transaction:
+
+- `game.Score` **giữ nguyên**. Điểm là đánh giá của người chơi, không phải bằng chứng hoàn thành.
+- Nếu sau khi xoá game **không còn** bản ghi `GameFinish` nào → `game.ProgressId = null`. Game không còn là "Done" nữa, nhưng **không đoán** sang trạng thái khác: không ai biết người chơi đang ở đâu trong game. Progress trống là trạng thái hợp lệ (§5.2) và đưa game về tab `planning`.
+- Còn ít nhất một bản ghi → Progress giữ nguyên.
 
 ---
 
@@ -474,20 +492,40 @@ giữ cột InitExeName (deprecated) cho tới khi xác nhận migrate sạch
 
 ## 12. Ảnh
 
-| Field | Nội dung | Dùng ở đâu trong WPF hiện tại | Dùng ở đâu trong UI mới |
+| Field | Nguồn duy nhất | Hình dạng | Consumer |
 |---|---|---|---|
-| `gImagePath` (gallery) | Ảnh ngang, decode ở **460px** (Steam header 460×215) | **Card trong lưới** (`MainWindow.xaml:348`) + **hàng trong Queue** (`QueueView.xaml:93`) | Giữ nguyên: card + queue |
-| `imagePath` (cover) | Ảnh ngang từ RAWG `background_image` | ❗ **KHÔNG dùng ở bất kỳ file XAML nào** — chỉ được lưu và sync | Hero ở màn chi tiết; fallback sang `gImagePath` khi RAWG không có ảnh |
-| `steamLibraryImagePath` | Ảnh thư viện Steam | Chỉ preview trong Game Editor (`GameEditorControl.xaml:1490`) | Giữ nguyên |
+| `bannerPath` | Steam `header.jpg` | Ngang 460×215, **đã có tên game in trong ảnh** | Card, table, queue và backdrop Console |
+| `backdropPath` | RAWG `background_image` (dự phòng: Steam `library_hero.jpg` khi RAWG không trả ảnh) | Ngang, **ảnh sạch, không có chữ** | Detail hero; fallback sang `bannerPath` |
+| `posterPath` | IGDB `t_cover_big_2x` | Dọc 528×748 | Console cover và preview trong Editor |
+
+**Quy tắc rút ra từ bảng trên: không bao giờ phủ chữ lên `bannerPath`** — ảnh đó đã mang sẵn tên game, chồng thêm chữ là đọc ra hai lần. Cần một nền để đặt chữ lên thì dùng `backdropPath`.
+
+Tên cũ (`cardCoverPath` / `coverPath` / `portraitCoverPath`) đã bỏ: chữ "cover" xuất hiện ở cả ba nên không phân biệt được khi đọc lướt, và `gallery_image_url` phía metadata còn nói dối — ảnh hiện ở gallery là `bannerPath`, không phải cột đó.
 
 **Kích thước card chốt cứng: rộng `270px`, vùng ảnh cao `126.2px`** — Lovable đã dựng **đúng y hệt** hai con số này.
 
-> ✅ **M38 đã được đính chính (2026-08-14).** Bản ghi trước đó cho rằng "card WPF dùng cover (dọc), Lovable dùng gallery → ngược nhau" là **SAI**.
-> Kiểm chứng trực tiếp: **cả hai bên đều dùng `gImagePath` (gallery) cho card**, cùng kích thước 270×126.2. Đây là **điểm khớp**, không phải mismatch.
->
-> `Game.ImagePath` là cover ngang của RAWG cho hero màn chi tiết. Cover dọc của IGDB sẽ được tách thành `portraitCoverPath` trong migration image-role kế tiếp; không được ghi đè `imagePath` bằng ảnh IGDB.
+> Ảnh dọc là dữ liệu IGDB only. `portrait-cover` không được gọi Steam hoặc RAWG và không được ghi vào field ảnh ngang.
 
-Upload: khi lưu, ảnh chưa nằm trên Cloudinary sẽ được upload vào `MasterPlay/Covers/{GameId}` / `MasterPlay/Galleries/{GameId}` với `overwrite + invalidate`. **Lỗi upload không được chặn thao tác lưu.**
+Cloudinary dùng ba asset role riêng: `card-cover`, `cover`, `portrait-cover`.
+
+**Tự upload khi lưu ảnh.** Mọi luồng ghi ảnh của Host (import từ kho, form sửa/tạo game, `metadata-refresh` nhận ảnh mới, lệnh `--sync-missing-posters`) đều lưu link gốc trước, rồi một hàng đợi nền đưa ảnh lên Cloudinary và thay đúng ô đó. Ô đã đổi giá trị trong lúc upload thì giữ giá trị mới hơn. Upload lỗi không làm hỏng lần lưu: ô giữ link gốc, lý do ghi vào log Host, nút "Đồng bộ ảnh" (`POST /api/tray/sync-images`) vét lại và báo lý do.
+
+`Games.ImageSources` (JSON, nội bộ, không ra API) ghi "bản Cloudinary `url` copy từ link gốc `source`" cho từng ô. Không phải cột ảnh thứ tư: không màn hình nào đọc nó. Nó tồn tại vì bản copy có URL khác link gốc:
+- `metadata-refresh` so ô ảnh bằng **link gốc** của bản copy, nên ảnh đã upload không bị coi là người dùng sửa tay, và kho đổi ảnh thì thư viện vẫn nhận ảnh mới;
+- form sửa gửi lại đúng link gốc của bản copy (tải trước khi upload xong) thì Host giữ bản copy.
+
+**Ảnh chỉ được lưu ở ba cột trên — không có cột ảnh nào khác.** Hai thế hệ cột cũ đã bị xoá khỏi SQLite, khỏi entity và khỏi hợp đồng API:
+
+| Cột đã xoá | Kích thước đo được | Đã dồn về |
+|---|---|---|
+| `GImagePath` | 460×215, có chữ | `BannerPath` |
+| `ImagePath` | 1920×1080, sạch | `BackdropPath` |
+| `SteamLibraryImagePath` | 600×900, dọc | `PosterPath` |
+| `CardCoverPath` / `CoverPath` / `PortraitCoverPath` | — | `BannerPath` / `BackdropPath` / `PosterPath` |
+
+Vai trò được xác định bằng cách **đo ảnh thật**, không suy từ tên cột — tên cột chính là thứ đã nói dối suốt: `ImagePath` được mô tả là "cover dọc" nhưng chứa ảnh ngang 16:9, còn `gallery_image_url` phía metadata thì trỏ vào ảnh không hề hiện ở gallery.
+
+Đợt dồn cột mang 7 ảnh `library_600x900` của Steam vào `posterPath`. Việc đó **không nới luật sync ở trên**: `portrait-cover` vẫn chỉ được *gọi* IGDB. Luật đó chặn đường lấy ảnh mới, còn đây là dữ liệu đã nằm sẵn trong DB từ trước — vứt đi thì mất, mà để lại thì phải có cột riêng, tức là đúng cái đang cần xoá.
 
 ---
 
@@ -611,3 +649,104 @@ Quy tắc (trích từ 12 property `ShouldShowX`):
 - Exe/launcher/save/backup/process state thuộc cả user và device.
 - Steam/Ubisoft password chỉ nằm trong vault mã hóa của thiết bị, không đồng bộ cloud.
 - Account bị khóa phải bị chặn trên request tiếp theo dù access token chưa hết hạn.
+- Đăng ký bằng Google tạo profile `username_required` (không username, không mật khẩu).
+  Host chặn mọi domain endpoint cho tới khi claim username; client không tự gợi ý username.
+- Email Google trùng email **đã xác minh** → Supabase tự liên kết vào tài khoản cũ (audit
+  `google_identity_linked`). Trùng email **chưa xác minh** → Host thu hồi profile đó về
+  `username_required` và vô hiệu mật khẩu cũ.
+- `registrationEnabled = false` chặn cả claim username lẫn tài khoản Google chưa hoàn tất
+  (Host xoá auth user đó).
+- Xác thực lại cho đổi mật khẩu/username/email **chỉ** bằng mã 6 số qua email → reauth
+  ticket (5 phút, dùng một lần, gắn phiên). Ngoại lệ duy nhất: bootstrap admin đổi mật khẩu
+  bắt buộc lần đầu vẫn dùng mật khẩu hiện tại.
+- Quên mật khẩu dùng mã 6 số qua email (không dùng link) và không tiết lộ tài khoản có tồn tại.
+
+---
+
+## 20. Hợp nhất metadata: sửa tay của người dùng thắng
+
+Một dòng thư viện có `metadataGameId` là **bản sao** của một bản ghi trên kho dùng chung,
+không phải một liên kết sống. Admin sửa bản ghi trên kho thì bản sao phải đổi theo — **trừ**
+field chính chủ thư viện đã sửa tay. Kéo về bằng `POST /api/library/metadata-refresh`.
+
+### 20.1. Field nào thuộc kho
+
+Đúng mười field, khớp một-một với danh sách mà `POST /api/library/game-imports` điền:
+
+`name`, `developer`, `publisher`, `publishDate`, `isDlc`,
+`bannerPath`, `backdropPath`, `posterPath`, `metaScore`, `avgPlaytimeHours`.
+
+**Không có gì khác bị đụng tới.** Điểm, độ háo hức, tiến độ, sở hữu, giờ chơi, lịch sử
+hoàn thành, queue, genre/theme cá nhân, exe/save/backup — tất cả thuộc người dùng và
+thiết bị (§19), đồng bộ metadata không có đường nào chạm vào.
+
+`series` **không** nằm trong danh sách: id series của kho và id series cục bộ là hai không
+gian khác nhau, không có bảng ánh xạ. Đổi bừa là gán game vào nhầm series.
+
+> Spec kho metadata (2026-08-24 §4) từng nói metadata field là **chỉ đọc trong UI** với
+> game lấy từ kho. Thực tế không phải vậy: `PUT /api/games/{id}` nhận cả mười field và
+> editor cho sửa hết. §20 này lấy thực tế làm gốc — sửa tay thắng. Nếu sau này khoá thật
+> mười field đó ở UI thì §20 vẫn đúng, chỉ là nhánh "giữ L" không còn dịp chạy.
+
+### 20.2. Ba giá trị, không phải hai
+
+Mỗi field được quyết định bằng **ba** giá trị, không phải hai:
+
+| | |
+|---|---|
+| **L** | đang ở thư viện |
+| **B** | kho nói gì ở lần đồng bộ trước (`Games.MetadataBaseline`, JSON) |
+| **C** | kho nói gì lần này |
+
+- `L == B` → người dùng chưa đụng vào → **lấy C**
+- `L != B` → người dùng đã sửa → **giữ L**, đếm vào `fieldsKept`
+
+Phải có B vì `PUT /api/games/{id}` nhận **bản ghi đầy đủ**: client gửi lại mọi field mỗi
+lần lưu, kể cả field người dùng không chạm vào. Nhìn request thì không thể biết họ đã sửa
+gì. So với B thì biết được, bất kể nó bị sửa qua đường nào — kể cả đường chưa tồn tại.
+
+**B luôn tiến lên C** sau mỗi lần hợp nhất, kể cả ở field vừa giữ lại. Hệ quả có chủ ý:
+người dùng đặt field về đúng giá trị kho đang hiện thì field đó **tự động bám theo kho trở
+lại**. Muốn nhận cập nhật lại thì gỡ sửa đổi của mình đi — không cần nút nào.
+
+### 20.3. Chưa có baseline thì chỉ điền ô trống
+
+Dòng nối từ trước khi có tính năng này — và dòng từng nối qua
+`publish-library` (đã gỡ), xem 20.4 — không có B. Lúc đó **chỉ điền vào ô
+đang trống**, rồi ghi B. Không đoán.
+
+Ô trống thì điền vào không mất gì của ai. Ghi đè một giá trị không rõ từ đâu ra thì có thể
+xoá mất công người dùng gõ từ những phiên bản trước — và không có undo.
+
+`NULL` và chuỗi trắng là **cùng một trạng thái**. `metaScore` / `avgPlaytimeHours` bằng `0`
+cũng là "chưa có": cột mặc định `0` chứ không `NULL`, và không game nào meta score 0 thật.
+Riêng `isDlc` thì `false` **là** một giá trị, không phải ô trống.
+
+### 20.4. `publish-library` không được ghi baseline
+
+> Endpoint đã gỡ (2026-10-04). Giữ mục này vì dòng thư viện nối qua nó trước đó vẫn
+> không có B.
+
+Đẩy thư viện lên kho gặp tên trùng thì nối vào bản ghi **sẵn có** (`status: "matched"`), và
+bản ghi đó mang giá trị khác cái vừa gửi lên. Lấy dữ liệu cục bộ làm B trong trường hợp ấy
+là đặt mốc sai: mọi field sẽ bị coi là "người dùng đã sửa" **vĩnh viễn** và không bao giờ
+nhận cập nhật nữa. Để trống B, vòng refresh sau lấy mốc thật từ kho.
+
+### 20.5. Kho im lặng thì không đụng tới
+
+Kho không trả về bản ghi (bị gỡ xuất bản hoặc đã xoá) → dòng thư viện **giữ nguyên**, chỉ
+đếm vào `missing`. Game vẫn là của người dùng; chỉ là kho không còn nói gì về nó nữa.
+
+## 21. Genre/Theme theo chủ sở hữu và nhóm theme
+
+Spec: `docs/superpowers/specs/2026-10-04-theme-groups-design.md`.
+
+- Genre/theme có `LibraryOwnerKey`: `system:shared` (bộ chung, có icon, chỉ admin sửa ở Admin Console ›
+  Taxonomy) hoặc cá nhân (`user:<id>` / `guest:local`, không icon, chỉ chủ sở hữu thấy và sửa).
+- Tên unique theo `(LibraryOwnerKey, NameKey)`; `NameKey` = trim + casefold + gộp khoảng trắng, tính ở
+  **một chỗ** (`TaxonomyRules.NormalizeName`) — migration, endpoint và `MasterPlayContext.SaveChanges` cùng dùng.
+- Trùng `NameKey` giữa bản cá nhân và bản chung: bản cá nhân thắng, bản chung bị ẩn khỏi người đó.
+- Nhóm theme: một cấp. Theme chung chỉ nằm trong nhóm chung; theme cá nhân nằm trong nhóm chung hoặc nhóm
+  của chính chủ. Xoá nhóm → theme về "chưa phân nhóm", không theme nào bị xoá.
+- Thứ tự nhóm/theme do **server** sắp; client chỉ render và gửi kết quả kéo thả (`…/order`).
+- Quyền sửa từng mục lấy từ `editable` do server trả, client không suy ra từ role + scope.

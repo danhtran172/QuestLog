@@ -31,7 +31,7 @@ Backend mapping is the source of truth:
 | `>= 8` and `< 9` | `Gold` |
 | `>= 9` and `< 10` | `Platinum` |
 | `10` | `Diamond` |
-| sentinel `999` | `Opal` |
+| Peak Score `11` | `Opal` |
 
 The mapping is implemented in `MasterPlay.Host/LibraryQuery.cs`, included in host DTO mapping, documented in `docs/DOMAIN_RULES.md`, and represented in `docs/openapi.yaml`. Generated TypeScript API files are regenerated with `npm run gen:api`; they are never edited by hand.
 
@@ -45,9 +45,9 @@ Create a Gallery-specific material score chip and use it in `GameCard` in place 
 - Height matches the current Metascore chip (`24px`).
 - Minimum width remains content-safe for half-step values.
 - Normal values use the existing score formatter.
-- Sentinel `999` displays `10` with the `Opal` band and no flame.
+- Peak Score `11` displays `10+` with the `Opal` band and no flame.
 - Missing/zero scores remain hidden by the existing Gallery condition.
-- Detail and Play Queue retain their existing score display, including their current sentinel formatting.
+- Detail and Play Queue use the same `11 → 10+` display rule.
 
 The component accepts the backend-provided band and maps enum values directly to CSS material classes. It never compares numeric score thresholds.
 
@@ -99,11 +99,10 @@ No database schema or migration is required because the band is derived from the
 
 ## Verification
 
-- Verify backend mapping at all boundaries: `2.5`, `3`, `5.5`, `6`, `7.5`, `8`, `8.5`, `9`, `9.5`, `10`, and `999`.
-- Confirm Gallery renders no star and renders `999` as Opal `10`.
+- Verify backend mapping at all boundaries: `2.5`, `3`, `5.5`, `6`, `7.5`, `8`, `8.5`, `9`, `9.5`, `10`, and `11`.
+- Confirm Gallery renders no star and renders `11` as Opal `10+`.
 - Confirm Detail and Play Queue still use their existing score badge.
 - Run `dotnet build MasterPlay.Host/MasterPlay.Host.csproj`.
 - Run `npm run gen:api`, then ensure no manual generated-file edits remain.
 - Run `npm run typecheck` and `npm run build` in `MasterPlay.Web`.
 - The web package currently defines no lint or test script; verification uses the available scripts above.
-

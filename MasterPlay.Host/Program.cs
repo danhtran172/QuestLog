@@ -6,13 +6,19 @@ using MasterPlay.Core.Entities;
 using MasterPlay.Infrastructure.Data;
 using MasterPlay.Infrastructure.Data.Services;
 using MasterPlay.Infrastructure.Configuration;
+using MasterPlay.Infrastructure.Integrations.Cloudinary;
 using MasterPlay.Infrastructure.Integrations.Gemini;
 using MasterPlay.Infrastructure.Integrations.Igdb;
 using MasterPlay.Infrastructure.Integrations.Igdb.Models;
 using MasterPlay.Infrastructure.Integrations.Rawg;
+using MasterPlay.Infrastructure.Integrations.Steam;
 using MasterPlay.Host;
 using MasterPlay.Host.Auth;
+using MasterPlay.Host.Integrations;
 using MasterPlay.Host.Metadata;
+using MasterPlay.Host.Taxonomy;
+using MasterPlay.Core.Taxonomy;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.FileProviders;
 
@@ -33,11 +39,27 @@ builder.Configuration.AddEnvironmentVariables();
 
 DataService.EnsureInitialized();
 
+if (args.Any(argument => string.Equals(argument, "--sync-missing-posters", StringComparison.OrdinalIgnoreCase)))
+{
+    Environment.ExitCode = await SyncMissingPostersAsync();
+    return;
+}
+
+if (args.Any(argument => string.Equals(argument, "--sync-cloudinary-images", StringComparison.OrdinalIgnoreCase)))
+{
+    Environment.ExitCode = await SyncCloudinaryImagesAsync();
+    return;
+}
+
 builder.Services.AddDbContext<MasterPlayContext>();
 
 var authOptions = SupabaseAuthOptions.FromConfiguration(builder.Configuration);
 builder.Services.AddSingleton(authOptions);
 builder.Services.AddSingleton<DesktopGuestSession>();
+builder.Services.AddSingleton(new GoogleOAuthFlowStore());
+builder.Services.AddSingleton(new ReauthTicketStore());
+builder.Services.AddSingleton(new PasswordResetTicketStore());
+builder.Services.AddSingleton(new EmailCodeThrottle());
 builder.Services.AddHttpClient(nameof(SupabaseAuthGateway), client =>
 {
     client.Timeout = TimeSpan.FromSeconds(15);
@@ -46,13 +68,53 @@ builder.Services.AddHttpClient(nameof(SupabaseMetadataCatalog), client =>
 {
     client.Timeout = TimeSpan.FromSeconds(15);
 });
+builder.Services.AddHttpClient(nameof(SupabaseMetadataAdmin), client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddHttpClient(nameof(SupabaseIntegrationStore), client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddHttpClient(nameof(IntegrationConnectionTester), client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 builder.Services.AddSingleton<SupabaseAuthGateway>();
 builder.Services.AddSingleton<SupabaseMetadataCatalog>();
+builder.Services.AddSingleton<SupabaseMetadataAdmin>();
+builder.Services.AddSingleton<SupabaseIntegrationStore>();
+builder.Services.AddSingleton<IntegrationConnectionTester>();
 builder.Services.AddHostedService<BootstrapAdminService>();
+builder.Services.AddHostedService<IntegrationCredentialWarmupService>();
+builder.Services.AddSingleton<CloudinaryAutoUploadQueue>();
+builder.Services.AddHostedService<CloudinaryAutoUploadService>();
 builder.Services.AddRateLimiter(rateLimiterOptions =>
 {
     rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     rateLimiterOptions.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true,
+            }));
+    // Google sign-in polls /complete every 1.5 s while the user is in the browser,
+    // which the 10/min "auth" policy would block. Each poll is a memory lookup.
+    rateLimiterOptions.AddPolicy("auth-poll", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true,
+            }));
+    rateLimiterOptions.AddPolicy("integration-test", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new FixedWindowRateLimiterOptions
@@ -91,7 +153,13 @@ app.Use(async (context, next) =>
                    path == "/api/auth/signup" ||
                    path == "/api/auth/guest" ||
                    path == "/api/auth/session" ||
-                   path == "/api/auth/logout";
+                   path == "/api/auth/logout" ||
+                   path == "/api/auth/google/start" ||
+                   path == "/api/auth/google/callback" ||
+                   path == "/api/auth/google/complete" ||
+                   path == "/api/auth/password/forgot" ||
+                   path == "/api/auth/password/verify-code" ||
+                   path == "/api/auth/password/reset";
 
     if (!isApi || isPublic)
     {
@@ -135,6 +203,18 @@ app.Use(async (context, next) =>
             accessToken,
             context.RequestAborted);
         context.Items["QuestLogAccount"] = account;
+        // A Google account without a username reaches nothing but the auth
+        // routes it needs to finish registration (design §7). The frontend gate
+        // is only a convenience.
+        if (account.Onboarding == AccountOnboarding.UsernameRequired && !AllowedDuringOnboarding(context.Request))
+        {
+            await WriteAuthError(
+                context,
+                StatusCodes.Status403Forbidden,
+                "USERNAME_REQUIRED",
+                "Choose a username to finish creating your account.");
+            return;
+        }
         if (string.Equals(account.Role, "admin", StringComparison.OrdinalIgnoreCase))
         {
             await ClaimLegacyGamesAsync(
@@ -155,7 +235,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", db = JsonService
 app.MapGet("/api/auth/config", () => Results.Ok(new AuthConfigDto(
     authOptions.IsConfigured,
     authOptions.RegistrationEnabled,
-    authOptions.GoogleEnabled)));
+    authOptions.GoogleReady)));
 
 app.MapPost("/api/auth/login", async (
     HttpContext context,
@@ -261,116 +341,98 @@ app.MapGet("/api/auth/me", (HttpContext context) =>
         ? Results.Ok(account)
         : AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue."));
 
+const string OAuthFlowCookie = "questlog_oauth_flow";
+
+/*
+ * Doi mat khau. Mac dinh can reauth ticket (ma 6 so qua email). Ngoai le duy
+ * nhat: bootstrap admin dang bi ep doi mat khau lan dau van dung mat khau hien
+ * tai — Host kiem tra dieu kien nay, client khong chon duoc.
+ */
 app.MapPost("/api/auth/change-password", async (
     HttpContext context,
     SupabaseAuthGateway gateway,
+    ReauthTicketStore tickets,
     ChangePasswordRequestDto body,
     CancellationToken cancellationToken) =>
 {
-    var currentPassword = body.CurrentPassword ?? string.Empty;
     var newPassword = body.NewPassword ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(currentPassword) || newPassword.Length < 12)
+    if (newPassword.Length < 12)
     {
-        return AuthErrorResult(
-            400,
-            "INVALID_PASSWORD_CHANGE",
-            "Enter your current password and a new password with at least 12 characters.");
+        return AuthErrorResult(400, "INVALID_PASSWORD_CHANGE", "Use a new password with at least 12 characters.");
     }
 
-    if (string.Equals(currentPassword, newPassword, StringComparison.Ordinal))
-    {
-        return AuthErrorResult(400, "PASSWORD_UNCHANGED", "Choose a different password.");
-    }
-
-    if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account ||
+        BearerToken(context.Request) is not { Length: > 0 } accessToken)
     {
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
     }
 
-    var accessToken = BearerToken(context.Request);
-    if (string.IsNullOrWhiteSpace(accessToken))
+    if (account.MustChangePassword && !string.IsNullOrEmpty(body.CurrentPassword))
     {
-        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
+        if (string.Equals(body.CurrentPassword, newPassword, StringComparison.Ordinal))
+        {
+            return AuthErrorResult(400, "PASSWORD_UNCHANGED", "Choose a different password.");
+        }
+
+        try
+        {
+            var result = await gateway.ChangePasswordAsync(account, newPassword, body.CurrentPassword, cancellationToken);
+            SetRefreshCookie(context, result.RefreshToken);
+            return Results.Ok(result.Session);
+        }
+        catch (SupabaseAuthException exception)
+        {
+            return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+        }
     }
 
-    try
+    return await WithReauthTicket(context, tickets, account, accessToken, body.ReauthTicket, async () =>
     {
-        var result = await gateway.ChangePasswordAsync(
-            account,
-            accessToken,
-            currentPassword,
-            newPassword,
-            cancellationToken);
+        var result = await gateway.ChangePasswordAsync(account, newPassword, null, cancellationToken);
         SetRefreshCookie(context, result.RefreshToken);
         return Results.Ok(result.Session);
-    }
-    catch (SupabaseAuthException exception)
-    {
-        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
-    }
+    });
 }).RequireRateLimiting("auth");
 
 app.MapPatch("/api/auth/account/username", async (
     HttpContext context,
     SupabaseAuthGateway gateway,
+    ReauthTicketStore tickets,
     ChangeUsernameRequestDto body,
     CancellationToken cancellationToken) =>
 {
     var username = body.Username?.Trim() ?? string.Empty;
-    var currentPassword = body.CurrentPassword ?? string.Empty;
-    if (username.Length is < 3 or > 32 ||
-        username.Any(character => !(char.IsAsciiLetterOrDigit(character) || character is '_' or '.' or '-')))
+    if (!IsValidUsername(username))
     {
-        return AuthErrorResult(
-            400,
-            "INVALID_USERNAME",
-            "Username must be 3-32 characters using letters, numbers, dot, dash, or underscore.");
+        return InvalidUsernameResult();
     }
 
-    if (string.IsNullOrWhiteSpace(currentPassword))
-    {
-        return AuthErrorResult(400, "CURRENT_PASSWORD_REQUIRED", "Enter your current password.");
-    }
-
-    if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account ||
+        BearerToken(context.Request) is not { Length: > 0 } accessToken)
     {
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
     }
 
-    try
-    {
-        return Results.Ok(await gateway.ChangeUsernameAsync(
-            account,
-            currentPassword,
-            username,
-            cancellationToken));
-    }
-    catch (SupabaseAuthException exception)
-    {
-        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
-    }
+    return await WithReauthTicket(context, tickets, account, accessToken, body.ReauthTicket, async () =>
+        Results.Ok(await gateway.ChangeUsernameAsync(account, username, cancellationToken)));
 }).RequireRateLimiting("auth");
 
 app.MapPost("/api/auth/account/email-change", async (
     HttpContext context,
     SupabaseAuthGateway gateway,
+    ReauthTicketStore tickets,
     ChangeEmailRequestDto body,
     CancellationToken cancellationToken) =>
 {
     var email = body.Email?.Trim() ?? string.Empty;
-    var currentPassword = body.CurrentPassword ?? string.Empty;
     if (!MailAddress.TryCreate(email, out var parsedEmail) ||
         !string.Equals(parsedEmail.Address, email, StringComparison.OrdinalIgnoreCase))
     {
         return AuthErrorResult(400, "INVALID_EMAIL", "Enter a valid email address.");
     }
 
-    if (string.IsNullOrWhiteSpace(currentPassword))
-    {
-        return AuthErrorResult(400, "CURRENT_PASSWORD_REQUIRED", "Enter your current password.");
-    }
-
-    if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account ||
+        BearerToken(context.Request) is not { Length: > 0 } accessToken)
     {
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
     }
@@ -380,20 +442,321 @@ app.MapPost("/api/auth/account/email-change", async (
         return AuthErrorResult(400, "EMAIL_UNCHANGED", "Choose a different email address.");
     }
 
-    var accessToken = BearerToken(context.Request);
-    if (string.IsNullOrWhiteSpace(accessToken))
+    return await WithReauthTicket(context, tickets, account, accessToken, body.ReauthTicket, async () =>
+        Results.Ok(await gateway.ChangeEmailAsync(account, accessToken, email, cancellationToken)));
+}).RequireRateLimiting("auth");
+
+/* ---------- Ma 6 so qua email: quen mat khau + xac thuc lai ---------- */
+
+// Luon tra 202 — ke ca khi tai khoan khong ton tai hoac dang trong cooldown —
+// de endpoint public khong tiet lo tai khoan nao co that.
+app.MapPost("/api/auth/password/forgot", async (
+    SupabaseAuthGateway gateway,
+    ForgotPasswordRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    var identifier = body.Identifier?.Trim() ?? string.Empty;
+    if (identifier.Length == 0)
+    {
+        return AuthErrorResult(400, "IDENTIFIER_REQUIRED", "Enter your username or email.");
+    }
+
+    try
+    {
+        await gateway.SendRecoveryCodeAsync(identifier, cancellationToken);
+        return Results.Json(new ForgotPasswordResponseDto(true), statusCode: StatusCodes.Status202Accepted);
+    }
+    catch (SupabaseAuthException exception)
+    {
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth");
+
+// Buoc 2 cua quen mat khau: kiem tra ma NGAY, dung thi cap reset ticket de sang
+// man dat mat khau moi. Supabase huy ma khi verify, nen buoc sau dung ticket.
+app.MapPost("/api/auth/password/verify-code", async (
+    SupabaseAuthGateway gateway,
+    PasswordResetTicketStore resetTickets,
+    VerifyResetCodeRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    var identifier = body.Identifier?.Trim() ?? string.Empty;
+    var code = body.Code?.Trim() ?? string.Empty;
+    if (identifier.Length == 0 || !IsEmailCode(code))
+    {
+        return AuthErrorResult(400, "CODE_INVALID", "The code is wrong or has expired.");
+    }
+
+    try
+    {
+        var (userId, email) = await gateway.VerifyRecoveryCodeAsync(identifier, code, cancellationToken);
+        var (ticket, expiresAt) = resetTickets.Issue(userId, email);
+        return Results.Ok(new ResetTicketResponseDto(ticket, expiresAt));
+    }
+    catch (SupabaseAuthException exception)
+    {
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth");
+
+// Buoc 3: dat mat khau moi bang reset ticket (dung mot lan, 10 phut).
+app.MapPost("/api/auth/password/reset", async (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    PasswordResetTicketStore resetTickets,
+    ResetPasswordRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    var newPassword = body.NewPassword ?? string.Empty;
+    if (newPassword.Length < 12)
+    {
+        return AuthErrorResult(400, "INVALID_PASSWORD_CHANGE", "Use a new password with at least 12 characters.");
+    }
+
+    var reservation = resetTickets.Reserve(body.ResetTicket);
+    if (reservation is null)
+    {
+        return AuthErrorResult(401, "RESET_TICKET_INVALID", "This reset expired. Request a new code.");
+    }
+
+    try
+    {
+        var result = await gateway.CompletePasswordResetAsync(
+            reservation.Entry.UserId,
+            reservation.Entry.Email,
+            newPassword,
+            cancellationToken);
+        SetRefreshCookie(context, result.RefreshToken);
+        return Results.Ok(result.Session);
+    }
+    catch (SupabaseAuthException exception)
+    {
+        if (exception.StatusCode is >= 400 and < 500 and not 401 and not 423)
+        {
+            resetTickets.Release(reservation);
+        }
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth");
+
+app.MapPost("/api/auth/reauth/email", async (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    CancellationToken cancellationToken) =>
+{
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
     {
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
     }
 
     try
     {
-        return Results.Ok(await gateway.ChangeEmailAsync(
-            account,
-            accessToken,
-            currentPassword,
-            email,
-            cancellationToken));
+        var (sent, resendAvailableAt) = await gateway.SendReauthCodeAsync(account, cancellationToken);
+        if (!sent)
+        {
+            return Results.Json(
+                new
+                {
+                    error = new
+                    {
+                        code = "CODE_RESEND_COOLDOWN",
+                        message = "Wait before requesting another code.",
+                        details = new { resendAvailableAt },
+                    },
+                },
+                statusCode: StatusCodes.Status429TooManyRequests);
+        }
+
+        return Results.Json(
+            new ReauthCodeResponseDto(true, resendAvailableAt),
+            statusCode: StatusCodes.Status202Accepted);
+    }
+    catch (SupabaseAuthException exception)
+    {
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth");
+
+app.MapPost("/api/auth/reauth/verify", async (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    ReauthTicketStore tickets,
+    ReauthVerifyRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account ||
+        BearerToken(context.Request) is not { Length: > 0 } accessToken)
+    {
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
+    }
+
+    var code = body.Code?.Trim() ?? string.Empty;
+    if (!IsEmailCode(code))
+    {
+        return AuthErrorResult(400, "CODE_INVALID", "The code is wrong or has expired.");
+    }
+
+    try
+    {
+        await gateway.VerifyReauthCodeAsync(account, code, cancellationToken);
+        var (ticket, expiresAt) = tickets.Issue(
+            account.Id,
+            SupabaseAuthGateway.SessionIdFromAccessToken(accessToken));
+        return Results.Ok(new ReauthTicketResponseDto(ticket, expiresAt));
+    }
+    catch (SupabaseAuthException exception)
+    {
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth");
+
+/* ---------- Dang ky / dang nhap bang Google (Host lam trung gian PKCE) ---------- */
+
+app.MapPost("/api/auth/google/start", (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    GoogleOAuthFlowStore flows,
+    DesktopGuestSession desktopGuest,
+    GoogleStartRequestDto body) =>
+{
+    if (!authOptions.IsConfigured)
+    {
+        return AuthErrorResult(503, "AUTH_NOT_CONFIGURED", "QuestLog authentication is not configured on this server.");
+    }
+
+    if (!authOptions.GoogleReady)
+    {
+        return AuthErrorResult(403, "GOOGLE_DISABLED", "Google sign-in is not enabled.");
+    }
+
+    GoogleOAuthClient client;
+    switch (body.Client)
+    {
+        case "web":
+            client = GoogleOAuthClient.Web;
+            break;
+        case "desktop":
+            // Chi WebView2 cua Shell co handshake token nay; trinh duyet thuong
+            // va Hosted API khong khoi tao duoc flow desktop.
+            if (!desktopGuest.AuthorizeExchange(context))
+            {
+                return AuthErrorResult(403, "DESKTOP_HANDSHAKE_REQUIRED", "Desktop sign-in is available only inside the QuestLog app.");
+            }
+            client = GoogleOAuthClient.Desktop;
+            break;
+        default:
+            return AuthErrorResult(400, "INVALID_OAUTH_CLIENT", "Unknown sign-in client.");
+    }
+
+    var flow = flows.Create(client);
+    if (flow is null)
+    {
+        return AuthErrorResult(429, "RATE_LIMITED", "Too many sign-in attempts in progress. Try again shortly.");
+    }
+
+    if (client == GoogleOAuthClient.Web)
+    {
+        SetOAuthFlowCookie(context, flow.FlowId);
+    }
+
+    return Results.Ok(new GoogleStartResponseDto(flow.FlowId, gateway.BuildGoogleAuthorizeUrl(flow), flow.ExpiresAt));
+}).RequireRateLimiting("auth");
+
+// Chi nhan code va gan vao flow, KHONG doi code o day: flow bi huy/bo do thi
+// khong bao gio sinh ra phien. Tra trang tinh, khong redirect.
+app.MapGet("/api/auth/google/callback", (HttpContext context, GoogleOAuthFlowStore flows) =>
+{
+    var query = context.Request.Query;
+    var flow = flows.TakeByState(query["state"].ToString());
+    var success = false;
+    if (flow is not null)
+    {
+        var code = query["code"].ToString();
+        var boundToBrowser = flow.Client != GoogleOAuthClient.Web ||
+                             (context.Request.Cookies.TryGetValue(OAuthFlowCookie, out var cookieFlowId) &&
+                              string.Equals(cookieFlowId, flow.FlowId, StringComparison.Ordinal));
+        if (boundToBrowser && string.IsNullOrEmpty(query["error"].ToString()) && code.Length > 0)
+        {
+            flow.Authorize(code);
+            success = true;
+        }
+        else
+        {
+            flow.Cancel();
+        }
+    }
+
+    var vietnamese = context.Request.Headers.AcceptLanguage.ToString()
+        .StartsWith("vi", StringComparison.OrdinalIgnoreCase);
+    context.Response.Headers.CacheControl = "no-store";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'";
+    return Results.Content(GoogleCallbackPage(success, vietnamese), "text/html; charset=utf-8");
+}).RequireRateLimiting("auth-poll");
+
+app.MapPost("/api/auth/google/complete", async (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    GoogleOAuthFlowStore flows,
+    DesktopGuestSession desktopGuest,
+    GoogleCompleteRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    var flow = flows.Get(body.FlowId);
+    var bound = flow is not null && (flow.Client == GoogleOAuthClient.Desktop
+        ? desktopGuest.AuthorizeExchange(context)
+        : context.Request.Cookies.TryGetValue(OAuthFlowCookie, out var cookieFlowId) &&
+          string.Equals(cookieFlowId, flow.FlowId, StringComparison.Ordinal));
+    if (flow is null || !bound)
+    {
+        return AuthErrorResult(410, "OAUTH_FLOW_EXPIRED", "This sign-in attempt has expired. Start again.");
+    }
+
+    var (progress, code) = flow.TryBeginExchange();
+    if (progress == GoogleFlowProgress.Pending)
+    {
+        return Results.Ok(new GoogleCompleteResponseDto("pending", null));
+    }
+
+    flows.Remove(flow);
+    ClearOAuthFlowCookie(context);
+    if (progress == GoogleFlowProgress.Cancelled)
+    {
+        return AuthErrorResult(400, "OAUTH_CANCELLED", "Google sign-in was cancelled or did not complete.");
+    }
+
+    try
+    {
+        var result = await gateway.CompleteGoogleSignInAsync(code!, flow.CodeVerifier, cancellationToken);
+        SetRefreshCookie(context, result.RefreshToken);
+        return Results.Ok(new GoogleCompleteResponseDto("completed", result.Session));
+    }
+    catch (SupabaseAuthException exception)
+    {
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}).RequireRateLimiting("auth-poll");
+
+app.MapPost("/api/auth/account/username-claim", async (
+    HttpContext context,
+    SupabaseAuthGateway gateway,
+    UsernameClaimRequestDto body,
+    CancellationToken cancellationToken) =>
+{
+    var username = body.Username?.Trim() ?? string.Empty;
+    if (!IsValidUsername(username))
+    {
+        return InvalidUsernameResult();
+    }
+
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
+    {
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
+    }
+
+    try
+    {
+        return Results.Ok(await gateway.ClaimUsernameAsync(account, username, cancellationToken));
     }
     catch (SupabaseAuthException exception)
     {
@@ -409,7 +772,9 @@ app.MapPost("/api/auth/logout", async (
     var accessToken = BearerToken(context.Request);
     if (!string.IsNullOrWhiteSpace(accessToken))
     {
-        await gateway.LogoutAsync(accessToken, cancellationToken);
+        // Only this device: a global sign-out would revoke the desktop app and every
+        // other browser, which then fail mid-session with session_not_found.
+        await gateway.LogoutAsync(accessToken, cancellationToken, "local");
     }
 
     ClearRefreshCookie(context);
@@ -426,7 +791,63 @@ app.MapGet("/api/capabilities", () => Results.Ok(new CapabilitiesDto(
         RevealFolder: OperatingSystem.IsWindows(),
         Tray: false,
         Scanner: false,
-        Controller: OperatingSystem.IsWindows()))));
+        Controller: OperatingSystem.IsWindows(),
+        // Dong bo anh chay ngay trong Host, khong can tien trinh Tray.
+        ImageSync: CloudinaryImageService.IsConfigured,
+        // Backup save game dang tam tat (MasterPlay.Core.FeatureFlags).
+        Backup: MasterPlay.Core.FeatureFlags.GameBackup && OperatingSystem.IsWindows()))));
+
+// Mot lan dong bo anh tai mot thoi diem: hai lan chong nhau se upload trung
+// va tranh nhau ghi cung cot anh.
+var imageSyncGate = new SemaphoreSlim(1, 1);
+
+/*
+ * Dua anh trong thu vien cua nguoi dang dang nhap len Cloudinary.
+ *
+ * Moi luong ghi anh (them game tu kho, lookup metadata, form sua, lenh dien
+ * poster IGDB) deu luu link GOC. Truoc day chi menu Tray goi duoc dong bo nen
+ * link goc nam yen mai. Chay dong bo (khong 202 + SSE) vi Host chua co kenh
+ * /api/events; bao cao tra ve kem LY DO tung anh loi.
+ */
+app.MapPost("/api/tray/sync-images", async (HttpContext context, CancellationToken cancellationToken) =>
+{
+    if (!TryGetLibraryOwnerKey(context, out var ownerKey))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
+    if (!CloudinaryImageService.IsConfigured)
+    {
+        return Results.Json(
+            new { error = new { code = "INTEGRATION_NOT_CONFIGURED", message = "Cloudinary is not configured." } },
+            statusCode: StatusCodes.Status422UnprocessableEntity);
+    }
+    if (!await imageSyncGate.WaitAsync(0, cancellationToken))
+    {
+        return Results.Json(
+            new { error = new { code = "IMAGE_SYNC_RUNNING", message = "An image sync is already running." } },
+            statusCode: StatusCodes.Status409Conflict);
+    }
+
+    try
+    {
+        var result = await CloudinaryImageService.MigrateAllGameImagesToCloudinaryAsync(
+            ownerKey: ownerKey,
+            cancellationToken: cancellationToken);
+        return Results.Ok(new ImageSyncReportDto(
+            TotalGames: result.TotalGames,
+            Banner: new ImageSyncRoleCountsDto(result.CardCoverUploaded, result.CardCoverAlreadySynced, result.CardCoverMissing),
+            Backdrop: new ImageSyncRoleCountsDto(result.CoverUploaded, result.CoverAlreadySynced, result.CoverMissing),
+            Poster: new ImageSyncRoleCountsDto(result.PortraitCoverUploaded, result.PortraitCoverAlreadySynced, result.PortraitCoverMissing),
+            Failed: result.Failed,
+            Failures: result.Failures
+                .OrderBy(failure => failure.GameName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(failure => failure.Role, StringComparer.Ordinal)
+                .Select(failure => new ImageSyncFailureDto(failure.GameId, failure.GameName, failure.Role, failure.Reason))
+                .ToList()));
+    }
+    finally
+    {
+        imageSyncGate.Release();
+    }
+});
 
 app.MapGet("/api/metadata/games", async (
     HttpContext context,
@@ -484,6 +905,7 @@ app.MapPost("/api/library/game-imports", async (
     HttpContext context,
     MasterPlayContext db,
     SupabaseMetadataCatalog catalog,
+    CloudinaryAutoUploadQueue imageUploads,
     LibraryGameImportRequestDto body,
     CancellationToken cancellationToken) =>
 {
@@ -594,6 +1016,7 @@ app.MapPost("/api/library/game-imports", async (
             }
         }
 
+        var importedGames = new List<Game>(newItems.Count);
         foreach (var item in newItems)
         {
             var source = metadata[item.MetadataGameId];
@@ -601,21 +1024,26 @@ app.MapPost("/api/library/game-imports", async (
             {
                 Id = Guid.NewGuid().ToString(),
                 LibraryOwnerKey = ownerKey,
-                MetadataGameId = source.Id,
-                MetadataRevision = source.Revision,
-                MetadataSyncedAt = DateTime.UtcNow,
                 Name = source.Name,
                 Developer = source.Developer,
                 Publisher = source.Publisher,
                 PublishDate = source.PublishDate,
                 IsDlc = source.IsDlc,
-                GImagePath = source.GalleryImageUrl,
-                ImagePath = source.CoverImageUrl,
-                SteamLibraryImagePath = source.SteamLibraryImageUrl,
+                // Ba vai tro anh — DOMAIN_RULES §12. Doi ung MOT-MOT voi cot
+                // cung ten tren kho; lech mot cap o day la anh card se hoa anh
+                // hero sau moi vong import.
+                BannerPath = source.BannerUrl,
+                BackdropPath = source.BackdropUrl,
+                PosterPath = source.PosterUrl,
                 MetaScore = source.MetaScore,
                 AvgPlayTime = source.AvgPlaytimeHours,
                 CreateAt = DateTime.Now,
             };
+
+            // Noi vao kho VA ghi moc so sanh. Ghi ngay tu luc import thi lan
+            // `metadata-refresh` dau tien da co du ba gia tri de doi chieu, khong
+            // phai di duong bootstrap "chi dien o trong".
+            LibraryMetadataMerge.Record(game, source, DateTime.UtcNow);
 
             if (item.UserData is not null)
                 ApplyUserData(game, ToUserDataPatch(item.UserData), db);
@@ -623,11 +1051,14 @@ app.MapPost("/api/library/game-imports", async (
             game.OwnershipId ??= defaultOwnershipId;
 
             db.Games.Add(game);
+            importedGames.Add(game);
             results.Add(new LibraryGameImportResultItemDto(item.MetadataGameId, "imported", game.Id, null));
         }
 
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        // Anh tu kho la link goc (Steam/RAWG/IGDB) — dua len Cloudinary o nen.
+        imageUploads.EnqueueIfNeeded(importedGames);
 
         return Results.Json(
             new LibraryGameImportResponseDto(
@@ -642,6 +1073,120 @@ app.MapPost("/api/library/game-imports", async (
         return Results.Json(
             new { error = new { code = exception.Code, message = exception.Message } },
             statusCode: exception.StatusCode);
+    }
+});
+
+/*
+ * Keo thay doi tu kho ve thu vien.
+ *
+ * Admin sua mot ban ghi tren kho thi moi thu vien da noi toi ban ghi do phai
+ * thay doi theo, TRU field ma chu thu vien da sua tay: sua tay thang. Luat hop
+ * nhat ba chieu nam trong `LibraryMetadataMerge`, cung noi giai thich tai sao
+ * phai co baseline.
+ *
+ * KHONG dat o `GET /api/games`: mot GET ma ghi DB va goi mang la mot cai bay —
+ * moi lan doi trang thu vien lai tra them mot round-trip, va loi mang se lam
+ * hong ca man hinh danh sach. Client goi endpoint nay mot lan moi phien.
+ *
+ * Co lay ca dong `IsDisabled`: nguoi dung khoi phuc mot game thi no phai san
+ * sang dung, chu khong phai cho them mot vong dong bo nua.
+ */
+app.MapPost("/api/library/metadata-refresh", async (
+    HttpContext context,
+    MasterPlayContext db,
+    SupabaseMetadataCatalog catalog,
+    CloudinaryAutoUploadQueue imageUploads,
+    LibraryMetadataRefreshRequestDto? body,
+    CancellationToken cancellationToken) =>
+{
+    if (!TryGetLibraryOwnerKey(context, out var ownerKey))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to refresh metadata.");
+
+    var dryRun = body?.DryRun is true;
+    var force = body?.Force is true;
+
+    var games = await db.Games
+        .Where(game => game.LibraryOwnerKey == ownerKey && game.MetadataGameId != null)
+        .ToListAsync(cancellationToken);
+
+    if (games.Count == 0)
+        return Results.Ok(LibraryMetadataRefreshResponseDto.Nothing(dryRun));
+
+    // Cua chan: client goi moi lan mo app, va mo lai app 20 lan trong mot buoi
+    // khong co nghia la hoi kho 20 lan. `force` danh cho nut bam tay, khi nguoi
+    // dung vua sua ben console va muon thay ket qua ngay.
+    var floor = DateTime.UtcNow - TimeSpan.FromMinutes(10);
+    if (!force && games.All(game => game.MetadataSyncedAt is { } at && at > floor))
+    {
+        return Results.Ok(LibraryMetadataRefreshResponseDto.Nothing(dryRun) with
+        {
+            Skipped = true,
+            Linked = games.Count,
+        });
+    }
+
+    try
+    {
+        var ids = games.Select(game => game.MetadataGameId!.Value).Distinct().ToArray();
+        var metadata = new Dictionary<long, MetadataCatalogGame>();
+        // `GetByIdsAsync` dung `id=in.(...)` tren URL. Cat lo de URL khong dai vo han.
+        foreach (var chunk in ids.Chunk(100))
+        {
+            foreach (var pair in await catalog.GetByIdsAsync(chunk, cancellationToken))
+                metadata[pair.Key] = pair.Value;
+        }
+
+        var syncedAt = DateTime.UtcNow;
+        var reports = new List<LibraryMetadataRefreshGameDto>();
+        var missing = 0;
+        var fieldsUpdated = 0;
+        var fieldsKept = 0;
+        var imageChanged = new List<Game>();
+
+        foreach (var game in games)
+        {
+            // Kho khong tra ve: ban ghi bi go xuat ban hoac da xoa. KHONG dung
+            // toi dong thu vien — game van la cua nguoi dung, chi la kho khong
+            // con noi gi ve no nua.
+            if (!metadata.TryGetValue(game.MetadataGameId!.Value, out var source))
+            {
+                missing++;
+                continue;
+            }
+
+            var result = LibraryMetadataMerge.Merge(game, source, syncedAt, apply: !dryRun);
+            if (result.Updated.Any(LibraryMetadataMerge.IsImageField))
+                imageChanged.Add(game);
+            fieldsUpdated += result.Updated.Count;
+            fieldsKept += result.Kept.Count;
+            if (result.Updated.Count > 0 || result.Kept.Count > 0)
+            {
+                reports.Add(new LibraryMetadataRefreshGameDto(
+                    result.GameId, result.Name, result.MetadataGameId, result.Updated, result.Kept));
+            }
+        }
+
+        if (!dryRun)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            // Kho doi anh thi thu vien vua nhan link goc moi — dua len Cloudinary o nen.
+            imageUploads.EnqueueIfNeeded(imageChanged);
+        }
+
+        return Results.Ok(new LibraryMetadataRefreshResponseDto(
+            DryRun: dryRun,
+            Skipped: false,
+            Linked: games.Count,
+            Checked: games.Count - missing,
+            Updated: reports.Count(report => report.Updated.Count > 0),
+            FieldsUpdated: fieldsUpdated,
+            FieldsKept: fieldsKept,
+            Missing: missing,
+            Games: reports));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
     }
 });
 
@@ -679,6 +1224,589 @@ app.MapPatch("/api/games/{id}/userdata", async (
     await db.SaveChangesAsync(cancellationToken);
     return Results.Ok(await ReloadGameDetailDto(db, id, ownerKey));
 });
+
+// ── Admin Console — kho metadata dung chung ────────────────────
+// Spec 2026-09-14 §7. Moi endpoint tu kiem role tu JWT: mode cua UI khong duoc
+// tham gia vao quyet dinh quyen.
+//
+// KHONG co endpoint nao cho metadata genres/themes — hai bang do thuoc tien trinh
+// sync (§4.4). Dung them "cho tien": co duong ghi la se co nguoi sua tay, roi lan
+// sync sau ghi de.
+
+app.MapGet("/api/admin/metadata/series", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    string? q,
+    int? limit,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+
+    try
+    {
+        var items = await admin.ListSeriesAsync(q, limit ?? 100, cancellationToken);
+        return Results.Ok(items.Select(item => new AdminMetadataSeriesDto(item.Id, item.Name)).ToList());
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPost("/api/admin/metadata/series", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    AdminMetadataSeriesWriteDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (ValidateSeriesName(body?.Name) is { } invalid) return invalid;
+
+    try
+    {
+        var created = await admin.CreateSeriesAsync(body!.Name!.Trim(), account.Id, cancellationToken);
+        return Results.Created(
+            $"/api/admin/metadata/series/{created.Id}",
+            new AdminMetadataSeriesDto(created.Id, created.Name));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPut("/api/admin/metadata/series/{id:long}", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    AdminMetadataSeriesWriteDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (ValidateSeriesName(body?.Name) is { } invalid) return invalid;
+
+    try
+    {
+        var saved = await admin.UpdateSeriesAsync(id, body!.Name!.Trim(), account.Id, cancellationToken);
+        return Results.Ok(new AdminMetadataSeriesDto(saved.Id, saved.Name));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapDelete("/api/admin/metadata/series/{id:long}", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+
+    try
+    {
+        await admin.DeleteSeriesAsync(id, account.Id, cancellationToken);
+        return Results.NoContent();
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPost("/api/admin/metadata/series/merge", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    AdminMetadataSeriesMergeDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+
+    if (body?.SourceId is not > 0 || body.TargetId is not > 0)
+    {
+        return Results.UnprocessableEntity(new
+        {
+            error = new { code = "SERIES_MERGE_IDS_INVALID", message = "Choose a source and a target series." }
+        });
+    }
+
+    try
+    {
+        var result = await admin.MergeSeriesAsync(body.SourceId.Value, body.TargetId.Value, account.Id, cancellationToken);
+        return Results.Ok(new AdminMetadataSeriesMergeResponseDto(
+            new AdminMetadataSeriesDto(result.Target.Id, result.Target.Name),
+            result.MovedGames));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapGet("/api/admin/metadata/stats", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+
+    try
+    {
+        return Results.Ok(await admin.GetStatsAsync(cancellationToken));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapGet("/api/admin/metadata/crawler", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    try { return Results.Ok(await admin.GetCrawlerStatusAsync(cancellationToken)); }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapPut("/api/admin/metadata/crawler/enabled", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    AdminCrawlerEnabledRequestDto? body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    if (body?.Enabled is null)
+        return MetadataParamError("CRAWLER_ENABLED_REQUIRED", "Specify whether the crawler should be enabled.");
+    try { return Results.Ok(await admin.SetCrawlerEnabledAsync(body.Enabled.Value, cancellationToken)); }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapPost("/api/admin/metadata/crawler/run", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    try
+    {
+        var queued = await admin.TriggerCrawlerAsync(cancellationToken);
+        return Results.Json(queued, statusCode: StatusCodes.Status202Accepted);
+    }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapGet("/api/admin/metadata/crawler/runs", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    string? cursor,
+    int? pageSize,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    if (!TryParseMetadataCursor(cursor, out var parsedCursor))
+        return MetadataParamError("CRAWLER_CURSOR_INVALID", "That page cursor is not valid. Reload the list.");
+    try { return Results.Ok(await admin.ListCrawlerRunsAsync(parsedCursor, Math.Clamp(pageSize ?? 25, 1, 100), cancellationToken)); }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapGet("/api/admin/metadata/crawler/runs/{runId:guid}/games", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    Guid runId,
+    string? cursor,
+    int? pageSize,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    if (!TryParseMetadataCursor(cursor, out var parsedCursor))
+        return MetadataParamError("CRAWLER_CURSOR_INVALID", "That page cursor is not valid. Reload the list.");
+    try { return Results.Ok(await admin.ListCrawlerRunItemsAsync(runId, parsedCursor, Math.Clamp(pageSize ?? 30, 1, 100), cancellationToken)); }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapGet("/api/admin/metadata/crawler/games", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    string? cursor,
+    int? pageSize,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    if (!TryParseMetadataCursor(cursor, out var parsedCursor))
+        return MetadataParamError("CRAWLER_CURSOR_INVALID", "That page cursor is not valid. Reload the list.");
+    try { return Results.Ok(await admin.ListCrawlerGamesAsync(parsedCursor, Math.Clamp(pageSize ?? 30, 1, 100), cancellationToken)); }
+    catch (MetadataCatalogException exception) { return MetadataErrorResult(exception); }
+});
+
+app.MapGet("/api/admin/metadata/games", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    string? q,
+    string? missing,
+    string? sort,
+    bool? desc,
+    bool? isDlc,
+    long? seriesId,
+    bool? noSeries,
+    int? year,
+    bool? published,
+    string? cursor,
+    int? pageSize,
+    int? page,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+
+    if (page is < 1)
+        return MetadataParamError("METADATA_PAGE_INVALID", "Page number must be 1 or greater.");
+
+    // Gia tri la bi tu choi TAI DAY thay vi de DB tra loi: loi 422 cua Host noi
+    // ro tham so nao sai, con loi tu DB chi noi "filter khong ho tro".
+    if (!string.IsNullOrWhiteSpace(missing) && !SupabaseMetadataAdmin.IsKnownMissingFilter(missing))
+        return MetadataParamError("METADATA_FILTER_UNKNOWN", "That catalog filter is not supported.");
+
+    if (!string.IsNullOrWhiteSpace(sort) && !SupabaseMetadataAdmin.IsKnownSortKey(sort))
+        return MetadataParamError("METADATA_SORT_UNKNOWN", "That sort key is not supported.");
+
+    if (year is < 1950 or > 2200)
+        return MetadataParamError("METADATA_YEAR_INVALID", "Release year must be between 1950 and 2200.");
+
+    /*
+     * Con tro den tu client duoi dang chuoi JSON do chinh DB phat ra o trang
+     * truoc. Host KHONG doc noi dung, chi kiem tra no la JSON hop le — parse duoc
+     * thi chuyen tiep, khong thi bao loi. Nhoi chuoi hong xuong DB se thanh mot
+     * loi 503 kho hieu thay vi mot loi 422 dung cho.
+     */
+    JsonElement? parsedCursor = null;
+    if (!string.IsNullOrWhiteSpace(cursor))
+    {
+        try
+        {
+            parsedCursor = JsonDocument.Parse(cursor).RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return MetadataParamError("METADATA_CURSOR_INVALID", "That page cursor is not valid. Reload the list.");
+        }
+    }
+
+    try
+    {
+        var size = Math.Clamp(pageSize ?? 30, 1, 100);
+        var result = await admin.ListGamesAsync(
+            new MetadataAdminGameQuery
+            {
+                Text = q,
+                Missing = missing,
+                IsDlc = isDlc,
+                SeriesId = seriesId,
+                NoSeries = noSeries,
+                Year = year,
+                Published = published,
+                Sort = string.IsNullOrWhiteSpace(sort) ? "id" : sort,
+                Descending = desc ?? true,
+                Cursor = parsedCursor,
+                // `page` la so trang (tu 1) cua che do danh sach; con tro thang
+                // neu client gui ca hai.
+                Offset = page is { } number && parsedCursor is null ? (number - 1) * size : null,
+                PageSize = size,
+            },
+            cancellationToken);
+
+        return Results.Ok(new AdminMetadataGameListResponseDto(
+            result.Items.Select(ToAdminMetadataGameDto).ToList(),
+            // Con tro di nguoc ra client duoi dang chuoi, de no chi viec gui lai
+            // nguyen si mà khong phai hieu cau truc ben trong.
+            result.NextCursor?.GetRawText(),
+            size,
+            result.TotalItems));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapGet("/api/admin/metadata/games/{id:long}", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+
+    try
+    {
+        var game = await admin.GetGameAsync(id, cancellationToken);
+        return game is null
+            ? Results.NotFound(new
+            {
+                error = new { code = "GAME_NOT_FOUND", message = "That metadata record no longer exists." }
+            })
+            : Results.Ok(ToAdminMetadataGameDto(game));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPost("/api/admin/metadata/games", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    AdminMetadataGameWriteDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (BuildMetadataGamePayload(body, out var payload) is { } invalid) return invalid;
+
+    try
+    {
+        var created = await admin.CreateGameAsync(
+            payload,
+            account.Id,
+            body!.ConfirmDuplicate == true,
+            cancellationToken);
+        return Results.Created(
+            $"/api/admin/metadata/games/{created.Id}",
+            ToAdminMetadataGameDto(created));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPut("/api/admin/metadata/games/{id:long}", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    AdminMetadataGameWriteDto body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+
+    // Khong co `revision` thi khong cho ghi. Cho qua o day dong nghia voi
+    // last-write-wins tren kho dung chung — dung thu spec §7 cam.
+    if (body?.Revision is not > 0)
+    {
+        return Results.UnprocessableEntity(new
+        {
+            error = new
+            {
+                code = "METADATA_REVISION_REQUIRED",
+                message = "Send the revision you are editing so concurrent changes can be detected."
+            }
+        });
+    }
+
+    if (BuildMetadataGamePayload(body, out var payload) is { } invalid) return invalid;
+
+    try
+    {
+        var saved = await admin.UpdateGameAsync(id, payload, body.Revision.Value, account.Id, cancellationToken);
+        return Results.Ok(ToAdminMetadataGameDto(saved));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapDelete("/api/admin/metadata/games/{id:long}", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+
+    try
+    {
+        var result = await admin.DeleteGameAsync(id, account.Id, cancellationToken);
+        return Results.Ok(new AdminMetadataGameDeleteResponseDto(result.OrphanedDlcCount));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+/*
+ * TIEU CHI XUAT BAN — spec §13.
+ *
+ * `manually_unpublished` la Y DINH cua admin; `is_published` la KET QUA suy ra, do
+ * trigger DB giu. Host khong bao gio ghi `is_published`.
+ *
+ * MAC DINH la DA XUAT BAN: ban ghi chi khong len duoc khi admin chu dong go, hoac
+ * khi no truot mot tieu chi dang bat.
+ */
+app.MapGet("/api/admin/metadata/publishing", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+
+    try
+    {
+        return Results.Ok(await admin.GetPublishRulesAsync(cancellationToken));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+app.MapPut("/api/admin/metadata/publishing", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    AdminPublishRulesDto? body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (body is null)
+        return MetadataParamError("PUBLISH_RULES_REQUIRED", "Send at least one rule to change.");
+
+    // Field bo trong = GIU NGUYEN. Chi gui len nhung khoa that su co gia tri, de
+    // ham SQL phan biet duoc "khong doi" voi "tat di".
+    var rules = new Dictionary<string, object?>();
+    void Put(string key, bool? value) { if (value.HasValue) rules[key] = value.Value; }
+    Put("requireBanner", body.RequireBanner);
+    Put("requirePoster", body.RequirePoster);
+    Put("requireBackdrop", body.RequireBackdrop);
+    Put("requireDeveloper", body.RequireDeveloper);
+    Put("requirePublisher", body.RequirePublisher);
+    Put("requirePublishDate", body.RequirePublishDate);
+    Put("requireMetaScore", body.RequireMetaScore);
+    Put("requireAvgPlaytime", body.RequireAvgPlaytime);
+    Put("requireSummary", body.RequireSummary);
+    Put("requireIgdbId", body.RequireIgdbId);
+    Put("requireDlcBase", body.RequireDlcBase);
+
+    if (rules.Count == 0)
+        return MetadataParamError("PUBLISH_RULES_REQUIRED", "Send at least one rule to change.");
+
+    try
+    {
+        return Results.Ok(await admin.SetPublishRulesAsync(rules, account.Id, cancellationToken));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+/*
+ * Xuat ban / go xuat ban thu cong. KHONG nhan `revision`: thao tac nay khong doi
+ * noi dung ban ghi nen no khong duoc dinh 409 vi mot ban sua do dang mo o cho khac.
+ *
+ * Ban ghi dang truot tieu chi VAN nhan duoc `published: true` — do la y dinh hop
+ * le cua admin, chi la no chua co hieu luc. Chan o day se khien admin khong bao
+ * gio go duoc y dinh cu sau khi bo sung du lieu.
+ */
+app.MapPut("/api/admin/metadata/games/{id:long}/published", async (
+    HttpContext context,
+    SupabaseMetadataAdmin admin,
+    long id,
+    AdminMetadataGamePublishedRequestDto? body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (body?.Published is not { } published)
+        return MetadataParamError("PUBLISHED_REQUIRED", "Specify whether the record should be published.");
+
+    try
+    {
+        var game = await admin.SetGamePublishedAsync(id, published, account.Id, cancellationToken);
+        return Results.Ok(ToAdminMetadataGameDto(game));
+    }
+    catch (MetadataCatalogException exception)
+    {
+        return MetadataErrorResult(exception);
+    }
+});
+
+// ── Admin Integrations ─────────────────────────────────────────────────────
+// Credentials are write-only at this HTTP boundary. The response is a safe
+// configuration summary sourced from Supabase Vault metadata plus the provider's
+// public identifiers (Cloudinary cloud name, IGDB client ID) — never a secret.
+app.MapGet("/api/admin/integrations", async (
+    HttpContext context,
+    SupabaseIntegrationStore integrations,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out _) is { } denied) return denied;
+    try
+    {
+        var summaries = new List<IntegrationSummaryDto>();
+        foreach (var summary in await integrations.ListAsync(cancellationToken))
+            summaries.Add(await integrations.WithIdentifiersAsync(summary, cancellationToken));
+        return Results.Ok(summaries);
+    }
+    catch (IntegrationStoreException exception)
+    {
+        return IntegrationErrorResult(exception);
+    }
+});
+
+app.MapPut("/api/admin/integrations/{provider}", async (
+    HttpContext context,
+    SupabaseIntegrationStore integrations,
+    string provider,
+    IntegrationCredentialsWriteDto? body,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (!IntegrationProviders.IsKnown(provider))
+        return IntegrationParamError("INTEGRATION_PROVIDER_UNKNOWN", "That integration is not supported.");
+    if (body?.Values is null || body.Values.Count is < 1 or > 3 ||
+        body.Values.Any(value => value.Key.Length is < 1 or > 40 || value.Value is null || value.Value.Length is < 1 or > 4096))
+    {
+        return IntegrationParamError("INTEGRATION_FIELDS_REQUIRED", "Provide the complete credential set for this integration.");
+    }
+
+    try
+    {
+        var summary = await integrations.ReplaceAsync(provider, body.Values, account.Id, cancellationToken);
+        return Results.Ok(await integrations.WithIdentifiersAsync(summary, cancellationToken));
+    }
+    catch (IntegrationStoreException exception)
+    {
+        return IntegrationErrorResult(exception);
+    }
+});
+
+app.MapPost("/api/admin/integrations/{provider}/test", async (
+    HttpContext context,
+    SupabaseIntegrationStore integrations,
+    IntegrationConnectionTester tester,
+    string provider,
+    CancellationToken cancellationToken) =>
+{
+    if (RequireAdmin(context, out var account) is { } denied) return denied;
+    if (!IntegrationProviders.IsKnown(provider))
+        return IntegrationParamError("INTEGRATION_PROVIDER_UNKNOWN", "That integration is not supported.");
+
+    try
+    {
+        var result = await tester.TestAsync(provider, cancellationToken);
+        var summary = await integrations.RecordTestAsync(
+            provider,
+            result.Passed,
+            result.ErrorCode,
+            account.Id,
+            cancellationToken);
+        return Results.Ok(await integrations.WithIdentifiersAsync(summary, cancellationToken));
+    }
+    catch (IntegrationStoreException exception)
+    {
+        return IntegrationErrorResult(exception);
+    }
+}).RequireRateLimiting("integration-test");
 
 app.MapGet("/api/settings", () => Results.Ok(ToSettingsDto(JsonService.LoadConfig())));
 
@@ -843,6 +1971,12 @@ app.MapGet("/api/games", async (
         // Queue owns its order and ignores library search/filter/sort controls.
         result = LibraryQuery.ApplySort(result, "default", "queue");
     }
+    else if (tab == "console")
+    {
+        // Console is a fixed server-owned view. Hidden Gallery controls must not
+        // leak stale search/filter/sort state into this presentation.
+        result = LibraryQuery.ApplySort(result, "default", "console");
+    }
     else
     {
         result = LibraryQuery.ApplySearch(result, q, scope);
@@ -855,7 +1989,7 @@ app.MapGet("/api/games", async (
     var list = result.ToList();
 
     // DOMAIN_RULES §7.3 — dao TOAN BO list SAU khi sort xong (mismatch M18).
-    if (tab != "queue" && reverseSort == true) list.Reverse();
+    if (tab is not ("queue" or "console") && reverseSort == true) list.Reverse();
 
     var totalItems = list.Count;
     var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)size));
@@ -887,7 +2021,7 @@ app.MapGet("/api/games", async (
         PageSize: size,
         TotalItems: totalItems,
         TotalPages: totalPages,
-        ActiveFilterCount: tab == "queue" ? 0 : filter.ActiveCount,
+        ActiveFilterCount: tab is "queue" or "console" ? 0 : filter.ActiveCount,
         CardHints: LibraryQuery.BuildCardHints(sort, tab, scope)));
 });
 
@@ -1069,20 +2203,29 @@ app.MapPost("/api/fs/pick-file", async (PickFileRequestDto body) =>
     }
 });
 
-app.MapPut("/api/games/{id}", async (HttpContext context, MasterPlayContext db, string id, GameUpsertDto body) =>
+app.MapPut("/api/games/{id}", async (
+    HttpContext context,
+    MasterPlayContext db,
+    CloudinaryAutoUploadQueue imageUploads,
+    string id,
+    GameUpsertDto body) =>
 {
     if (!TryGetLibraryOwnerKey(context, out var ownerKey))
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to update games.");
-    return await SaveGame(db, id, body, create: false, ownerKey);
+    return await SaveGame(db, imageUploads, id, body, create: false, ownerKey);
 });
 
-app.MapPost("/api/games", async (HttpContext context, MasterPlayContext db, GameUpsertDto body) =>
+app.MapPost("/api/games", async (
+    HttpContext context,
+    MasterPlayContext db,
+    CloudinaryAutoUploadQueue imageUploads,
+    GameUpsertDto body) =>
 {
     if (context.Items["QuestLogAccount"] is not AuthAccountDto account)
         return AuthErrorResult(403, "ADMIN_REQUIRED", "Only an administrator can create manual games.");
     if (!string.Equals(account.Role, "admin", StringComparison.OrdinalIgnoreCase))
         return AuthErrorResult(403, "ADMIN_REQUIRED", "Only an administrator can create manual games.");
-    return await SaveGame(db, null, body, create: true, $"user:{account.Id}");
+    return await SaveGame(db, imageUploads, null, body, create: true, $"user:{account.Id}");
 });
 
 app.MapPost("/api/games/{id}/playtime", async (
@@ -1182,6 +2325,13 @@ app.MapPost("/api/games/{id}/backup-folder/generate", async (HttpContext context
 {
     if (!TryGetLibraryOwnerKey(context, out var ownerKey))
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to manage game folders.");
+    if (!MasterPlay.Core.FeatureFlags.GameBackup)
+    {
+        return Results.Json(TaxonomyError(
+            "FEATURE_DISABLED",
+            "Game backup is temporarily disabled."),
+            statusCode: StatusCodes.Status501NotImplemented);
+    }
     if (!OperatingSystem.IsWindows())
     {
         return Results.Json(TaxonomyError(
@@ -1228,101 +2378,159 @@ app.MapPost("/api/games/{id}/backup-folder/generate", async (HttpContext context
     }
 });
 
-app.MapPost("/api/games/{id}/sync/{source}", async (
+/// <summary>
+/// Mot loi van duy nhat cho ca hai nhanh anh Steam: cung mot nguyen nhan thi phai
+/// cung mot cau chu, neu khong nguoi doc se tuong la hai su co khac nhau.
+/// </summary>
+const string SteamUnreachableMessage =
+    "Cannot reach store.steampowered.com from this machine. Some ISP or router DNS "
+    + "servers resolve it to 127.0.0.1; switching the DNS server to 1.1.1.1 or 8.8.8.8 fixes it.";
+
+app.MapPost("/api/game-metadata/preview", async (
     HttpContext context,
     MasterPlayContext db,
-    string id,
-    string source,
+    GameMetadataPreviewRequestDto body,
     CancellationToken cancellationToken) =>
 {
-    if (!TryGetLibraryOwnerKey(context, out var ownerKey))
-        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to sync game metadata.");
-    if (source is not ("metadata" or "cover" or "gallery" or "steam-library"))
-        return Results.BadRequest(TaxonomyError("INVALID_SYNC_SOURCE", $"Unsupported sync source: {source}"));
+    if (!TryGetLibraryOwnerKey(context, out _))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to preview game metadata.");
 
-    var game = await db.Games.SingleOrDefaultAsync(g => g.Id == id && g.LibraryOwnerKey == ownerKey && !g.IsDisabled, cancellationToken);
-    if (game is null)
-        return Results.NotFound(TaxonomyError("GAME_NOT_FOUND", $"Game not found: {id}"));
+    static string? Present(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    var name = body.Name?.Trim();
+    var source = body.Source?.Trim();
+    if (string.IsNullOrWhiteSpace(name))
+        return Results.BadRequest(TaxonomyError("NAME_REQUIRED", "A game name is required to preview metadata."));
+    if (source is not ("metadata" or "card-cover" or "cover" or "portrait-cover"))
+        return Results.BadRequest(TaxonomyError("INVALID_SYNC_SOURCE", $"Unsupported sync source: {source}"));
 
     try
     {
         if (source == "metadata")
         {
-            // IGDB is optional for the general sync. A user who has not
-            // connected Twitch credentials can still refresh RAWG/Steam data;
-            // only the dedicated portrait-cover sync requires IGDB.
+            // Preview only: resolve providers into a DTO and never touch the database.
             var igdbTask = IgdbService.IsConfigured
-                ? IgdbService.GetMetadataAsync(game.Name, cancellationToken)
+                ? IgdbService.GetMetadataAsync(name, cancellationToken)
                 : Task.FromResult<IgdbMetadata?>(null);
-            var rawgTask = RawgService.GetMetadata_Rawg(game.Name);
-            var galleryTask = RawgService.GetGalleryImage(game.Name);
-            var steamTask = RawgService.GetSteamLibraryImage(game.Name);
-            var executableTask = GeminiService.GetExecutableNameAsync(game.Name, cancellationToken);
-            await Task.WhenAll(new Task[] { igdbTask, rawgTask, galleryTask, steamTask, executableTask });
+            var rawgTask = RawgService.GetMetadata_Rawg(name);
+            var steamTask = SteamImageService.GetBannerAndHeroAsync(name, cancellationToken);
+            var executableTask = GeminiService.GetExecutableNameAsync(name, cancellationToken);
+            await Task.WhenAll(new Task[] { igdbTask, rawgTask, steamTask, executableTask });
 
             var igdb = igdbTask.Result;
             var rawg = rawgTask.Result;
+            var steam = steamTask.Result;
             if (igdb is null && rawg is null)
                 return Results.Json(
-                    TaxonomyError("METADATA_NOT_FOUND", $"No IGDB or RAWG entry found for {game.Name}."),
+                    TaxonomyError("METADATA_NOT_FOUND", $"No IGDB or RAWG entry found for {name}."),
                     statusCode: StatusCodes.Status502BadGateway);
 
-            if (igdb is not null)
+            // Series: khop collection/franchise cua IGDB voi Series DA CO, cung quy tac
+            // voi sync IGDB. Chua co thi chi tra TEN goi y — preview khong duoc ghi DB.
+            Series? matchedSeries = null;
+            string? seriesName = null;
+            if (igdb is { SeriesCandidates.Count: > 0 })
             {
-                // IGDB remains the preferred canonical source when configured.
-                await IgdbMetadataSync.ApplyAsync(db, game, igdb, cancellationToken);
+                var existingSeries = await db.Series.AsNoTracking().ToListAsync(cancellationToken);
+                matchedSeries = IgdbMetadataSync.MatchSeries(existingSeries, igdb.SeriesCandidates);
+                seriesName = matchedSeries?.Name ?? IgdbMetadataSync.NewSeriesName(igdb.SeriesCandidates);
             }
 
-            if (rawg is not null)
+            return Results.Ok(new GameMetadataPreviewDto(
+                Name: igdb?.Name ?? rawg?.Name,
+                Developer: igdb?.Developers ?? rawg?.Developers,
+                Publisher: igdb?.Publishers ?? rawg?.Publishers,
+                SlugName: rawg?.SlugName,
+                PublishDate: igdb?.ReleaseDate?.ToString("yyyy-MM-dd") ?? rawg?.ReleaseDate,
+                MetaScore: rawg?.MetaScore,
+                AvgPlaytimeHours: rawg?.AvgPlaytime,
+                ExeName: executableTask.Result,
+                IsDlc: igdb?.IsDlc,
+                BannerPath: steam.Banner,
+                // RAWG la nguon chinh; Steam library_hero (cung sach, khong chu) chi du phong.
+                BackdropPath: Present(rawg?.Background_Image) ?? steam.Hero,
+                PosterPath: igdb?.CoverUrl,
+                Series: matchedSeries is null
+                    ? null
+                    : new TaxonomyItemDto(matchedSeries.Id, matchedSeries.Name, null, 0, null, null, true, null),
+                SeriesName: seriesName));
+        }
+
+        if (source == "cover")
+        {
+            var rawg = await RawgService.GetMetadata_Rawg(name);
+            var backdrop = Present(rawg?.Background_Image)
+                ?? await SteamImageService.GetHeroAsync(name, cancellationToken);
+            if (backdrop is null)
+                return Results.Json(TaxonomyError("RAWG_COVER_NOT_FOUND", $"No RAWG or Steam backdrop found for {name}."),
+                    statusCode: StatusCodes.Status502BadGateway);
+            return Results.Ok(new GameMetadataPreviewDto(null, null, null, null, null, null, null, null, null, null, backdrop, null));
+        }
+
+        if (source == "card-cover")
+        {
+            var path = await SteamImageService.GetBannerAsync(name, cancellationToken);
+            if (string.IsNullOrWhiteSpace(path))
             {
-                // When IGDB is not configured, RAWG supplies a useful
-                // metadata fallback instead of making every Sync fail.
-                if (igdb is null && !string.IsNullOrWhiteSpace(rawg.Name)) game.Name = rawg.Name.Trim();
-                if (igdb is null && !string.IsNullOrWhiteSpace(rawg.Developers)) game.Developer = rawg.Developers.Trim();
-                if (igdb is null && !string.IsNullOrWhiteSpace(rawg.Publishers)) game.Publisher = rawg.Publishers.Trim();
-                if (igdb is null && DateOnly.TryParse(rawg.ReleaseDate, out var releaseDate)) game.PublishDate = releaseDate;
-                if (!string.IsNullOrWhiteSpace(rawg.SlugName)) game.SlugName = rawg.SlugName.Trim();
-                if (rawg.MetaScore is > 0) game.MetaScore = rawg.MetaScore;
-                if (rawg.AvgPlaytime is > 0) game.AvgPlayTime = rawg.AvgPlaytime;
-                // RAWG is the detail-cover source. IGDB's portrait is kept
-                // separate as part of the three-image-role migration.
-                if (!string.IsNullOrWhiteSpace(rawg.Background_Image)) game.ImagePath = rawg.Background_Image;
+                // Cung ly do nhu o nhanh poster: "khong goi duoc" va "khong co game"
+                // hong giong het nhau tu phia nguoi dung, nhung cach sua khac han.
+                if (!await SteamImageService.SearchReachableAsync(cancellationToken))
+                {
+                    return Results.Json(
+                        TaxonomyError("STEAM_STORE_UNREACHABLE", SteamUnreachableMessage),
+                        statusCode: StatusCodes.Status502BadGateway);
+                }
+
+                return Results.Json(TaxonomyError("STEAM_CARD_COVER_NOT_FOUND", $"No Steam card cover found for {name}."),
+                    statusCode: StatusCodes.Status502BadGateway);
             }
-
-            if (!string.IsNullOrWhiteSpace(galleryTask.Result)) game.GImagePath = galleryTask.Result;
-            if (!string.IsNullOrWhiteSpace(steamTask.Result)) game.SteamLibraryImagePath = steamTask.Result;
-            if (!string.IsNullOrWhiteSpace(executableTask.Result)) game.ExeName = executableTask.Result;
-        }
-        else if (source == "cover")
-        {
-            // Detail cover comes from RAWG and intentionally does not require
-            // an IGDB/Twitch setup.
-            var rawgCover = await RawgService.GetMetadata_Rawg(game.Name);
-            if (rawgCover is null || string.IsNullOrWhiteSpace(rawgCover.Background_Image))
-                return Results.Json(TaxonomyError("RAWG_COVER_NOT_FOUND", $"No RAWG cover found for {game.Name}."),
-                    statusCode: StatusCodes.Status502BadGateway);
-
-            game.ImagePath = rawgCover.Background_Image;
-        }
-        else if (source == "gallery")
-        {
-            var path = await RawgService.GetGalleryImage(game.Name);
-            if (string.IsNullOrWhiteSpace(path))
-                return Results.Json(TaxonomyError("GALLERY_NOT_FOUND", $"No gallery image found for {game.Name}."),
-                    statusCode: StatusCodes.Status502BadGateway);
-            game.GImagePath = path;
-        }
-        else
-        {
-            var path = await RawgService.GetSteamLibraryImage(game.Name);
-            if (string.IsNullOrWhiteSpace(path))
-                return Results.Json(TaxonomyError("STEAM_IMAGE_NOT_FOUND", $"No Steam Library image found for {game.Name}."),
-                    statusCode: StatusCodes.Status502BadGateway);
-            game.SteamLibraryImagePath = path;
+            return Results.Ok(new GameMetadataPreviewDto(null, null, null, null, null, null, null, null, null, path, null, null));
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        return Results.Ok(await ReloadGameDetailDto(db, id, ownerKey));
+        /*
+         * Poster: thu IGDB TRUOC roi moi den Steam.
+         *
+         * IGDB cho box art that (`t_cover_big_2x`) va la nguon duoc DOMAIN_RULES §12
+         * chi dinh. Steam cho `library_600x900_2x` — cung la anh doc dung ti le, cung
+         * co ten game in san, chap nhan duoc cho vai tro poster (§12 chi cam phu chu
+         * len banner va backdrop).
+         *
+         * Thu tu nay khien viec them credential IGDB sau nay TU DONG nang chat luong
+         * ma khong phai sua lai doan ma nay lan nua.
+         */
+        if (IgdbService.IsConfigured)
+        {
+            var portraitIgdb = await IgdbService.GetMetadataAsync(name, cancellationToken);
+            if (portraitIgdb is not null && !string.IsNullOrWhiteSpace(portraitIgdb.CoverUrl))
+            {
+                return Results.Ok(new GameMetadataPreviewDto(
+                    null, null, null, null, null, null, null, null,
+                    portraitIgdb.IsDlc, null, null, portraitIgdb.CoverUrl));
+            }
+        }
+
+        var steamPoster = await SteamImageService.GetPosterAsync(name, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(steamPoster))
+            return Results.Ok(new GameMetadataPreviewDto(null, null, null, null, null, null, null, null, null, null, null, steamPoster));
+
+        /*
+         * Phan biet HAI nguyen nhan that bai thay vi gop thanh mot.
+         *
+         * Mot so mang (DNS cua router hoac ISP) tra `127.0.0.1` cho
+         * `store.steampowered.com` trong khi CDN anh van thong. Luc do moi lan sync
+         * deu hong giong het nhu "khong tim thay game" — bao sai thi nguoi dung se
+         * di doi ten game hang chuc lan trong khi cho can sua la DNS.
+         */
+        if (!await SteamImageService.SearchReachableAsync(cancellationToken))
+        {
+            return Results.Json(
+                TaxonomyError("STEAM_STORE_UNREACHABLE", SteamUnreachableMessage),
+                statusCode: StatusCodes.Status502BadGateway);
+        }
+
+        return Results.Json(
+            TaxonomyError("PORTRAIT_NOT_FOUND", $"No portrait cover found for {name} on IGDB or Steam."),
+            statusCode: StatusCodes.Status502BadGateway);
     }
     catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or InvalidOperationException)
     {
@@ -1350,6 +2558,9 @@ app.MapPost("/api/games/{gameId}/finishes", async (
             }
         });
     }
+
+    if (!TryReadFinishedAt(body.FinishedYear, body.FinishedMonth, out var finishedAt, out var hasMonth))
+        return InvalidFinishTimeResult();
 
     var game = await db.Games.SingleOrDefaultAsync(g => g.Id == gameId && g.LibraryOwnerKey == ownerKey && !g.IsDisabled);
     if (game is null)
@@ -1381,7 +2592,8 @@ app.MapPost("/api/games/{gameId}/finishes", async (
     db.GameFinishes.Add(new GameFinish
     {
         GameId = game.Id,
-        FinishedAt = DateTime.Now,
+        FinishedAt = finishedAt,
+        HasMonth = hasMonth,
         Score = score,
     });
     await db.SaveChangesAsync();
@@ -1399,22 +2611,10 @@ app.MapPut("/api/games/{gameId}/finishes/{finishId:int}", async (
 {
     if (!TryGetLibraryOwnerKey(context, out var ownerKey))
         return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to update finish history.");
-    if (string.IsNullOrWhiteSpace(body.FinishedMonth) ||
-        !DateTime.TryParseExact(
-            body.FinishedMonth,
-            "yyyy-MM",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.None,
-            out var parsedMonth))
+    if (body.FinishedYear is null ||
+        !TryReadFinishedAt(body.FinishedYear, body.FinishedMonth, out var finishedAt, out var hasMonth))
     {
-        return Results.BadRequest(new
-        {
-            error = new
-            {
-                code = "INVALID_FINISH_MONTH",
-                message = "Finish month must use YYYY-MM."
-            }
-        });
+        return InvalidFinishTimeResult();
     }
 
     if (!await db.Games.AnyAsync(g => g.Id == gameId && g.LibraryOwnerKey == ownerKey && !g.IsDisabled))
@@ -1438,8 +2638,60 @@ app.MapPut("/api/games/{gameId}/finishes/{finishId:int}", async (
         });
     }
 
-    finish.FinishedAt = new DateTime(parsedMonth.Year, parsedMonth.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
+    finish.FinishedAt = finishedAt;
+    finish.HasMonth = hasMonth;
     await db.SaveChangesAsync();
+
+    return Results.Ok(await ReloadGameDetailDto(db, gameId, ownerKey));
+});
+
+// Xoa mot moc hoan thanh. Xem DOMAIN_RULES 9.6.
+app.MapDelete("/api/games/{gameId}/finishes/{finishId:int}", async (
+    HttpContext context,
+    MasterPlayContext db,
+    string gameId,
+    int finishId) =>
+{
+    if (!TryGetLibraryOwnerKey(context, out var ownerKey))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to update finish history.");
+
+    var game = await db.Games.SingleOrDefaultAsync(g => g.Id == gameId && g.LibraryOwnerKey == ownerKey && !g.IsDisabled);
+    if (game is null)
+    {
+        return Results.NotFound(new
+        {
+            error = new { code = "GAME_NOT_FOUND", message = $"Game not found: {gameId}" }
+        });
+    }
+
+    var finish = await db.GameFinishes.SingleOrDefaultAsync(f => f.Id == finishId && f.GameId == gameId);
+    if (finish is null)
+    {
+        return Results.NotFound(new
+        {
+            error = new
+            {
+                code = "GAME_FINISH_NOT_FOUND",
+                message = $"Finish history entry not found: {finishId}"
+            }
+        });
+    }
+
+    await using var transaction = await db.Database.BeginTransactionAsync();
+    db.GameFinishes.Remove(finish);
+    await db.SaveChangesAsync();
+
+    // Khong con moc nao thi game khong con la "Done" nua. De trong Progress chu
+    // KHONG doan sang mot trang thai khac — khong ai biet nguoi choi dang o dau
+    // trong game. Score giu nguyen: no la danh gia, khong phai bang chung hoan
+    // thanh.
+    if (!await db.GameFinishes.AnyAsync(f => f.GameId == gameId))
+    {
+        game.ProgressId = null;
+        await db.SaveChangesAsync();
+    }
+
+    await transaction.CommitAsync();
 
     return Results.Ok(await ReloadGameDetailDto(db, gameId, ownerKey));
 });
@@ -1552,39 +2804,8 @@ app.MapGet("/api/catalog/{kind}", async (MasterPlayContext db, string kind) => k
     _ => Results.BadRequest(new { error = new { code = "BAD_KIND", message = $"kind khong hop le: {kind}" } }),
 });
 
-app.MapGet("/api/taxonomy/{kind}", async (MasterPlayContext db, string kind, string? q) => kind switch
-{
-    "series" => Results.Ok(await db.Series.AsNoTracking()
-        .Where(s => string.IsNullOrWhiteSpace(q) || s.Name.Contains(q))
-        .OrderBy(s => s.Name)
-        // Series chua co IconData/SortOrder trong DB — xem thay doi schema S2, S3.
-        .Select(s => new TaxonomyItemDto(s.Id, s.Name, null, 0)).ToListAsync()),
-    "genres" => Results.Ok(await db.Genres.AsNoTracking()
-        .Where(g => string.IsNullOrWhiteSpace(q) || g.Name.Contains(q))
-        .OrderBy(g => g.SortOrder).ThenBy(g => g.Name)
-        .Select(g => new TaxonomyItemDto(g.Id, g.Name, g.IconData, g.SortOrder)).ToListAsync()),
-    "themes" => Results.Ok(await db.Themes.AsNoTracking()
-        .Where(x => string.IsNullOrWhiteSpace(q) || x.Name.Contains(q))
-        .OrderBy(x => x.SortOrder).ThenBy(x => x.Name)
-        .Select(x => new TaxonomyItemDto(x.Id, x.Name, x.IconData, x.SortOrder)).ToListAsync()),
-    _ => Results.BadRequest(new { error = new { code = "BAD_KIND", message = $"kind khong hop le: {kind}" } }),
-});
-
-app.MapPost("/api/taxonomy/{kind}", async (
-    MasterPlayContext db,
-    string kind,
-    TaxonomyItemDto body) => await CreateTaxonomyItem(db, kind, body));
-
-app.MapPut("/api/taxonomy/{kind}/{id:int}", async (
-    MasterPlayContext db,
-    string kind,
-    int id,
-    TaxonomyItemDto body) => await UpdateTaxonomyItem(db, kind, id, body));
-
-app.MapDelete("/api/taxonomy/{kind}/{id:int}", async (
-    MasterPlayContext db,
-    string kind,
-    int id) => await DeleteTaxonomyItem(db, kind, id));
+// Taxonomy (genre/theme/series + nhom theme): MasterPlay.Host/Taxonomy/TaxonomyEndpoints.cs
+app.MapTaxonomyEndpoints();
 
 // Dashboard — BACKEND tinh, khong tinh o client (T1).
 app.MapGet("/api/dashboard/stats", async (HttpContext context, MasterPlayContext db) =>
@@ -1616,7 +2837,7 @@ app.MapGet("/api/dashboard/stats", async (HttpContext context, MasterPlayContext
         {
             id = g.Id,
             name = g.Name,
-            imagePath = g.GImagePath,
+            bannerPath = g.BannerPath,
             totalPlaytimeSeconds = g.TotalPlayTimeSeconds ?? 0,
         })
         .ToList();
@@ -1744,7 +2965,7 @@ app.MapGet("/api/dashboard/stats", async (HttpContext context, MasterPlayContext
         {
             id = g.Id,
             name = g.Name,
-            imagePath = g.GImagePath,
+            bannerPath = g.BannerPath,
             publishDate = g.PublishDate!.Value.ToString("yyyy-MM-dd"),
             daysLeft = g.PublishDate!.Value.DayNumber - today.DayNumber,
         })
@@ -1758,8 +2979,8 @@ app.MapGet("/api/dashboard/stats", async (HttpContext context, MasterPlayContext
         missingSeries = games.Count(g => g.SeriesId is null),
         missingGenres = games.Count(g => g.GameGenres.Count == 0),
         missingSlug = games.Count(g => string.IsNullOrWhiteSpace(g.SlugName)),
-        missingGalleryImage = games.Count(g => string.IsNullOrWhiteSpace(g.GImagePath)),
-        missingCoverImage = games.Count(g => string.IsNullOrWhiteSpace(g.ImagePath)),
+        missingBanner = games.Count(g => string.IsNullOrWhiteSpace(g.BannerPath)),
+        missingPoster = games.Count(g => string.IsNullOrWhiteSpace(g.PosterPath)),
         missingPublishDate = games.Count(g => g.PublishDate is null),
         missingProgress = games.Count(g => g.ProgressId is null),
         missingOwnership = games.Count(g => g.OwnershipId is null),
@@ -1802,6 +3023,177 @@ static string? BearerToken(HttpRequest request)
         : null;
 }
 
+/// <summary>
+/// Guard cho moi endpoint /api/admin/**.
+///
+/// Role doc tu <c>QuestLogAccount</c> — do middleware dat sau khi gateway xac thuc
+/// access token voi Supabase, nen day la role tu PROFILE chu khong phai tu payload
+/// client gui len (spec §2).
+///
+/// Workspace mode cua UI KHONG duoc tham gia vao quyet dinh nay: mode la rao chan
+/// UX, khong phai rao chan bao mat.
+/// </summary>
+static IResult? RequireAdmin(HttpContext context, out AuthAccountDto account)
+{
+    account = null!;
+
+    if (context.Items["QuestLogGuest"] is true)
+        return AuthErrorResult(403, "ADMIN_REQUIRED", "This action requires an admin account.");
+
+    if (context.Items["QuestLogAccount"] is not AuthAccountDto signedIn || string.IsNullOrWhiteSpace(signedIn.Id))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in to continue.");
+
+    if (!string.Equals(signedIn.Role, "admin", StringComparison.OrdinalIgnoreCase))
+        return AuthErrorResult(403, "ADMIN_REQUIRED", "This action requires an admin account.");
+
+    account = signedIn;
+    return null;
+}
+
+/// <summary>
+/// Chan o bien truoc khi cham toi Supabase. Kiem tra trung ten va cac rang buoc
+/// nghiep vu khac nam trong ham SQL, noi chung chay cung transaction voi audit.
+/// </summary>
+static IResult? ValidateSeriesName(string? name)
+{
+    var trimmed = name?.Trim();
+    if (string.IsNullOrEmpty(trimmed) || trimmed.Length > 200)
+    {
+        return Results.UnprocessableEntity(new
+        {
+            error = new { code = "SERIES_NAME_INVALID", message = "Series name must contain 1-200 characters." }
+        });
+    }
+    return null;
+}
+
+/// <summary>
+/// Tham so truy van sai — tu choi TRUOC khi cham toi DB. Tra cung hinh dang loi
+/// voi moi endpoint admin khac.
+/// </summary>
+static bool TryParseMetadataCursor(string? cursor, out JsonElement? parsed)
+{
+    parsed = null;
+    if (string.IsNullOrWhiteSpace(cursor)) return true;
+    try
+    {
+        parsed = JsonDocument.Parse(cursor).RootElement.Clone();
+        return true;
+    }
+    catch (JsonException)
+    {
+        return false;
+    }
+}
+
+static IResult MetadataParamError(string code, string message) =>
+    Results.Json(new { error = new { code, message } }, statusCode: 422);
+
+static IResult IntegrationParamError(string code, string message) =>
+    Results.Json(new { error = new { code, message } }, statusCode: 422);
+
+static IResult IntegrationErrorResult(IntegrationStoreException exception) =>
+    Results.Json(
+        new { error = new { code = exception.Code, message = exception.Message } },
+        statusCode: exception.StatusCode);
+
+static IResult MetadataErrorResult(MetadataCatalogException exception)
+{
+    // Ban ghi kem theo loi phai co CUNG shape voi response thanh cong. UI dung no de
+    // doi chieu voi ban dang sua, nen hai shape khac nhau la mot cai bay.
+    var details = exception.Details is MetadataAdminGame game
+        ? ToAdminMetadataGameDto(game)
+        : exception.Details;
+
+    return Results.Json(
+        new { error = new { code = exception.Code, message = exception.Message, details } },
+        statusCode: exception.StatusCode);
+}
+
+static AdminMetadataGameDto ToAdminMetadataGameDto(MetadataAdminGame game) => new(
+    game.Id,
+    game.IgdbId,
+    game.Name,
+    game.Developer,
+    game.Publisher,
+    game.Summary,
+    game.PublishDate?.ToString("yyyy-MM-dd"),
+    game.IsDlc,
+    game.BaseMetadataGameId,
+    game.PosterUrl,
+    game.BackdropUrl,
+    game.BannerUrl,
+    game.MetaScore,
+    game.AvgPlaytimeHours,
+    game.SeriesId,
+    game.Revision,
+    game.UpdatedAt?.ToString("O"),
+    game.ManuallyUnpublished,
+    game.IsPublished,
+    game.GateFailures);
+
+/// <summary>
+/// Dung payload jsonb gui cho ham SQL. Khoa dung snake_case khop signature ham.
+///
+/// Chan o bien nhung thu re tien va chac chan (dinh dang ngay, do dai chuoi); con
+/// rang buoc nghiep vu (trung ten, FK, revision) de ham SQL lam, noi chung chay
+/// cung transaction voi audit.
+/// </summary>
+static IResult? BuildMetadataGamePayload(
+    AdminMetadataGameWriteDto? body,
+    out Dictionary<string, object?> payload)
+{
+    payload = [];
+
+    var name = body?.Name?.Trim();
+    if (string.IsNullOrEmpty(name) || name.Length > 300)
+    {
+        return Results.UnprocessableEntity(new
+        {
+            error = new { code = "GAME_NAME_INVALID", message = "Game name must contain 1-300 characters." }
+        });
+    }
+
+    string? publishDate = null;
+    if (!string.IsNullOrWhiteSpace(body!.PublishDate))
+    {
+        if (!DateOnly.TryParseExact(
+                body.PublishDate.Trim(),
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var parsed))
+        {
+            return Results.UnprocessableEntity(new
+            {
+                error = new { code = "GAME_PUBLISH_DATE_INVALID", message = "Release date must be formatted as YYYY-MM-DD." }
+            });
+        }
+        publishDate = parsed.ToString("yyyy-MM-dd");
+    }
+
+    static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    payload = new Dictionary<string, object?>
+    {
+        ["igdb_id"] = body.IgdbId,
+        ["name"] = name,
+        ["developer"] = Clean(body.Developer),
+        ["publisher"] = Clean(body.Publisher),
+        ["summary"] = Clean(body.Summary),
+        ["publish_date"] = publishDate,
+        ["is_dlc"] = body.IsDlc ?? false,
+        ["base_metadata_game_id"] = body.BaseMetadataGameId,
+        ["poster_url"] = Clean(body.PosterUrl),
+        ["backdrop_url"] = Clean(body.BackdropUrl),
+        ["banner_url"] = Clean(body.BannerUrl),
+        ["meta_score"] = body.MetaScore,
+        ["avg_playtime_hours"] = body.AvgPlaytimeHours,
+        ["series_id"] = body.SeriesId,
+    };
+    return null;
+}
+
 static bool TryGetLibraryOwnerKey(HttpContext context, out string ownerKey)
 {
     if (context.Items["QuestLogGuest"] is true)
@@ -1818,6 +3210,96 @@ static bool TryGetLibraryOwnerKey(HttpContext context, out string ownerKey)
 
     ownerKey = string.Empty;
     return false;
+}
+
+/// <summary>
+/// Local maintenance command for the library owner on this device. It is deliberately
+/// not an HTTP endpoint: a user runs it explicitly, it only fills missing IGDB posters,
+/// and it never replaces an image selected in the editor.
+/// </summary>
+static async Task<int> SyncMissingPostersAsync()
+{
+    if (!IgdbService.IsConfigured)
+    {
+        Console.Error.WriteLine("IGDB is not configured. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET first.");
+        return 2;
+    }
+
+    await using var db = new MasterPlayContext();
+    var games = await db.Games
+        .Where(game => !game.IsDisabled && string.IsNullOrWhiteSpace(game.PosterPath))
+        .OrderBy(game => game.Name)
+        .ToListAsync();
+
+    var updated = 0;
+    var notFound = 0;
+    var failed = 0;
+
+    Console.WriteLine($"IGDB poster sync: {games.Count} game(s) missing a poster.");
+
+    foreach (var game in games)
+    {
+        try
+        {
+            var metadata = game.IgdbId is > 0
+                ? await IgdbService.GetMetadataByIdAsync(game.IgdbId.Value)
+                : await IgdbService.GetMetadataAsync(game.Name);
+
+            if (string.IsNullOrWhiteSpace(metadata?.CoverUrl))
+            {
+                notFound++;
+                Console.WriteLine($"[not found] {game.Name}");
+                continue;
+            }
+
+            game.PosterPath = metadata.CoverUrl;
+            await db.SaveChangesAsync();
+            updated++;
+            Console.WriteLine($"[updated] {game.Name}");
+
+            // Lenh nay thoat ngay khi xong, khong co hang doi nen: upload luon o day.
+            if (CloudinaryImageService.IsConfigured)
+            {
+                var upload = await CloudinaryImageService.SyncGameImagesAsync(game.Id);
+                foreach (var failure in upload.Failures)
+                    Console.Error.WriteLine($"[cloudinary failed] {game.Name} ({failure.Role}): {failure.Reason}");
+            }
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or InvalidOperationException)
+        {
+            failed++;
+            Console.Error.WriteLine($"[failed] {game.Name}: {exception.Message}");
+        }
+    }
+
+    Console.WriteLine($"Complete. Updated: {updated}; not found: {notFound}; failed: {failed}.");
+    return failed == 0 ? 0 : 1;
+}
+
+/// <summary>
+/// Local maintenance command, same job as the Tray menu item: upload every game
+/// image on this device to Cloudinary. Uses config.json credentials because the
+/// Vault warmup only runs when the Host serves HTTP.
+/// </summary>
+static async Task<int> SyncCloudinaryImagesAsync()
+{
+    if (!CloudinaryImageService.IsConfigured)
+    {
+        Console.Error.WriteLine("Cloudinary is not configured in config.json.");
+        return 2;
+    }
+
+    var progress = new Progress<string>(Console.WriteLine);
+    var result = await CloudinaryImageService.MigrateAllGameImagesToCloudinaryAsync(progress);
+
+    foreach (var failure in result.Failures)
+        Console.Error.WriteLine($"[failed] {failure.GameName} ({failure.Role}): {failure.Reason}");
+    Console.WriteLine(
+        $"Complete. Banner {result.CardCoverUploaded}/{result.CardCoverAlreadySynced}/{result.CardCoverMissing}, " +
+        $"backdrop {result.CoverUploaded}/{result.CoverAlreadySynced}/{result.CoverMissing}, " +
+        $"poster {result.PortraitCoverUploaded}/{result.PortraitCoverAlreadySynced}/{result.PortraitCoverMissing} " +
+        $"(uploaded/already synced/missing); failed: {result.Failed} of {result.TotalGames} games.");
+    return result.Failed == 0 ? 0 : 1;
 }
 
 static async Task ClaimLegacyGamesAsync(
@@ -1844,9 +3326,9 @@ static MetadataGameCandidateDto ToMetadataGameCandidateDto(
         IsDlc: game.IsDlc,
         IsUpcoming: game.PublishDate.HasValue && game.PublishDate.Value > DateOnly.FromDateTime(DateTime.Now),
         BaseMetadataGameId: game.BaseMetadataGameId,
-        CoverImageUrl: game.CoverImageUrl,
-        GalleryImageUrl: game.GalleryImageUrl,
-        SteamLibraryImageUrl: game.SteamLibraryImageUrl,
+        PosterUrl: game.PosterUrl,
+        BackdropUrl: game.BackdropUrl,
+        BannerUrl: game.BannerUrl,
         MetaScore: game.MetaScore,
         AvgPlaytimeHours: game.AvgPlaytimeHours,
         SeriesId: game.SeriesId,
@@ -1855,6 +3337,134 @@ static MetadataGameCandidateDto ToMetadataGameCandidateDto(
 
 static IResult AuthErrorResult(int statusCode, string code, string message) =>
     Results.Json(new { error = new { code, message } }, statusCode: statusCode);
+
+// Routes a Google account may use before it has a username (design §7).
+// Changing username/email is excluded: the first username comes only from the claim.
+static bool AllowedDuringOnboarding(HttpRequest request)
+{
+    var path = request.Path;
+    if (path == "/api/auth/account/username" || path == "/api/auth/account/email-change") return false;
+    if (path.StartsWithSegments("/api/auth")) return true;
+    return HttpMethods.IsGet(request.Method) &&
+           (path == "/api/settings" || path == "/api/capabilities");
+}
+
+/*
+ * Chay thao tac nhay cam sau khi giu cho reauth ticket. Ticket chi bi tieu khi
+ * thao tac thanh cong; loi nguoi dung sua duoc (trung username...) tra ticket lai
+ * de ho khong phai xin ma moi.
+ */
+static async Task<IResult> WithReauthTicket(
+    HttpContext context,
+    ReauthTicketStore tickets,
+    AuthAccountDto account,
+    string accessToken,
+    string? reauthTicket,
+    Func<Task<IResult>> operation)
+{
+    if (string.IsNullOrWhiteSpace(reauthTicket))
+    {
+        return AuthErrorResult(400, "REAUTH_REQUIRED", "Confirm with the code sent to your email.");
+    }
+
+    var reservation = tickets.Reserve(
+        reauthTicket,
+        account.Id,
+        SupabaseAuthGateway.SessionIdFromAccessToken(accessToken));
+    if (reservation is null)
+    {
+        return AuthErrorResult(401, "REAUTH_INVALID", "The confirmation expired. Request a new code.");
+    }
+
+    try
+    {
+        return await operation();
+    }
+    catch (SupabaseAuthException exception)
+    {
+        if (exception.StatusCode is >= 400 and < 500 and not 401 and not 423)
+        {
+            tickets.Release(reservation);
+        }
+        return AuthErrorResult(exception.StatusCode, exception.Code, exception.Message);
+    }
+}
+
+static bool IsValidUsername(string username) =>
+    username.Length is >= 3 and <= 32 &&
+    username.All(character => char.IsAsciiLetterOrDigit(character) || character is '_' or '.' or '-');
+
+static IResult InvalidUsernameResult() =>
+    AuthErrorResult(
+        400,
+        "INVALID_USERNAME",
+        "Username must be 3-32 characters using letters, numbers, dot, dash, or underscore.");
+
+static bool IsEmailCode(string code) => code.Length is >= 6 and <= 10 && code.All(char.IsAsciiDigit);
+
+static void SetOAuthFlowCookie(HttpContext context, string flowId)
+{
+    context.Response.Cookies.Append(
+        OAuthFlowCookie,
+        flowId,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            // Lax: cookie van di kem khi Supabase redirect top-level GET ve callback.
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/auth/google",
+            MaxAge = GoogleOAuthFlowStore.Lifetime,
+            IsEssential = true,
+        });
+}
+
+static void ClearOAuthFlowCookie(HttpContext context)
+{
+    if (!context.Request.Cookies.ContainsKey(OAuthFlowCookie)) return;
+    context.Response.Cookies.Delete(
+        OAuthFlowCookie,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/auth/google",
+            IsEssential = true,
+        });
+}
+
+// Trang tinh: khong script, khong token, khong tai nguyen ngoai.
+static string GoogleCallbackPage(bool success, bool vietnamese)
+{
+    var (title, body) = (success, vietnamese) switch
+    {
+        (true, true) => ("Đã xác thực", "Bạn có thể đóng tab này và quay lại QuestLog."),
+        (true, false) => ("You're signed in", "You can close this tab and return to QuestLog."),
+        (false, true) => ("Chưa hoàn tất", "Quay lại QuestLog để thử đăng nhập bằng Google lần nữa."),
+        (false, false) => ("Sign-in didn't finish", "Return to QuestLog to try Google sign-in again."),
+    };
+    var lang = vietnamese ? "vi" : "en";
+    return $$"""
+        <!doctype html>
+        <html lang="{{lang}}">
+        <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>QuestLog — {{title}}</title>
+        <style>
+          :root { color-scheme: light dark; }
+          body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+                 font: 16px/1.5 system-ui, sans-serif; background: #1f232b; color: #e8eaed; }
+          main { max-width: 26rem; padding: 2rem; text-align: center; }
+          h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+          p { margin: 0; color: #aab0b9; }
+        </style>
+        </head>
+        <body><main><h1>{{title}}</h1><p>{{body}}</p></main></body>
+        </html>
+        """;
+}
 
 static async Task WriteAuthError(HttpContext context, int statusCode, string code, string message)
 {
@@ -1946,131 +3556,44 @@ static async Task<GameDetailDto> ReloadGameDetailDto(MasterPlayContext db, strin
     return ToGameDetailDto(game, baseGameName);
 }
 
-static string? CleanTaxonomyName(string? value) =>
-    string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
 static object TaxonomyError(string code, string message) => new { error = new { code, message } };
 
-static async Task<IResult> CreateTaxonomyItem(MasterPlayContext db, string kind, TaxonomyItemDto body)
+/// <summary>
+/// Doc thoi diem hoan thanh tu than yeu cau.
+///
+/// Nam bo trong = dung thoi diem hien tai (hanh vi cu cua nut Finish). Thang bo
+/// trong = nguoi choi chi nho nam: luu ngay 1 thang 1 nhung danh dau
+/// <c>hasMonth = false</c> de UI khong bia ra mot thang 1 khong co that.
+///
+/// Chan nam tuong lai xa: mot so nam go nham (2206) se troi len dau moi bang
+/// sort "finish time" va khong ai hieu tai sao.
+/// </summary>
+static bool TryReadFinishedAt(int? year, int? month, out DateTime finishedAt, out bool hasMonth)
 {
-    var name = CleanTaxonomyName(body.Name);
-    if (name is null) return Results.BadRequest(TaxonomyError("TAXONOMY_NAME_REQUIRED", "Name is required."));
+    finishedAt = DateTime.Now;
+    hasMonth = true;
 
-    if (kind == "series")
-    {
-        if (await db.Series.AnyAsync(x => x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Series already exists: {name}"));
-        var item = new Series { Name = name };
-        db.Series.Add(item);
-        await db.SaveChangesAsync();
-        return Results.Created($"/api/taxonomy/series/{item.Id}", new TaxonomyItemDto(item.Id, item.Name, null, 0));
-    }
+    if (year is null)
+        return month is null;
 
-    if (kind == "genres")
-    {
-        if (await db.Genres.AnyAsync(x => x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Genre already exists: {name}"));
-        var item = new Genre { Name = name, IconData = body.IconData, SortOrder = body.SortOrder };
-        db.Genres.Add(item);
-        await db.SaveChangesAsync();
-        return Results.Created($"/api/taxonomy/genres/{item.Id}", new TaxonomyItemDto(item.Id, item.Name, item.IconData, item.SortOrder));
-    }
+    if (year is < 1970 || year > DateTime.Now.Year + 1)
+        return false;
+    if (month is not null && month is < 1 or > 12)
+        return false;
 
-    if (kind == "themes")
-    {
-        if (await db.Themes.AnyAsync(x => x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Theme already exists: {name}"));
-        var item = new Theme { Name = name, IconData = body.IconData, SortOrder = body.SortOrder };
-        db.Themes.Add(item);
-        await db.SaveChangesAsync();
-        return Results.Created($"/api/taxonomy/themes/{item.Id}", new TaxonomyItemDto(item.Id, item.Name, item.IconData, item.SortOrder));
-    }
-
-    return Results.BadRequest(TaxonomyError("BAD_KIND", $"kind khong hop le: {kind}"));
+    hasMonth = month is not null;
+    finishedAt = new DateTime(year.Value, month ?? 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+    return true;
 }
 
-static async Task<IResult> UpdateTaxonomyItem(
-    MasterPlayContext db,
-    string kind,
-    int id,
-    TaxonomyItemDto body)
+static IResult InvalidFinishTimeResult() => Results.BadRequest(new
 {
-    var name = CleanTaxonomyName(body.Name);
-    if (name is null) return Results.BadRequest(TaxonomyError("TAXONOMY_NAME_REQUIRED", "Name is required."));
-
-    if (kind == "series")
+    error = new
     {
-        var item = await db.Series.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Series not found: {id}"));
-        if (await db.Series.AnyAsync(x => x.Id != id && x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Series already exists: {name}"));
-        item.Name = name;
-        await db.SaveChangesAsync();
-        return Results.Ok(new TaxonomyItemDto(item.Id, item.Name, null, 0));
+        code = "INVALID_FINISH_TIME",
+        message = "Finish year must be a real year; month, when given, must be 1-12."
     }
-
-    if (kind == "genres")
-    {
-        var item = await db.Genres.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Genre not found: {id}"));
-        if (await db.Genres.AnyAsync(x => x.Id != id && x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Genre already exists: {name}"));
-        item.Name = name;
-        item.IconData = body.IconData;
-        item.SortOrder = body.SortOrder;
-        await db.SaveChangesAsync();
-        return Results.Ok(new TaxonomyItemDto(item.Id, item.Name, item.IconData, item.SortOrder));
-    }
-
-    if (kind == "themes")
-    {
-        var item = await db.Themes.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Theme not found: {id}"));
-        if (await db.Themes.AnyAsync(x => x.Id != id && x.Name.ToLower() == name.ToLower()))
-            return Results.Conflict(TaxonomyError("TAXONOMY_NAME_EXISTS", $"Theme already exists: {name}"));
-        item.Name = name;
-        item.IconData = body.IconData;
-        item.SortOrder = body.SortOrder;
-        await db.SaveChangesAsync();
-        return Results.Ok(new TaxonomyItemDto(item.Id, item.Name, item.IconData, item.SortOrder));
-    }
-
-    return Results.BadRequest(TaxonomyError("BAD_KIND", $"kind khong hop le: {kind}"));
-}
-
-static async Task<IResult> DeleteTaxonomyItem(MasterPlayContext db, string kind, int id)
-{
-    await using var transaction = await db.Database.BeginTransactionAsync();
-    if (kind == "series")
-    {
-        var item = await db.Series.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Series not found: {id}"));
-        await db.Games.Where(x => x.SeriesId == id).ExecuteUpdateAsync(update => update.SetProperty(x => x.SeriesId, (int?)null));
-        db.Series.Remove(item);
-    }
-    else if (kind == "genres")
-    {
-        var item = await db.Genres.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Genre not found: {id}"));
-        await db.GameGenres.Where(x => x.GenreId == id).ExecuteDeleteAsync();
-        db.Genres.Remove(item);
-    }
-    else if (kind == "themes")
-    {
-        var item = await db.Themes.SingleOrDefaultAsync(x => x.Id == id);
-        if (item is null) return Results.NotFound(TaxonomyError("TAXONOMY_NOT_FOUND", $"Theme not found: {id}"));
-        await db.GameThemes.Where(x => x.ThemeId == id).ExecuteDeleteAsync();
-        db.Themes.Remove(item);
-    }
-    else
-    {
-        return Results.BadRequest(TaxonomyError("BAD_KIND", $"kind khong hop le: {kind}"));
-    }
-
-    await db.SaveChangesAsync();
-    await transaction.CommitAsync();
-    return Results.NoContent();
-}
+});
 
 static bool IsValidRating(double? value) =>
     value.HasValue &&
@@ -2162,6 +3685,7 @@ static void ApplyUserData(Game game, UserDataPatchDto body, MasterPlayContext db
 
 static async Task<IResult> SaveGame(
     MasterPlayContext db,
+    CloudinaryAutoUploadQueue imageUploads,
     string? routeId,
     GameUpsertDto body,
     bool create,
@@ -2264,6 +3788,18 @@ static async Task<IResult> SaveGame(
         });
     }
 
+    // Chi gan duoc tag chung hoac tag ca nhan cua chinh minh (spec 2026-10-04 §5.4).
+    if (await db.Genres.AnyAsync(x => genreIds.Contains(x.Id) &&
+            x.LibraryOwnerKey != TaxonomyRules.SharedOwnerKey && x.LibraryOwnerKey != ownerKey) ||
+        await db.Themes.AnyAsync(x => themeIds.Contains(x.Id) &&
+            x.LibraryOwnerKey != TaxonomyRules.SharedOwnerKey && x.LibraryOwnerKey != ownerKey))
+    {
+        return Results.BadRequest(new
+        {
+            error = new { code = "TAXONOMY_NOT_VISIBLE", message = "One or more selected genres or themes belong to another library." }
+        });
+    }
+
     static bool ValidRating(double? value) =>
         value is null || IsValidRating(value);
 
@@ -2318,8 +3854,14 @@ static async Task<IResult> SaveGame(
     game.Developer = Clean(body.Developer);
     game.Publisher = Clean(body.Publisher);
     game.SeriesId = seriesId;
-    game.GImagePath = Clean(body.GImagePath);
-    game.ImagePath = Clean(body.ImagePath);
+    var previousImages = (game.BannerPath, game.BackdropPath, game.PosterPath);
+    // Form tai truoc khi upload nen xong se gui lai link goc cu: giu ban Cloudinary.
+    game.BannerPath =GameImageSources.KeepUploadedCopy(
+        game.ImageSources, GameImageSources.Banner, game.BannerPath, Clean(body.BannerPath));
+    game.BackdropPath = GameImageSources.KeepUploadedCopy(
+        game.ImageSources, GameImageSources.Backdrop, game.BackdropPath, Clean(body.BackdropPath));
+    game.PosterPath = GameImageSources.KeepUploadedCopy(
+        game.ImageSources, GameImageSources.Poster, game.PosterPath, Clean(body.PosterPath));
     game.ProgressId = progressId;
     game.OwnershipId = ownershipId;
     game.MetaScore = body.MetaScore;
@@ -2335,7 +3877,6 @@ static async Task<IResult> SaveGame(
     game.LaunchTargetPath = launchPath;
     game.SaveFolderPath = Clean(body.SaveFolderPath);
     game.BackupFolderPath = Clean(body.BackupFolderPath);
-    game.SteamLibraryImagePath = Clean(body.SteamLibraryImagePath);
     game.BaseGameId = baseGameId;
 
     db.GameGenres.RemoveRange(game.GameGenres);
@@ -2372,6 +3913,9 @@ static async Task<IResult> SaveGame(
     }
 
     await db.SaveChangesAsync();
+    // Chi khi o anh doi: luu diem so khong duoc thu lai mot link anh da chet.
+    if (previousImages != (game.BannerPath, game.BackdropPath, game.PosterPath))
+        imageUploads.EnqueueIfNeeded(game);
 
     db.ChangeTracker.Clear();
     var saved = await LoadGameDetail(db, game.Id, ownerKey);
@@ -2467,12 +4011,6 @@ static CatalogItemDto? ToCatalogOwn(OwnershipStatus? o) => o is null ? null : ne
 
 static GameListItemDto ToDto(Game g)
 {
-    // Nut Play chi hien khi that su co the khoi chay — DOMAIN_RULES §10.3.
-    // TODO(A21): tra cuu DetectedProcess de chinh xac hon.
-    var canLaunch = !g.IsDlc && (
-        !string.IsNullOrWhiteSpace(g.LaunchTargetPath) ||
-        !string.IsNullOrWhiteSpace(g.ExeName));
-
     return new GameListItemDto(
         Id: g.Id,
         MetadataGameId: g.MetadataGameId,
@@ -2483,9 +4021,9 @@ static GameListItemDto ToDto(Game g)
         Developer: g.Developer,
         Publisher: g.Publisher,
         Series: g.Series is null ? null : new TaxonomyItemDto(g.Series.Id, g.Series.Name, null, 0),
-        // Card va Queue dung GALLERY — khop WPF (MainWindow.xaml:348).
-        GImagePath: g.GImagePath,
-        ImagePath: g.ImagePath,
+        BannerPath: g.BannerPath,
+        PosterPath: g.PosterPath,
+        BackdropPath: g.BackdropPath,
         Progress: ToCatalog(g.Progress),
         Ownership: ToCatalogOwn(g.Ownership),
         MetaScore: g.MetaScore,
@@ -2498,13 +4036,16 @@ static GameListItemDto ToDto(Game g)
         AvgPlaytimeBand: LibraryQuery.AvgBand(g.AvgPlayTime),
         PublishDate: g.PublishDate?.ToString("yyyy-MM-dd"),
         LastFinishedAt: LibraryQuery.LastFinishedAt(g),
+        LastPlayedAt: g.LastPlayedAt.HasValue
+            ? DateTime.SpecifyKind(g.LastPlayedAt.Value, DateTimeKind.Utc)
+            : null,
         IsDlc: g.IsDlc,
         IsUpcoming: g.PublishDate.HasValue &&
             g.PublishDate.Value > DateOnly.FromDateTime(DateTime.Now),
         Ready: g.Ready,
         // TODO(A11): lay tu GameProcessMonitor qua SSE.
         IsRunning: false,
-        CanLaunch: canLaunch,
+        CanLaunch: LibraryQuery.CanLaunch(g),
         // TODO(A10): tinh theo GameViewModel.CheckFolderWarning.
         FolderWarning: null,
         // Ten base game duoc resolve o endpoint list (tu chinh trang thu vien da nap).
@@ -2524,8 +4065,9 @@ static GameDetailDto ToGameDetailDto(Game g, string? baseGameName)
         Developer: list.Developer,
         Publisher: list.Publisher,
         Series: list.Series,
-        GImagePath: list.GImagePath,
-        ImagePath: list.ImagePath,
+        BannerPath: list.BannerPath,
+        PosterPath: list.PosterPath,
+        BackdropPath: list.BackdropPath,
         Progress: list.Progress,
         Ownership: list.Ownership,
         MetaScore: list.MetaScore,
@@ -2538,6 +4080,7 @@ static GameDetailDto ToGameDetailDto(Game g, string? baseGameName)
         AvgPlaytimeBand: list.AvgPlaytimeBand,
         PublishDate: list.PublishDate,
         LastFinishedAt: list.LastFinishedAt,
+        LastPlayedAt: list.LastPlayedAt,
         IsDlc: list.IsDlc,
         IsUpcoming: list.IsUpcoming,
         Ready: list.Ready,
@@ -2551,19 +4094,18 @@ static GameDetailDto ToGameDetailDto(Game g, string? baseGameName)
             : new LaunchTargetDto(g.LaunchTargetKind ?? "exe", g.LaunchTargetPath),
         SaveFolderPath: g.SaveFolderPath,
         BackupFolderPath: g.BackupFolderPath,
-        SteamLibraryImagePath: g.SteamLibraryImagePath,
         Genres: g.GameGenres.OrderBy(link => link.Genre.SortOrder)
             .ThenBy(link => link.Genre.Name)
-            .Select(link => new TaxonomyItemDto(link.Genre.Id, link.Genre.Name, link.Genre.IconData, link.Genre.SortOrder))
+            .Select(link => TaxonomyEndpoints.ToDto(link.Genre, g.LibraryOwnerKey))
             .ToList(),
         Themes: g.GameThemes.OrderBy(link => link.Theme.SortOrder)
             .ThenBy(link => link.Theme.Name)
-            .Select(link => new TaxonomyItemDto(link.Theme.Id, link.Theme.Name, link.Theme.IconData, link.Theme.SortOrder))
+            .Select(link => TaxonomyEndpoints.ToDto(link.Theme, g.LibraryOwnerKey))
             .ToList(),
         BaseGameId: g.BaseGameId,
         BaseGameName: baseGameName,
         Finishes: g.Finishes.OrderByDescending(f => f.FinishedAt)
-            .Select(f => new GameFinishEntryDto(f.Id, f.FinishedAt, f.Score))
+            .Select(f => new GameFinishEntryDto(f.Id, f.FinishedAt, f.HasMonth, f.Score))
             .ToList(),
         OwnershipInfo: g.OwnershipInfo is null
             ? null

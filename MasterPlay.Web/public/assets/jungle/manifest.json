@@ -1,0 +1,205 @@
+[
+ {
+  "code": "br-01",
+  "label": "Canh cay bam reu",
+  "w": 640,
+  "h": 137,
+  "ar": 4.6715
+ },
+ {
+  "code": "br-02",
+  "label": "Canh cay co la non",
+  "w": 448,
+  "h": 307,
+  "ar": 1.4593
+ },
+ {
+  "code": "mo-01",
+  "label": "Mang reu ru ngang",
+  "w": 640,
+  "h": 84,
+  "ar": 7.619
+ },
+ {
+  "code": "mo-02",
+  "label": "Mang reu ru day",
+  "w": 640,
+  "h": 207,
+  "ar": 3.0918
+ },
+ {
+  "code": "mo-03",
+  "label": "Tan reu",
+  "w": 640,
+  "h": 155,
+  "ar": 4.129
+ },
+ {
+  "code": "mo-04",
+  "label": "La ru rem reu",
+  "w": 354,
+  "h": 407,
+  "ar": 0.8698
+ },
+ {
+  "code": "pl-01",
+  "label": "La monstera la lon",
+  "w": 640,
+  "h": 611,
+  "ar": 1.0475
+ },
+ {
+  "code": "pl-02",
+  "label": "La monstera xe sau",
+  "w": 640,
+  "h": 589,
+  "ar": 1.0866
+ },
+ {
+  "code": "pl-03",
+  "label": "Cay monstera khom",
+  "w": 640,
+  "h": 621,
+  "ar": 1.0306
+ },
+ {
+  "code": "pl-04",
+  "label": "La duong xi lon",
+  "w": 640,
+  "h": 619,
+  "ar": 1.0339
+ },
+ {
+  "code": "pl-05",
+  "label": "La duong xi dung",
+  "w": 373,
+  "h": 560,
+  "ar": 0.6661
+ },
+ {
+  "code": "pl-06",
+  "label": "La duong xi nghieng",
+  "w": 253,
+  "h": 263,
+  "ar": 0.962
+ },
+ {
+  "code": "pl-07",
+  "label": "Khom cay rung nhiet doi",
+  "w": 640,
+  "h": 516,
+  "ar": 1.2403
+ },
+ {
+  "code": "pl-08",
+  "label": "Bui cay",
+  "w": 640,
+  "h": 343,
+  "ar": 1.8659
+ },
+ {
+  "code": "pl-09",
+  "label": "Bui co rung nhiet doi",
+  "w": 640,
+  "h": 571,
+  "ar": 1.1208
+ },
+ {
+  "code": "pl-10",
+  "label": "Khom co la dai",
+  "w": 534,
+  "h": 447,
+  "ar": 1.1946
+ },
+ {
+  "code": "pl-11",
+  "label": "Cay bat ruoi",
+  "w": 574,
+  "h": 513,
+  "ar": 1.1189
+ },
+ {
+  "code": "pl-12",
+  "label": "Nam rung",
+  "w": 442,
+  "h": 640,
+  "ar": 0.6906
+ },
+ {
+  "code": "vn-01",
+  "label": "Day leo treo ngang ban A",
+  "w": 640,
+  "h": 176,
+  "ar": 3.6364
+ },
+ {
+  "code": "vn-02",
+  "label": "Day leo treo ngang ban B",
+  "w": 640,
+  "h": 176,
+  "ar": 3.6364
+ },
+ {
+  "code": "vn-03",
+  "label": "Day leo la tim doc",
+  "w": 301,
+  "h": 640,
+  "ar": 0.4703
+ },
+ {
+  "code": "vn-04",
+  "label": "Day leo manh doc",
+  "w": 299,
+  "h": 640,
+  "ar": 0.4672
+ },
+ {
+  "code": "vn-05",
+  "label": "Day leo ivy doc",
+  "w": 187,
+  "h": 640,
+  "ar": 0.2922
+ },
+ {
+  "code": "vn-06",
+  "label": "Day leo manh co la dai",
+  "w": 209,
+  "h": 640,
+  "ar": 0.3266
+ },
+ {
+  "code": "vn-07",
+  "label": "Day leo dang vong la tron",
+  "w": 640,
+  "h": 551,
+  "ar": 1.1615
+ },
+ {
+  "code": "vn-08",
+  "label": "Day leo dang vong manh",
+  "w": 640,
+  "h": 499,
+  "ar": 1.2826
+ },
+ {
+  "code": "vn-09",
+  "label": "Day leo cung than go",
+  "w": 484,
+  "h": 640,
+  "ar": 0.7562
+ },
+ {
+  "code": "vn-10",
+  "label": "Day leo ru doi",
+  "w": 640,
+  "h": 609,
+  "ar": 1.0509
+ },
+ {
+  "code": "vn-11",
+  "label": "Day leo vat ngang canh",
+  "w": 640,
+  "h": 472,
+  "ar": 1.3559
+ }
+]

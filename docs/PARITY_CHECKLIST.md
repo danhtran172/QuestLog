@@ -15,7 +15,7 @@
 > và verify bằng cách gọi API mock thật. Nó **chưa** chứng minh backend thật cho cùng kết quả —
 > đó chính là việc của cổng parity ở Giai đoạn 4.
 
-Cập nhật lần cuối: 2026-08-29
+Cập nhật lần cuối: 2026-09-04
 
 ---
 
@@ -27,7 +27,7 @@ Cập nhật lần cuối: 2026-08-29
 | A2 | Card field visibility động (`cardHints`) | DOMAIN §17 | Library | 🟨 |
 | A3 | DLC (`isDlc`, `baseGameId`) | DOMAIN §13 | Editor | ✅ Editor dùng selector base game từ API; backend validate game gốc và chặn tự tham chiếu |
 | A4 | Lịch sử hoàn thành nhiều lần (`GameFinish[]`) | DOMAIN §9 | Editor/Detail | ✅ Detail hiển thị toàn bộ lịch sử; Editor sửa riêng tháng/năm từng lần qua API thật |
-| A5 | `steamLibraryImagePath` + nút sync riêng | DOMAIN §12 | Editor | ✅ Có preview/fallback và sync riêng qua `/api/games/{id}/sync/steam-library` |
+| A5 | `posterPath` + nút sync riêng | DOMAIN §12 | Editor | ✅ Sync riêng qua `/api/games/{id}/sync/portrait-cover`, IGDB only; Detail tab Files mở được image-only editor |
 | A6 | Gemini đoán tên executable | API §7 | Editor | ✅ Metadata sync gọi Gemini ở backend và trả `exeName`; lỗi được trả về UI |
 | A7 | Mở HowLongToBeat/Metacritic theo slug | API §7 | Editor | ✅ URL do backend dựng; Editor và Detail dùng nút icon mở URL trả từ API |
 | A8 | Generate Backup Folder | API §8 | Editor | ✅ Backend tạo tên thư mục duy nhất, ghi `SaveLocation.txt`; Editor cập nhật path và hiển thị lỗi |
@@ -39,7 +39,7 @@ Cập nhật lần cuối: 2026-08-29
 | A14 | Chuẩn hoá + persist thứ tự queue | DOMAIN §8.3 | Queue | ✅ `GET /api/queue` chuẩn hoá và persist thứ tự |
 | A15 | Quản lý Progress/Ownership (tên/icon/thứ tự) | API §6 | Settings | ⬜ |
 | A16 | Icon danh mục lưu DB | API §6 | Settings | ⬜ |
-| A17 | Điều hướng tay cầm + Console mode | — | Toàn cục | ✅ Gamepad API điều khiển toàn app; F10 hoặc LB+RB+A mở Console fullscreen; prompt đổi theo ngữ cảnh |
+| A17 | Điều hướng tay cầm + Console mode | — | Toàn cục | ✅ Gamepad API điều khiển toàn app; F10 hoặc LB+RB+A tự mở Console fullscreen phủ cả vùng taskbar; F11 dùng cùng fullscreen native; Console chặn L3/Menu đổi sang desktop, bỏ phím L và hướng dẫn đổi layout/Gallery; giữ Esc/B để thoát và khôi phục cửa sổ; Tab/A mở Detail; Enter/X Play; gợi ý Shift/D-pad Up có nhãn theo ngôn ngữ, popup đóng bằng D-pad Down hoặc action khác, xếp dọc ở góc phải dưới. Verify: 25 test web + typecheck/build; kiểm tra native từ Normal/Maximized và fullscreen có sẵn đạt; chưa kiểm tra tay cầm vật lý; repo chưa có script lint |
 | A18 | Ctrl+K focus search | — | Library | 🟨 |
 | A19 | Scroll to top khi đổi trang | DOMAIN §16 | Library | 🟨 |
 | A20 | Localize giá trị dữ liệu (`displayName`) | DOMAIN §14 | Toàn cục | 🟨 |
@@ -51,6 +51,10 @@ Cập nhật lần cuối: 2026-08-29
 | A26 | Game Detail + Editor mở từ mọi view | API §4 | All/Planning/Finished/Queue | ✅ Đã verify card, double-click queue, View → Edit → PUT thật; Game Information có form gọn riêng và lưu qua PUT thật |
 | A27 | Add Game ghi DB thật | API §4 | Toàn cục | ✅ Form dùng catalog/taxonomy từ API, validate tên và gọi `POST /api/games` |
 | A28 | Tag Upcoming trên card | API §2.3 | Library | ✅ Backend trả `isUpcoming` từ `publishDate > ngày hiện tại`; card chỉ hiển thị ribbon |
+| A29 | Console view playable + recent play | DOMAIN §4, §7.2 | Console | ✅ Tray ghi `lastPlayedAt` theo cạnh bắt đầu phiên; API lọc `canLaunch` và sort recent phía server; vào/thoát CM chuyển Console/khôi phục tab cũ |
+| A30 | Quản lý crawler IGDB | API §6.5.5 | Admin Console | ✅ Trạng thái, pause/resume, run-now, lịch sử keyset và game audit qua API thật; quota/ưu tiên vẫn ở Supabase |
+| A31 | Preview mode duyệt metadata | API §6.5.2, §6.5.3 | Admin Console | 🟨 Popup 2 cột (Tổng quan / Ảnh & xuất bản), search + bộ lọc + chuyển bản ghi ←/→ theo `page` server-side, tô ô thiếu (đỏ nếu đang chặn xuất bản theo `gateFailures`), nút Duyệt = `PUT .../published`. Verify: typecheck/build/test web, SQL offset chạy trên PGlite; **chưa** kiểm UI với Host mới + migration `20261004120000` |
+| A32 | Danh sách metadata: cột trạng thái xuất bản + phân trang số trang | API §6.5.2 | Admin Console | 🟨 Cột Trạng thái; trang đầu/trước/số/sau/cuối, nhảy trang, chọn 25/50/100 mỗi trang. Chế độ thẻ giữ keyset "Tải thêm". Cần migration `20261004120000` |
 
 ## B — Quyết định sản phẩm/kiến trúc
 
@@ -64,8 +68,8 @@ Cập nhật lần cuối: 2026-08-29
 | B6 | Ngôn ngữ mặc định | 🔁 | **Chốt**: `en-US` |
 | B7 | Điều hướng tay cầm | 🔁 | **Chốt 2026-08-29**: Gamepad API luôn bật; Console fullscreen là surface bổ sung, Shell chỉ giữ cầu nối fullscreen |
 | B8 | Tray tách rời hay gộp | 🔁 | Tray giữ là tiến trình WinForms riêng; panel web chỉ là control panel qua API |
-| B9 | Bảo mật API | 🔁 | Auth gate + Supabase token validation + Desktop guest token chỉ qua WebView2/loopback + Account UI đã có; còn Postgres cutover, MFA/Google và vault credential |
-| B10 | RAWG/Gemini key lộ | 🔁 | **Chốt**: thu hồi cả 2 key, tạo mới, chuyển vào config. ⚠️ *Việc thu hồi do người dùng thực hiện* |
+| B9 | Bảo mật API | 🔁 | Auth gate + Supabase token validation + Desktop guest token chỉ qua WebView2/loopback + Account UI đã có; Google sign-up/sign-in (Host PKCE, chọn username), quên mật khẩu và xác thực lại bằng mã email đã có (2026-10-04); còn Postgres cutover, MFA và vault credential |
+| B10 | RAWG/Gemini key lộ | 🔁 | Admin Console Integrations lưu replacement key trong Vault và Host không còn hardcode key. ⚠️ *Người dùng vẫn phải thu hồi/rotate hai key đã lộ trong git history* |
 | B11 | Màn Restore game đã disable | 🔁 | **Chốt (giả định)**: thêm — endpoint `GET /api/games/disabled` đã có trong hợp đồng |
 | B12 | Phân trang 30/trang | 🔁 | **Chốt (giả định)**: giữ 30/trang ở v1 để đo parity |
 
@@ -109,13 +113,13 @@ Cập nhật lần cuối: 2026-08-29
 | M6 | `series` entity ↔ string | API §2.2 | 🟨 |
 | M7 | `genres`/`themes` entity ↔ string[] | API §2.2 | ✅ Detail/Editor đọc và ghi entity qua API thật |
 | M8 | Progress/Ownership | DOMAIN §3 | 🟨 dùng `systemKey` + `sortOrder`; Detail đổi trực tiếp bằng chip từ catalog API, game mới mặc định Pending + Wishlist ở backend |
-| M9 | Ảnh thứ 3 | DOMAIN §12 | ✅ `steamLibraryImagePath` có trong Detail/Editor và persist qua PUT |
+| M9 | Ảnh thứ 3 | DOMAIN §12 | ✅ `posterPath` từ IGDB có trong Detail/Editor và persist qua PUT |
 | M10 | `isDlc`/`baseGameId` | DOMAIN §13 | ⬜ |
 | M11 | `ready` là kết quả scan | DOMAIN §11 | 🟨 read-only ở FE |
 | M12 | `createAt`/`playDiary`/`detectedProcess` | — | ⬜ |
 | M13 | Config ↔ runtime của library path | API §9 | ⬜ |
 | M14 | `themeMode` | DOMAIN §15 | ✅ migrate bool cũ sang enum 4 giá trị |
-| M15 | RAWG key | API §11 | ⬜ |
+| M15 | RAWG key | API §6.5.0 | 🔁 Admin Console + Vault-backed Host runtime; cần migration/deploy và user rotate key cũ |
 
 ### M16–M27 · Thuật toán (nguy hiểm nhất — sai âm thầm)
 
@@ -141,14 +145,15 @@ Cập nhật lần cuối: 2026-08-29
 | M28 | Finish ghi lịch sử `GameFinish` | DOMAIN §9.2 | ✅ `POST /api/games/{gameId}/finishes` cập nhật Score + Progress Done + thêm lịch sử trong transaction |
 | M29 | Kéo-thả Queue đổi cả ProgressId | DOMAIN §8.2 | ✅ Verify API thật: Playing giữ nguyên, 3 non-playing đầu → NextPlay |
 | M30 | Sync metadata gọi RAWG thật | API §7 | ⬜ |
-| M31 | Upload ảnh lên Cloudinary thật | DOMAIN §12 | ⬜ |
+| M31 | Upload ảnh lên Cloudinary thật | DOMAIN §12 | ✅ `POST /api/tray/sync-images` (Host, theo chủ thư viện) + lệnh `--sync-cloudinary-images`; chạy thật 2026-10-04: 112 ảnh lên `QuestLog/`, lỗi trả kèm lý do |
 | M32 | Disable game ghi DB | API §4 | ⬜ |
-| M33 | Xoá taxonomy có transaction | API §6 | ⬜ |
+| M33 | Xoá taxonomy có transaction | API §6 | ✅ `TaxonomyEndpoints.Delete` + xoá nhóm theme đều trong một transaction |
+| M36 | Nhóm theme + taxonomy theo chủ sở hữu | spec 2026-10-04-theme-groups | ✅ API + ManageTags (kéo thả) + picker theo nhóm + Admin Console › Taxonomy |
 | M34 | Launch game thật | DOMAIN §10.3 | ⬜ |
 | M35 | `initExeName` → `launchTarget` | DOMAIN §10 | 🟨 có trong hợp đồng |
 | M36 | Ngôn ngữ lưu config (tray dùng chung) | DOMAIN §15 | ⬜ |
 | M37 | Theme lưu config | DOMAIN §15 | ✅ GET/PUT `/api/settings`, không dùng localStorage |
-| M38 | ~~Card dùng cover~~ → **ĐÍNH CHÍNH: không phải mismatch.** Cả hai bên đều dùng `gImagePath` (gallery), cùng 270×126.2 | DOMAIN §12 | ✅ Khớp sẵn |
+| M38 | Card dùng ảnh ngang Steam | DOMAIN §12 | ✅ Dùng `bannerPath`, cùng khung 270×126.2 |
 | M39 | Màu MetaScore chip theo dải 90/80/70/50 | DOMAIN §5.5 | 🟨 map từ `metaScoreBand` |
 | M40 | Refresh xuyên tiến trình → SSE | API §9 | ⬜ |
 | M41 | Chất liệu User Score trên Gallery theo band backend | DOMAIN §2.1 | ✅ map từ `scoreMaterialBand` |

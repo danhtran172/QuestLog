@@ -1,0 +1,6 @@
+project_id = "questlog"
+
+[functions.igdb-crawler]
+# The handler authenticates every request with a dedicated crawler secret.
+verify_jwt = false
+

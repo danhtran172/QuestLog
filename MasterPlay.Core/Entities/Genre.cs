@@ -13,5 +13,11 @@ public partial class Genre
 
     public int SortOrder { get; set; }
 
+    /// <summary>'system:shared' | 'user:&lt;id&gt;' | 'guest:local'. Server gan, client khong gui.</summary>
+    public string LibraryOwnerKey { get; set; } = Taxonomy.TaxonomyRules.SharedOwnerKey;
+
+    /// <summary>Ten da chuan hoa (TaxonomyRules.NormalizeName). MasterPlayContext tu tinh khi luu.</summary>
+    public string NameKey { get; set; } = string.Empty;
+
     public virtual ICollection<Game> Games { get; set; } = new List<Game>();
 }
