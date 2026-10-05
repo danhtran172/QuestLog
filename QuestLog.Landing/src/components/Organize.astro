@@ -1,0 +1,235 @@
+---
+// Phan loai: bento 4 o, moi o mot anh chup that cua app.
+// Chi noi nhung gi app lam duoc hom nay: Manage tags cho progress/ownership
+// van chi doc, nen o "nhan" chi noi ve hien thi, khong noi doi ten/doi mau.
+import { Image } from "astro:assets";
+import { shot } from "../shots";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const { organize: t, shots } = ui[lang];
+---
+
+<section id="organize" class="scroll-mt-16 py-28 lg:py-36" aria-labelledby="organize-title">
+  <div class="container-page">
+    <header class="max-w-[46rem]" data-reveal>
+      <p class="eyebrow">◆ {t.eyebrow}</p>
+      <h2 id="organize-title" class="display mt-5 text-[clamp(2.8rem,6.4vw,5.2rem)] text-balance">{t.title}</h2>
+      <p class="mt-6 max-w-[36rem] text-lg leading-relaxed text-mist/80">{t.intro}</p>
+    </header>
+
+    <div class="bento mt-14 lg:mt-20">
+      <article class="tile tile--filter" data-reveal>
+        <div class="tile-copy">
+          <h3 class="tile-title">{t.filter.title}</h3>
+          <p class="tile-body">{t.filter.body}</p>
+        </div>
+        <div class="tile-media tile-media--dialog">
+          <Image
+            src={shot(lang, "filter")}
+            alt={shots.filter}
+            widths={[480, 720, 960, 1400]}
+            sizes="(min-width: 1024px) 560px, 88vw"
+            quality={90}
+            class="shot"
+          />
+        </div>
+      </article>
+
+      <article class="tile tile--themes" data-reveal style="--d:90ms">
+        <div class="tile-copy">
+          <h3 class="tile-title">{t.themes.title}</h3>
+          <p class="tile-body">{t.themes.body}</p>
+        </div>
+        <div class="tile-media tile-media--crop">
+          <Image
+            src={shot(lang, "themes")}
+            alt={shots.themes}
+            widths={[480, 720, 960, 1400]}
+            sizes="(min-width: 1024px) 460px, 88vw"
+            quality={90}
+            class="shot"
+          />
+        </div>
+      </article>
+
+      <article class="tile tile--labels" data-reveal style="--d:60ms">
+        <div class="tile-copy">
+          <h3 class="tile-title">{t.labels.title}</h3>
+          <p class="tile-body">{t.labels.body}</p>
+        </div>
+        <!-- Ba card that: Playing/Subscription, Nextplay/Owned, Drop/Owned. -->
+        <div class="tile-media fan" aria-hidden="true">
+          {
+            [1, 2, 3].map((n) => (
+              <Image
+                src={shot(lang, `label-card-${n}` as "label-card-1")}
+                alt=""
+                widths={[300, 594]}
+                sizes="(min-width: 1024px) 200px, 30vw"
+                quality={92}
+                class={`fan-card fan-card--${n}`}
+              />
+            ))
+          }
+        </div>
+      </article>
+
+      <article class="tile tile--sort" data-reveal style="--d:150ms">
+        <div class="tile-copy">
+          <h3 class="tile-title">{t.sort.title}</h3>
+          <p class="tile-body">{t.sort.body}</p>
+        </div>
+        <div class="tile-media tile-media--dialog">
+          <Image
+            src={shot(lang, "sort-profile")}
+            alt={shots.sortProfile}
+            widths={[400, 600, 800, 1200]}
+            sizes="(min-width: 1024px) 420px, 80vw"
+            quality={90}
+            class="shot"
+          />
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bento {
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* Vi tri tuong minh: loc (trai, 2 hang) | chu de; nhan (trai) | thu tu sap xep (phai, 2 hang). */
+  @media (min-width: 1024px) {
+    .bento {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-rows: auto auto auto;
+      gap: 1.25rem;
+    }
+
+    .tile--filter {
+      grid-area: 1 / 1 / 3 / 8;
+    }
+
+    .tile--themes {
+      grid-area: 1 / 8 / 2 / 13;
+    }
+
+    .tile--sort {
+      grid-area: 2 / 8 / 4 / 13;
+    }
+
+    .tile--labels {
+      grid-area: 3 / 1 / 4 / 8;
+    }
+  }
+
+  .tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--color-line) 90%, transparent);
+    border-radius: 18px;
+    padding: 1.6rem 1.6rem 0;
+    background:
+      radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, var(--color-quest) 9%, transparent), transparent 60%),
+      var(--color-slate);
+  }
+
+  .tile-title {
+    font-family: var(--font-display);
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+  }
+
+  :global(:lang(vi)) .tile-title {
+    line-height: 1.12;
+  }
+
+  .tile-body {
+    margin-top: 0.7rem;
+    max-width: 30rem;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-mist) 78%, transparent);
+  }
+
+  .tile-media {
+    position: relative;
+    margin-top: auto;
+  }
+
+  /* Anh dialog nho ra mep duoi cua o, nhu vua mo len. */
+  .tile-media--dialog {
+    margin-inline: auto;
+    width: min(100%, 34rem);
+  }
+
+  .tile-media--dialog :global(.shot) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 14px 14px 0 0;
+    box-shadow:
+      0 -20px 60px -30px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+
+  /* Ba card xoe nhu quan bai, mep duoi bi o cat. */
+  .fan {
+    display: flex;
+    justify-content: center;
+    height: 13.5rem;
+    margin-top: 1rem;
+  }
+
+  .fan :global(.fan-card) {
+    width: min(36%, 13rem);
+    height: auto;
+    align-self: flex-start;
+    border-radius: 5.98% / 5.23%;
+    box-shadow:
+      0 30px 60px -24px rgb(0 0 0 / 0.95),
+      0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+
+  .fan :global(.fan-card--1) {
+    rotate: -6deg;
+    translate: 18% 10%;
+  }
+
+  .fan :global(.fan-card--2) {
+    z-index: 1;
+  }
+
+  .fan :global(.fan-card--3) {
+    rotate: 6deg;
+    translate: -18% 10%;
+  }
+
+  /* Anh cat tu man hinh lon: tran ra mep phai/duoi cua o. */
+  .tile-media--crop {
+    margin-right: -1.6rem;
+  }
+
+  .tile-media--crop :global(.shot) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-top-left-radius: 12px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
+    mask-image: linear-gradient(90deg, #000 80%, transparent);
+  }
+</style>

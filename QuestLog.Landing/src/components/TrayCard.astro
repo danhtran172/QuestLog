@@ -1,0 +1,90 @@
+---
+// Minh hoa bang "Dich vu nen" cua app o trang thai dang chay (cac dich vu deu bat).
+// Backup dang tam tat (FeatureFlags.GameBackup) nen khong quang cao o day.
+// Nhan chu lay dung tu app. Chi la hinh minh hoa nen an khoi trinh doc man hinh.
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+  class?: string;
+}
+
+const { lang, class: className } = Astro.props;
+const t = ui[lang].tray;
+const icons = [
+  // activity
+  "M22 12h-4l-3 9L9 3l-3 9H2",
+  // folder-search
+  "M10.7 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v3.3M17 17a3 3 0 1 0 0-.01M21 21l-1.9-1.9",
+];
+---
+
+<div class:list={["tray", className]} aria-hidden="true">
+  <div class="flex items-center gap-2.5">
+    <svg viewBox="0 0 24 24" class="h-[1.1rem] w-[1.1rem] text-mist"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg>
+    <p class="font-semibold text-mist">{t.title}</p>
+  </div>
+  <p class="mt-1 flex items-center gap-2 text-xs text-fog">
+    <span class="h-1.5 w-1.5 rounded-full bg-done"></span>{t.running}
+  </p>
+  <ul class="mt-4 space-y-2.5">
+    {
+      t.items.map((label, i) => (
+        <li class="tray-row">
+          <svg viewBox="0 0 24 24" class="h-4 w-4 text-quest"><path d={icons[i]}></path></svg>
+          <span class="text-sm font-semibold text-mist">{label}</span>
+          <span class="toggle"></span>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .tray {
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 18px;
+    padding: 1.1rem;
+    background: color-mix(in oklab, #2b2f35 82%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 40px 80px -28px rgb(0 0 0 / 0.95);
+  }
+
+  svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tray-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.7rem;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 12px;
+    padding: 0.7rem 0.8rem;
+    background: rgb(255 255 255 / 0.04);
+  }
+
+  .toggle {
+    position: relative;
+    width: 2.3rem;
+    height: 1.3rem;
+    border-radius: 999px;
+    background: var(--color-quest);
+  }
+
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 0.18rem;
+    right: 0.2rem;
+    width: 0.94rem;
+    height: 0.94rem;
+    border-radius: 50%;
+    background: white;
+  }
+</style>

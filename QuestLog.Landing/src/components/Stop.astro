@@ -1,0 +1,173 @@
+---
+// Mot chang tren dong thoi gian: moc tren duong ray + nhan + noi dung.
+// Danh so vi thu tu la that: da choi -> dang choi -> sap choi.
+import type { Stop } from "../i18n/ui";
+
+interface Props {
+  stop: Stop;
+  index: number;
+  flip?: boolean;
+  /** Anh tran ra mep man hinh (desktop) de hien to hon. */
+  bleed?: boolean;
+}
+
+const { stop, index, flip = false, bleed = false } = Astro.props;
+const num = String(index + 1).padStart(2, "0");
+---
+
+<article class="stop container-page" style={`--status: var(--color-${stop.key})`} aria-labelledby={`stop-${stop.key}`}>
+  <div class="relative">
+    <span class="route-marker" data-route-point></span>
+  </div>
+  <div>
+    <p class="stop-label">
+      <span>{num}</span>
+      <span class="stop-dash" aria-hidden="true"></span>
+      <span class="stop-status">{stop.label}</span>
+    </p>
+    <div class:list={["stop-grid", flip && "stop-grid--flip"]}>
+      <div class="stop-copy" data-reveal>
+        <h3 id={`stop-${stop.key}`} class="display text-[clamp(2.3rem,4.6vw,3.7rem)] text-balance">{stop.title}</h3>
+        <p class="mt-5 max-w-[32rem] text-[1.05rem] leading-relaxed text-mist/80">{stop.body}</p>
+        <ul class="mt-7 flex flex-wrap gap-2">
+          {stop.tags.map((tag) => <li class="tag">{tag}</li>)}
+        </ul>
+      </div>
+      <div class:list={["stop-media", bleed && "stop-media--bleed"]} data-reveal style="--d:140ms">
+        <slot />
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .stop {
+    display: grid;
+    grid-template-columns: var(--rail) 1fr;
+    padding-block: clamp(3.5rem, 7.5vw, 6.5rem);
+  }
+
+  .route-marker {
+    position: absolute;
+    z-index: 3;
+    top: 0.05rem;
+    left: 50%;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 2px solid var(--status);
+    border-radius: 50%;
+    background: var(--status);
+    box-shadow:
+      0 0 0 6px var(--color-abyss),
+      0 0 26px 4px color-mix(in oklab, var(--status) 55%, transparent);
+    translate: -50% 0;
+    transition:
+      background-color 0.4s,
+      box-shadow 0.5s;
+  }
+
+  /* Khi JS chay: moc tat cho den khi "nguoi di duong" toi noi. */
+  :global(.route-live) .route-marker:not(:global(.is-reached)) {
+    background: var(--color-abyss);
+    box-shadow: 0 0 0 6px var(--color-abyss);
+  }
+
+  :global(.route-live) .route-marker:global(.is-reached)::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid var(--status);
+    border-radius: 50%;
+    animation: ping 1s var(--ease-out-quint) both;
+  }
+
+  @keyframes ping {
+    from {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(2.6);
+    }
+  }
+
+  .stop-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--status);
+  }
+
+  .stop-dash {
+    width: 2.5rem;
+    height: 1px;
+    background: color-mix(in oklab, var(--status) 60%, transparent);
+  }
+
+  .stop-grid {
+    display: grid;
+    gap: 3rem;
+    margin-top: 1.75rem;
+  }
+
+  @media (min-width: 1024px) {
+    .stop-grid {
+      grid-template-columns: 5fr 7fr;
+      align-items: center;
+      gap: 4.5rem;
+    }
+
+    .stop-grid--flip {
+      grid-template-columns: 7fr 5fr;
+    }
+
+    .stop-grid--flip .stop-media {
+      order: -1;
+    }
+
+    /* Chi tran sang PHAI: ben trai la duong ray cua tuyen duong.
+       Khoang tu mep noi dung toi mep man hinh: (100vw - 1200px)/2 + padding 2rem. */
+    .stop-media--bleed {
+      --bleed: calc(max(0px, (100vw - 1200px) / 2) + 2rem);
+      margin-right: calc(-1 * var(--bleed));
+    }
+
+    .stop-media--bleed :global(.frame) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right: 0;
+    }
+  }
+
+  .tag {
+    border: 1px solid color-mix(in oklab, var(--status) 32%, var(--color-line));
+    border-radius: 999px;
+    padding: 0.32rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--status) 35%, var(--color-mist));
+    background: color-mix(in oklab, var(--status) 7%, transparent);
+  }
+
+  .stop-media {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Quang mau trang thai sau anh. */
+  .stop-media::before {
+    content: "";
+    position: absolute;
+    inset: 8% 4%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--status) 26%, transparent), transparent);
+    filter: blur(48px);
+  }
+</style>
