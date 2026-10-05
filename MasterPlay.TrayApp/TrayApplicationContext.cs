@@ -1,5 +1,4 @@
 using MasterPlay.Infrastructure.Configuration;
-using MasterPlay.Infrastructure.Integrations.Images;
 using MasterPlay.Infrastructure.TrayControl;
 using MasterPlay.TrayApp.Services;
 using MasterPlay.TrayApp.Startup;
@@ -32,7 +31,6 @@ namespace MasterPlay.TrayApp
         private ToolStripMenuItem? _playTimeMenuItem;
         private ToolStripMenuItem? _libraryMenuItem;
         private ToolStripMenuItem? _scanNowMenuItem;
-        private ToolStripMenuItem? _syncImagesMenuItem;
         private ToolStripMenuItem? _openMasterPlayMenuItem;
         private ToolStripMenuItem? _openLogMenuItem;
         private ToolStripMenuItem? _startupMenuItem;
@@ -49,7 +47,6 @@ namespace MasterPlay.TrayApp
         private Font? _serviceFont;
         private TrayTheme _theme = TrayTheme.Dark;
 
-        private bool _isSyncingImages = false;
         private bool _isExiting;
 
         public TrayApplicationContext(IServiceProvider serviceProvider)
@@ -237,7 +234,6 @@ namespace MasterPlay.TrayApp
 
             _scanNowMenuItem = CreateItem(LocalizationService.Get("ScanNow"), TrayGlyph.FolderSearch, ScanNow_Click);
             _openLogMenuItem = CreateItem(LocalizationService.Get("OpenLogFolder"), TrayGlyph.ScrollText, OpenLogFolder);
-            _syncImagesMenuItem = CreateItem(LocalizationService.Get("SyncImagesCloudinary"), TrayGlyph.RefreshCw, SyncImagesToCloudinary_Click);
 
             _openMasterPlayMenuItem = CreateItem(LocalizationService.Get("OpenMasterPlay"), TrayGlyph.AppWindow, OpenMasterPlay);
 
@@ -247,7 +243,7 @@ namespace MasterPlay.TrayApp
 
             _exitMenuItem = CreateItem(LocalizationService.Get("Exit"), TrayGlyph.LogOut, Exit, TrayMenuRole.Danger);
 
-            foreach (var item in new[] { _scanNowMenuItem, _openLogMenuItem, _syncImagesMenuItem, _openMasterPlayMenuItem, _exitMenuItem })
+            foreach (var item in new[] { _scanNowMenuItem, _openLogMenuItem, _openMasterPlayMenuItem, _exitMenuItem })
                 item.Padding = itemPadding;
 
             _contextMenu.Items.AddRange(new ToolStripItem[]
@@ -259,7 +255,6 @@ namespace MasterPlay.TrayApp
                 new ToolStripSeparator(),
                 _scanNowMenuItem,
                 _openLogMenuItem,
-                _syncImagesMenuItem,
                 new ToolStripSeparator(),
                 _openMasterPlayMenuItem,
                 _startupMenuItem,
@@ -492,59 +487,6 @@ namespace MasterPlay.TrayApp
                 ToolTipIcon.Warning);
         }
 
-        private async void SyncImagesToCloudinary_Click(object? sender, EventArgs e)
-        {
-            if (_isSyncingImages)
-            {
-                ShowBalloon(3000, "QuestLog", LocalizationService.Get("ImageSyncAlreadyRunning"), ToolTipIcon.Info);
-                return;
-            }
-
-            _isSyncingImages = true;
-            _syncImagesMenuItem!.Enabled = false;
-            _syncImagesMenuItem.Text = LocalizationService.Get("SyncingImages");
-
-            _logger.LogInformation("Cloudinary image sync started from tray menu.");
-            ShowBalloon(3000, "QuestLog", LocalizationService.Get("StartingImageSync"), ToolTipIcon.Info);
-
-            try
-            {
-                var progress = new Progress<string>(msg => _logger.LogInformation("[ImageSync] {msg}", msg));
-                // Admin -> Cloudinary, moi chu khac -> luu tren may (DOMAIN_RULES §12).
-                var result = await GameImageSync.SyncAllAsync(progress);
-
-                string summary = LocalizationService.Get(
-                    "ImageSyncSummary",
-                    result.CardCoverUploaded,
-                    result.CardCoverAlreadySynced,
-                    result.CardCoverMissing,
-                    result.CoverUploaded,
-                    result.CoverAlreadySynced,
-                    result.CoverMissing,
-                    result.PortraitCoverUploaded,
-                    result.PortraitCoverAlreadySynced,
-                    result.PortraitCoverMissing,
-                    result.Failed,
-                    result.TotalGames);
-
-                foreach (var failure in result.Failures)
-                    _logger.LogWarning("[ImageSync] {game} ({role}) failed: {reason}", failure.GameName, failure.Role, failure.Reason);
-                _logger.LogInformation("Cloudinary image sync finished. {summary}", summary.Replace("\n", " "));
-                ShowBalloon(6000, LocalizationService.Get("ImageSyncComplete"), summary, ToolTipIcon.Info);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Cloudinary image sync.");
-                ShowBalloon(5000, LocalizationService.Get("ImageSyncError"), ex.Message, ToolTipIcon.Error);
-            }
-            finally
-            {
-                _isSyncingImages = false;
-                _syncImagesMenuItem.Enabled = true;
-                _syncImagesMenuItem.Text = LocalizationService.Get("SyncImagesCloudinary");
-            }
-        }
-
         private void OpenLogFolder(object? sender, EventArgs e)
         {
             try
@@ -766,7 +708,6 @@ namespace MasterPlay.TrayApp
             if (_playTimeMenuItem != null) _playTimeMenuItem.Text = LocalizationService.Get("PlayTimeTracking");
             if (_libraryMenuItem != null) _libraryMenuItem.Text = LocalizationService.Get("LibraryScanner");
             if (_scanNowMenuItem != null) _scanNowMenuItem.Text = LocalizationService.Get("ScanNow");
-            if (_syncImagesMenuItem != null && !_isSyncingImages) _syncImagesMenuItem.Text = LocalizationService.Get("SyncImagesCloudinary");
             if (_openLogMenuItem != null) _openLogMenuItem.Text = LocalizationService.Get("OpenLogFolder");
             if (_startupMenuItem != null) _startupMenuItem.Text = LocalizationService.Get("StartWithWindows");
             if (_exitMenuItem != null) _exitMenuItem.Text = LocalizationService.Get("Exit");

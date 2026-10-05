@@ -1,5 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// `text-fs-*` la co chu tu dinh nghia (index.css). Khong khai bao thi tailwind-merge
+// coi no la MAU, giu ca `text-fs-11` lan `text-2xl` -> class mac dinh de len class truyen vao.
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: { "font-size": [{ text: [(value: string) => /^fs-\d+$/.test(value)] }] } },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

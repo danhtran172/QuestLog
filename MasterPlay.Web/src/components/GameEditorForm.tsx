@@ -357,7 +357,9 @@ function ImageSlot({
             label={t("editor.syncImage")}
             icon={syncing ? <Loader2 className="animate-spin" /> : <CloudDownload />}
             onClick={onSync}
-            disabled={disabled || syncDisabled}
+            /* Khoa metadata chi chan sua TAY; sync lay tu nguon metadata nen van
+               bam duoc, giong nut Sync canh ten game. */
+            disabled={syncDisabled}
           />
         </div>
         {pasteError ? <span role="alert" className="text-danger">{t("editor.pasteImageFailed")}</span> : null}
@@ -627,7 +629,16 @@ export function GameEditorForm({
          (truoc day sync hut mot nguon la mat luon ten exe/developer da nhap). */
       const str = (value: string | null | undefined, current: string) => value ?? current;
       const num = (value: number | null | undefined, current: string) => value?.toString() ?? current;
-      setDraft((current) => source === "metadata" ? {
+      /* Sync metadata chi dien o anh CON TRONG: game them tay chua co anh nao nen
+         lay du ca ba, con anh da chon/dan tay thi giu nguyen. */
+      const fill = (value: string | null | undefined, current: string) => current.trim() ? current : value ?? current;
+      const fillImages = <T extends Pick<Draft, "posterPath" | "bannerPath" | "backdropPath">>(current: T): T => ({
+        ...current,
+        posterPath: fill(preview.posterPath, current.posterPath),
+        bannerPath: fill(preview.bannerPath, current.bannerPath),
+        backdropPath: fill(preview.backdropPath, current.backdropPath),
+      });
+      setDraft((current) => source === "metadata" ? fillImages({
         ...current,
         name: str(preview.name, current.name),
         developer: str(preview.developer, current.developer),
@@ -636,17 +647,16 @@ export function GameEditorForm({
         publishDate: str(preview.publishDate, current.publishDate),
         metaScore: num(preview.metaScore, current.metaScore),
         avgPlaytimeHours: num(preview.avgPlaytimeHours, current.avgPlaytimeHours),
-        /* Sync metadata KHONG dung toi anh: moi o anh co nut sync rieng, de anh
-           da chon tay khong bi thay mat khi chi muon cap nhat thong tin. */
         exeName: str(preview.exeName, current.exeName),
         isDlc: preview.isDlc ?? current.isDlc,
         /* Server da khop san voi Series dang co; khong khop thi giu lua chon cu. */
         seriesId: preview.series ? preview.series.id.toString() : current.seriesId,
-      } : source === "cover" ? { ...current, backdropPath: str(preview.backdropPath, current.backdropPath) }
+      }) : source === "cover" ? { ...current, backdropPath: str(preview.backdropPath, current.backdropPath) }
         : source === "card-cover" ? { ...current, bannerPath: str(preview.bannerPath, current.bannerPath) }
           : { ...current, posterPath: str(preview.posterPath, current.posterPath) });
       if (source === "metadata") {
         setSeriesSuggestion(preview.series ? null : preview.seriesName ?? null);
+        setImageInputs(fillImages);
       } else if (source === "cover") {
         setImageInputs((current) => ({ ...current, backdropPath: str(preview.backdropPath, current.backdropPath) }));
       } else if (source === "card-cover") {
