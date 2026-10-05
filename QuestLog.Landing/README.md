@@ -1,6 +1,6 @@
 # QuestLog Landing
 
-Trang giới thiệu public của QuestLog. Astro, xuất HTML tĩnh, deploy lên Cloudflare Pages.
+Trang giới thiệu public của QuestLog. Astro, xuất HTML tĩnh, deploy lên Firebase Hosting.
 
 Project này **tách riêng** khỏi `MasterPlay.Web` (giao diện app desktop):
 - Không dùng chung `package.json`, không import code từ app.
@@ -42,7 +42,7 @@ src/
   pages/index.astro      /      (tiếng Việt, mặc định)
   pages/en/index.astro   /en/   (English)
 public/
-  _headers               Header bảo mật + cache cho Cloudflare Pages
+  _headers               Header bảo mật + cache khi host trên Cloudflare (Firebase dùng firebase.json)
   og.jpg                 Ảnh chia sẻ 1200×630
 ```
 
@@ -75,20 +75,21 @@ Xem `.env.example`.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `PUBLIC_SITE_URL` | `https://questlog.pages.dev` | Domain chính, dùng cho canonical/hreflang |
+| `PUBLIC_SITE_URL` | `https://getquestlog.web.app` | Domain chính, dùng cho canonical/hreflang |
 | `PUBLIC_DOWNLOAD_URL` | `releases/latest/download/QuestLogDesktop-win-Setup.exe` | Link nút "Tải xuống": tải thẳng file cài của bản mới nhất. Cần đã có ít nhất một release (`tools/release.ps1 -Upload`), nếu không link trả 404 |
 
-## Deploy lên Cloudflare Pages
+## Deploy lên Firebase Hosting
 
-1. Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git** → chọn repo.
-2. Cấu hình build:
-   - Framework preset: **Astro**
-   - Root directory: `QuestLog.Landing`
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-   - Biến môi trường: `NODE_VERSION=22`, cùng `PUBLIC_SITE_URL` và `PUBLIC_DOWNLOAD_URL` nếu khác mặc định.
-3. **Settings → Builds → Build watch paths**: include `QuestLog.Landing/*` để commit chỉ sửa app không kích hoạt build landing.
-4. Gắn domain riêng tại **Custom domains**, rồi cập nhật `PUBLIC_SITE_URL`.
+Site `getquestlog` trong project Firebase `questlog-8e895` → https://getquestlog.web.app (cấu hình ở `firebase.json`, `.firebaserc`).
+
+```bash
+npm run build
+npx firebase-tools deploy --only hosting
+```
+
+Cần đăng nhập Firebase CLI một lần (`npx firebase-tools login`) bằng tài khoản có quyền với project. Header bảo mật và cache khai báo trong `firebase.json` (`public/_headers` chỉ dùng khi host trên Cloudflare).
+
+Gói miễn phí (Spark) giới hạn 360 MB truyền tải/ngày; nếu lượt xem tăng thì chuyển sang Cloudflare (không giới hạn băng thông) hoặc gói Blaze.
 
 File cài đặt (.exe/.msi) đặt ở **GitHub Releases**. Nếu file lớn hoặc nhiều lượt tải thì chuyển sang Cloudflare R2 và đổi `PUBLIC_DOWNLOAD_URL`.
 
