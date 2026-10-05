@@ -209,7 +209,7 @@ export function GameTable({
 
       <div
         role="row"
-        className={`hidden gap-2 border-b border-border bg-surface-2/40 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-muted-fg lg:grid ${rowGrid(variant)}`}
+        className={`hidden gap-2 border-b border-border bg-surface-2/40 px-4 py-2 text-fs-11 font-bold uppercase tracking-wide text-muted-fg lg:grid ${rowGrid(variant)}`}
       >
         {draggable ? <span /> : null}
         <span>#</span>

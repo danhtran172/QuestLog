@@ -16,7 +16,7 @@ namespace MasterPlay.Infrastructure.Configuration
         /// <summary>Thu muc du lieu — xem <see cref="AppPaths"/> ve viec di doi ten cu.</summary>
         public static string GetConfigDirectory() => AppPaths.GetDataDirectory();
 
-        public static string GetConfigPath() => Path.Combine(GetConfigDirectory(), "config.json");
+        public static string GetConfigPath() => Path.Combine(GetConfigDirectory(), AppPaths.ConfigFileName);
 
         public static List<string> GetGameLibraryPath()
         {
@@ -100,11 +100,13 @@ namespace MasterPlay.Infrastructure.Configuration
                     .FirstOrDefault(property => property.Name.Equals("isDarkMode", StringComparison.OrdinalIgnoreCase));
 
                 // Migrate the legacy bool once, then write only ThemeMode from now on.
+                // A file with neither (the setup window writes only Language) takes the
+                // Config default instead of being treated as a legacy light theme.
                 if (themeModeProperty is null)
                 {
-                    payload[nameof(Config.ThemeMode)] = legacyDarkModeProperty?.Value.Value<bool>() == true
-                        ? "dark"
-                        : "light";
+                    payload[nameof(Config.ThemeMode)] = legacyDarkModeProperty is null
+                        ? new Config().ThemeMode
+                        : legacyDarkModeProperty.Value.Value<bool>() ? "dark" : "light";
                 }
                 legacyDarkModeProperty?.Remove();
 

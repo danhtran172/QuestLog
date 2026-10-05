@@ -44,6 +44,7 @@ function setupRoute() {
   const ahead = svg?.querySelector<SVGPathElement>(".route-ahead");
   const done = svg?.querySelector<SVGPathElement>(".route-done");
   const head = svg?.querySelector<SVGCircleElement>(".route-head");
+  const maskRect = svg?.querySelector<SVGRectElement>(".route-mask-rect");
   if (!route || !svg || !ahead || !done || !head) return;
 
   const points = [...route.querySelectorAll<HTMLElement | SVGElement>("[data-route-point]")];
@@ -58,7 +59,11 @@ function setupRoute() {
   const layout = () => {
     const box = route.getBoundingClientRect();
     const width = route.clientWidth;
-    svg.setAttribute("viewBox", `0 0 ${width} ${route.offsetHeight}`);
+    const height = route.offsetHeight;
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    // Mat na mo dan o cuoi: duoi dong thoi gian la "tuong lai", net dut tan dan.
+    maskRect?.setAttribute("width", `${width}`);
+    maskRect?.setAttribute("height", `${height}`);
 
     const pts = points.map((el) => {
       const r = el.getBoundingClientRect();

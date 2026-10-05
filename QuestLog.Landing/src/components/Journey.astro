@@ -1,4 +1,6 @@
 ---
+// Dong thoi gian: da choi -> dang choi -> sap choi. Thu tu nay la that (qua
+// khu -> hien tai -> tuong lai) nen moi chang duoc danh so va noi bang duong ray.
 import { Image } from "astro:assets";
 import Stop from "./Stop.astro";
 import TrayCard from "./TrayCard.astro";
@@ -11,86 +13,78 @@ interface Props {
 }
 
 const { lang } = Astro.props;
-const { journey, shots, quest } = ui[lang];
-const [planned, nextplay, playing, done] = journey.stops;
+const { timeline, shots } = ui[lang];
+const [played, playing, next] = timeline.stops;
 ---
 
-<section id="journey" class="scroll-mt-16 pt-28 lg:pt-40" aria-labelledby="journey-title">
+<section id="timeline" class="scroll-mt-16 pt-28 lg:pt-40" aria-labelledby="timeline-title">
   <header class="container-page grid grid-cols-[var(--rail)_1fr]">
     <div class="relative">
       <span class="route-start" data-route-point></span>
     </div>
-    <div class="max-w-[44rem]" data-reveal>
-      <p class="eyebrow">◆ {journey.eyebrow}</p>
-      <h2 id="journey-title" class="display mt-5 text-[clamp(2.8rem,6.4vw,5.2rem)] text-balance">{journey.title}</h2>
-      <p class="mt-6 max-w-[36rem] text-lg leading-relaxed text-mist/80">{journey.intro}</p>
+    <div class="max-w-[46rem]" data-reveal>
+      <p class="eyebrow">◆ {timeline.eyebrow}</p>
+      <h2 id="timeline-title" class="display mt-5 text-[clamp(2.8rem,6.4vw,5.2rem)] text-balance">{timeline.title}</h2>
+      <p class="mt-6 max-w-[36rem] text-lg leading-relaxed text-mist/80">{timeline.intro}</p>
     </div>
   </header>
 
-  <Stop stop={planned} index={0} bleed>
-    <div class="frame frame--fade">
+  <Stop stop={played} index={0}>
+    <div class="frame frame--fade mx-auto max-w-[40rem]">
       <Image
-        src={shot(lang, "list")}
-        alt={shots.list}
-        widths={[700, 1000, 1400, 2000]}
-        sizes="(min-width: 1024px) 60vw, 88vw"
+        src={shot(lang, "dashboard")}
+        alt={shots.dashboard}
+        widths={[640, 960, 1280, 1568]}
+        sizes="(min-width: 1024px) 640px, 92vw"
+        quality={90}
         class="block h-auto w-full"
       />
     </div>
   </Stop>
 
-  <Stop stop={nextplay} index={1} flip>
-    <div class="relative pb-20 sm:pb-24 lg:pb-16">
+  <Stop stop={playing} index={1} flip>
+    <div class="relative mx-auto max-w-[36rem] pb-28 pl-6 sm:pb-20 sm:pl-12">
+      <Image
+        src={shot(lang, "detail")}
+        alt={shots.detail}
+        widths={[560, 840, 1120, 1680]}
+        sizes="(min-width: 1024px) 520px, 86vw"
+        quality={90}
+        class="dialog-shot relative block h-auto w-full"
+      />
+      <TrayCard lang={lang} class="absolute bottom-0 left-0 w-[64%] -rotate-2 sm:w-[18.5rem]" />
+    </div>
+  </Stop>
+
+  <ConsoleBand lang={lang} />
+
+  <Stop stop={next} index={2}>
+    <div class="relative pb-24 sm:pb-20 lg:pb-14">
       <div class="frame">
         <Image
           src={shot(lang, "queue")}
           alt={shots.queue}
           widths={[700, 1000, 1400, 2000]}
           sizes="(min-width: 1200px) 660px, (min-width: 1024px) 55vw, 88vw"
+          quality={90}
           class="block h-auto w-full"
         />
       </div>
       <Image
-        src={shot(lang, "filter")}
-        alt={shots.filter}
-        widths={[340, 520, 700]}
-        sizes="(min-width: 1024px) 280px, 46vw"
-        class="dialog-shot absolute right-[-3%] bottom-0 w-[46%] rotate-[2.5deg] sm:w-[42%]"
+        src={shot(lang, "releases")}
+        alt={shots.releases}
+        widths={[340, 520, 780]}
+        sizes="(min-width: 1024px) 300px, 58vw"
+        quality={90}
+        class="popover-shot absolute right-[-2%] bottom-0 w-[58%] rotate-[2deg] sm:w-[46%]"
       />
     </div>
   </Stop>
 
-  <Stop stop={playing} index={2}>
-    <div class="relative mx-auto max-w-[34rem] pb-24 pl-8 sm:pb-16 sm:pl-14">
-      <Image
-        src={shot(lang, "detail")}
-        alt={shots.detail}
-        widths={[540, 800, 1100, 1600]}
-        sizes="(min-width: 1024px) 480px, 82vw"
-        class="dialog-shot relative block h-auto w-full"
-      />
-      <TrayCard lang={lang} class="absolute bottom-0 left-0 w-[60%] -rotate-2 sm:w-[18.5rem]" />
-    </div>
-  </Stop>
-
-  <ConsoleBand lang={lang} />
-
-  <Stop stop={done} index={3} flip>
-    <div class="trophy relative mx-auto flex max-w-[30rem] justify-center pt-10 pb-6">
-      <Image
-        src={shot(lang, "card-done")}
-        alt={shots.cardDone}
-        widths={[300, 602]}
-        sizes="(min-width: 1024px) 300px, 62vw"
-        class="card-shot relative w-[66%] max-w-[300px] -rotate-3"
-      />
-      <div class="hud quest-toast absolute top-0 right-0 px-5 py-4" aria-hidden="true">
-        <p class="eyebrow text-done">◆ {quest.label}</p>
-        <p class="mt-1.5 font-semibold text-mist">{quest.game}</p>
-        <p class="mt-0.5 font-mono text-xs text-fog">{quest.meta}</p>
-      </div>
-    </div>
-  </Stop>
+  <!-- Duoi dong thoi gian: tuong lai con mo, net dut mo dan. -->
+  <div class="container-page grid grid-cols-[var(--rail)_1fr]" aria-hidden="true">
+    <div class="relative h-28"><span class="absolute bottom-0 left-1/2 h-px w-px" data-route-point></span></div>
+  </div>
 </section>
 
 <style>
@@ -115,11 +109,12 @@ const [planned, nextplay, playing, done] = journey.stops;
   }
 
   .frame--fade {
-    mask-image: linear-gradient(180deg, #000 62%, transparent 98%);
+    mask-image: linear-gradient(180deg, #000 70%, transparent 99%);
   }
 
-  /* Anh chup dialog: bo goc dung ti le dialog trong app (16px). */
-  .dialog-shot {
+  /* Anh chup dialog/popover: bo goc theo ti le cua dialog trong app. */
+  .dialog-shot,
+  .popover-shot {
     height: auto;
     border-radius: 1.8% / 1.7%;
     box-shadow:
@@ -127,43 +122,7 @@ const [planned, nextplay, playing, done] = journey.stops;
       0 0 0 1px rgb(255 255 255 / 0.08);
   }
 
-  .card-shot {
-    height: auto;
-    border-radius: 5.98% / 5.23%;
-    box-shadow:
-      0 50px 90px -30px rgb(0 0 0 / 0.95),
-      0 0 0 1px rgb(255 255 255 / 0.08);
-  }
-
-  /* Hao quang "hoan thanh" sau card. */
-  .trophy::before {
-    content: "";
-    position: absolute;
-    inset: 4% 10%;
-    border-radius: 50%;
-    background:
-      repeating-conic-gradient(from 0deg, color-mix(in oklab, var(--color-done) 20%, transparent) 0deg 6deg, transparent 6deg 18deg);
-    mask-image: radial-gradient(closest-side, #000 35%, transparent);
-  }
-
-  .quest-toast {
-    border-color: color-mix(in oklab, var(--color-done) 35%, transparent);
-  }
-
-  .quest-toast::before,
-  .quest-toast::after {
-    border-color: var(--color-done);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .trophy::before {
-      animation: spin 60s linear infinite;
-    }
-  }
-
-  @keyframes spin {
-    to {
-      rotate: 1turn;
-    }
+  .popover-shot {
+    border-radius: 4.5% / 5%;
   }
 </style>

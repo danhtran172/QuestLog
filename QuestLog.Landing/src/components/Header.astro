@@ -11,14 +11,15 @@ const otherLang: Locale = lang === "vi" ? "en" : "vi";
 ---
 
 <header class="site-header fixed inset-x-0 top-0 z-50" data-header>
-  <nav aria-label={t.menu} class="container-page flex h-16 items-center justify-between gap-4">
+  <nav aria-label={t.menu} class="container-page header-wide flex h-16 items-center justify-between gap-4">
     <a href={localePath[lang]} class="flex items-center gap-2.5">
       <img src="/favicon.png" alt="" width="28" height="28" />
       <span class="font-display text-[1.45rem] font-extrabold tracking-[0.04em] uppercase">QuestLog</span>
     </a>
     <div class="flex items-center gap-1 sm:gap-2">
-      <a href="#journey" class="nav-link hidden md:inline-flex">{t.journey}</a>
-      <a href="#console" class="nav-link hidden md:inline-flex">{t.console}</a>
+      <a href="#timeline" class="nav-link hidden md:inline-flex">{t.timeline}</a>
+      <a href="#scores" class="nav-link hidden md:inline-flex">{t.scores}</a>
+      <a href="#organize" class="nav-link hidden md:inline-flex">{t.organize}</a>
       <a
         href={localePath[otherLang]}
         hreflang={otherLang}
@@ -46,6 +47,17 @@ const otherLang: Locale = lang === "vi" ? "en" : "vi";
     border-color: color-mix(in oklab, var(--color-line) 70%, transparent);
     background: color-mix(in oklab, var(--color-abyss) 74%, transparent);
     backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  /* Header rong hon noi dung: logo va nav sat hai mep hon tren man hinh lon. */
+  .header-wide {
+    max-width: 1680px;
+  }
+
+  @media (min-width: 1024px) {
+    .header-wide {
+      padding-inline: 2.5rem;
+    }
   }
 
   .nav-link {

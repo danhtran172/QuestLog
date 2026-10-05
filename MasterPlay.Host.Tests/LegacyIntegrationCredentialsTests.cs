@@ -49,6 +49,14 @@ public sealed class LegacyIntegrationCredentialsTests
 
         Assert.Equal("r", LegacyIntegrationCredentials.Read(IntegrationProviders.Rawg, env, () => null)!["apiKey"]);
         Assert.Equal("g", LegacyIntegrationCredentials.Read(IntegrationProviders.Gemini, env, () => null)!["apiKey"]);
-        Assert.Null(LegacyIntegrationCredentials.Read(IntegrationProviders.Steam, env, () => null));
+    }
+
+    [Fact]
+    public void Steam_web_api_is_no_longer_an_integration()
+    {
+        var env = Env(new() { ["STEAM_API_KEY"] = "s" });
+
+        Assert.False(IntegrationProviders.IsKnown("steam"));
+        Assert.Null(LegacyIntegrationCredentials.Read("steam", env, () => null));
     }
 }

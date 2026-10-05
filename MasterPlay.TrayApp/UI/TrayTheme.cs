@@ -16,17 +16,27 @@ public sealed class TrayTheme
     public required Color Foreground { get; init; }
     public required Color MutedForeground { get; init; }
     public required Color Primary { get; init; }
+    public required Color PrimaryForeground { get; init; }
     public required Color Danger { get; init; }
 
     /// <summary>Nen cua dong dang di chuot qua, bang primary pha loang vao surface.</summary>
     public Color Hover => Blend(Primary, Surface, 0.22);
 
+    // Switch cua web (components/ui.tsx): tat = ray muted-fg/30 vien muted-fg/80,
+    // num mau fg; bat = ray va vien primary, num primary-fg.
     public Color SwitchTrackOff => Blend(MutedForeground, Surface, 0.30);
-    public Color SwitchKnobOff => Blend(MutedForeground, Surface, 0.85);
+    public Color SwitchBorderOff => Blend(MutedForeground, Surface, 0.80);
+    public Color SwitchKnobOff => Foreground;
     public Color SwitchTrackOn => Primary;
-    public Color SwitchKnobOn => Surface;
+    public Color SwitchKnobOn => PrimaryForeground;
 
-    // --questory-surface / surface-2 / border / fg / muted-fg / primary / danger
+    // Card dich vu, theo utility surface-card cua web: mat sang hon nen mot chut,
+    // vien pha 9% trang; di chuot qua thi vien pha 45% primary.
+    public Color CardFill => Blend(Foreground, Surface, 0.05);
+    public Color CardBorder => Blend(Foreground, Border, 0.09);
+    public Color CardBorderHover => Blend(Primary, Border, 0.45);
+
+    // --questory-surface / surface-2 / border / fg / muted-fg / primary / primary-fg / danger
     public static TrayTheme Dark { get; } = new()
     {
         Name = "dark",
@@ -35,7 +45,8 @@ public sealed class TrayTheme
         Border = Color.FromArgb(75, 79, 85),
         Foreground = Color.FromArgb(195, 198, 201),
         MutedForeground = Color.FromArgb(147, 151, 156),
-        Primary = Color.FromArgb(77, 180, 151),
+        Primary = Color.FromArgb(109, 136, 99),
+        PrimaryForeground = Color.FromArgb(10, 20, 12),
         Danger = Color.FromArgb(215, 104, 104)
     };
 
@@ -48,6 +59,7 @@ public sealed class TrayTheme
         Foreground = Color.FromArgb(40, 48, 40),
         MutedForeground = Color.FromArgb(100, 107, 100),
         Primary = Color.FromArgb(84, 107, 80),
+        PrimaryForeground = Color.FromArgb(246, 248, 242),
         Danger = Color.FromArgb(171, 65, 62)
     };
 
@@ -60,6 +72,7 @@ public sealed class TrayTheme
         Foreground = Color.FromArgb(233, 241, 217),
         MutedForeground = Color.FromArgb(156, 176, 128),
         Primary = Color.FromArgb(156, 176, 128),
+        PrimaryForeground = Color.FromArgb(5, 10, 13),
         Danger = Color.FromArgb(214, 112, 100)
     };
 

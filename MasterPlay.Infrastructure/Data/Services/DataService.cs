@@ -134,6 +134,29 @@ namespace MasterPlay.Infrastructure.Data.Services
                                 FOREIGN KEY (GameId) REFERENCES Games (Id) ON DELETE CASCADE
                         );
                         """);
+                    // Thong bao ra mat da xem, theo chu thu vien. DOMAIN_RULES §22.
+                    // NotificationId = "{gameId}:{stage}:{publishDate}"; doi ngay phat
+                    // hanh thi ra id moi nen thong bao hien lai.
+                    context.Database.ExecuteSqlRaw(
+                        """
+                        CREATE TABLE IF NOT EXISTS ReleaseNotificationReads (
+                            LibraryOwnerKey TEXT NOT NULL,
+                            NotificationId TEXT NOT NULL,
+                            ReadAt TEXT NOT NULL,
+                            CONSTRAINT PK_ReleaseNotificationReads PRIMARY KEY (LibraryOwnerKey, NotificationId)
+                        );
+                        """);
+                    // Noi luu anh cua tung tai khoan: UsesCloud = 1 la admin (Cloudinary),
+                    // 0 la luu tren may. Host ghi khi xac thuc token; Tray/CLI doc.
+                    // Xem ImageStorageOwners / DOMAIN_RULES §12.
+                    context.Database.ExecuteSqlRaw(
+                        """
+                        CREATE TABLE IF NOT EXISTS ImageStorageOwners (
+                            LibraryOwnerKey TEXT NOT NULL PRIMARY KEY,
+                            UsesCloud INTEGER NOT NULL,
+                            RecordedAt TEXT NOT NULL
+                        );
+                        """);
                     // Rating contract v2: replace the legacy out-of-band sentinel with
                     // the user-editable Peak Score value. These updates are idempotent.
                     context.Database.ExecuteSqlRaw("UPDATE Games SET Score = 11 WHERE Score = 999;");

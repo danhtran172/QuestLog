@@ -20,16 +20,25 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BarChart3,
+  Building2,
+  CalendarDays,
   CalendarClock,
   CheckCircle2,
   Clock,
   Gamepad2,
+  Gauge,
+  History,
+  KeyRound,
+  Library,
+  ListChecks,
   ListOrdered,
   PlayCircle,
   RotateCcw,
   ShieldAlert,
   Star,
+  Tags,
   Trophy,
+  Users,
 } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { DashboardStats } from "@/lib/api/domain";
@@ -134,7 +143,7 @@ function OverviewTab({ data }: { data: DashboardStats }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {tiles.map((tile) => (
           <div key={tile.label} className="surface-card p-3">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-fg">
+            <p className="flex items-center gap-1.5 text-fs-11 font-semibold text-muted-fg">
               <tile.icon size={13} /> {tile.label}
             </p>
             <p className="mt-1 truncate text-xl font-black">{tile.value}</p>
@@ -145,7 +154,7 @@ function OverviewTab({ data }: { data: DashboardStats }) {
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel
           title={t("dashboard.finishesByYear")}
-          icon={<Trophy size={13} className="text-success" />}
+          icon={<History size={13} className="text-field-finish-history" />}
           hint={`${(data.finishesByYear ?? []).reduce((sum, y) => sum + y.count, 0)}`}
         >
           <ColumnChart
@@ -154,39 +163,39 @@ function OverviewTab({ data }: { data: DashboardStats }) {
           />
         </Panel>
 
-        <Panel title={t("dashboard.gamesByReleaseYear")} icon={<CalendarClock size={13} className="text-violet-400" />}>
+        <Panel title={t("dashboard.gamesByReleaseYear")} icon={<CalendarDays size={13} className="text-field-publish" />}>
           <ColumnChart
             data={(data.gamesByReleaseYear ?? []).map((y) => ({ label: String(y.year), value: y.count }))}
             emptyLabel={noData}
           />
         </Panel>
 
-        <Panel title={t("dashboard.progressBreakdown")}>
+        <Panel title={t("dashboard.progressBreakdown")} icon={<ListChecks size={13} className="text-field-progress" />}>
           <Donut data={data.progressBreakdown ?? []} emptyLabel={noData} />
         </Panel>
 
-        <Panel title={t("dashboard.ownershipBreakdown")}>
+        <Panel title={t("dashboard.ownershipBreakdown")} icon={<KeyRound size={13} className="text-field-ownership" />}>
           <Donut data={data.ownershipBreakdown ?? []} emptyLabel={noData} />
         </Panel>
 
         <Panel
           title={t("dashboard.scoreVsCritics")}
-          icon={<Star size={13} className="text-amber-400" />}
+          icon={<Gauge size={13} className="text-field-metascore" />}
           hint={critics?.pairedGames ? `${critics.pairedGames} ${t("lib.items")}` : undefined}
         >
           {critics && critics.pairedGames ? (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg border border-border bg-surface-2/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.mine")}</p>
+                  <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.mine")}</p>
                   <p className="text-lg font-black text-primary">{critics.averageMine?.toFixed(2)}</p>
                 </div>
                 <div className="rounded-lg border border-border bg-surface-2/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.critics")}</p>
+                  <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.critics")}</p>
                   <p className="text-lg font-black text-fg">{critics.averageCritic?.toFixed(2)}</p>
                 </div>
                 <div className="rounded-lg border border-border bg-surface-2/30 p-2">
-                  <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.gap")}</p>
+                  <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.gap")}</p>
                   <p
                     className={cn(
                       "text-lg font-black",
@@ -210,7 +219,7 @@ function OverviewTab({ data }: { data: DashboardStats }) {
                   <span className="bg-danger/70" style={{ width: `${(critics.lower! / critics.pairedGames) * 100}%` }} />
                 </Tooltip>
               </div>
-              <div className="flex justify-between text-[11px] font-semibold">
+              <div className="flex justify-between text-fs-11 font-semibold">
                 <span className="text-success">{t("dashboard.higher")} {critics.higher}</span>
                 <span className="text-muted-fg">{t("dashboard.equal")} {critics.equal}</span>
                 <span className="text-danger">{t("dashboard.lower")} {critics.lower}</span>
@@ -221,32 +230,32 @@ function OverviewTab({ data }: { data: DashboardStats }) {
           )}
         </Panel>
 
-        <Panel title={t("dashboard.scoreDistribution")} icon={<BarChart3 size={13} className="text-primary" />}>
+        <Panel title={t("dashboard.scoreDistribution")} icon={<Trophy size={13} className="text-field-score" />}>
           <ColumnChart
             data={(data.scoreDistribution ?? []).map((s) => ({ label: String(s.score), value: s.count }))}
             emptyLabel={noData}
           />
         </Panel>
 
-        <Panel title={t("dashboard.topGenres")}>
+        <Panel title={t("dashboard.topGenres")} icon={<Tags size={13} className="text-field-genres" />}>
           <RankedBars data={data.topGenres ?? []} emptyLabel={noData} />
         </Panel>
 
-        <Panel title={t("dashboard.topSeries")}>
+        <Panel title={t("dashboard.topSeries")} icon={<Library size={13} className="text-field-series" />}>
           <RankedBars data={data.topSeries ?? []} emptyLabel={noData} />
         </Panel>
 
-        <Panel title={t("dashboard.topPublishers")}>
+        <Panel title={t("dashboard.topPublishers")} icon={<Building2 size={13} className="text-field-publisher" />}>
           <RankedBars data={data.topPublishers ?? []} emptyLabel={noData} />
         </Panel>
 
-        <Panel title={t("dashboard.topDevelopers")}>
+        <Panel title={t("dashboard.topDevelopers")} icon={<Users size={13} className="text-field-developer" />}>
           <RankedBars data={data.topDevelopers ?? []} emptyLabel={noData} />
         </Panel>
 
         <Panel
           title={t("dashboard.upcoming")}
-          icon={<CalendarClock size={13} className="text-sky-400" />}
+          icon={<CalendarClock size={13} className="text-field-upcoming" />}
           className="xl:col-span-2"
         >
           {(data.upcoming ?? []).length === 0 ? (
@@ -265,11 +274,11 @@ function OverviewTab({ data }: { data: DashboardStats }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-bold text-fg">{game.name}</span>
-                    <span className="block text-[11px] text-muted-fg">{game.publishDate}</span>
+                    <span className="block text-fs-11 text-muted-fg">{game.publishDate}</span>
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-sm font-black tabular-nums text-primary">{game.daysLeft}</span>
-                    <span className="block text-[10px] text-muted-fg">{t("dashboard.days")}</span>
+                    <span className="block text-fs-10 text-muted-fg">{t("dashboard.days")}</span>
                   </span>
                 </li>
               ))}
@@ -333,19 +342,19 @@ function HealthTab({ data }: { data: DashboardStats }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="surface-card p-3">
-          <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.total")}</p>
+          <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.total")}</p>
           <p className="mt-1 text-xl font-black">{total}</p>
         </div>
         <div className="surface-card p-3">
-          <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.healthChecks")}</p>
+          <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.healthChecks")}</p>
           <p className="mt-1 text-xl font-black">{rows.length - INFO_ONLY.length}</p>
         </div>
         <div className="surface-card p-3">
-          <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.healthClean")}</p>
+          <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.healthClean")}</p>
           <p className="mt-1 text-xl font-black text-success">{clean}</p>
         </div>
         <div className="surface-card p-3">
-          <p className="text-[11px] font-semibold text-muted-fg">{t("dashboard.healthTodo")}</p>
+          <p className="text-fs-11 font-semibold text-muted-fg">{t("dashboard.healthTodo")}</p>
           <p className={cn("mt-1 text-xl font-black", problems.length > 0 ? "text-warning" : "text-success")}>
             {problems.length}
           </p>
@@ -364,7 +373,7 @@ function HealthTab({ data }: { data: DashboardStats }) {
                   <span className="block truncate text-sm font-bold text-fg">
                     {t(`dashboard.health.${row.key}`)}
                   </span>
-                  <span className="block truncate text-[11px] text-muted-fg">
+                  <span className="block truncate text-fs-11 text-muted-fg">
                     {t(`dashboard.healthWhy.${row.key}`)}
                   </span>
                 </span>

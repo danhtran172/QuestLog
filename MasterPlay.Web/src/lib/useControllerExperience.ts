@@ -3,9 +3,11 @@ import { toast } from "sonner";
 import type { ControllerPrompt } from "@/components/ControllerPrompts";
 import type { GameListItem, Tab } from "./api/domain";
 import { CONSOLE_TABS, TABS } from "./api/domain";
+import { playConsoleSound, type ConsoleSoundCue } from "./consoleSounds";
 import { isControllerActionAvailable, type ControllerAction } from "./controllerInput";
 import { getConsoleKeyboardAction } from "./keyboardInput";
 import {
+  isDesktopShell,
   setConsoleFullscreen,
   subscribeConsoleToggle,
   subscribeFullscreenState,
@@ -95,6 +97,8 @@ export function useControllerExperience({
   const consoleSessionRef = useRef(false);
   const suspendedRef = useRef(suspended);
   suspendedRef.current = suspended;
+  const promptsOpenRef = useRef(promptsOpen);
+  promptsOpenRef.current = promptsOpen;
   const showConsole = consoleSession;
   const selectedGame = games.find((game) => game.id === selectedGameId) ?? games[0] ?? null;
 
@@ -106,20 +110,30 @@ export function useControllerExperience({
     setExitHoldSource(null);
   }, []);
 
-  const enterConsoleSession = useCallback(() => {
+  const enterConsoleSession = useCallback((fullscreen = true) => {
     if (consoleSessionRef.current) return;
     clearExitHold();
     consoleSessionRef.current = true;
     setConsoleSession(true);
+    playConsoleSound("enterConsole");
     onEnterConsoleSession();
+    if (!fullscreen) return;
     void setConsoleFullscreen(true).catch((fullscreenError) => {
       toast.error(fullscreenError instanceof Error ? fullscreenError.message : t("controller.fullscreenError"));
     });
   }, [clearExitHold, onEnterConsoleSession, t]);
 
+  /* Vao lai console session luc mo app (mode cuoi cung = console). Khong co cu chi
+     nguoi dung nen trinh duyet se tu choi requestFullscreen — chi vo desktop moi
+     phong to cua so; tren web van hien console, khong bao loi. */
+  const restoreConsoleSession = useCallback(() => {
+    enterConsoleSession(isDesktopShell());
+  }, [enterConsoleSession]);
+
   const leaveConsoleSession = useCallback(() => {
     if (!consoleSessionRef.current) return;
     clearExitHold();
+    playConsoleSound("exitConsole");
     consoleSessionRef.current = false;
     setConsoleSession(false);
     onExitConsoleSession();
@@ -208,39 +222,57 @@ export function useControllerExperience({
     onTabChange(nextTab);
   }, [consoleSession, onTabChange, tab]);
 
-  const moveConsoleSelection = useCallback((change: -1 | 1) => {
-    if (games.length === 0) return;
+  const moveConsoleSelection = useCallback((change: -1 | 1): ConsoleSoundCue => {
+    if (games.length === 0) return "blocked";
     const currentIndex = Math.max(0, games.findIndex((game) => game.id === selectedGameId));
     const nextIndex = currentIndex + change;
     if (nextIndex >= 0 && nextIndex < games.length) {
       setSelectedGameId(games[nextIndex]?.id ?? null);
-    } else if (tab !== "queue" && change > 0 && page < totalPages) {
+      return "move";
+    }
+    if (tab !== "queue" && change > 0 && page < totalPages) {
       setPendingEdge("first");
       onPageChange(page + 1);
-    } else if (tab !== "queue" && change < 0 && page > 1) {
+      return "page";
+    }
+    if (tab !== "queue" && change < 0 && page > 1) {
       setPendingEdge("last");
       onPageChange(page - 1);
+      return "page";
     }
+    return "blocked";
   }, [games, onPageChange, page, selectedGameId, tab, totalPages]);
 
-  const focusSpatialTarget = useCallback((direction: SpatialDirection) => {
+  const focusSpatialTarget = useCallback((direction: SpatialDirection): ConsoleSoundCue => {
     const target = moveSpatialFocus(direction);
     const gameId = target?.closest<HTMLElement>("[data-game-id]")?.dataset.gameId;
     if (gameId) setSelectedGameId(gameId);
+    return target ? "move" : "blocked";
   }, []);
 
   const handleAction = useCallback((action: ControllerAction) => {
     if (suspendedRef.current) return;
     if (!isControllerActionAvailable(action, consoleSessionRef.current)) return;
+    /* Chi phat am trong console session; toggleConsole tu phat qua enter/leave. */
+    const sound = (cue: ConsoleSoundCue | null) => {
+      if (cue && consoleSessionRef.current) playConsoleSound(cue);
+    };
     if (action === "togglePrompts") {
-      if (showConsole && !hasOverlay) setPromptsOpen((current) => !current);
+      if (showConsole && !hasOverlay) {
+        sound(promptsOpenRef.current ? "promptsClose" : "promptsOpen");
+        setPromptsOpen((current) => !current);
+      }
       return;
     }
     if (action === "openPrompts") {
-      if (showConsole && !hasOverlay) setPromptsOpen(true);
+      if (showConsole && !hasOverlay) {
+        if (!promptsOpenRef.current) sound("promptsOpen");
+        setPromptsOpen(true);
+      }
       return;
     }
     if (action === "closePrompts") {
+      if (promptsOpenRef.current) sound("promptsClose");
       setPromptsOpen(false);
       return;
     }
@@ -251,31 +283,42 @@ export function useControllerExperience({
       return;
     }
     if (hasOverlay) {
-      if (action === "activate") activateFocusedControl();
-      else if (action === "back") onCloseOverlay();
-      else if (action === "moveUp") focusSpatialTarget("up");
-      else if (action === "moveDown") focusSpatialTarget("down");
-      else if (action === "moveLeft") focusSpatialTarget("left");
-      else if (action === "moveRight") focusSpatialTarget("right");
+      if (action === "activate") {
+        sound("confirm");
+        activateFocusedControl();
+      } else if (action === "back") {
+        sound("back");
+        onCloseOverlay();
+      } else if (action === "moveUp") sound(focusSpatialTarget("up"));
+      else if (action === "moveDown") sound(focusSpatialTarget("down"));
+      else if (action === "moveLeft") sound(focusSpatialTarget("left"));
+      else if (action === "moveRight") sound(focusSpatialTarget("right"));
       else if (action === "scrollUp") scrollControllerSurface("up");
       else if (action === "scrollDown") scrollControllerSurface("down");
       return;
     }
 
-    if (action === "openSettings") onOpenSettings();
-    else if (action === "previousTab") selectAdjacentTab(-1);
-    else if (action === "nextTab") selectAdjacentTab(1);
-    else if (action === "moveLeft" && showConsole) moveConsoleSelection(-1);
-    else if (action === "moveRight" && showConsole) moveConsoleSelection(1);
-    else if (action === "moveUp") focusSpatialTarget("up");
-    else if (action === "moveDown") focusSpatialTarget("down");
-    else if (action === "moveLeft") focusSpatialTarget("left");
-    else if (action === "moveRight") focusSpatialTarget("right");
+    if (action === "openSettings") {
+      sound("confirm");
+      onOpenSettings();
+    } else if (action === "previousTab") {
+      sound("tab");
+      selectAdjacentTab(-1);
+    } else if (action === "nextTab") {
+      sound("tab");
+      selectAdjacentTab(1);
+    } else if (action === "moveLeft" && showConsole) sound(moveConsoleSelection(-1));
+    else if (action === "moveRight" && showConsole) sound(moveConsoleSelection(1));
+    else if (action === "moveUp") sound(focusSpatialTarget("up"));
+    else if (action === "moveDown") sound(focusSpatialTarget("down"));
+    else if (action === "moveLeft") sound(focusSpatialTarget("left"));
+    else if (action === "moveRight") sound(focusSpatialTarget("right"));
     else if (action === "activate") {
       const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       const primaryGameId = active?.dataset.gamePrimary === "true"
         ? active.closest<HTMLElement>("[data-game-id]")?.dataset.gameId
         : null;
+      sound("confirm");
       if (error) onRefresh();
       else if (showConsole && selectedGame) onOpenGame(selectedGame.id);
       else if (primaryGameId) onOpenGame(primaryGameId);
@@ -285,15 +328,24 @@ export function useControllerExperience({
         ? document.activeElement.closest<HTMLElement>("[data-game-id]")?.dataset.gameId
         : null;
       const game = showConsole ? selectedGame : games.find((item) => item.id === focusedGameId);
-      if (game?.canLaunch) onLaunchGame(game.id);
-    } else if (action === "refresh") onRefresh();
-    else if (action === "toggleLayout") {
+      if (game?.canLaunch) {
+        sound("launch");
+        onLaunchGame(game.id);
+      } else {
+        sound("blocked");
+      }
+    } else if (action === "refresh") {
+      sound("confirm");
+      onRefresh();
+    } else if (action === "toggleLayout") {
       onLeaveDashboard();
       if (tab !== "queue") {
         onLayoutChange(layout === "card" ? "list" : "card");
       }
-    } else if (action === "addGame") onAddGame();
-    else if (action === "scrollUp") scrollControllerSurface("up");
+    } else if (action === "addGame") {
+      sound("confirm");
+      onAddGame();
+    } else if (action === "scrollUp") scrollControllerSurface("up");
     else if (action === "scrollDown") scrollControllerSurface("down");
   }, [
     consoleSession,
@@ -403,6 +455,8 @@ export function useControllerExperience({
     if (selectedGame?.canLaunch) {
       next.splice(1, 0, { button: keyboard ? "Enter" : "X", label: t("action.play") });
     }
+    if (showConsole) next.push({ button: keyboard ? "Esc" : "B", label: t("controller.holdToExit") });
+    if (!keyboard && showConsole) next.push({ button: "D↓", label: t("controller.closeControls") });
     return next;
   }, [consoleSession, error, hasOverlay, inputModality, selectedGame?.canLaunch, showConsole, tab, t]);
 
@@ -417,6 +471,7 @@ export function useControllerExperience({
     promptTriggerButton: inputModality === "gamepad" ? "D↑" : "Shift",
     prompts,
     promptsOpen,
+    restoreConsoleSession,
     selectedGameId,
     setInputModality,
     setSelectedGameId,

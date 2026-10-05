@@ -17,6 +17,9 @@ export type AdminCrawlerRun = components["schemas"]["AdminCrawlerRun"];
 export type AdminCrawlerRunPage = components["schemas"]["AdminCrawlerRunPage"];
 export type AdminCrawlerRunItemPage = components["schemas"]["AdminCrawlerRunItemPage"];
 export type AdminCrawlerTrackedGamePage = components["schemas"]["AdminCrawlerTrackedGamePage"];
+export type AdminGeminiExeStatus = components["schemas"]["AdminGeminiExeStatus"];
+export type AdminGeminiExeRunPage = components["schemas"]["AdminGeminiExeRunPage"];
+export type AdminGeminiExeGamePage = components["schemas"]["AdminGeminiExeGamePage"];
 
 export type AdminMetadataGame = {
   id: number;
@@ -325,6 +328,16 @@ export const adminApi = {
 
   listCrawlerGames: (params: { cursor?: string | null; pageSize?: number } = {}) =>
     httpRequest<AdminCrawlerTrackedGamePage>(`/api/admin/metadata/crawler/games${query(params)}`),
+
+  geminiExeStatus: () => httpRequest<AdminGeminiExeStatus>("/api/admin/metadata/gemini-exe"),
+  setGeminiExeEnabled: (enabled: boolean) => httpRequest<AdminGeminiExeStatus>("/api/admin/metadata/gemini-exe/enabled", {
+    method: "PUT", body: JSON.stringify({ enabled }),
+  }),
+  triggerGeminiExe: () => httpRequest<components["schemas"]["AdminCrawlerRunRequest"]>("/api/admin/metadata/gemini-exe/run", { method: "POST" }),
+  listGeminiExeRuns: (params: { pageSize?: number } = {}) =>
+    httpRequest<AdminGeminiExeRunPage>(`/api/admin/metadata/gemini-exe/runs${query(params)}`),
+  listGeminiExeGames: (params: { pageSize?: number } = {}) =>
+    httpRequest<AdminGeminiExeGamePage>(`/api/admin/metadata/gemini-exe/games${query(params)}`),
 
   listGames: (params: {
     q?: string;

@@ -26,7 +26,7 @@ export type WorkspaceMode = "library" | "adminConsole";
  * `publishing` dat TRUOC `dashboard`: no la mot man hinh GHI, con dashboard chi
  * doc. Cac muc ghi nam lien nhau.
  */
-export const ADMIN_SECTIONS = ["games", "series", "taxonomy", "publishing", "integrations", "crawler", "dashboard"] as const;
+export const ADMIN_SECTIONS = ["games", "series", "taxonomy", "publishing", "integrations", "crawler", "geminiExe", "dashboard"] as const;
 
 export type AdminSection = (typeof ADMIN_SECTIONS)[number];
 

@@ -106,7 +106,7 @@ function IntegrationCard({ integration }: { integration: IntegrationSummary }) {
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em]",
+            "shrink-0 rounded-full border px-2 py-1 text-fs-10 font-black uppercase tracking-[0.1em]",
             integration.configured ? "border-primary/35 bg-primary/10 text-primary" : "border-border bg-surface-2/60 text-muted-fg",
           )}
         >
@@ -118,11 +118,11 @@ function IntegrationCard({ integration }: { integration: IntegrationSummary }) {
         <div className="grid gap-2 sm:grid-cols-2">
           {integration.requiredFields.map((field) => (
             <label key={field} className="block space-y-1.5">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-fg">
+              <span className="flex items-center gap-1.5 text-fs-11 font-bold uppercase tracking-wide text-muted-fg">
                 <KeyRound size={12} aria-hidden="true" />
                 {t(`admin.integrations.field.${field}`)}
                 {configured.has(field) ? (
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-fs-9 text-primary">
                     {t("admin.integrations.savedBadge")}
                   </span>
                 ) : null}
@@ -161,7 +161,7 @@ function IntegrationCard({ integration }: { integration: IntegrationSummary }) {
             {test.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             {t("admin.integrations.test")}
           </button>
-          <span className={cn("ml-auto inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold", statusTone(integration.lastTest.status))}>
+          <span className={cn("ml-auto inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-fs-10 font-bold", statusTone(integration.lastTest.status))}>
             {integration.lastTest.status === "passed" ? <CheckCircle2 size={12} /> : <CircleAlert size={12} />}
             {t(`admin.integrations.status.${integration.lastTest.status}`)}
           </span>
@@ -172,7 +172,7 @@ function IntegrationCard({ integration }: { integration: IntegrationSummary }) {
             {t("admin.integrations.lastError")}: {integration.lastTest.errorCode}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-fg">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-fs-11 text-muted-fg">
           <span>{t("admin.integrations.lastTestAt")}: {formatTimestamp(integration.lastTest.testedAt)}</span>
           <span>{t("admin.integrations.updatedAt")}: {formatTimestamp(integration.updatedAt)}</span>
         </div>

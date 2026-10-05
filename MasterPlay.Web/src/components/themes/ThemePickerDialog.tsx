@@ -271,7 +271,7 @@ function ThemeBucketSection({
 
   return (
     <section aria-label={label} className="pt-4">
-      <h3 className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">
+      <h3 className="mb-2 flex items-center gap-2 text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">
         {label}
         <span className="font-semibold normal-case tracking-normal text-muted-fg/70">· {bucket.themes.length}</span>
       </h3>

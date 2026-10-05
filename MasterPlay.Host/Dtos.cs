@@ -11,7 +11,10 @@ public record CatalogItemDto(
     string DisplayName,
     string ColorCode,
     string? IconData,
-    int SortOrder);
+    int SortOrder,
+    // Chi co voi Ownership: bo cuc khung "thong tin so huu" (sharedAccount | download),
+    // null = kieu nay khong co thong tin gi. Client doc co nay, KHONG tu suy tu SystemKey.
+    string? InfoLayout = null);
 
 /// <summary>
 /// Key/Scope/Editable/GroupId do server dien (spec 2026-10-04-theme-groups-design §5.1);
@@ -412,7 +415,12 @@ public sealed record GameMetadataPreviewDto(
     // Series co san trong thu vien khop voi collection/franchise cua IGDB.
     TaxonomyItemDto? Series = null,
     // Ten series IGDB goi y; co ma Series = null nghia la thu vien chua co series nay.
-    string? SeriesName = null);
+    string? SeriesName = null,
+    // Game kho metadata giong ten nhat da dung lam nguon chinh; null = khong khop game nao.
+    long? MetadataGameId = null,
+    string? MetadataGameName = null,
+    // Nguon nao khong dong gop duoc va vi sao (thieu key, key sai, timeout...).
+    IReadOnlyList<MasterPlay.Host.Metadata.MetadataPreviewWarning>? Warnings = null);
 
 // Input rieng cho mutation: cung cac field editable cua GameDetail trong openapi,
 // nhung khong cho client ghi de cac field runtime/read-only nhu Ready/CanLaunch.
@@ -458,6 +466,13 @@ public record CapabilityFeaturesDto(
 
 public record CapabilitiesDto(string Mode, CapabilityFeaturesDto Features);
 
+public sealed record TrayServiceStatusDto(string Name, bool Enabled);
+
+/// <summary>`GET /api/tray/status`. Tray khong chay thi Running = false, Services rong.</summary>
+public sealed record TrayStatusDto(bool Running, IReadOnlyList<TrayServiceStatusDto> Services, bool StartWithWindows);
+
+public sealed record SetTrayServiceDto(bool? Enabled);
+
 public sealed record ImageSyncRoleCountsDto(int Uploaded, int AlreadySynced, int Missing);
 
 public sealed record ImageSyncFailureDto(string GameId, string GameName, string Role, string Reason);
@@ -492,6 +507,8 @@ public sealed record SettingsDto(
     string ThemeMode,
     string JungleFx,
     string JungleWeather,
+    string AppMode,
+    IReadOnlyList<string> SeenGuides,
     string BackupRootPath,
     string DatabasePath,
     LibrarySettingsDto Libraries,
@@ -507,6 +524,9 @@ public sealed record UpdateSettingsDto(
     string? ThemeMode,
     string? JungleFx,
     string? JungleWeather,
+    string? AppMode,
+    // null = giu nguyen; mang (ke ca rong) = thay ca danh sach.
+    IReadOnlyList<string>? SeenGuides,
     string? BackupRootPath,
     string? DatabasePath,
     LibrarySettingsUpdateDto? Libraries,

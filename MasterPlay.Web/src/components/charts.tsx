@@ -32,7 +32,7 @@ export function Panel({
           {icon}
           {title}
         </h3>
-        {hint ? <span className="shrink-0 text-[11px] text-muted-fg/70">{hint}</span> : null}
+        {hint ? <span className="shrink-0 text-fs-11 text-muted-fg/70">{hint}</span> : null}
       </header>
       <div className="min-w-0 flex-1">{children}</div>
     </section>
@@ -58,14 +58,14 @@ export function ColumnChart({
     <div className="flex h-40 items-end gap-1.5 overflow-x-auto pb-1">
       {data.map((d) => (
         <div key={d.label} className="flex min-w-8 flex-1 flex-col items-center gap-1">
-          <span className="text-[11px] font-black tabular-nums text-fg">{d.value}</span>
+          <span className="text-fs-11 font-black tabular-nums text-fg">{d.value}</span>
           {/* Chieu cao theo ti le voi coc lon nhat; toi thieu 3px de coc gia tri
               nho van nhin thay duoc. */}
           <span
             className="w-full rounded-t-[3px] bg-gradient-to-t from-primary/45 to-primary"
             style={{ height: `${Math.max(3, (d.value / max) * 100)}%` }}
           />
-          <span className="w-full truncate text-center text-[10px] font-semibold text-muted-fg">
+          <span className="w-full truncate text-center text-fs-10 font-semibold text-muted-fg">
             {d.label}
           </span>
         </div>
@@ -94,11 +94,11 @@ export function RankedBars({
               className="absolute inset-y-0 left-0 rounded-md bg-primary/30"
               style={{ width: `${(d.count / max) * 100}%` }}
             />
-            <span className="relative flex h-full items-center truncate px-2 text-[11px] font-bold text-fg">
+            <span className="relative flex h-full items-center truncate px-2 text-fs-11 font-bold text-fg">
               {d.name}
             </span>
           </span>
-          <span className="w-7 text-right text-[11px] font-black tabular-nums text-muted-fg">
+          <span className="w-7 text-right text-fs-11 font-black tabular-nums text-muted-fg">
             {d.count}
           </span>
         </li>

@@ -1,4 +1,3 @@
-using MasterPlay.Core;
 using MasterPlay.Infrastructure.Configuration;
 using MasterPlay.Infrastructure.Data.Services;
 using MasterPlay.Core.Entities;
@@ -310,16 +309,6 @@ public sealed class LibraryService : IDisposable
 
             DataService.SyncDetectedProcesses(detected);
             DataService.SyncGameStatus();
-
-            // Backup dang tam tat (FeatureFlags.GameBackup): khong tu tao thu muc backup.
-            if (FeatureFlags.GameBackup)
-            {
-                foreach (var game in DataService.LoadActiveGames())
-                {
-                    if (string.IsNullOrWhiteSpace(game.BackupFolderPath) || !Directory.Exists(game.BackupFolderPath))
-                        DataService.CreateBackupFolder(game);
-                }
-            }
 
             foreach (var notification in notifications)
                 PublishNotification(notification);

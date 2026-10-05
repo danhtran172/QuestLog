@@ -4,6 +4,8 @@ import Header from "./Header.astro";
 import Hero from "./Hero.astro";
 import Showcase from "./Showcase.astro";
 import Journey from "./Journey.astro";
+import Scores from "./Scores.astro";
+import Organize from "./Organize.astro";
 import Download from "./Download.astro";
 import Footer from "./Footer.astro";
 import { ui, type Locale } from "../i18n/ui";
@@ -21,16 +23,29 @@ const { meta } = ui[lang];
   <main>
     <Hero lang={lang} />
     <Showcase lang={lang} />
-    <!-- Tuyen duong ban do: noi cac moc [data-route-point] tu Journey toi dau X o Download. -->
+    <!-- Duong ray dong thoi gian: noi cac moc [data-route-point] trong Journey. -->
     <div class="route relative" data-route>
       <svg class="route-svg" aria-hidden="true">
-        <path class="route-ahead"></path>
-        <path class="route-done"></path>
-        <circle class="route-head" r="5"></circle>
+        <defs>
+          <linearGradient id="route-fade" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0.9" stop-color="#fff"></stop>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+          </linearGradient>
+          <mask id="route-mask" maskUnits="userSpaceOnUse">
+            <rect class="route-mask-rect" fill="url(#route-fade)"></rect>
+          </mask>
+        </defs>
+        <g mask="url(#route-mask)">
+          <path class="route-ahead"></path>
+          <path class="route-done"></path>
+          <circle class="route-head" r="5"></circle>
+        </g>
       </svg>
       <Journey lang={lang} />
-      <Download lang={lang} />
     </div>
+    <Scores lang={lang} />
+    <Organize lang={lang} />
+    <Download lang={lang} />
   </main>
   <Footer lang={lang} />
 </Base>

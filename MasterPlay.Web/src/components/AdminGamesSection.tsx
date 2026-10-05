@@ -55,6 +55,7 @@ import { formatPublishDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { AdminLayout } from "@/lib/workspace";
 import { AdminGameCard, AdminGameCardSkeleton } from "./AdminGameCard";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { AdminPublishedStatus, unpublishedReason } from "./AdminPublishedStatus";
 import {
   IconButton,
@@ -315,11 +316,9 @@ export function AdminGamesSection({
       toast.error(failure instanceof ApiRequestError ? failure.message : String(failure)),
   });
 
-  const confirmDelete = (game: AdminMetadataGame) => {
-    if (window.confirm(t("admin.game.deleteConfirm").replace("{name}", game.name))) {
-      remove.mutate(game);
-    }
-  };
+  // Game dang cho xac nhan xoa; `null` = hop dong.
+  const [pendingDelete, setPendingDelete] = useState<AdminMetadataGame | null>(null);
+  const confirmDelete = (game: AdminMetadataGame) => setPendingDelete(game);
 
   const active = layout === "card" ? cards : rows;
 
@@ -409,7 +408,7 @@ export function AdminGamesSection({
         >
           <table className="w-full min-w-[1100px] text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-[11px] font-black uppercase tracking-[0.12em] text-muted-fg">
+              <tr className="border-b border-border text-left text-fs-11 font-black uppercase tracking-[0.12em] text-muted-fg">
                 <th className="px-3 py-2">#</th>
                 {/* Cot anh de trong ve mat thi giac, nhung van phai co ten cho
                     trinh doc man hinh — o khong ten la mot cot khong giai thich duoc. */}
@@ -458,7 +457,7 @@ export function AdminGamesSection({
                         <span className="font-bold text-fg">{game.name}</span>
                       </Tooltip>
                       {game.isDlc ? (
-                        <span className="ml-2 rounded-full border border-primary/35 px-1.5 py-0.5 text-[10px] font-black uppercase text-primary">
+                        <span className="ml-2 rounded-full border border-primary/35 px-1.5 py-0.5 text-fs-10 font-black uppercase text-primary">
                           DLC
                         </span>
                       ) : null}
@@ -575,6 +574,15 @@ export function AdminGamesSection({
           </label>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(next) => { if (!next) setPendingDelete(null); }}
+        title={t("action.delete")}
+        description={t("admin.game.deleteConfirm").replace("{name}", pendingDelete?.name ?? "")}
+        confirmLabel={t("action.delete")}
+        onConfirm={() => { if (pendingDelete) remove.mutate(pendingDelete); }}
+      />
     </div>
   );
 }

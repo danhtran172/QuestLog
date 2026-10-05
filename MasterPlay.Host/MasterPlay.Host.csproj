@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>MasterPlay.Host</RootNamespace>
+    <!-- Host chay an duoi QuestLog.exe; khong co icon thi Task Manager/Explorer hien icon exe trong. -->
+    <ApplicationIcon>..\MasterPlay.Shell\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

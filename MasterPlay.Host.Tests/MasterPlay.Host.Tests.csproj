@@ -25,4 +25,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Bo cai la .NET Framework 4.8, khong tham chieu duoc: dich kem nguon de test quy tac chon thu muc. -->
+    <Compile Include="..\MasterPlay.Installer\InstallTarget.cs" Link="Installer\InstallTarget.cs" />
+    <Compile Include="..\MasterPlay.Installer\VelopackSetup.cs" Link="Installer\VelopackSetup.cs" />
+  </ItemGroup>
+
 </Project>

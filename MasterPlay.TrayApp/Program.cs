@@ -97,7 +97,6 @@ namespace MasterPlay.TrayApp
             services.AddSingleton<PlayTimeService>();
             services.AddSingleton<IGameMetadataResolver, NullGameMetadataResolver>();
             services.AddSingleton<LibraryService>();
-            services.AddSingleton<BackupService>();
         }
     }
 }

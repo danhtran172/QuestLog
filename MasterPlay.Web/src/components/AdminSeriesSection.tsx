@@ -24,6 +24,7 @@ import {
   DialogTitle,
   IconButton,
 } from "./ui";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { editorInputClass } from "./GameEditorControls";
 
 const SERIES_KEY = ["admin-metadata-series"];
@@ -173,7 +174,7 @@ function SeriesMergeDialog({
               <option key={item.id} value={item.id}>{item.name}</option>
             ))}
           </select>
-          <p className="text-[11px] leading-5 text-muted-fg">{t("admin.series.mergeHint")}</p>
+          <p className="text-fs-11 leading-5 text-muted-fg">{t("admin.series.mergeHint")}</p>
         </div>
         <DialogFooter>
           <IconButton
@@ -210,6 +211,7 @@ export function AdminSeriesSection({
 
   const [editing, setEditing] = useState<AdminMetadataSeries | null | undefined>(undefined);
   const [merging, setMerging] = useState<AdminMetadataSeries | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminMetadataSeries | null>(null);
 
   useEffect(() => {
     if (createSignal > 0) {
@@ -291,7 +293,7 @@ export function AdminSeriesSection({
           <div className="surface-card overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-[11px] font-black uppercase tracking-[0.12em] text-muted-fg">
+                <tr className="border-b border-border text-left text-fs-11 font-black uppercase tracking-[0.12em] text-muted-fg">
                   <th className="px-3 py-2">#</th>
                   <th className="px-3 py-2">{t("admin.series.name")}</th>
                   <th className="px-3 py-2" />
@@ -324,11 +326,7 @@ export function AdminSeriesSection({
                           label={t("action.delete")}
                           icon={remove.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
                           disabled={remove.isPending}
-                          onClick={() => {
-                            if (window.confirm(t("admin.series.deleteConfirm").replace("{name}", item.name))) {
-                              remove.mutate(item);
-                            }
-                          }}
+                          onClick={() => setPendingDelete(item)}
                         />
                       </div>
                     </td>
@@ -352,6 +350,14 @@ export function AdminSeriesSection({
         source={merging}
         options={all}
         onOpenChange={(next) => { if (!next) setMerging(null); }}
+      />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(next) => { if (!next) setPendingDelete(null); }}
+        title={t("action.delete")}
+        description={t("admin.series.deleteConfirm").replace("{name}", pendingDelete?.name ?? "")}
+        confirmLabel={t("action.delete")}
+        onConfirm={() => { if (pendingDelete) remove.mutate(pendingDelete); }}
       />
     </>
   );

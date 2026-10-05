@@ -52,7 +52,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
     <label className="block">
       <span className="mb-1 block text-xs font-bold uppercase tracking-[0.1em] text-muted-fg">{label}</span>
       {children}
-      {hint ? <span className="mt-1 block text-[11px] text-muted-fg/80">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-fs-11 text-muted-fg/80">{hint}</span> : null}
     </label>
   );
 }
@@ -191,7 +191,7 @@ export function AdminGameEditorDialog({
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[11px] leading-5 text-muted-fg">{t("admin.game.duplicateHint")}</p>
+              <p className="mt-2 text-fs-11 leading-5 text-muted-fg">{t("admin.game.duplicateHint")}</p>
               <button
                 type="button"
                 disabled={busy}
@@ -210,7 +210,7 @@ export function AdminGameEditorDialog({
                 <AlertTriangle size={15} className="shrink-0 text-danger" />
                 {t("admin.game.conflictTitle")}
               </p>
-              <p className="mt-1 text-[11px] leading-5 text-muted-fg">
+              <p className="mt-1 text-fs-11 leading-5 text-muted-fg">
                 {t("admin.game.conflictHint").replace("{revision}", String(conflict.revision))}
               </p>
               {conflictDiff.length > 0 ? (
@@ -367,14 +367,14 @@ export function AdminGameEditorDialog({
             </Row>
           </div>
 
-          <p className="rounded-xl border border-border bg-surface-2/30 p-3 text-[11px] leading-5 text-muted-fg">
+          <p className="rounded-xl border border-border bg-surface-2/30 p-3 text-fs-11 leading-5 text-muted-fg">
             {t("admin.game.tagsReadOnly")}
           </p>
         </div>
 
         <DialogFooter>
           {game ? (
-            <span className="mr-auto pl-1 text-[11px] text-muted-fg">
+            <span className="mr-auto pl-1 text-fs-11 text-muted-fg">
               #{game.id} · rev {form.revision ?? game.revision}
             </span>
           ) : null}

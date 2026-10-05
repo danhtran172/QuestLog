@@ -9,6 +9,7 @@ import { JungleProvider } from "./jungle/JungleContext";
 import { TooltipProvider } from "./components/ui";
 import { AuthProvider } from "./lib/auth";
 import { AuthGate } from "./components/AuthGate";
+import { UpdateNotice } from "./components/UpdateNotice";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
             </ThemeProvider>
           </AuthGate>
           <Toaster position="bottom-right" richColors closeButton />
+          <UpdateNotice />
         </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>

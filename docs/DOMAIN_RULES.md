@@ -393,6 +393,7 @@ kết quả = withOrder ++ withoutOrder, đánh lại PlayOrder = 0,1,2,…
 
 ### 9.1. Mô hình — ✅ chốt dùng `GameFinish[]`
 - Một game hoàn thành **nhiều lần** → bảng `GameFinish { Id, GameId, FinishedAt: DateTime, HasMonth: bool, Score: double? }`.
+- **Không lưu điểm theo từng lần.** Điểm duy nhất là `game.score`. Cột `GameFinish.Score` chỉ còn giữ dữ liệu cũ: lần hoàn thành mới ghi `null`, API không sửa và UI không hiện nó.
 - `HasMonth = false` nghĩa là người chơi **chỉ nhớ năm**. `FinishedAt` vẫn là một ngày đầy đủ (1 tháng 1 của năm đó) để §9.3 không phải biết đến chuyện này, nhưng UI phải hiện `2019` chứ không phải `01/2019` — một tháng 1 không có thật.
 - Dữ liệu có sẵn trước khi thêm cột đều mặc định `HasMonth = true`. **Không** suy diễn ngược rằng "ngày 1 tháng 1" nghĩa là không nhớ tháng: làm vậy là đổi nghĩa dữ liệu thật của người dùng một cách âm thầm.
 - Cột cũ `Game.FinishedIn` (string): **loại khỏi mọi API và UI mới**. Giữ cột trong DB để backfill, đánh dấu deprecated, xoá ở bản sau.
@@ -400,11 +401,14 @@ kết quả = withOrder ++ withoutOrder, đánh lại PlayOrder = 0,1,2,…
 ### 9.2. Luồng Finish — thứ tự bắt buộc (giao dịch)
 ```
 1. game.score      = điểm người dùng nhập (0-11 bước 0.5; 11 là Peak Score)
+                     — BẮT BUỘC ở lần hoàn thành ĐẦU TIÊN (game chưa có GameFinish nào);
+                       các lần sau không hỏi điểm, gửi kèm thì mới ghi đè game.score
 2. game.progress   = "Done"
 3. LƯU game
-4. THÊM bản ghi GameFinish { FinishedAt, HasMonth, Score = điểm vừa nhập }
+4. THÊM bản ghi GameFinish { FinishedAt, HasMonth }   (không có điểm)
 5. reload
 ```
+Lần đầu mà thiếu điểm → `400 FINISH_SCORE_REQUIRED`.
 Thời điểm ở bước 4 lấy từ `finishedYear` / `finishedMonth` của yêu cầu:
 - có năm + có tháng → `FinishedAt = <năm>-<tháng>-01 00:00`, `HasMonth = true`
 - có năm, không tháng → `FinishedAt = <năm>-01-01 00:00`, `HasMonth = false`
@@ -418,9 +422,7 @@ Sort `finishTime↓` dùng **thời điểm đầy đủ của lần gần nhấ
 *(Lưu ý phân biệt: **filter** dùng ANY theo năm, **sort** dùng MAX theo thời điểm đầy đủ. Đây là chủ ý, không phải nhầm lẫn.)*
 
 ### 9.4. Sửa thời gian hoàn thành
-**Năm bắt buộc, tháng tuỳ chọn** — cùng quy tắc thời điểm với §9.2. Backend cập nhật đúng một `GameFinish`, chuẩn hoá `FinishedAt` thành ngày đầu tháng lúc `00:00:00`, **không** sửa score và **không** thay thế các lịch sử khác.
-
-Điểm của một lần hoàn thành là **bất biến** sau khi ghi: nó là điểm tại thời điểm đó. Muốn đổi đánh giá hiện tại thì sửa `game.score`.
+**Năm bắt buộc, tháng tuỳ chọn** — cùng quy tắc thời điểm với §9.2. Backend cập nhật đúng một `GameFinish`, chuẩn hoá `FinishedAt` thành ngày đầu tháng lúc `00:00:00`, **chỉ** sửa thời điểm và **không** thay thế các lịch sử khác. Muốn đổi đánh giá thì sửa `game.score`.
 
 ### 9.5. Backfill khi migrate
 Với game có `FinishedIn` parse được thành năm và **chưa có** bản ghi `GameFinish` nào:
@@ -508,9 +510,21 @@ Tên cũ (`cardCoverPath` / `coverPath` / `portraitCoverPath`) đã bỏ: chữ 
 
 Cloudinary dùng ba asset role riêng: `card-cover`, `cover`, `portrait-cover`.
 
-**Tự upload khi lưu ảnh.** Mọi luồng ghi ảnh của Host (import từ kho, form sửa/tạo game, `metadata-refresh` nhận ảnh mới, lệnh `--sync-missing-posters`) đều lưu link gốc trước, rồi một hàng đợi nền đưa ảnh lên Cloudinary và thay đúng ô đó. Ô đã đổi giá trị trong lúc upload thì giữ giá trị mới hơn. Upload lỗi không làm hỏng lần lưu: ô giữ link gốc, lý do ghi vào log Host, nút "Đồng bộ ảnh" (`POST /api/tray/sync-images`) vét lại và báo lý do.
+**Nơi lưu ảnh theo chủ thư viện** (từ 2026-10-05):
 
-`Games.ImageSources` (JSON, nội bộ, không ra API) ghi "bản Cloudinary `url` copy từ link gốc `source`" cho từng ô. Không phải cột ảnh thứ tư: không màn hình nào đọc nó. Nó tồn tại vì bản copy có URL khác link gốc:
+| Chủ thư viện | Nơi lưu | Giá trị trong cột ảnh |
+|---|---|---|
+| Tài khoản role `admin` | Cloudinary (`QuestLog/…`) | URL `https://res.cloudinary.com/...` |
+| User, guest, legacy | **Trên máy**: `%APPDATA%\QuestLog\images\{gameId}-{role}-{hash}.{ext}` | URL tương đối `/local-images/{file}`, Host phục vụ ngoài `/api` |
+
+- Role chỉ biết được khi Host xác thực token, nhưng Tray và lệnh CLI cũng đồng bộ ảnh. Vì vậy Host ghi role của từng tài khoản vào bảng SQLite `ImageStorageOwners` (`UsesCloud` 1/0) mỗi khi role đổi. Tài khoản (`user:*`) **chưa từng được ghi nhận thì bị bỏ qua**, không đoán: đoán "trên máy" sẽ kéo ảnh Cloudinary của admin về máy, đoán "Cloudinary" sẽ đẩy ảnh của user lên mây. Guest và `legacy:*` không có role nên luôn lưu trên máy.
+- Ảnh trên máy chỉ nhận ảnh raster nhận diện bằng magic bytes (JPEG, PNG, GIF, WebP, AVIF), tối đa 25 MB. SVG/HTML bị từ chối vì file được phục vụ từ chính origin của app.
+- Đổi role thì lần đồng bộ sau tự chuyển: user lên admin thì ảnh trên máy được đưa lên Cloudinary; admin xuống user thì ảnh Cloudinary được tải về máy. Ảnh cũ trên Cloudinary **không bị xoá** tự động.
+- Ảnh trên máy không theo tài khoản sang máy khác — giống mọi dữ liệu thư viện khác.
+
+**Tự đưa về nơi lưu khi lưu ảnh.** Mọi luồng ghi ảnh của Host (import từ kho, form sửa/tạo game, `metadata-refresh` nhận ảnh mới, lệnh `--sync-missing-posters`) đều lưu link gốc trước, rồi một hàng đợi nền đưa ảnh về nơi lưu ở bảng trên và thay đúng ô đó. Ô đã đổi giá trị trong lúc xử lý thì giữ giá trị mới hơn. Lỗi không làm hỏng lần lưu: ô giữ link gốc, lý do ghi vào log Host, nút "Đồng bộ ảnh" (`POST /api/tray/sync-images`) vét lại và báo lý do. Thư viện admin mà chưa cấu hình Cloudinary thì giữ link gốc.
+
+`Games.ImageSources` (JSON, nội bộ, không ra API) ghi "bản copy `url` (Cloudinary hoặc `/local-images/…`) copy từ link gốc `source`" cho từng ô. `source` luôn là link gốc thật, không phải bản copy trung gian (ảnh Cloudinary tải về máy vẫn ghi link gốc ban đầu). Không phải cột ảnh thứ tư: không màn hình nào đọc nó. Nó tồn tại vì bản copy có URL khác link gốc:
 - `metadata-refresh` so ô ảnh bằng **link gốc** của bản copy, nên ảnh đã upload không bị coi là người dùng sửa tay, và kho đổi ảnh thì thư viện vẫn nhận ảnh mới;
 - form sửa gửi lại đúng link gốc của bản copy (tải trước khi upload xong) thì Host giữ bản copy.
 
@@ -556,6 +570,17 @@ Tên `Progress` / `Ownership` / `Genre` / `Theme` **đến từ DB và người 
 > ⚠️ Mismatch A20. Lovable đang dịch bằng key cứng `status.Done` — khi người dùng đổi tên Progress trong Catalog Settings, key sẽ trượt và mất bản dịch.
 
 Chuỗi giao diện thuần (nút, nhãn, tiêu đề) vẫn do i18n phía client lo.
+
+### 14.1. Thông tin sở hữu — bố cục do backend quyết định
+Mục Ownership có thêm `infoLayout`, client **chỉ đọc cờ này**, không tự so `systemKey`:
+
+| `infoLayout` | Ownership (`systemKey`) | Khung thông tin |
+|---|---|---|
+| `sharedAccount` | `Shared`, `SteamOff` | Tài khoản Steam (+ Ubisoft nếu nhà phát hành là Ubisoft), Document, Note |
+| `download` | `Picklocked`, `Pirated` | Link tải, Note |
+| `null` | còn lại | Không có nút ⓘ |
+
+Ô nào **đã có dữ liệu** vẫn luôn hiện dù không thuộc bố cục, để dữ liệu không bao giờ bị khoá lại.
 
 ---
 
@@ -635,6 +660,10 @@ Quy tắc (trích từ 12 property `ShouldShowX`):
 
 - Desktop Shell cho phép vào guest mode bằng token ngẫu nhiên theo từng lần chạy;
   Hosted/Web không hiển thị và không chấp nhận guest mode.
+- Desktop mở thẳng vào app: không khôi phục được phiên tài khoản (Host trả 401) hoặc
+  auth chưa cấu hình thì tự vào guest. Màn đăng nhập chỉ hiện khi người dùng chủ động
+  chọn "Đăng nhập"; lỗi mạng khi khôi phục phiên đã có vẫn hiện màn lỗi, không âm thầm
+  chuyển sang dữ liệu local. Quy tắc nằm ở `src/lib/authStartup.ts`.
 - Guest chỉ dùng userdata local của thiết bị, không có hồ sơ Supabase, không được gọi
   mutation quản lý account và không biến thành một user cloud ngầm định.
 - Self-registration luôn tạo role `user`; role từ request client bị bỏ qua/từ chối.
@@ -659,11 +688,22 @@ Quy tắc (trích từ 12 property `ShouldShowX`):
 - Xác thực lại cho đổi mật khẩu/username/email **chỉ** bằng mã 6 số qua email → reauth
   ticket (5 phút, dùng một lần, gắn phiên). Ngoại lệ duy nhất: bootstrap admin đổi mật khẩu
   bắt buộc lần đầu vẫn dùng mật khẩu hiện tại.
-- Quên mật khẩu dùng mã 6 số qua email (không dùng link) và không tiết lộ tài khoản có tồn tại.
+- Quên mật khẩu dùng mã 6 số qua email (không dùng link). Tên đăng nhập/email không có tài khoản
+  được báo rõ `ACCOUNT_NOT_FOUND`; đăng ký bằng email đã có tài khoản báo `EMAIL_TAKEN`.
 
 ---
 
 ## 20. Hợp nhất metadata: sửa tay của người dùng thắng
+
+### 20.0 Candidate executable từ Gemini
+
+Candidate executable trong kho metadata là **gợi ý không được xác minh**, không phải
+`Game.ExeName`. Worker Gemini chạy riêng với crawler IGDB, chọn tối đa 10 metadata
+game cũ nhất chưa có kết quả mỗi lượt và chỉ ghi basename không có `.exe`, provenance,
+trạng thái và audit. Scanner local chỉ được dùng candidate để đối chiếu file thật trên
+thiết bị; không candidate nào được ghi thẳng vào thư viện, `ready` hay `launchTarget`.
+Ngoại lệ duy nhất: nút Sync của editor (`POST /api/game-metadata/preview`) được **điền sẵn**
+candidate vào ô `exeName` của bản nháp; chỉ khi người dùng bấm Save thì giá trị mới vào thư viện.
 
 Một dòng thư viện có `metadataGameId` là **bản sao** của một bản ghi trên kho dùng chung,
 không phải một liên kết sống. Admin sửa bản ghi trên kho thì bản sao phải đổi theo — **trừ**
@@ -750,3 +790,18 @@ Spec: `docs/superpowers/specs/2026-10-04-theme-groups-design.md`.
   của chính chủ. Xoá nhóm → theme về "chưa phân nhóm", không theme nào bị xoá.
 - Thứ tự nhóm/theme do **server** sắp; client chỉ render và gửi kết quả kéo thả (`…/order`).
 - Quyền sửa từng mục lấy từ `editable` do server trả, client không suy ra từ role + scope.
+
+## 22. Thông báo game sắp ra mắt
+
+- Xét mọi game **chưa bị vô hiệu hoá** trong thư viện của chủ sở hữu, có `publishDate` (kể cả DLC).
+- `publishDate` là **ngày theo UTC** (IGDB `first_release_date` là Unix seconds UTC). Mốc ra mắt
+  `releaseAt` = 00:00 UTC của ngày đó.
+- Đổi `releaseAt` sang múi giờ người dùng rồi mới đếm ngày lịch `daysLeft` so với hôm nay ở múi giờ đó.
+  Múi giờ: client gửi tên IANA của trình duyệt (`timeZone`); thiếu thì dùng múi giờ máy chạy Host.
+  Ví dụ game ngày `2026-10-07`: ở UTC+7 ra mắt 07:00 ngày 7, ở UTC−4 ra mắt 20:00 ngày 6.
+- Hai mốc nhắc, mỗi mốc là **một thông báo riêng**, đọc riêng:
+  - `soon` khi `daysLeft` ∈ 1..3 (bắt đầu nhắc từ trước 3 ngày);
+  - `today` khi `daysLeft` = 0.
+- Id = `{gameId}:{stage}:{publishDate}` — đổi ngày phát hành thì ra thông báo mới.
+- Trạng thái đã xem lưu ở server theo chủ thư viện (bảng `ReleaseNotificationReads`); không dùng
+  `localStorage`. Client không tự lọc/tính ngưỡng — chỉ render và format `releaseAt` theo `timeZone`.

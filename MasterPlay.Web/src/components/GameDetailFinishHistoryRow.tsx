@@ -10,7 +10,7 @@ import {
   toFinishTimeRequest,
   type FinishTimeDraft,
 } from "@/lib/finishTime";
-import { formatFinishTime, formatScore } from "@/lib/format";
+import { formatFinishTime } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 import { useExitOnOutsidePointer } from "@/lib/useExitOnOutsidePointer";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ import {
   IconButton,
 } from "./ui";
 
-/** Mot moc hoan thanh = mot pill "thang/nam" kem diem cua lan do. */
+/** Mot moc hoan thanh = mot pill "thang/nam". Khong con diem theo lan (DOMAIN_RULES §9.1). */
 function FinishPill({ finish, className }: { finish: GameFinishEntry; className?: string }) {
   return (
     <span
@@ -36,7 +36,6 @@ function FinishPill({ finish, className }: { finish: GameFinishEntry; className?
       )}
     >
       <span className="tabular-nums">{formatFinishTime(finish.finishedAt, finish.hasMonth) ?? "—"}</span>
-      <span className="tabular-nums text-muted-fg">{formatScore(finish.score) ?? "—"}</span>
     </span>
   );
 }
@@ -45,9 +44,8 @@ function FinishPill({ finish, className }: { finish: GameFinishEntry; className?
  * Hang Finish history cua the chi tiet, sua duoc tai cho — cung khuon voi hang
  * Genre/Theme: nut but canh nhan, nhay dup vao hang, bam ra ngoai la xong.
  *
- * Khac Genre/Theme mot cho: sua mot moc chi sua duoc THOI DIEM. Diem cua mot
- * lan hoan thanh la bat bien sau khi ghi — no la diem TAI LUC DO. Muon doi danh
- * gia hien tai thi sua `game.score` (DOMAIN_RULES §9.4).
+ * Bam mot moc la sua THOI DIEM cua lan do. Khong co diem theo tung lan: danh
+ * gia duy nhat la `game.score` (DOMAIN_RULES §9.1, §9.4).
  *
  * Xoa mot moc khong dung toi diem game; xoa het moc thi backend bo trong
  * Progress (§9.6). Vi the buoc hoi lai noi ro hau qua do.
@@ -60,11 +58,14 @@ export function GameDetailFinishHistoryRow({
   label,
   icon,
   onSaved,
+  action,
 }: {
   game: GameDetail;
   label: string;
   icon: ReactNode;
   onSaved: (game: GameDetail) => void;
+  /** Nut o cot cuoi khi KHONG sua — vd nut Finish cua the chi tiet. */
+  action?: ReactNode;
 }) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -76,9 +77,7 @@ export function GameDetailFinishHistoryRow({
   const rowRef = useRef<HTMLDivElement>(null);
 
   const finishes = game.finishes ?? [];
-  /* Diem de dien san khi them moc moi: diem cua lan hoan thanh gan nhat, hoac
-     diem game dang mang neu chua hoan thanh lan nao. */
-  const previousScore = finishes[0]?.score ?? game.score ?? null;
+
 
   useEffect(() => {
     setTime(timeTarget ? finishTimeDraftFromEntry(timeTarget) : { year: "", month: "" });
@@ -174,7 +173,6 @@ export function GameDetailFinishHistoryRow({
                     onClick={() => setTimeTarget(finish)}
                   >
                     <span className="tabular-nums">{when || "—"}</span>
-                    <span className="tabular-nums text-muted-fg">{formatScore(finish.score) ?? "—"}</span>
                   </button>
                   <button
                     type="button"
@@ -221,7 +219,9 @@ export function GameDetailFinishHistoryRow({
         )}
       </dd>
 
-      <div className="-my-1 justify-self-end">
+      {/* Khong keo -my-1 nhu DetailRow: nut mini (20px) phai thang hang voi
+          dong pill thoi diem (22px), ke ca khi pill xuong nhieu dong. */}
+      <div className="justify-self-end pt-px">
         {/* Chi THOAT che do sua — moi thay doi da luu ngay luc thuc hien. */}
         {editing ? (
           <IconButton
@@ -231,14 +231,15 @@ export function GameDetailFinishHistoryRow({
             disabled={busy}
             onClick={stopEditing}
           />
-        ) : null}
+        ) : action}
       </div>
 
       <FinishGameDialog
         gameId={game.id}
         open={addOpen}
         onOpenChange={setAddOpen}
-        defaultScore={previousScore}
+        defaultScore={game.score ?? null}
+        firstFinish={finishes.length === 0}
         onSaved={onSaved}
       />
 
@@ -255,8 +256,6 @@ export function GameDetailFinishHistoryRow({
             <div className="space-y-4 p-5 pr-14">
               <div>
                 <DialogTitle>{t("editor.finishTime")}</DialogTitle>
-                {/* Noi truoc rang diem la bat bien, de nguoi dung khong di tim
-                    nut sua diem cho met. */}
                 <DialogDescription>{t("detail.finishTimeOnly")}</DialogDescription>
               </div>
               {saveTime.error ? (

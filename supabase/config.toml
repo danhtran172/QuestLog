@@ -4,3 +4,6 @@ project_id = "questlog"
 # The handler authenticates every request with a dedicated crawler secret.
 verify_jwt = false
 
+[functions.gemini-exe-enricher]
+# Scheduled/admin requests authenticate with a dedicated worker secret.
+verify_jwt = false

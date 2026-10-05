@@ -1,0 +1,130 @@
+<!doctype html>
+<!--
+  Ban luu tam: style nut tron "C · Thau kinh day" cho IconButton.
+  Trang thai: DA AP vao app 2026-10-05 (MasterPlay.Web/src/index.css .icon-button).
+
+  Khi ap that:
+    - .g          -> .icon-button (giu data-tone / --btn-tone thay cho --t)
+    - mau --t     -> them vao --tone-* cho ca 3 theme (dark / light / jungle)
+    - .big        -> chi de xem phong to, khong dua vao app
+  Bien the .tint (C2): kinh mau, icon den — them class "tint" vao nut.
+  Bien the .full (C3): phu kin mau ca nut, icon den — them class "tint full".
+  Bien the .glass (C4): kinh mau deu ca nut, van trong; do dam = --a (62% / 80%).
+  Mau dang thu (dark):
+    sort  oklch(0.82 0.13 240)   filter oklch(0.86 0.15 80)
+    bell  oklch(0.8 0.15 305)    add    oklch(0.84 0.15 165)
+-->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nut thau kinh day</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+body{margin:0;min-height:100vh;display:grid;place-content:center;background:oklch(0.292 0.008 258);font-family:system-ui,sans-serif}
+.r{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.sp{width:28px}
+
+.g{--t:oklch(0.8 0.14 245);all:unset;box-sizing:border-box;position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;overflow:hidden;cursor:pointer;isolation:isolate;
+  backdrop-filter:blur(8px) saturate(160%);-webkit-backdrop-filter:blur(8px) saturate(160%);
+  transition:transform .18s cubic-bezier(.22,1,.36,1),background .18s;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.04) 45%,rgba(255,255,255,.2) 72%,rgba(255,255,255,.08) 100%);
+  box-shadow:0 12px 22px -8px rgba(0,0,0,.75),0 2px 4px rgba(0,0,0,.4),inset 0 0 0 4px rgba(255,255,255,.07),inset 3px 4px 6px rgba(255,255,255,.3),inset -3px -5px 8px rgba(0,0,0,.35)}
+.g.big{width:60px;height:60px}
+.g i{position:relative;z-index:3;font-size:21px;color:var(--t);
+  filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.8)) drop-shadow(0 0 6px color-mix(in oklab,var(--t) 60%,transparent))}
+.g.big i{font-size:31px}
+/* Vien khuc xa: vong conic, chi giu phan vanh 2px bang mask. */
+.g::after{content:"";position:absolute;inset:0;border-radius:50%;padding:2px;z-index:2;pointer-events:none;
+  background:conic-gradient(from 200deg,rgba(255,255,255,.95),rgba(255,255,255,.2),var(--t),rgba(255,255,255,.2),rgba(255,255,255,.95));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+/* Cham sang phan chieu. */
+.g::before{content:"";position:absolute;width:30%;height:16%;left:20%;top:13%;border-radius:50%;background:rgba(255,255,255,.95);filter:blur(1px);transform:rotate(-32deg);z-index:1}
+.g:hover{transform:translateY(-2px)}
+.g:active{transform:translateY(1px) scale(.95)}
+.g:focus-visible{outline:2px solid var(--t);outline-offset:3px}
+
+/* C2 — kinh mau, icon den. */
+.g.tint{background:radial-gradient(circle at 50% 108%,color-mix(in oklab,var(--t) 70%,white) 0%,transparent 55%),radial-gradient(circle at 50% 45%,color-mix(in oklab,var(--t) 78%,transparent) 40%,color-mix(in oklab,var(--t) 92%,transparent) 72%,color-mix(in oklab,var(--t) 70%,black) 100%);
+  box-shadow:0 12px 22px -8px color-mix(in oklab,var(--t) 45%,black),0 2px 4px rgba(0,0,0,.4),inset 0 0 0 4px rgba(255,255,255,.12),inset 3px 4px 6px rgba(255,255,255,.45),inset -3px -5px 8px color-mix(in oklab,var(--t) 45%,black)}
+.g.tint i{color:oklch(0.17 0.02 258);filter:drop-shadow(0 1px 0 rgba(255,255,255,.45))}
+.g.tint:hover{filter:brightness(1.07)}
+/* C3 — phu kin mau, icon den (dung cung .tint de lay mau icon). */
+.g.tint.full{backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:radial-gradient(circle at 50% 112%,color-mix(in oklab,var(--t) 55%,white) 0%,transparent 50%),linear-gradient(180deg,color-mix(in oklab,var(--t) 82%,white) 0%,var(--t) 42%,color-mix(in oklab,var(--t) 82%,black) 100%);
+  box-shadow:0 12px 22px -8px color-mix(in oklab,var(--t) 40%,black),0 2px 4px rgba(0,0,0,.45),inset 0 0 0 4px color-mix(in oklab,white 14%,transparent),inset 3px 4px 6px rgba(255,255,255,.5),inset -3px -5px 8px color-mix(in oklab,var(--t) 40%,black)}
+/* C4 — kinh mau: mau trong deu khap mat nut, icon den. */
+.g.glass{--a:62%;backdrop-filter:blur(10px) saturate(180%);-webkit-backdrop-filter:blur(10px) saturate(180%);
+  background:radial-gradient(circle at 50% 115%,color-mix(in oklab,color-mix(in oklab,var(--t) 50%,white) 85%,transparent) 0%,transparent 48%),linear-gradient(180deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,.04) 48%,transparent 60%),color-mix(in oklab,var(--t) var(--a),transparent);
+  box-shadow:0 12px 22px -8px color-mix(in oklab,var(--t) 45%,black),0 2px 4px rgba(0,0,0,.4),inset 0 0 0 3px color-mix(in oklab,var(--t) 40%,rgba(255,255,255,.3)),inset 3px 4px 6px rgba(255,255,255,.4),inset -3px -5px 8px color-mix(in oklab,var(--t) 50%,black)}
+.g.glass::after{background:conic-gradient(from 200deg,rgba(255,255,255,.95),color-mix(in oklab,var(--t) 60%,white),var(--t),color-mix(in oklab,var(--t) 60%,white),rgba(255,255,255,.95))}
+.g.glass i{color:oklch(0.17 0.02 258);filter:drop-shadow(0 1px 0 rgba(255,255,255,.4))}
+.g.glass:hover{filter:brightness(1.08)}
+.g.glass.dense{--a:80%}
+.l{font-size:13px;color:oklch(0.78 0.01 252);margin:18px 0 10px}
+
+.sort{--t:oklch(0.82 0.13 240)}.filt{--t:oklch(0.86 0.15 80)}.bell{--t:oklch(0.8 0.15 305)}.add{--t:oklch(0.84 0.15 165)}
+</style>
+</head>
+<body>
+<p class="l">C · Kinh trong, icon mau</p>
+<div class="r">
+  <button class="g sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+  <span class="sp"></span>
+  <button class="g big sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g big filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g big bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g big add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+</div>
+<p class="l">C2 · Kinh mau, icon den</p>
+<div class="r">
+  <button class="g tint sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g tint filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g tint bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g tint add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+  <span class="sp"></span>
+  <button class="g tint big sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g tint big filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g tint big bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g tint big add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+</div>
+<p class="l">C3 · Phu kin mau, icon den</p>
+<div class="r">
+  <button class="g tint full sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g tint full filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g tint full bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g tint full add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+  <span class="sp"></span>
+  <button class="g tint full big sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g tint full big filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g tint full big bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g tint full big add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+</div>
+<p class="l">C4 · Kinh mau, trong vua (62%)</p>
+<div class="r">
+  <button class="g glass sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g glass filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g glass bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g glass add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+  <span class="sp"></span>
+  <button class="g glass big sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g glass big filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g glass big bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g glass big add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+</div>
+<p class="l">C4 · Kinh mau, dam hon (80%)</p>
+<div class="r">
+  <button class="g glass dense sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g glass dense filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g glass dense bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g glass dense add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+  <span class="sp"></span>
+  <button class="g glass dense big sort" aria-label="Sắp xếp"><i class="ti ti-arrows-sort"></i></button>
+  <button class="g glass dense big filt" aria-label="Lọc"><i class="ti ti-filter"></i></button>
+  <button class="g glass dense big bell" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+  <button class="g glass dense big add" aria-label="Thêm"><i class="ti ti-plus"></i></button>
+</div>
+</body>
+</html>

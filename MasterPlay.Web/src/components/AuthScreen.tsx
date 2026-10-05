@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   Eye,
   EyeOff,
   Gamepad2,
@@ -13,14 +12,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { authErrorMessage } from "@/lib/authErrors";
+import { authErrorMessage, resendAvailableAtFromError } from "@/lib/authErrors";
 import { EMAIL_CODE_LENGTH } from "@/lib/emailCode";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { EmailCodeField } from "./EmailCodeField";
 import { GoogleSignInButton } from "./GoogleSignIn";
 
-type Mode = "login" | "signup" | "forgot" | "newPassword" | "reset";
+type Mode = "login" | "signup" | "verifyEmail" | "forgot" | "newPassword" | "reset";
 
 const inputClass = cn(
   "h-11 w-full rounded-lg border border-border bg-bg/75 px-3 text-base text-fg shadow-inner outline-none",
@@ -36,6 +35,8 @@ export function AuthScreen() {
     guestAvailable,
     login,
     signup,
+    resendSignupCode,
+    verifySignupCode,
     forgotPassword,
     verifyResetCode,
     resetPassword,
@@ -53,7 +54,6 @@ export function AuthScreen() {
   const [pending, setPending] = useState(false);
   const [guestPending, setGuestPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [resetTicket, setResetTicket] = useState<string | null>(null);
   const [resendAvailableAt, setResendAvailableAt] = useState<string | null>(null);
@@ -159,7 +159,7 @@ export function AuthScreen() {
       }
     }
 
-    if (mode === "reset" && code.length !== EMAIL_CODE_LENGTH) {
+    if ((mode === "reset" || mode === "verifyEmail") && code.length !== EMAIL_CODE_LENGTH) {
       setError(t("auth.fieldsRequired"));
       return;
     }
@@ -188,7 +188,15 @@ export function AuthScreen() {
         await login({ identifier: identifier.trim(), password });
       } else if (mode === "signup") {
         const response = await signup({ username: username.trim(), email: email.trim(), password });
-        setVerificationEmail(response.email);
+        // Buoc nhap ma xac nhan dung email vua dang ky; mat khau khong giu lai.
+        setIdentifier(response.email);
+        setPassword("");
+        setConfirmPassword("");
+        setCode("");
+        setResendAvailableAt(new Date(Date.now() + 60_000).toISOString());
+        goTo("verifyEmail");
+      } else if (mode === "verifyEmail") {
+        await verifySignupCode(identifier.trim(), code);
       } else if (mode === "forgot") {
         // Server luon tra 202 du tai khoan co ton tai hay khong, nen buoc nay
         // khong tiet lo email nao da dang ky.
@@ -205,7 +213,14 @@ export function AuthScreen() {
         await resetPassword({ resetTicket: resetTicket ?? "", newPassword: password });
       }
     } catch (submitError) {
-      if (mode === "reset") setCode("");
+      if (mode === "reset" || mode === "verifyEmail") setCode("");
+      if (mode === "login" && (submitError as { code?: unknown }).code === "EMAIL_NOT_CONFIRMED") {
+        // Tai khoan chua xac nhan email: chuyen sang buoc nhap ma (co the gui ma moi).
+        setPassword("");
+        setCode("");
+        setResendAvailableAt(null);
+        goTo("verifyEmail");
+      }
       if (mode === "newPassword" && (submitError as { code?: unknown }).code === "RESET_TICKET_INVALID") {
         // Ticket het han (10 phut): quay lai buoc nhap ma de xin ma moi.
         setResetTicket(null);
@@ -227,7 +242,9 @@ export function AuthScreen() {
   const switchMode = (nextMode: Mode) => {
     setMode(nextMode);
     setError(null);
-    setVerificationEmail(null);
+    // Khong de mat khau cua buoc truoc (vd. luc dang ky) nam lai trong form moi.
+    setPassword("");
+    setConfirmPassword("");
     setCode("");
     setResetTicket(null);
     window.setTimeout(() => firstFieldRef.current?.focus(), 0);
@@ -239,11 +256,23 @@ export function AuthScreen() {
     window.setTimeout(() => stepFieldRef.current?.focus(), 0);
   };
 
-  const recovering = mode === "forgot" || mode === "newPassword" || mode === "reset";
-  const showGoogle = Boolean(config?.googleEnabled) && status !== "unconfigured" && !recovering;
+  const resendSignup = async () => {
+    setError(null);
+    try {
+      setResendAvailableAt(await resendSignupCode(identifier.trim()));
+    } catch (resendError) {
+      setResendAvailableAt(resendAvailableAtFromError(resendError));
+      setError(authErrorMessage(resendError, t));
+    }
+  };
+
+  // Cac buoc nhap ma / quen mat khau: an tab dang nhap-dang ky va Google.
+  const inStep = mode === "verifyEmail" || mode === "forgot" || mode === "newPassword" || mode === "reset";
+  const showGoogle = Boolean(config?.googleEnabled) && status !== "unconfigured" && !inStep;
   const titleKey = {
     login: "auth.signInTitle",
     signup: "auth.signUpTitle",
+    verifyEmail: "auth.checkEmail",
     forgot: "auth.forgotTitle",
     newPassword: "auth.forgotTitle",
     reset: "auth.forgotTitle",
@@ -251,6 +280,7 @@ export function AuthScreen() {
   const descriptionKey = {
     login: "auth.signInDescription",
     signup: "auth.signUpDescription",
+    verifyEmail: "auth.signupCodeSent",
     forgot: "auth.forgotDescription",
     reset: "auth.codeSentIfExists",
     newPassword: "auth.newPasswordDescription",
@@ -258,6 +288,7 @@ export function AuthScreen() {
   const submitKey = {
     login: "auth.signIn",
     signup: "auth.createAccount",
+    verifyEmail: "auth.verifyCode",
     forgot: "auth.sendCode",
     reset: "auth.verifyCode",
     newPassword: "auth.resetPassword",
@@ -325,244 +356,241 @@ export function AuthScreen() {
             </div>
           </div>
 
-          {verificationEmail ? (
-            <div role="status" className="surface-card p-6 text-center">
-              <CheckCircle2 className="mx-auto text-primary" size={36} aria-hidden="true" />
-              <h1 className="mt-4 text-2xl font-black tracking-tight">{t("auth.checkEmail")}</h1>
-              <p className="mt-2 text-sm leading-6 text-muted-fg">
-                {t("auth.verificationSent")} <span className="font-semibold text-fg">{verificationEmail}</span>
-              </p>
-              <button
-                type="button"
-                onClick={() => switchMode("login")}
-                className="mt-6 min-h-11 w-full rounded-lg bg-primary px-4 font-bold text-primary-fg outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-              >
-                {t("auth.backToSignIn")}
-              </button>
-            </div>
-          ) : (
-            <>
-              {status === "unconfigured" ? (
-                <div className="mb-5 rounded-xl border border-warning/45 bg-warning/10 p-3.5" role="status">
-                  <div className="flex items-start gap-2.5">
-                    <ServerCog className="mt-0.5 shrink-0 text-warning" size={17} aria-hidden="true" />
-                    <div>
-                      <p className="text-sm font-extrabold text-fg">{t("auth.setupRequired")}</p>
-                      <p className="mt-1 text-xs leading-5 text-muted-fg">{t("auth.setupDescription")}</p>
-                    </div>
-                  </div>
+          {status === "unconfigured" ? (
+            <div className="mb-5 rounded-xl border border-warning/45 bg-warning/10 p-3.5" role="status">
+              <div className="flex items-start gap-2.5">
+                <ServerCog className="mt-0.5 shrink-0 text-warning" size={17} aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-extrabold text-fg">{t("auth.setupRequired")}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-fg">{t("auth.setupDescription")}</p>
                 </div>
-              ) : null}
-              {recovering ? (
+              </div>
+            </div>
+          ) : null}
+          {inStep ? (
+            <button
+              type="button"
+              onClick={() => switchMode("login")}
+              className="mb-4 inline-flex min-h-9 items-center gap-1.5 rounded-md px-1 text-sm font-bold text-muted-fg outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-primary/45"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              {t("auth.backToSignIn")}
+            </button>
+          ) : null}
+          <h1 className="text-3xl font-black tracking-[-0.025em] text-fg">{t(titleKey)}</h1>
+          <p className="mt-2 text-sm text-muted-fg">{t(descriptionKey)}</p>
+
+          {inStep ? null : (
+          <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-surface/65 p-1">
+            {(["login", "signup"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => switchMode(value)}
+                aria-pressed={mode === value}
+                className={cn(
+                  "min-h-10 rounded-lg px-3 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
+                  mode === value ? "bg-bg text-fg shadow-soft" : "text-muted-fg hover:text-fg",
+                )}
+              >
+                {t(value === "login" ? "auth.signIn" : "auth.createAccount")}
+              </button>
+            ))}
+          </div>
+          )}
+
+          {showGoogle ? (
+            <div className="mt-6">
+              <GoogleSignInButton disabled={pending || guestPending} onBusyChange={setGoogleBusy} />
+              <div className="mt-5 flex items-center gap-3" aria-hidden="true">
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-fg">{t("auth.or")}</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+          ) : null}
+
+          <form
+            className={cn("space-y-4", showGoogle ? "mt-5" : "mt-6")}
+            onSubmit={submit}
+            aria-busy={pending}
+            aria-disabled={googleBusy}
+            noValidate
+          >
+            {mode !== "signup" ? (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.identifier")}</span>
+                <input
+                  ref={firstFieldRef}
+                  name="identifier"
+                  autoComplete="username"
+                  value={identifier}
+                  readOnly={mode === "newPassword" || mode === "reset" || mode === "verifyEmail"}
+                  onChange={(event) => setIdentifier(event.target.value)}
+                  aria-invalid={Boolean(error && !identifier.trim())}
+                  className={inputClass}
+                />
+              </label>
+            ) : (
+              <>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.username")}</span>
+                  <input
+                    ref={firstFieldRef}
+                    name="username"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    minLength={3}
+                    maxLength={32}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.email")}</span>
+                  <input
+                    name="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+              </>
+            )}
+
+            {mode === "verifyEmail" ? (
+              <EmailCodeField
+                id="signup-code"
+                disabled={pending}
+                label={t("auth.code")}
+                inputRef={stepFieldRef}
+                value={code}
+                onChange={(value) => {
+                  setCode(value);
+                  setError(null);
+                }}
+                resendAvailableAt={resendAvailableAt}
+                onResend={resendSignup}
+              />
+            ) : null}
+
+            {mode === "reset" ? (
+              <EmailCodeField
+                id="recovery-code"
+                disabled={pending}
+                label={t("auth.code")}
+                inputRef={stepFieldRef}
+                value={code}
+                onChange={(value) => {
+                  setCode(value);
+                  setError(null);
+                }}
+                resendAvailableAt={resendAvailableAt}
+                onResend={async () => {
+                  setError(null);
+                  try {
+                    await requestRecoveryCode();
+                  } catch (resendError) {
+                    setError(authErrorMessage(resendError, t));
+                  }
+                }}
+              />
+            ) : null}
+
+            {mode === "forgot" || mode === "reset" || mode === "verifyEmail" ? null : (
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-bold text-fg">
+                {t(mode === "newPassword" ? "auth.newPassword" : "auth.password")}
+              </span>
+              <span className="relative block">
+                <input
+                  ref={mode === "newPassword" ? stepFieldRef : undefined}
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className={cn(inputClass, "pr-11")}
+                />
                 <button
                   type="button"
-                  onClick={() => switchMode("login")}
-                  className="mb-4 inline-flex min-h-9 items-center gap-1.5 rounded-md px-1 text-sm font-bold text-muted-fg outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-primary/45"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={t(showPassword ? "auth.hidePassword" : "auth.showPassword")}
+                  className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-md text-muted-fg outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-primary/45"
                 >
-                  <ArrowLeft size={16} aria-hidden="true" />
-                  {t("auth.backToSignIn")}
+                  {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
                 </button>
-              ) : null}
-              <h1 className="text-3xl font-black tracking-[-0.025em] text-fg">{t(titleKey)}</h1>
-              <p className="mt-2 text-sm text-muted-fg">{t(descriptionKey)}</p>
-
-              {recovering ? null : (
-              <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-surface/65 p-1">
-                {(["login", "signup"] as const).map((value) => (
+              </span>
+              {mode === "login" ? (
+                <span className="mt-1.5 flex justify-end">
                   <button
-                    key={value}
                     type="button"
-                    onClick={() => switchMode(value)}
-                    aria-pressed={mode === value}
-                    className={cn(
-                      "min-h-10 rounded-lg px-3 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
-                      mode === value ? "bg-bg text-fg shadow-soft" : "text-muted-fg hover:text-fg",
-                    )}
+                    onClick={() => switchMode("forgot")}
+                    className="min-h-8 rounded-md px-1 text-xs font-bold text-primary outline-none hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-primary/45"
                   >
-                    {t(value === "login" ? "auth.signIn" : "auth.createAccount")}
+                    {t("auth.forgotPassword")}
                   </button>
-                ))}
-              </div>
-              )}
-
-              {showGoogle ? (
-                <div className="mt-6">
-                  <GoogleSignInButton disabled={pending || guestPending} onBusyChange={setGoogleBusy} />
-                  <div className="mt-5 flex items-center gap-3" aria-hidden="true">
-                    <span className="h-px flex-1 bg-border" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-fg">{t("auth.or")}</span>
-                    <span className="h-px flex-1 bg-border" />
-                  </div>
-                </div>
+                </span>
               ) : null}
+              {mode === "newPassword" ? (
+                <span className="mt-1.5 block text-xs text-muted-fg">{t("auth.passwordPolicy")}</span>
+              ) : null}
+            </label>
+            )}
 
-              <form
-                className={cn("space-y-4", showGoogle ? "mt-5" : "mt-6")}
-                onSubmit={submit}
-                aria-busy={pending}
-                aria-disabled={googleBusy}
-                noValidate
+            {mode === "signup" || mode === "newPassword" ? (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.confirmPassword")}</span>
+                <input
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  className={inputClass}
+                />
+                {mode === "signup" ? (
+                  <span className="mt-1.5 block text-xs text-muted-fg">{t("auth.verificationHint")}</span>
+                ) : null}
+              </label>
+            ) : null}
+
+            {error ? (
+              <p className="flex items-start gap-2 rounded-lg border border-danger/50 bg-danger/10 p-3 text-sm text-fg" role="alert">
+                <AlertTriangle className="mt-0.5 shrink-0 text-danger" size={16} aria-hidden="true" />
+                {error}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={pending || googleBusy}
+              className="glass-surface flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 font-extrabold text-primary-fg outline-none disabled:cursor-wait disabled:opacity-65 focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              {pending ? <Loader2 className="animate-spin" size={17} aria-hidden="true" /> : <ArrowRight size={17} aria-hidden="true" />}
+              {t(submitKey)}
+            </button>
+          </form>
+          {guestAvailable && !inStep ? (
+            <div className="mt-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={() => void enterAsGuest()}
+                disabled={pending || guestPending || googleBusy}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-sm font-bold text-muted-fg outline-none transition-colors hover:text-primary disabled:cursor-wait disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary/45"
               >
-                {mode !== "signup" ? (
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.identifier")}</span>
-                    <input
-                      ref={firstFieldRef}
-                      name="identifier"
-                      autoComplete="username"
-                      value={identifier}
-                      readOnly={mode === "newPassword" || mode === "reset"}
-                      onChange={(event) => setIdentifier(event.target.value)}
-                      aria-invalid={Boolean(error && !identifier.trim())}
-                      className={inputClass}
-                    />
-                  </label>
-                ) : (
-                  <>
-                    <label className="block">
-                      <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.username")}</span>
-                      <input
-                        ref={firstFieldRef}
-                        name="username"
-                        autoComplete="username"
-                        value={username}
-                        onChange={(event) => setUsername(event.target.value)}
-                        minLength={3}
-                        maxLength={32}
-                        className={inputClass}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.email")}</span>
-                      <input
-                        name="email"
-                        type="email"
-                        inputMode="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        className={inputClass}
-                      />
-                    </label>
-                  </>
-                )}
-
-                {mode === "reset" ? (
-                  <EmailCodeField
-                    id="recovery-code"
-                    disabled={pending}
-                    label={t("auth.code")}
-                    inputRef={stepFieldRef}
-                    value={code}
-                    onChange={(value) => {
-                      setCode(value);
-                      setError(null);
-                    }}
-                    resendAvailableAt={resendAvailableAt}
-                    onResend={async () => {
-                      setError(null);
-                      try {
-                        await requestRecoveryCode();
-                      } catch (resendError) {
-                        setError(authErrorMessage(resendError, t));
-                      }
-                    }}
-                  />
+                {guestPending ? (
+                  <Loader2 className="animate-spin" size={15} aria-hidden="true" />
                 ) : null}
-
-                {mode === "forgot" || mode === "reset" ? null : (
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-bold text-fg">
-                    {t(mode === "newPassword" ? "auth.newPassword" : "auth.password")}
-                  </span>
-                  <span className="relative block">
-                    <input
-                      ref={mode === "newPassword" ? stepFieldRef : undefined}
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete={mode === "login" ? "current-password" : "new-password"}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      className={cn(inputClass, "pr-11")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((value) => !value)}
-                      aria-label={t(showPassword ? "auth.hidePassword" : "auth.showPassword")}
-                      className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-md text-muted-fg outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-primary/45"
-                    >
-                      {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
-                    </button>
-                  </span>
-                  {mode === "login" ? (
-                    <span className="mt-1.5 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => switchMode("forgot")}
-                        className="min-h-8 rounded-md px-1 text-xs font-bold text-primary outline-none hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-primary/45"
-                      >
-                        {t("auth.forgotPassword")}
-                      </button>
-                    </span>
-                  ) : null}
-                  {mode === "newPassword" ? (
-                    <span className="mt-1.5 block text-xs text-muted-fg">{t("auth.passwordPolicy")}</span>
-                  ) : null}
-                </label>
-                )}
-
-                {mode === "signup" || mode === "newPassword" ? (
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-bold text-fg">{t("auth.confirmPassword")}</span>
-                    <input
-                      name="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                      className={inputClass}
-                    />
-                    {mode === "signup" ? (
-                      <span className="mt-1.5 block text-xs text-muted-fg">{t("auth.verificationHint")}</span>
-                    ) : null}
-                  </label>
-                ) : null}
-
-                {error ? (
-                  <p className="flex items-start gap-2 rounded-lg border border-danger/50 bg-danger/10 p-3 text-sm text-fg" role="alert">
-                    <AlertTriangle className="mt-0.5 shrink-0 text-danger" size={16} aria-hidden="true" />
-                    {error}
-                  </p>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={pending || googleBusy}
-                  className="glass-surface flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 font-extrabold text-primary-fg outline-none disabled:cursor-wait disabled:opacity-65 focus-visible:ring-2 focus-visible:ring-primary/50"
-                >
-                  {pending ? <Loader2 className="animate-spin" size={17} aria-hidden="true" /> : <ArrowRight size={17} aria-hidden="true" />}
-                  {t(submitKey)}
-                </button>
-              </form>
-              {guestAvailable && !recovering ? (
-                <div className="mt-5 flex items-center gap-3">
-                  <span className="h-px flex-1 bg-border" aria-hidden="true" />
-                  <button
-                    type="button"
-                    onClick={() => void enterAsGuest()}
-                    disabled={pending || guestPending || googleBusy}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-sm font-bold text-muted-fg outline-none transition-colors hover:text-primary disabled:cursor-wait disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary/45"
-                  >
-                    {guestPending ? (
-                      <Loader2 className="animate-spin" size={15} aria-hidden="true" />
-                    ) : null}
-                    {t("auth.continueWithoutSignIn")}
-                  </button>
-                  <span className="h-px flex-1 bg-border" aria-hidden="true" />
-                </div>
-              ) : null}
-            </>
-          )}
+                {t("auth.continueWithoutSignIn")}
+              </button>
+              <span className="h-px flex-1 bg-border" aria-hidden="true" />
+            </div>
+          ) : null}
         </div>
       </section>
     </main>

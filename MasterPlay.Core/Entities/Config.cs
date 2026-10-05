@@ -20,6 +20,10 @@ namespace MasterPlay.Core.Entities
         public string ThemeMode { get; set; } = "system";
         public string JungleFx { get; set; } = "auto";
         public string JungleWeather { get; set; } = "clear";
+        // Mode cuoi cung cua app: "desktop" | "console". Mo lai app se vao lai mode nay.
+        public string AppMode { get; set; } = "desktop";
+        // Huong dan UI nguoi dung da xem xong ("gameForm", "viewModes"). Rong = chua xem gi.
+        public List<string> SeenGuides { get; set; } = new List<string>();
         public string Language { get; set; } = "en-US";
         public string CloudinaryCloudName { get; set; } = string.Empty;
         public string CloudinaryApiKey { get; set; } = string.Empty;

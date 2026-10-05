@@ -1,7 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import wall from "../assets/app/wall.webp";
-import QuestTracker from "./QuestTracker.astro";
+import GlancePanel from "./GlancePanel.astro";
 import { ui, type Locale } from "../i18n/ui";
 import { DOWNLOAD_URL } from "../site";
 
@@ -14,7 +14,7 @@ const t = ui[lang].hero;
 ---
 
 <section class="hero relative isolate flex min-h-[100svh] items-center overflow-hidden pt-28 pb-44 lg:pb-60">
-  <!-- Nen: trang dau thu vien that (30 game), nghieng 3D va troi cham. -->
+  <!-- Nen: trang dau thu vien (30 game cua tac gia), nghieng 3D va troi cham. -->
   <div class="hero-wall" aria-hidden="true">
     <div class="hero-wall__plane">
       <div class="hero-wall__drift">
@@ -25,39 +25,42 @@ const t = ui[lang].hero;
   </div>
   <div class="hero-shade" aria-hidden="true"></div>
 
-  <div class="container-page grid items-center gap-14 lg:grid-cols-[1.12fr_0.88fr] lg:gap-8">
+  <div class="container-page">
+    <p class="eyebrow enter" style="--d:0ms">◆ {t.eyebrow}</p>
+    <h1 class="display hero-title mt-6" aria-label={t.titlePlain}>
+      {
+        t.title.map((line, i) => (
+          <span class="enter-blur block" style={`--d:${140 + i * 140}ms`} aria-hidden="true">
+            {line.map((seg) => (seg.accent ? <span class="text-quest">{seg.text}</span> : seg.text))}
+          </span>
+        ))
+      }
+    </h1>
+    <div class="mt-10 grid items-start gap-12 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:gap-16">
     <div>
-      <p class="eyebrow enter" style="--d:0ms">◆ {t.eyebrow}</p>
-      <h1 class="display hero-title mt-6" aria-label={t.titlePlain}>
-        {
-          t.title.map((line, i) => (
-            <span class="enter-blur block" style={`--d:${140 + i * 120}ms`} aria-hidden="true">
-              {line.map((seg) => (seg.accent ? <span class="text-quest">{seg.text}</span> : seg.text))}
-            </span>
-          ))
-        }
-      </h1>
-      <p class="enter mt-7 max-w-[34rem] text-lg leading-relaxed text-mist/80" style="--d:560ms">{t.subtitle}</p>
-      <div class="enter mt-9 flex flex-col gap-3 sm:flex-row" style="--d:680ms">
+      <p class="enter max-w-[36rem] text-lg leading-relaxed text-mist/80" style="--d:520ms">{t.subtitle}</p>
+      <div class="enter mt-9 flex flex-col gap-3 sm:flex-row" style="--d:640ms">
         <a href={DOWNLOAD_URL} class="btn-primary">
           <svg class="btn-icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"></path>
           </svg>
           {t.cta}
         </a>
-        <a href="#journey" class="btn-ghost">{t.secondary}</a>
+        <a href="#timeline" class="btn-ghost">{t.secondary}</a>
       </div>
-      <p class="enter mt-5 font-mono text-xs tracking-wider text-fog" style="--d:780ms">{t.note}</p>
+      <p class="enter mt-5 font-mono text-xs tracking-wider text-fog" style="--d:760ms">{t.note}</p>
     </div>
 
-    <QuestTracker lang={lang} />
+    <GlancePanel lang={lang} />
+    </div>
   </div>
 </section>
 
 <style>
+  /* Hai dong ngan, trai het be ngang: cau tra loi chinh cua trang. */
   .hero-title {
-    font-size: clamp(3.1rem, 6.7vw, 6.4rem);
-    line-height: 0.92;
+    font-size: clamp(3.2rem, 10.5vw, 9.5rem);
+    line-height: 0.9;
   }
 
   .hero-title > span {
@@ -65,7 +68,7 @@ const t = ui[lang].hero;
   }
 
   :global(html[lang="vi"]) .hero-title {
-    line-height: 1.06;
+    line-height: 1.04;
   }
 
   .hero-wall {

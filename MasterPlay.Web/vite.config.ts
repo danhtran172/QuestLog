@@ -34,11 +34,14 @@ export default defineConfig(({ mode }) => {
         ? undefined
         : {
             "/api": { target: apiTarget, changeOrigin: true },
+            // Anh thu vien luu tren may (khong phai admin) — Host phuc vu, DOMAIN_RULES §12.
+            "/local-images": { target: apiTarget, changeOrigin: true },
           },
     },
     build: {
       outDir: "dist",
-      sourcemap: true,
+      // Ban build di kem bo cai cong khai: khong kem source map, khong lo ma nguon TS.
+      sourcemap: false,
     },
   };
 });

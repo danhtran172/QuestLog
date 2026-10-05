@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MasterPlay.Host.Auth;
+using MasterPlay.Infrastructure.Integrations;
 
 namespace MasterPlay.Host.Metadata;
 
@@ -56,6 +57,8 @@ public sealed class SupabaseMetadataCatalog(
     ILogger<SupabaseMetadataCatalog> logger)
 {
     private const int MaxPageSize = 100;
+    private const string GameColumns =
+        "id,igdb_id,name,developer,publisher,summary,publish_date,is_dlc,base_metadata_game_id,poster_url,backdrop_url,banner_url,meta_score,avg_playtime_hours,series_id,revision";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<MetadataSearchPage> SearchAsync(
@@ -103,15 +106,99 @@ public sealed class SupabaseMetadataCatalog(
         if (ids.Count == 0) return new Dictionary<long, MetadataCatalogGame>();
 
         var values = string.Join(',', ids.Distinct().Select(id => id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        var select = "id,igdb_id,name,developer,publisher,summary,publish_date,is_dlc,base_metadata_game_id,poster_url,backdrop_url,banner_url,meta_score,avg_playtime_hours,series_id,revision";
         // `is_published=is.true` la BAT BUOC: duong nay chay bang service_role nen
         // bypass RLS. Thieu no thi mot ban ghi CHUA xuat ban van import ve thu vien
         // duoc — cua sau di vong qua toan bo tieu chi xuat ban (spec §13).
-        var path = $"/rest/v1/metadata_games?select={Uri.EscapeDataString(select)}&id=in.({values})&is_published=is.true";
+        var path = $"/rest/v1/metadata_games?select={Uri.EscapeDataString(GameColumns)}&id=in.({values})&is_published=is.true";
         using var request = CreateServiceRequest(HttpMethod.Get, path);
         var rows = await SendAsync<List<MetadataRow>>(request, cancellationToken);
         return rows.Select(ToDomain).ToDictionary(game => game.Id);
     }
+
+    public bool IsConfigured => options.IsConfigured;
+
+    /// <summary>
+    /// Game trong kho metadata co ten giong <paramref name="name"/> nhat, cho nut Sync
+    /// cua editor (chi dien vao form, khong import), hoac null khi khong co game nao du giong.
+    ///
+    /// Gom ca ban CHUA xuat ban vi truot tieu chi (vd thieu anh bia): du lieu do van tot
+    /// hon goi API ngoai. CHI bo ban admin chu dong go (<c>manually_unpublished</c>) —
+    /// thuong la ban sai/rac. Import (<see cref="GetByIdsAsync"/>) va tim kiem cua nguoi
+    /// dung (<see cref="SearchAsync"/>) van chi thay ban da xuat ban (spec §13).
+    ///
+    /// Vi vay KHONG dung RPC <c>search_metadata_games</c> (RPC loc <c>is_published</c>)
+    /// ma hoi thang bang bang cung cach khop: moi tu la mot tien to, noi bang AND tren
+    /// <c>search_vector</c> cau hinh <c>simple</c>. Tu chi gom chu/so
+    /// (<see cref="GameNameMatcher.SearchTokens"/>) nen khong chua ky tu dac biet cua tsquery.
+    ///
+    /// Tim voi DU MOI TU da go. KHONG bo bot tu de tim lai: bo "shadow" khoi
+    /// "Assassin's Creed Shadow" la ra ca loat game AC khac va khop nham sang Black Flag.
+    /// Kho khong co thi tra null de provider tim bang dung ten nguoi dung go.
+    ///
+    /// search_vector con chua developer/publisher, nen moi tu phai nam TRONG TEN ung vien
+    /// (<see cref="GameNameMatcher.CoversAllWords"/>) roi moi cham diem giong ten.
+    /// </summary>
+    public async Task<MetadataCatalogGame?> FindClosestAsync(string name, CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        var tokens = GameNameMatcher.SearchTokens(name);
+        if (string.Join(' ', tokens).Length < 2) return null;
+
+        var tsquery = string.Join(" & ", tokens.Select(token => token + ":*"));
+        var path = $"/rest/v1/metadata_games?select={Uri.EscapeDataString(GameColumns)}"
+            + "&manually_unpublished=is.false"
+            + $"&search_vector=fts(simple).{Uri.EscapeDataString(tsquery)}"
+            + $"&order=name.asc,id.asc&limit={MaxPageSize}";
+        using var request = CreateServiceRequest(HttpMethod.Get, path);
+        var rows = await SendAsync<List<MetadataRow>>(request, cancellationToken);
+        var best = GameNameMatcher.PickBest(
+            name,
+            rows.Where(row => GameNameMatcher.CoversAllWords(name, row.Name)),
+            row => row.Name);
+        return best is null ? null : ToDomain(best);
+    }
+
+    public async Task<string?> GetSeriesNameAsync(long seriesId, CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        using var request = CreateServiceRequest(HttpMethod.Get,
+            $"/rest/v1/metadata_series?select=name&id=eq.{seriesId.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        var rows = await SendAsync<List<NameRow>>(request, cancellationToken);
+        return rows.FirstOrDefault()?.Name;
+    }
+
+    /// <summary>
+    /// Ten file chay da luu cho game trong kho metadata (`metadata_game_executable_candidates`),
+    /// hoac null khi chua co. Kho chua tao bang nay (migration chua chay) cung tra null —
+    /// thieu goi y ten exe khong duoc lam hong ca lan sync.
+    /// </summary>
+    public async Task<string?> GetExecutableNameAsync(long metadataGameId, CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        using var request = CreateServiceRequest(HttpMethod.Get,
+            "/rest/v1/metadata_game_executable_candidates?select=file_name&status=eq.candidate&metadata_game_id=eq."
+            + metadataGameId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        using var response = await HttpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            logger.LogWarning("metadata_game_executable_candidates is not available; executable names are skipped.");
+            return null;
+        }
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("Executable lookup failed with {StatusCode}: {Body}", (int)response.StatusCode, body[..Math.Min(body.Length, 300)]);
+            throw new MetadataCatalogException(503, "METADATA_UNAVAILABLE", "Metadata catalog is temporarily unavailable.");
+        }
+
+        var rows = await response.Content.ReadFromJsonAsync<List<FileNameRow>>(JsonOptions, cancellationToken);
+        var fileName = rows?.FirstOrDefault()?.FileName;
+        return string.IsNullOrWhiteSpace(fileName) ? null : fileName.Trim();
+    }
+
+    private sealed record NameRow([property: JsonPropertyName("name")] string? Name);
+
+    private sealed record FileNameRow([property: JsonPropertyName("file_name")] string? FileName);
 
     private HttpRequestMessage CreateServiceRequest(HttpMethod method, string path)
     {

@@ -1,0 +1,331 @@
+<Window x:Class="MasterPlay.Installer.InstallerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="QuestLog Setup"
+        Icon="app.ico"
+        Width="640" Height="480"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        UseLayoutRounding="True"
+        FontFamily="Segoe UI"
+        Background="#292C30">
+
+    <!-- Cung giao dien voi man cai dat lan dau cua app (MasterPlay.Shell/SetupWindow.xaml)
+         vi hai man nay hien noi tiep nhau. -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="36"
+                            ResizeBorderThickness="0"
+                            GlassFrameThickness="0"
+                            CornerRadius="12"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="FieldBrush" Color="#22262A"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#484C53"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#E6E8EA"/>
+        <SolidColorBrush x:Key="BodyBrush" Color="#C3C6C9"/>
+        <SolidColorBrush x:Key="MutedBrush" Color="#9A9EA4"/>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#6D8863"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#9DB892"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#E0877F"/>
+
+        <Style x:Key="CloseCaptionButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#C9CDD2"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#C42B1C"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#9F1F15"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FocusRing">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="-3" RadiusX="10" RadiusY="10"
+                                   Stroke="{StaticResource PrimaryTextBrush}" StrokeThickness="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="104"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="18,0"/>
+            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource BodyBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#3A3F45"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#2F3338"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="#0F170E"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#7C9871"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#5F7856"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="Label"
+                                   Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Background="Transparent"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PathBox" TargetType="TextBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Field"
+                                Background="{StaticResource FieldBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="10,0">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Field" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsReadOnly" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#22262A"
+                BorderBrush="#3A4047" BorderThickness="0,0,0,1">
+            <Grid>
+                <StackPanel Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="app-icon.png" Width="18" Height="18"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock x:Name="WindowTitleText"
+                               Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#D8DBDE"/>
+                </StackPanel>
+                <Button x:Name="CloseButton"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource CloseCaptionButtonStyle}"
+                        Content="&#xE8BB;"
+                        Click="OnCancelClick"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="1" Margin="40,30,40,0">
+            <Image Source="app-icon.png" Width="48" Height="48" HorizontalAlignment="Left"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <TextBlock x:Name="TitleText"
+                       Margin="0,18,0,0"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource TextBrush}"/>
+            <TextBlock x:Name="SubtitleText"
+                       Margin="0,8,0,0"
+                       FontSize="13.5"
+                       LineHeight="20"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource MutedBrush}"/>
+
+            <TextBlock x:Name="LabelText"
+                       Margin="0,24,0,0"
+                       FontSize="12.5"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource BodyBrush}"/>
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="PathBox"
+                         Grid.Column="0"
+                         Style="{StaticResource PathBox}"
+                         TextChanged="OnPathChanged"/>
+                <Button x:Name="BrowseButton"
+                        Grid.Column="1"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource ActionButton}"
+                        Click="OnBrowseClick"/>
+            </Grid>
+            <Button x:Name="UseDefaultButton"
+                    Margin="0,10,0,0"
+                    HorizontalAlignment="Left"
+                    Style="{StaticResource LinkButton}"
+                    Click="OnUseDefaultClick"/>
+
+            <Grid x:Name="ExistingPanel" Margin="0,14,0,0" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Margin="0,2,8,0"
+                           Text="&#xE930;"
+                           FontFamily="Segoe MDL2 Assets"
+                           FontSize="13"
+                           Foreground="{StaticResource PrimaryTextBrush}"/>
+                <TextBlock x:Name="ExistingText"
+                           Grid.Column="1"
+                           FontSize="12.5"
+                           LineHeight="18"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource PrimaryTextBrush}"/>
+            </Grid>
+
+            <TextBlock x:Name="ErrorText"
+                       Margin="0,10,0,0"
+                       FontSize="12.5"
+                       LineHeight="18"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource DangerBrush}"
+                       Visibility="Collapsed"
+                       AutomationProperties.LiveSetting="Assertive"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" Padding="40,16,40,20" BorderBrush="#3A4047" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Margin="0,0,20,0" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Margin="0,1,8,0"
+                               Text="&#xE946;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="13"
+                               Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock x:Name="FolderNoteText"
+                               Grid.Column="1"
+                               FontSize="12"
+                               LineHeight="17"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedBrush}"/>
+                </Grid>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CancelButton"
+                            Margin="0,0,10,0"
+                            IsCancel="True"
+                            Style="{StaticResource ActionButton}"
+                            Click="OnCancelClick"/>
+                    <Button x:Name="InstallButton"
+                            IsDefault="True"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="OnInstallClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

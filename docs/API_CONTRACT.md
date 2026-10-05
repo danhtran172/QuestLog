@@ -71,7 +71,7 @@ Mặc định hệ thống: **`en-US`**.
 | `423` | Tài khoản bị khóa |
 | `429` | Quá nhiều yêu cầu auth |
 | `501` | Endpoint native gọi trên Hosted API |
-| `502` | Dịch vụ ngoài lỗi (RAWG, Cloudinary, Gemini) |
+| `502` | Dịch vụ ngoài lỗi (RAWG, IGDB, Steam, Cloudinary) |
 
 **Frontend không được nuốt lỗi.** Mọi lỗi phải hiển thị được cho người dùng.
 
@@ -98,7 +98,7 @@ Mặc định hệ thống: **`en-US`**.
 | `POST` | `/api/auth/account/username-claim` | Bearer | Chỉ khi `onboarding = usernameRequired`: chọn username đầu tiên cho tài khoản Google. Cần `registrationEnabled` |
 | `POST` | `/api/auth/reauth/email` | Bearer | Gửi mã 6 số tới email hiện tại. `202 {sent, resendAvailableAt}`; trong cooldown 60 giây trả `429 CODE_RESEND_COOLDOWN` |
 | `POST` | `/api/auth/reauth/verify` | Bearer | `{code}` → `{reauthTicket, expiresAt}`: dùng một lần, sống 5 phút, gắn account + phiên. Sai 5 lần → `429 CODE_ATTEMPTS_EXCEEDED` |
-| `POST` | `/api/auth/password/forgot` | Public | `{identifier}` (username hoặc email). **Luôn** `202`, không tiết lộ tài khoản có tồn tại |
+| `POST` | `/api/auth/password/forgot` | Public | `{identifier}` (username hoặc email). `202` khi đã gửi mã; `404 ACCOUNT_NOT_FOUND` khi không có tài khoản (quyết định sản phẩm 2026-10-04, đánh đổi lấy UX rõ ràng; rate limit `auth` làm chậm việc dò) |
 | `POST` | `/api/auth/password/verify-code` | Public | `{identifier, code}` → kiểm tra mã ngay, đúng thì `{resetTicket, expiresAt}` (dùng một lần, 10 phút) |
 | `POST` | `/api/auth/password/reset` | Public | `{resetTicket, newPassword}` → `AuthSession` + cookie; thu hồi mọi phiên khác. Ticket sai/hết hạn: `401 RESET_TICKET_INVALID` |
 | `POST` | `/api/auth/google/start` | Public (+ desktop handshake khi `client = desktop`) | `{client: web\|desktop}` → `{flowId, authorizeUrl, expiresAt}`. Web nhận cookie `questlog_oauth_flow` |
@@ -127,6 +127,8 @@ username thành email và không được gửi role lúc signup. Email trong `p
 | `CODE_RESEND_COOLDOWN` | 429 | Xin mã lại trong 60 giây; `details.resendAvailableAt` |
 | `CODE_ATTEMPTS_EXCEEDED` | 429 | Sai mã 5 lần; phải xin mã mới |
 | `EMAIL_RATE_LIMITED` | 429 | Supabase hết hạn mức gửi email (mail mặc định rất thấp); **không** có mã nào được gửi |
+| `ACCOUNT_NOT_FOUND` | 404 | Quên mật khẩu với tên đăng nhập/email không có tài khoản |
+| `EMAIL_TAKEN` | 409 | Đăng ký bằng email đã có tài khoản |
 | `RESET_TICKET_INVALID` | 401 | Reset ticket sai, hết hạn (10 phút) hoặc đã dùng; phải gửi mã mới |
 | `REAUTH_REQUIRED` | 400 | Thao tác nhạy cảm thiếu `reauthTicket` |
 | `REAUTH_INVALID` | 401 | Ticket sai, hết hạn, đã dùng hoặc gắn phiên khác |
@@ -199,7 +201,7 @@ server sắp sẵn (nhóm chung → nhóm cá nhân → chưa phân nhóm).
   isDlc: boolean
   ready: boolean                      // kết quả scan, UI KHÔNG sửa
   isRunning: boolean                  // từ process monitor
-  canLaunch: boolean                  // backend quyết định (có launchTarget hoặc exe đã detect)
+  canLaunch: boolean                  // backend quyết định: file launchTarget, hoặc exe đã detect khớp exeName, còn tồn tại trên đĩa
   folderWarning: string | null        // đã localize
 }
 ```
@@ -338,12 +340,12 @@ về nó nữa.
 | Method | Path | Ghi chú |
 |---|---|---|
 | `GET` | `/api/games/{id}` | → `GameDetail` |
-| `POST` | `/api/games` | tạo mới |
+| `POST` | `/api/games` | thêm thủ công — mọi owner (user, admin, guest); game riêng của owner, `metadataGameId = null`, không ghi vào kho dùng chung. `baseGameId` phải thuộc cùng owner. Thiếu phiên → 401 `AUTH_REQUIRED` |
 | `PUT` | `/api/games/{id}` | cập nhật toàn phần |
 | `POST` | `/api/games/{id}/disable` | soft delete |
 | `POST` | `/api/games/{id}/restore` | khôi phục |
-| `POST` | `/api/games/{id}/finishes` | body `{ score, finishedYear?, finishedMonth? }` — bỏ trống cả hai mốc thời gian thì dùng thời gian hiện tại; chạy trong một transaction |
-| `PUT` | `/api/games/{id}/finishes/{finishId}` | body `{ finishedYear, finishedMonth? }` — chỉ sửa thời điểm của đúng một lịch sử, không đụng score |
+| `POST` | `/api/games/{id}/finishes` | body `{ score?, finishedYear?, finishedMonth? }` — `score` bắt buộc ở lần hoàn thành đầu tiên (thiếu → `400 FINISH_SCORE_REQUIRED`), các lần sau bỏ trống = giữ `game.score`; không lưu điểm theo lần. Bỏ trống cả hai mốc thời gian thì dùng thời gian hiện tại; chạy trong một transaction |
+| `PUT` | `/api/games/{id}/finishes/{finishId}` | body `{ finishedYear, finishedMonth? }` — chỉ sửa thời điểm của đúng một lịch sử |
 | `DELETE` | `/api/games/{id}/finishes/{finishId}` | Xoá đúng một lịch sử. Score giữ nguyên; hết lịch sử thì Progress bị bỏ trống (§9.6) |
 | `POST` | `/api/games/{id}/promote` | §8.4 |
 | `POST` | `/api/games/{id}/playtime` | body `{ deltaMinutes }` — cộng/trừ |
@@ -399,21 +401,22 @@ Xoá taxonomy: server xử lý lại association trong **một transaction**.
 
 ### 6.5.0 Integrations dùng chung
 
-Admin Console quản lý credential server-side cho `rawg`, `igdb`, `steam`,
+Admin Console quản lý credential server-side cho `rawg`, `igdb`,
 `cloudinary` và `gemini`. Mọi endpoint bên dưới yêu cầu role admin từ JWT; browser
 chỉ nhận `configured`, tên các field đã lưu, revision và kết quả test an toàn —
 **không** nhận plaintext, ciphertext, hoặc một phần credential.
 
 | Method | Path | Ghi chú |
 |---|---|---|
-| `GET` | `/api/admin/integrations` | Trạng thái của cả 5 provider |
+| `GET` | `/api/admin/integrations` | Trạng thái của cả 4 provider |
 | `PUT` | `/api/admin/integrations/{provider}` | Thay thế **trọn bộ** credential provider; field thiếu là lỗi `422`, không có nghĩa “giữ key cũ” |
 | `POST` | `/api/admin/integrations/{provider}/test` | Kiểm tra read-only trên backend; trả status/code đã được redaction |
 
 IGDB crawler lấy active revision từ kho secret chung khi bắt đầu lượt chạy; lưu key
 mới không cần deploy lại function. Không có endpoint hay nút deploy/enable cron trong
-Admin Console. Steam Web API chỉ test app key; đồng bộ thư viện Steam cần danh tính và
-uỷ quyền riêng của từng người dùng, nên không nằm trong integration này.
+Admin Console. Steam **không** còn là integration: ảnh Steam (banner / hero / poster) lấy qua
+`IStoreQueryService/SearchSuggestions` và CDN công khai, không cần key (migration
+`20261005000000_remove_steam_integration` xoá cấu hình và secret Steam cũ).
 
 Mọi endpoint dưới `/api/admin/**` **tự kiểm role admin từ JWT**. Workspace mode của UI
 không tham gia vào quyết định quyền — mode là rào chắn UX, không phải rào chắn bảo mật.
@@ -516,6 +519,12 @@ Thiếu một trong hai thì tiêu chí xuất bản chỉ là lời khuyên.
 
 Import một bản ghi chưa xuất bản trả `422 METADATA_GAME_NOT_FOUND` — không tiết lộ là nó tồn tại.
 
+**Ngoại lệ duy nhất (từ 2026-10-05): nút Sync của editor** (`POST /api/game-metadata/preview`,
+và lệnh `--sync-missing-posters`) dùng cả bản chưa xuất bản vì trượt tiêu chí — chỉ **điền sẵn**
+giá trị vào form, không import, không gắn `metadataGameId`. Bản admin chủ động gỡ
+(`manuallyUnpublished`) vẫn bị bỏ. Đường này hỏi thẳng `metadata_games` (lọc
+`manually_unpublished=is.false`), không qua RPC `search_metadata_games`.
+
 | Code | HTTP | Khi nào |
 |---|---|---|
 | `PUBLISH_RULES_REQUIRED` | 422 | `PUT /publishing` không có khoá nào |
@@ -595,6 +604,20 @@ hạn 100 game discovery, 10 refresh mỗi run và chỉ discovery tới 90% sto
 | `CRAWLER_CURSOR_INVALID` | 422 | cursor không hợp lệ |
 | `CRAWLER_SCHEDULER_NOT_READY` | 503 | thiếu Vault URL/secret cần cho trigger |
 
+### 6.5.6. Gemini executable enrichment
+
+Worker Gemini độc lập với crawler IGDB, chạy batch 10 metadata game cũ nhất chưa có
+candidate. Kết quả là candidate basename có provenance, không phải `Game.exeName` và
+không bao giờ chứa path local. Scanner desktop là authority duy nhất xác nhận candidate.
+
+| Method | Path | Ghi chú |
+|---|---|---|
+| `GET` | `/api/admin/metadata/gemini-exe` | trạng thái, lease, queue và run mới nhất |
+| `PUT` | `/api/admin/metadata/gemini-exe/enabled` | body `{ enabled }` |
+| `POST` | `/api/admin/metadata/gemini-exe/run` | chỉ enqueue, trả `202 { requestId }` |
+| `GET` | `/api/admin/metadata/gemini-exe/runs` | lịch sử run server-owned |
+| `GET` | `/api/admin/metadata/gemini-exe/games` | candidate/enrichment diagnostics, read-only |
+
 ## 7. Metadata preview
 
 Một endpoint **duy nhất**, nhận `{ name, source }`, resolve provider theo **tên** rồi trả
@@ -603,11 +626,11 @@ Một endpoint **duy nhất**, nhận `{ name, source }`, resolve provider theo 
 
 | Method | Path | `source` | Nguồn |
 |---|---|---|---|
-| `POST` | `/api/game-metadata/preview` | `metadata` | IGDB (nếu đã cấu hình): canonical metadata; RAWG fallback cho name/publisher/developer/slug/metascore/avgPlaytime/releaseDate + cover ngang (RAWG không có thì Steam `library_hero.jpg`); Steam cho gallery/card; Gemini đoán `exeName`. `series` = Series đã có khớp collection/franchise IGDB, `seriesName` = tên gợi ý (preview không tạo series). Thiếu IGDB không được làm cả preview thất bại. |
-| `POST` | `/api/game-metadata/preview` | `cover` | RAWG `background_image`, dự phòng Steam `library_hero.jpg` — cover ngang cho detail hero |
-| `POST` | `/api/game-metadata/preview` | `card-cover` | Steam `header.jpg` — ảnh ngang cho card và queue |
-| `POST` | `/api/game-metadata/preview` | `portrait-cover` | IGDB `t_cover_big_2x` — ảnh dọc; không gọi Steam |
-| `GET` | `/api/games/{id}/external-links` | — | → `{ hltbUrl, metacriticUrl }` **backend dựng từ name/slug** |
+| `POST` | `/api/game-metadata/preview` | `metadata` | **Kho metadata trước**: game có tên giống nhất, **kể cả bản chưa xuất bản vì trượt tiêu chí** (chỉ bỏ bản admin chủ động gỡ, `manuallyUnpublished`) — MỌI từ người dùng gõ phải nằm trong tên game kho (không bỏ bớt từ để tìm lại); kho không có thì provider tìm bằng đúng tên người dùng gõ. Field kho có thì dùng luôn, kể cả `exeName` (candidate trong kho). Field **còn thiếu** mới gọi provider bằng tên chuẩn của game kho: IGDB (theo `igdb_id` nếu kho có) cho name/developer/publisher/releaseDate/isDlc/poster/series; RAWG cho slug/metascore/avgPlaytime/backdrop (+ dự phòng dev/pub/ngày); Steam cho banner, backdrop dự phòng (`library_hero`), poster dự phòng. IGDB/RAWG/Steam giữ thứ tự liên quan của chính provider (kết quả đầu). Provider lỗi không làm hỏng preview — lý do trả trong `warnings[]` (vd `RAWG_NOT_CONFIGURED`, `RAWG_KEY_INVALID`). Không còn gọi Gemini. `metadataGameId`/`metadataGameName` = game kho đã khớp. |
+| `POST` | `/api/game-metadata/preview` | `cover` | Kho metadata `backdrop_url` → RAWG `background_image` → Steam `library_hero.jpg` |
+| `POST` | `/api/game-metadata/preview` | `card-cover` | Kho metadata `banner_url` → Steam `header.jpg` — ảnh ngang cho card và queue |
+| `POST` | `/api/game-metadata/preview` | `portrait-cover` | Kho metadata `poster_url` → IGDB `t_cover_big_2x` → Steam `library_600x900_2x` |
+| `GET` | `/api/games/{id}/external-links` | — | → `{ hltbUrl, metacriticUrl }` **backend dựng từ name/slug**. Thiếu slug RAWG → `metacriticUrl` rỗng; UI giữ nút nhưng disable |
 
 > Frontend **không** hardcode URL HowLongToBeat/Metacritic trên object game (Lovable đang làm vậy — phải bỏ).
 
@@ -624,7 +647,8 @@ Một endpoint **duy nhất**, nhận `{ name, source }`, resolve provider theo 
 | `POST` | `/api/games/{id}/backup-folder/generate` | tạo tên duy nhất + ghi `SaveLocation.txt`. **Tạm tắt**: trả `501 FEATURE_DISABLED` khi `capabilities.features.backup = false`; client ẩn mọi UI backup (thư mục backup gốc, thư mục backup từng game, dịch vụ/nút backup của Tray) |
 | `GET` | `/api/tray/status` | |
 | `POST` | `/api/tray/services/{name}` | bật/tắt 1 trong 3 service |
-| `POST` | `/api/tray/sync-images` | Chạy **trong Host**, không cần Tray. Đưa ảnh banner/backdrop/poster của thư viện người đang đăng nhập lên Cloudinary, trả `ImageSyncReport` khi xong (kèm lý do từng ảnh lỗi). Chỉ thay đúng cột ảnh, chỉ khi giá trị chưa đổi trong lúc chạy. `409 IMAGE_SYNC_RUNNING`, `422 INTEGRATION_NOT_CONFIGURED`. Nút hiện theo `capabilities.features.imageSync`. Bình thường không cần bấm: Host tự upload nền sau mỗi lần lưu ảnh (DOMAIN_RULES §12); nút này vét những ảnh upload nền bị lỗi |
+| `POST` | `/api/tray/sync-images` | Chạy **trong Host**, không cần Tray. Đưa ảnh banner/backdrop/poster của thư viện người đang đăng nhập về nơi lưu — **admin: Cloudinary; user/guest: trên máy** (`/local-images/...`) — trả `ImageSyncReport` khi xong (kèm lý do từng ảnh lỗi; `uploaded` = số ảnh vừa lưu). Chỉ thay đúng cột ảnh, chỉ khi giá trị chưa đổi trong lúc chạy. `409 IMAGE_SYNC_RUNNING`, `422 INTEGRATION_NOT_CONFIGURED` (chỉ thư viện admin). Nút hiện theo `capabilities.features.imageSync`. Bình thường không cần bấm: Host tự xử lý nền sau mỗi lần lưu ảnh (DOMAIN_RULES §12); nút này vét những ảnh bị lỗi |
+| `GET` | `/local-images/{file}` | **Ngoài `/api`, không cần token** (thẻ `<img>` không gửi bearer). Phục vụ ảnh thư viện lưu trên máy. Tên file `{gameId}-{role}-{hash}.{jpg\|png\|gif\|webp\|avif}`, sai dạng hoặc không có → `404`. Kèm `nosniff`, cache vĩnh viễn (đổi ảnh thì đổi tên). Dev server Vite proxy đường này sang Host như `/api` |
 | `POST` | `/api/tray/{scan-now\|backup-now\|open-logs\|startup}` | |
 
 ---
@@ -637,6 +661,8 @@ Một endpoint **duy nhất**, nhận `{ name, source }`, resolve provider theo 
 | `POST` | `/api/settings/test-cloudinary` | ping thật |
 | `GET` | `/api/dashboard/stats` | 6 ô thống kê + top-5 playtime — **backend tính**, không tính ở client |
 | `GET` | `/api/events` | **SSE**: `runningProcesses`, `refresh`, `trayNotification`, `syncProgress` |
+| `GET` | `/api/notifications/releases?timeZone=` | Game trong thư viện sắp ra mắt: `stage` `soon` (còn 1..3 ngày) / `today`, kèm `releaseAt` UTC và `read`. Client gửi múi giờ IANA của trình duyệt; tính ngày ở **server** (DOMAIN_RULES §22) |
+| `POST` | `/api/notifications/releases/read` | body `{ ids }` → `204`. Lưu đã xem theo chủ thư viện |
 
 `GET /api/settings` trả `libraries` tách đôi:
 ```ts

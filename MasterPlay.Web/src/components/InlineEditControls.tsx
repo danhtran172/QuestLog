@@ -59,14 +59,24 @@ type InlineNumberInputProps = Omit<
  * - Escape: cancel va bo qua blur sinh ra khi input bi thao khoi DOM.
  * - Khong hien nut tang/giam native.
  */
-export function InlineNumberInput({
+export function InlineNumberInput(props: InlineNumberInputProps) {
+  return <InlineInput {...props} type="number" />;
+}
+
+/** Cung luat Enter / blur / Escape nhu {@link InlineNumberInput}, cho chuoi. */
+export function InlineTextInput(props: InlineNumberInputProps) {
+  return <InlineInput {...props} type="text" />;
+}
+
+function InlineInput({
   value,
   onChange,
   onCommit,
   onCancel,
   className,
+  type,
   ...props
-}: InlineNumberInputProps) {
+}: InlineNumberInputProps & { type: "number" | "text" }) {
   const cancelBlurRef = useRef(false);
   const committedByEnterRef = useRef<string | null>(null);
 
@@ -81,7 +91,7 @@ export function InlineNumberInput({
   return (
     <input
       {...props}
-      type="number"
+      type={type}
       value={value}
       onFocus={(event) => event.currentTarget.select()}
       onChange={(event) => {
@@ -113,7 +123,7 @@ export function InlineNumberInput({
           onCancel();
         }
       }}
-      className={cn(NUMBER_INPUT_NO_SPINNER, className)}
+      className={cn(type === "number" && NUMBER_INPUT_NO_SPINNER, className)}
     />
   );
 }

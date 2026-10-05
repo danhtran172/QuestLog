@@ -28,6 +28,9 @@ internal sealed class FakeSupabase : HttpMessageHandler
 
     public HttpStatusCode RecoverStatus { get; set; } = HttpStatusCode.OK;
 
+    public DateTimeOffset? EmailConfirmedAt { get; set; } = ProviderNow;
+    public DateTimeOffset UserCreatedAt { get; set; } = ProviderNow;
+
     public static JsonObject NewProfile() => new()
     {
         ["user_id"] = UserId,
@@ -73,6 +76,8 @@ internal sealed class FakeSupabase : HttpMessageHandler
                 HttpStatusCode.Forbidden);
         }
 
+        if (path == "/auth/v1/user" && request.Method == HttpMethod.Get) return Json(User());
+
         if (path == "/auth/v1/verify") return Json(new JsonObject { ["msg"] = "Token has expired or is invalid" }, VerifyStatus);
 
         if (path == "/auth/v1/recover" && RecoverStatus != HttpStatusCode.OK)
@@ -117,7 +122,8 @@ internal sealed class FakeSupabase : HttpMessageHandler
             return new HttpResponseMessage(HttpStatusCode.NoContent);
         }
 
-        if (path.StartsWith("/auth/v1/admin/users", StringComparison.Ordinal) && request.Method == HttpMethod.Put)
+        if (path.StartsWith("/auth/v1/admin/users", StringComparison.Ordinal) &&
+            (request.Method == HttpMethod.Put || request.Method == HttpMethod.Get))
         {
             return Json(User());
         }
@@ -137,7 +143,8 @@ internal sealed class FakeSupabase : HttpMessageHandler
     {
         ["id"] = UserId,
         ["email"] = "player@example.test",
-        ["email_confirmed_at"] = ProviderNow.ToString("O"),
+        ["email_confirmed_at"] = EmailConfirmedAt?.ToString("O"),
+        ["created_at"] = UserCreatedAt.ToString("O"),
         ["identities"] = Identities.DeepClone(),
     };
 
@@ -157,9 +164,19 @@ internal sealed class FakeHttpClientFactory(HttpMessageHandler handler) : IHttpC
     public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
 }
 
+internal sealed class ManualTimeProvider : TimeProvider
+{
+    public DateTimeOffset Now { get; set; } = FakeSupabase.ProviderNow;
+
+    public override DateTimeOffset GetUtcNow() => Now;
+}
+
 public sealed class SupabaseAuthGatewayTests
 {
     private readonly FakeSupabase supabase = new();
+    private readonly ManualTimeProvider clock = new();
+
+    private int UserLookups => supabase.Paths.Count(path => path == "GET /auth/v1/user");
 
     private SupabaseAuthGateway Gateway(bool registrationEnabled = true, EmailCodeThrottle? throttle = null) => new(
         new FakeHttpClientFactory(supabase),
@@ -173,7 +190,81 @@ public sealed class SupabaseAuthGatewayTests
             RegistrationEnabled = registrationEnabled,
         },
         throttle ?? new EmailCodeThrottle(),
-        NullLogger<SupabaseAuthGateway>.Instance);
+        NullLogger<SupabaseAuthGateway>.Instance,
+        clock);
+
+    [Fact]
+    public async Task Recently_validated_token_is_not_sent_to_the_provider_again()
+    {
+        var gateway = Gateway();
+
+        var first = await gateway.ValidateAccessTokenAsync("token", default);
+        clock.Now += SupabaseAuthGateway.ValidationReuseWindow - TimeSpan.FromSeconds(1);
+        var second = await gateway.ValidateAccessTokenAsync("token", default);
+
+        Assert.Equal(first, second);
+        Assert.Equal(1, UserLookups);
+    }
+
+    [Fact]
+    public async Task Concurrent_requests_with_one_token_share_a_single_provider_check()
+    {
+        var gateway = Gateway();
+
+        await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => gateway.ValidateAccessTokenAsync("token", default)));
+
+        Assert.Equal(1, UserLookups);
+    }
+
+    [Fact]
+    public async Task Validation_is_asked_again_once_the_reuse_window_passes()
+    {
+        var gateway = Gateway();
+        await gateway.ValidateAccessTokenAsync("token", default);
+
+        clock.Now += SupabaseAuthGateway.ValidationReuseWindow;
+        supabase.SessionRevoked = true;
+
+        await Assert.ThrowsAsync<SupabaseAuthException>(() => gateway.ValidateAccessTokenAsync("token", default));
+        Assert.Equal(2, UserLookups);
+    }
+
+    [Fact]
+    public async Task Rejected_token_is_not_remembered()
+    {
+        var gateway = Gateway();
+        supabase.SessionRevoked = true;
+        await Assert.ThrowsAsync<SupabaseAuthException>(() => gateway.ValidateAccessTokenAsync("token", default));
+
+        supabase.SessionRevoked = false;
+        await gateway.ValidateAccessTokenAsync("token", default);
+
+        Assert.Equal(2, UserLookups);
+    }
+
+    [Fact]
+    public async Task Changed_username_is_visible_on_the_next_request()
+    {
+        var gateway = Gateway();
+        var account = await gateway.ValidateAccessTokenAsync("token", default);
+
+        await gateway.ChangeUsernameAsync(account, "player", default);
+        var next = await gateway.ValidateAccessTokenAsync("token", default);
+
+        Assert.Equal("player", next.Username);
+    }
+
+    [Fact]
+    public async Task Signed_out_token_is_validated_again()
+    {
+        var gateway = Gateway();
+        await gateway.ValidateAccessTokenAsync("token", default);
+
+        await gateway.LogoutAsync("token", default, "local");
+        supabase.SessionRevoked = true;
+
+        await Assert.ThrowsAsync<SupabaseAuthException>(() => gateway.ValidateAccessTokenAsync("token", default));
+    }
 
     [Fact]
     public async Task New_google_user_gets_a_session_that_still_needs_a_username()
@@ -308,11 +399,112 @@ public sealed class SupabaseAuthGatewayTests
     }
 
     [Fact]
-    public async Task Forgot_password_is_silent_for_unknown_accounts()
+    public async Task Forgot_password_reports_an_unknown_account()
     {
-        await Gateway().SendRecoveryCodeAsync("nobody", default);
+        var error = await Assert.ThrowsAsync<SupabaseAuthException>(
+            () => Gateway().SendRecoveryCodeAsync("nobody", default));
 
+        Assert.Equal((404, "ACCOUNT_NOT_FOUND"), (error.StatusCode, error.Code));
         Assert.DoesNotContain("POST /auth/v1/recover", supabase.Paths);
+    }
+
+    [Fact]
+    public async Task Sign_up_with_an_email_that_already_has_an_account_is_rejected()
+    {
+        var error = await Assert.ThrowsAsync<SupabaseAuthException>(
+            () => Gateway().SignupAsync("newname", "player@example.test", "a-password-123", default));
+
+        Assert.Equal((409, "EMAIL_TAKEN"), (error.StatusCode, error.Code));
+        Assert.DoesNotContain("POST /auth/v1/signup", supabase.Paths);
+    }
+
+    [Fact]
+    public async Task Unconfirmed_sign_up_releases_its_email_after_the_hold()
+    {
+        supabase.Profile["signup_method"] = "password";
+        supabase.Identities = [FakeSupabase.Identity("email", FakeSupabase.ProviderNow)];
+        supabase.EmailConfirmedAt = null;
+        supabase.UserCreatedAt = FakeSupabase.ProviderNow - SupabaseAuthGateway.UnconfirmedSignupHold - TimeSpan.FromMinutes(1);
+
+        await Gateway().SignupAsync("newname", "player@example.test", "a-password-123", default);
+
+        Assert.Contains($"DELETE /auth/v1/admin/users/{FakeSupabase.UserId}", supabase.Paths);
+        Assert.Contains("POST /auth/v1/signup", supabase.Paths);
+        Assert.Contains("unconfirmed_signup_released", supabase.AuditEvents);
+    }
+
+    [Fact]
+    public async Task Email_change_releases_an_expired_unconfirmed_sign_up()
+    {
+        supabase.Profile["signup_method"] = "password";
+        supabase.Identities = [FakeSupabase.Identity("email", FakeSupabase.ProviderNow)];
+        supabase.EmailConfirmedAt = null;
+        supabase.UserCreatedAt = FakeSupabase.ProviderNow - SupabaseAuthGateway.UnconfirmedSignupHold - TimeSpan.FromMinutes(1);
+        var account = new AuthAccountDto(
+            "22222222-2222-2222-2222-222222222222", "other", "other@example.test", "user", "active",
+            true, false, false, AccountOnboarding.Complete, true);
+
+        await Gateway().ChangeEmailAsync(account, "token", "player@example.test", default);
+
+        Assert.Contains($"DELETE /auth/v1/admin/users/{FakeSupabase.UserId}", supabase.Paths);
+    }
+
+    [Fact]
+    public async Task Unconfirmed_sign_up_keeps_its_email_during_the_hold()
+    {
+        supabase.Profile["signup_method"] = "password";
+        supabase.Identities = [FakeSupabase.Identity("email", FakeSupabase.ProviderNow)];
+        supabase.EmailConfirmedAt = null;
+        supabase.UserCreatedAt = FakeSupabase.ProviderNow - SupabaseAuthGateway.UnconfirmedSignupHold + TimeSpan.FromMinutes(1);
+
+        var error = await Assert.ThrowsAsync<SupabaseAuthException>(
+            () => Gateway().SignupAsync("newname", "player@example.test", "a-password-123", default));
+
+        Assert.Equal("EMAIL_TAKEN", error.Code);
+        Assert.DoesNotContain($"DELETE /auth/v1/admin/users/{FakeSupabase.UserId}", supabase.Paths);
+    }
+
+    [Fact]
+    public async Task Unconfirmed_sign_up_with_a_google_identity_is_never_released()
+    {
+        supabase.Profile["signup_method"] = "password";
+        supabase.EmailConfirmedAt = null;
+        supabase.UserCreatedAt = FakeSupabase.ProviderNow - TimeSpan.FromDays(3);
+
+        var error = await Assert.ThrowsAsync<SupabaseAuthException>(
+            () => Gateway().SignupAsync("newname", "player@example.test", "a-password-123", default));
+
+        Assert.Equal("EMAIL_TAKEN", error.Code);
+        Assert.DoesNotContain($"DELETE /auth/v1/admin/users/{FakeSupabase.UserId}", supabase.Paths);
+    }
+
+    [Fact]
+    public async Task Sign_up_code_confirms_the_email_and_signs_in()
+    {
+        supabase.Profile["username"] = "player";
+        supabase.Profile["onboarding_state"] = "complete";
+        supabase.Profile["signup_method"] = "password";
+
+        var (session, refreshToken) = await Gateway().VerifySignupCodeAsync("player@example.test", "123456", default);
+
+        var verify = Assert.Single(supabase.Requests, request => request.PathAndQuery == "/auth/v1/verify");
+        Assert.Equal("signup", JsonNode.Parse(verify.Body)!["type"]!.GetValue<string>());
+        Assert.Equal("player@example.test", JsonNode.Parse(verify.Body)!["email"]!.GetValue<string>());
+        Assert.Equal(FakeSupabase.UserId, session.Account.Id);
+        Assert.Equal("refresh", refreshToken);
+        Assert.Contains("email_verified", supabase.AuditEvents);
+    }
+
+    [Fact]
+    public async Task Sign_up_code_resend_waits_out_the_cooldown()
+    {
+        var gateway = Gateway();
+        var first = await gateway.ResendSignupCodeAsync("player@example.test", default);
+        var second = await gateway.ResendSignupCodeAsync("player@example.test", default);
+
+        Assert.True(first.Sent);
+        Assert.False(second.Sent);
+        Assert.Single(supabase.Paths, path => path == "POST /auth/v1/resend");
     }
 
     [Fact]

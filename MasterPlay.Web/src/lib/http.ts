@@ -26,5 +26,7 @@ export async function httpRequest<T>(path: string, init?: RequestInit): Promise<
     );
   }
 
-  return (await response.json()) as T;
+  // 202 Accepted (lenh tray...) co the khong co body.
+  const body = await response.text();
+  return (body ? JSON.parse(body) : undefined) as T;
 }

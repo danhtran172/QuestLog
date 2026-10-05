@@ -3,7 +3,7 @@
  *
  *   Tong quan: ten + gio choi + diem | thong tin game | trang thai |
  *              avg & metascore | the loai & chu de.
- *   Tep:       tien trinh + launch tuy chon | thu muc save | backup.
+ *   Khoi chay: tien trinh + file khoi chay tuy chon | backup (khi bat).
  *   Anh:       anh doc | anh card | anh chi tiet.
  *
  * So khung va cach xep khung bam theo template; kich thuoc/mau chi la he
@@ -22,7 +22,6 @@ import {
   Folder,
   FolderPlus,
   FolderSymlink,
-  Info,
   Loader2,
   Lock,
   LockOpen,
@@ -35,13 +34,12 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import type { CatalogItem, GameDetail, GameFinishEntry, TaxonomyItem } from "@/lib/api/domain";
+import type { CatalogItem, GameDetail, GameFinishEntry, GameMetadataPreview, TaxonomyItem } from "@/lib/api/domain";
 import { api } from "@/lib/api/client";
 import { gameDetailApi } from "@/lib/gameDetailApi";
 import {
   RATING_MAX,
   finishMonthInputValue,
-  formatScore,
   isRatingInputDraft,
 } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -53,7 +51,9 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTitle,
+  GlassFooter,
   IconButton,
+  InfoButton,
   Select,
   SelectContent,
   SelectItem,
@@ -78,6 +78,9 @@ import { TaxonomyPicker } from "./TaxonomyPicker";
 import { OwnershipInfoDialog, ownershipHasInfo } from "./OwnershipInfoDialog";
 import { NUMBER_INPUT_NO_SPINNER } from "./InlineEditControls";
 import { RatingScaleHint } from "./RatingScaleHint";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { GuideTour } from "./GuideTour";
+import { FORM_GUIDE, useGameFormGuide } from "./gameFormGuide";
 
 type Draft = {
   name: string;
@@ -147,6 +150,7 @@ type Props = {
 function finishEditorMonth(finish: GameFinishEntry): string {
   return finish.hasMonth ? finishMonthInputValue(finish.finishedAt) : "";
 }
+
 
 const NONE = "__none__";
 
@@ -309,7 +313,7 @@ function ImageSlot({
               <button
                 type="button"
                 aria-label={`${preview.label} — ${t("editor.previewHint")}`}
-                className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-surface/50 px-2 py-0.5 text-[10px] font-bold text-muted-fg transition hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-surface/50 px-2 py-0.5 text-fs-10 font-bold text-muted-fg transition hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 <Eye size={11} aria-hidden />
                 {preview.label}
@@ -385,6 +389,7 @@ export function GameEditorForm({
   const [hasCustomLaunch, setHasCustomLaunch] = useState(() => Boolean(game?.launchTarget?.path?.trim()));
   const [adjustMinutes, setAdjustMinutes] = useState("");
   const [ownershipOpen, setOwnershipOpen] = useState(false);
+  const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
   /* Dang cho nguoi dung tra loi hop canh bao: dong han the, hay chi thoat sua. */
   const [pendingExit, setPendingExit] = useState<"close" | "cancel" | null>(null);
   /* The THEM game: metadata (ten hang, anh, diem ngoai...) mac dinh khoa de
@@ -394,6 +399,12 @@ export function GameEditorForm({
   /* Ten series IGDB goi y ma thu vien CHUA co (preview khong duoc tao). Nguoi
      dung bam thi moi tao that. */
   const [seriesSuggestion, setSeriesSuggestion] = useState<string | null>(null);
+  /* Ket qua lan sync gan nhat: game kho metadata da khop va nguon nao hong (vd thieu
+     key RAWG) — phai hien ra, khong de nguoi dung tuong "RAWG khong chay" ma khong ro vi sao. */
+  const [syncReport, setSyncReport] = useState<{
+    matchedName: string | null;
+    warnings: NonNullable<GameMetadataPreview["warnings"]>;
+  } | null>(null);
 
   const baseDraft = useMemo(() => toDraft(game), [game]);
   const dirty = useMemo(() => isDirtyDraft(draft, baseDraft), [draft, baseDraft]);
@@ -403,9 +414,13 @@ export function GameEditorForm({
   const pendingExitRef = useRef(pendingExit);
   pendingExitRef.current = pendingExit;
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const guideContainerRef = useRef<HTMLDivElement>(null);
+  /* Tour huong dan dang mo thi Esc / nut X chi dong tour, khong dong the. */
+  const stopGuideRef = useRef<(() => boolean) | null>(null);
 
   useEffect(() => {
     registerCloseGuard?.(() => {
+      if (stopGuideRef.current?.()) return true;
       if (!dirtyRef.current) return false;
       setPendingExit("close");
       return true;
@@ -449,17 +464,17 @@ export function GameEditorForm({
     [progress, ownership, series, genres, themes].find((query) => query.isError)?.error ??
     (draft.isDlc && baseGames.isError ? baseGames.error : undefined)
   );
+  const formGuide = useGameFormGuide(mode === "add" && !imagesOnly && !referencesPending && !referenceError);
+  stopGuideRef.current = formGuide.stop;
 
-  const pickCatalog = (items: CatalogItem[] | undefined, value: string) =>
+  const pickCatalog =(items: CatalogItem[] | undefined, value: string) =>
     items?.find((item) => item.id === Number(value)) ?? null;
   const pickTaxonomy = (items: TaxonomyItem[] | undefined, value: string) =>
     items?.find((item) => item.id === Number(value)) ?? null;
 
   /* Doi kieu so huu sang loai khong co thong tin thi nut ⓘ bien mat — popup
      dang mo phai dong theo, khong de no treo lai giua man hinh. */
-  const ownershipInfoAvailable = ownershipHasInfo(
-    pickCatalog(ownership.data, draft.ownershipId)?.systemKey,
-  );
+  const ownershipInfoAvailable = ownershipHasInfo(pickCatalog(ownership.data, draft.ownershipId));
 
   const payload = useMemo<GameDetail>(() => {
     if (imagesOnly && game) {
@@ -526,7 +541,18 @@ export function GameEditorForm({
   }, [draft, game, genres.data, hasCustomLaunch, imagesOnly, ownership.data, progress.data, series.data, themes.data]);
 
   const save = useMutation({
-    mutationFn: () => mode === "add" ? gameDetailApi.create(payload) : gameDetailApi.update(game!.id, payload),
+    mutationFn: async () => {
+      let body = payload;
+      /* Sync tim ra mot Series thu vien CHUA co (preview khong duoc ghi DB) va
+         nguoi dung khong chon Series nao khac: tao that luc Luu, khong thi bam
+         Luu ma quen bam chip goi y la series cua sync roi mat. */
+      if (!imagesOnly && !draft.isDlc && draft.seriesId === NONE && seriesSuggestion) {
+        const created = await api.createTaxonomy("series", { id: 0, name: seriesSuggestion, iconData: null, sortOrder: 0 });
+        await queryClient.invalidateQueries({ queryKey: ["taxonomy", "series"] });
+        body = { ...payload, series: created };
+      }
+      return mode === "add" ? gameDetailApi.create(body) : gameDetailApi.update(game!.id, body);
+    },
     onSuccess: async (saved) => {
       queryClient.setQueryData(["game-detail", saved.id], saved);
       await Promise.all([
@@ -561,10 +587,12 @@ export function GameEditorForm({
   });
 
   /* Them mot moc hoan thanh. Backend chay ca transaction: ghi moc voi thoi
-     gian hien tai, set progress=Done va set score — nen phai keo hai field do
-     ve ban nhap, khong thi luc Save minh ghi de nguoc lai. */
+     gian hien tai, set progress=Done (va set score neu la LAN DAU) — nen phai
+     keo hai field do ve ban nhap, khong thi luc Save minh ghi de nguoc lai.
+     Diem chi gui o lan dau; cac lan sau khong con diem theo lan (§9.2). */
   const addFinish = useMutation({
-    mutationFn: (score: number) => gameDetailApi.finish(game!.id, { score }),
+    mutationFn: (score: number | null) =>
+      gameDetailApi.finish(game!.id, score === null ? {} : { score }),
     onSuccess: async (saved) => {
       setDraft((current) => ({
         ...current,
@@ -593,41 +621,40 @@ export function GameEditorForm({
   const sync = useMutation({
     mutationFn: (source: "metadata" | "card-cover" | "cover" | "portrait-cover") =>
       gameDetailApi.previewMetadata(draft.name.trim(), source),
+    onMutate: () => setSyncReport(null),
     onSuccess: (preview, source) => {
-      const str = (value: string | null | undefined) => value ?? "";
-      const num = (value: number | null | undefined) => value?.toString() ?? "";
+      /* Field null = khong nguon nao co -> GIU gia tri dang co thay vi xoa trang
+         (truoc day sync hut mot nguon la mat luon ten exe/developer da nhap). */
+      const str = (value: string | null | undefined, current: string) => value ?? current;
+      const num = (value: number | null | undefined, current: string) => value?.toString() ?? current;
       setDraft((current) => source === "metadata" ? {
         ...current,
-        name: str(preview.name) || current.name,
-        developer: str(preview.developer),
-        publisher: str(preview.publisher),
-        slugName: str(preview.slugName),
-        publishDate: str(preview.publishDate),
-        metaScore: num(preview.metaScore),
-        avgPlaytimeHours: num(preview.avgPlaytimeHours),
-        bannerPath: str(preview.bannerPath),
-        backdropPath: str(preview.backdropPath),
-        posterPath: str(preview.posterPath),
-        exeName: str(preview.exeName),
+        name: str(preview.name, current.name),
+        developer: str(preview.developer, current.developer),
+        publisher: str(preview.publisher, current.publisher),
+        slugName: str(preview.slugName, current.slugName),
+        publishDate: str(preview.publishDate, current.publishDate),
+        metaScore: num(preview.metaScore, current.metaScore),
+        avgPlaytimeHours: num(preview.avgPlaytimeHours, current.avgPlaytimeHours),
+        /* Sync metadata KHONG dung toi anh: moi o anh co nut sync rieng, de anh
+           da chon tay khong bi thay mat khi chi muon cap nhat thong tin. */
+        exeName: str(preview.exeName, current.exeName),
+        isDlc: preview.isDlc ?? current.isDlc,
         /* Server da khop san voi Series dang co; khong khop thi giu lua chon cu. */
         seriesId: preview.series ? preview.series.id.toString() : current.seriesId,
-      } : source === "cover" ? { ...current, backdropPath: str(preview.backdropPath) }
-        : source === "card-cover" ? { ...current, bannerPath: str(preview.bannerPath) }
-          : { ...current, posterPath: str(preview.posterPath) });
+      } : source === "cover" ? { ...current, backdropPath: str(preview.backdropPath, current.backdropPath) }
+        : source === "card-cover" ? { ...current, bannerPath: str(preview.bannerPath, current.bannerPath) }
+          : { ...current, posterPath: str(preview.posterPath, current.posterPath) });
       if (source === "metadata") {
         setSeriesSuggestion(preview.series ? null : preview.seriesName ?? null);
-        setImageInputs({
-          bannerPath: str(preview.bannerPath),
-          backdropPath: str(preview.backdropPath),
-          posterPath: str(preview.posterPath),
-        });
       } else if (source === "cover") {
-        setImageInputs((current) => ({ ...current, backdropPath: str(preview.backdropPath) }));
+        setImageInputs((current) => ({ ...current, backdropPath: str(preview.backdropPath, current.backdropPath) }));
       } else if (source === "card-cover") {
-        setImageInputs((current) => ({ ...current, bannerPath: str(preview.bannerPath) }));
+        setImageInputs((current) => ({ ...current, bannerPath: str(preview.bannerPath, current.bannerPath) }));
       } else {
-        setImageInputs((current) => ({ ...current, posterPath: str(preview.posterPath) }));
+        setImageInputs((current) => ({ ...current, posterPath: str(preview.posterPath, current.posterPath) }));
       }
+      setSyncReport({ matchedName: preview.metadataGameName ?? null, warnings: preview.warnings ?? [] });
     },
   });
   const createSeries = useMutation({
@@ -703,6 +730,8 @@ export function GameEditorForm({
     setDraft((current) => ({ ...current, [key]: value }));
 
   const scoreForFinish = asNumber(draft.score);
+  const firstFinish = (game?.finishes?.length ?? 0) === 0;
+  const finishNeedsScore = firstFinish && scoreForFinish === null;
   const adjustAmount = Math.max(0, Math.floor(asNumber(adjustMinutes) ?? 0));
   const canAdjust = mode === "edit" && adjustAmount > 0 && !adjustPlaytime.isPending;
   const canPickFile = Boolean(capabilities.data?.features.filePicker);
@@ -736,7 +765,7 @@ export function GameEditorForm({
       <DialogTitle className="sr-only">{imagesOnly ? t("editor.images") : mode === "add" ? t("editor.addTitle") : t("editor.editTitle")}</DialogTitle>
       <DialogDescription className="sr-only">{t("editor.description")}</DialogDescription>
 
-      <div className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={guideContainerRef} className="relative min-h-0 flex-1 overflow-hidden">
         {/* `scrollbar-none`: thanh truot native se an mat mot dai o mep phai cua
             anh hero. Thay bang thanh truot noi de len tren, ben duoi. */}
         <div ref={scrollerRef} className="scrollbar-none h-full overflow-y-auto">
@@ -746,6 +775,26 @@ export function GameEditorForm({
             <div className="sticky top-0 z-20 mx-5 mt-3 flex gap-2 rounded-lg border border-danger/45 bg-danger/20 p-2.5 text-xs text-danger shadow-lg backdrop-blur-xl">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span className="min-w-0 break-words">{errorMessage}</span>
+            </div>
+          ) : null}
+          {syncReport && (syncReport.matchedName || syncReport.warnings.length > 0) ? (
+            <div role="status" className="mx-5 mt-3 space-y-1 rounded-lg border border-border bg-muted/40 p-2.5 text-xs text-muted-fg">
+              <p className="flex items-center gap-2">
+                <RefreshCw size={13} className="shrink-0 text-primary" />
+                <span className="min-w-0 break-words">
+                  {syncReport.matchedName
+                    ? t("editor.syncMatchedMetadata").replace("{name}", syncReport.matchedName)
+                    : t("editor.syncNoMetadataMatch")}
+                </span>
+              </p>
+              {syncReport.warnings.map((warning) => (
+                <p key={`${warning.provider}:${warning.code}`} className="flex gap-2 text-warning">
+                  <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                  <span className="min-w-0 break-words">
+                    <span className="font-bold uppercase">{warning.provider}</span> · {warning.message}
+                  </span>
+                </p>
+              ))}
             </div>
           ) : null}
 
@@ -765,13 +814,15 @@ export function GameEditorForm({
             />
           ) : null}
 
-          <div className="space-y-6 pb-6 pl-5 pr-4 pt-4 sm:pl-6 sm:pr-5">
+          {/* Le duoi chua cho footer kinh mo noi o day the. */}
+          <div className="space-y-6 pb-20 pl-5 pr-4 pt-4 sm:pl-6 sm:pr-5">
             {!imagesOnly ? (
               <>
             <EditorSection
               title={t("detail.overview")}
               actions={mode === "add" ? (
                 <IconButton
+                  data-guide={FORM_GUIDE.lock}
                   size="compact"
                   tone={metadataLocked ? "neutral" : "edit"}
                   label={t(metadataLocked ? "editor.unlockMetadata" : "editor.lockMetadata")}
@@ -781,13 +832,13 @@ export function GameEditorForm({
               ) : undefined}
             >
               {mode === "add" ? (
-                <p className="-mt-1 text-[11px] font-medium text-muted-fg">
+                <p className="-mt-1 text-fs-11 font-medium text-muted-fg">
                   {t(metadataLocked ? "editor.metadataLockedHint" : "editor.metadataUnlockedHint")}
                 </p>
               ) : null}
               {/* Hang ten: ten game va cong tac DLC nam cung mot hang. */}
               <div className="space-y-3">
-                <EditorPanel className="flex items-center gap-3">
+                <EditorPanel guide={FORM_GUIDE.name} className="flex items-center gap-3">
                   <EditorRow label={t("editor.name")} className="min-w-0 flex-1">
                     <input
                       autoFocus
@@ -822,7 +873,7 @@ export function GameEditorForm({
                 </EditorPanel>
 
                 {/* Gio choi va o diem cung hang. */}
-                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(88px,auto)]">
+                <div data-guide={FORM_GUIDE.playtime} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(88px,auto)]">
                   <EditorPanel>
                     <EditorRow label={t("editor.playedTime")}>
                       <input
@@ -833,7 +884,7 @@ export function GameEditorForm({
                         value={draft.playedHours}
                         onChange={(event) => set("playedHours", event.target.value)}
                       />
-                      <span className="text-[11px] font-black text-muted-fg">h</span>
+                      <span className="text-fs-11 font-black text-muted-fg">h</span>
                       <input
                         type="number"
                         min="0"
@@ -843,7 +894,7 @@ export function GameEditorForm({
                         value={draft.playedMinutes}
                         onChange={(event) => set("playedMinutes", event.target.value)}
                       />
-                      <span className="text-[11px] font-black text-muted-fg">m</span>
+                      <span className="text-fs-11 font-black text-muted-fg">m</span>
                       {/* Cum cong/tru: goi API playtime, khong tu tinh o client. */}
                       <span className="ml-auto flex items-center gap-1.5">
                         <IconButton
@@ -931,7 +982,7 @@ export function GameEditorForm({
                             onClick={() => createSeries.mutate(seriesSuggestion)}
                             disabled={createSeries.isPending}
                             title={t("editor.createSeries")}
-                            className="inline-flex min-w-0 items-center gap-1.5 justify-self-start rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary transition hover:bg-primary/20 disabled:opacity-50"
+                            className="inline-flex min-w-0 items-center gap-1.5 justify-self-start rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-fs-11 font-bold text-primary transition hover:bg-primary/20 disabled:opacity-50"
                           >
                             {createSeries.isPending ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                             <span className="truncate">{t("editor.seriesSuggestion").replace("{name}", seriesSuggestion)}</span>
@@ -969,7 +1020,7 @@ export function GameEditorForm({
                 </EditorPanel>
 
                 {/* Khung trang thai. */}
-                <EditorPanel className="flex flex-col gap-2">
+                <EditorPanel guide={FORM_GUIDE.status} className="flex flex-col gap-2">
                   <div className="space-y-2">
                     <EditorRow label={t("sort.progress")}>
                       <CatalogSelectControl
@@ -995,10 +1046,9 @@ export function GameEditorForm({
                           chua cho trong dung bang no — hai o chon phai dai
                           bang nhau du co nut hay khong. */}
                       {ownershipInfoAvailable ? (
-                        <IconButton
+                        <InfoButton
                           size="compact"
                           label={t(ownershipOpen ? "detail.hideOwnershipInfo" : "detail.showOwnershipInfo")}
-                          icon={<Info />}
                           tone={ownershipOpen ? "edit" : "neutral"}
                           aria-expanded={ownershipOpen}
                           onClick={() => setOwnershipOpen((current) => !current)}
@@ -1037,7 +1087,7 @@ export function GameEditorForm({
                                 <input
                                   type="month"
                                   aria-label={t("editor.finishTime")}
-                                  className="w-[104px] bg-transparent text-[11px] font-bold text-fg outline-none"
+                                  className="w-[104px] bg-transparent text-fs-11 font-bold text-fg outline-none"
                                   value={selectedMonth}
                                   onChange={(event) =>
                                     setFinishMonths((current) => ({ ...current, [finish.id]: event.target.value }))
@@ -1053,22 +1103,18 @@ export function GameEditorForm({
                                     onClick={() => finishTimeSave.mutate({ finishId: finish.id, finishedMonth: selectedMonth })}
                                     disabled={finishTimeSave.isPending}
                                   />
-                                ) : (
-                                  <span className="px-1 text-[11px] font-bold tabular-nums text-muted-fg">
-                                    {formatScore(finish.score) ?? "—"}
-                                  </span>
-                                )}
+                                ) : null}
                               </span>
                             );
                           })}
                           {/* Them moc: dung dung diem dang co o o Score. */}
                           <IconButton
                             size="compact"
-                            label={t(scoreForFinish === null ? "editor.addFinishNeedsScore" : "editor.addFinish")}
+                            label={t(finishNeedsScore ? "editor.addFinishNeedsScore" : "editor.addFinish")}
                             tone="finish"
                             icon={addFinish.isPending ? <Loader2 className="animate-spin" /> : <CalendarPlus />}
-                            onClick={() => scoreForFinish !== null && addFinish.mutate(scoreForFinish)}
-                            disabled={addFinish.isPending || scoreForFinish === null}
+                            onClick={() => !finishNeedsScore && addFinish.mutate(firstFinish ? scoreForFinish : null)}
+                            disabled={addFinish.isPending || finishNeedsScore}
                           />
                         </div>
                       </div>
@@ -1091,11 +1137,10 @@ export function GameEditorForm({
                     onChange={(event) => set("avgPlaytimeHours", event.target.value)}
                     disabled={metaDisabled}
                   />
-                  <IconButton
+                  <InfoButton
                     size="compact"
                     label={t("editor.openHltb")}
                     tone="open"
-                    icon={<Info />}
                     onClick={() => externalLinks.data?.hltbUrl && window.open(externalLinks.data.hltbUrl, "_blank", "noopener,noreferrer")}
                     disabled={!externalLinks.data?.hltbUrl}
                   />
@@ -1110,11 +1155,10 @@ export function GameEditorForm({
                     onChange={(event) => set("metaScore", event.target.value)}
                     disabled={metaDisabled}
                   />
-                  <IconButton
+                  <InfoButton
                     size="compact"
-                    label={t("editor.openMetacritic")}
+                    label={t(externalLinks.data?.metacriticUrl === "" ? "detail.metacriticNoSlug" : "editor.openMetacritic")}
                     tone="open"
-                    icon={<Info />}
                     onClick={() => externalLinks.data?.metacriticUrl && window.open(externalLinks.data.metacriticUrl, "_blank", "noopener,noreferrer")}
                     disabled={!externalLinks.data?.metacriticUrl}
                   />
@@ -1122,7 +1166,7 @@ export function GameEditorForm({
               </EditorPanel>
 
               {/* Chu de va the loai — mot khung chay het be rong. */}
-              <EditorPanel className="space-y-2">
+              <EditorPanel guide={FORM_GUIDE.tags} className="space-y-2">
                 <TaxonomyPicker
                   kind="genres"
                   label={t("editor.genres")}
@@ -1147,7 +1191,7 @@ export function GameEditorForm({
 
             {/* The THEM game: gap it dung den ngay, nen thu gon san — bam tieu
                 de la mo ra khi can khai bao process/thu muc. */}
-            <EditorSection title={t("detail.files")} collapsible={mode === "add"} defaultOpen={mode !== "add"}>
+            <EditorSection guide={FORM_GUIDE.launch} title={t("detail.files")} collapsible={mode === "add"} defaultOpen={mode !== "add"}>
               {game?.folderWarning ? (
                 <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2.5 text-xs text-warning">
                   <AlertTriangle size={14} className="shrink-0" /> {game.folderWarning}
@@ -1155,25 +1199,23 @@ export function GameEditorForm({
               ) : null}
 
               <EditorPanel className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                  <EditorRow label={t("editor.process")} className="min-w-56 flex-1">
-                    <input
-                      className="h-8 min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-mono text-xs font-bold text-accent outline-none transition focus:border-border/80 focus:bg-surface/55"
-                      value={draft.exeName}
-                      onChange={(event) => set("exeName", event.target.value)}
-                    />
-                  </EditorRow>
-                  <label className="flex items-center gap-2 whitespace-nowrap text-xs font-bold text-muted-fg">
-                    {t("editor.hasCustomLaunch")}
-                    <Switch
-                      checked={hasCustomLaunch}
-                      onCheckedChange={(value) => {
-                        setHasCustomLaunch(value);
-                        if (!value) set("launchTargetPath", "");
-                      }}
-                    />
-                  </label>
-                </div>
+                <EditorRow label={t("editor.process")}>
+                  <input
+                    className={cn(editorInputClass, "h-8 font-mono text-xs")}
+                    value={draft.exeName}
+                    onChange={(event) => set("exeName", event.target.value)}
+                  />
+                </EditorRow>
+                <EditorRow label={t("editor.hasCustomLaunch")}>
+                  <Switch
+                    checked={hasCustomLaunch}
+                    aria-label={t("editor.hasCustomLaunch")}
+                    onCheckedChange={(value) => {
+                      setHasCustomLaunch(value);
+                      if (!value) set("launchTargetPath", "");
+                    }}
+                  />
+                </EditorRow>
                 <EditorRow label={t("editor.launchTarget")}>
                   <input
                     className={cn(editorInputClass, "h-8 font-mono text-xs")}
@@ -1192,32 +1234,8 @@ export function GameEditorForm({
                 </EditorRow>
               </EditorPanel>
 
-              <EditorPanel>
-                <EditorRow label={t("editor.saveFolder")}>
-                  <input
-                    className={cn(editorInputClass, "h-8 font-mono text-xs")}
-                    value={draft.saveFolderPath}
-                    onChange={(event) => set("saveFolderPath", event.target.value)}
-                  />
-                  <IconButton
-                    size="compact"
-                    label={t("editor.pickFolder")}
-                    tone="open"
-                    icon={<Folder />}
-                    onClick={() => pickFolder.mutate("saveFolderPath")}
-                    disabled={!canPickFile || pickFolder.isPending}
-                  />
-                  <IconButton
-                    size="compact"
-                    label={t("detail.openFolder")}
-                    tone="open"
-                    icon={<FolderSymlink />}
-                    onClick={() => revealFolder.mutate(draft.saveFolderPath)}
-                    disabled={!canReveal || !draft.saveFolderPath || revealFolder.isPending}
-                  />
-                </EditorRow>
-              </EditorPanel>
-
+              {/* Thu muc save khong con sua o day: ban nhap van giu gia tri cu nen
+                  Save khong xoa SaveFolderPath da co. */}
               {canBackup && (
                 <EditorPanel>
                   <EditorRow label={t("editor.backupFolder")}>
@@ -1259,6 +1277,7 @@ export function GameEditorForm({
             ) : null}
 
             <EditorSection
+              guide={FORM_GUIDE.images}
               title={t("editor.images")}
               actions={mode === "add" && !imagesOnly ? (
                 <IconButton
@@ -1335,18 +1354,17 @@ export function GameEditorForm({
         </div>
 
         <OverlayScrollbar targetRef={scrollerRef} />
-      </div>
 
-      {/* Footer THAP co dinh duoi the: nut khong con noi de len noi dung, va
-          trang thai sync nam giua hai cum nut thay vi day chung len. */}
-      <footer className="flex shrink-0 items-center gap-3 border-t border-border/60 bg-surface/45 px-4 py-1.5 backdrop-blur-xl">
+      {/* Footer kinh mo NOI o day the: noi dung cuon xuong duoi va nhin xuyen
+          qua; trang thai sync nam giua hai cum nut thay vi day chung len. */}
+        <GlassFooter className="gap-3">
         <div className="flex min-w-9 items-center">
           {mode === "edit" && !imagesOnly ? (
             <IconButton
               tone="danger"
               label={t("editor.disableGame")}
               icon={disableGame.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
-              onClick={() => { if (window.confirm(t("editor.disableConfirm"))) disableGame.mutate(); }}
+              onClick={() => setDisableConfirmOpen(true)}
               disabled={disableGame.isPending}
             />
           ) : null}
@@ -1359,7 +1377,7 @@ export function GameEditorForm({
             </div>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div data-guide={FORM_GUIDE.save} className="flex items-center gap-2">
           <IconButton
             label={t(mode === "edit" ? "action.back" : "action.cancel")}
             icon={<ArrowLeft />}
@@ -1373,12 +1391,21 @@ export function GameEditorForm({
             disabled={referencesPending || save.isPending || !draft.name.trim()}
           />
         </div>
-      </footer>
+        </GlassFooter>
+
+        <GuideTour
+          open={formGuide.open}
+          steps={formGuide.steps}
+          eyebrow={formGuide.eyebrow}
+          containerRef={guideContainerRef}
+          onClose={formGuide.close}
+        />
+      </div>
 
       <OwnershipInfoDialog
         open={ownershipOpen && ownershipInfoAvailable}
         onOpenChange={setOwnershipOpen}
-        ownershipKey={pickCatalog(ownership.data, draft.ownershipId)?.systemKey}
+        layout={pickCatalog(ownership.data, draft.ownershipId)?.infoLayout}
         publisher={draft.publisher}
         values={{
           steamAccount: draft.steamAccount,
@@ -1390,6 +1417,15 @@ export function GameEditorForm({
           note: draft.note,
         }}
         onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
+      />
+
+      <ConfirmDialog
+        open={disableConfirmOpen}
+        onOpenChange={setDisableConfirmOpen}
+        title={t("editor.disableGame")}
+        description={t("editor.disableConfirm")}
+        confirmLabel={t("editor.disableGame")}
+        onConfirm={() => disableGame.mutate()}
       />
 
       {/* Con thay doi chua luu ma dong the: hoi truoc, khong am tham vut di. */}

@@ -59,7 +59,7 @@ const NO_SERIES = "__none";
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.1em] text-muted-fg">
+      <span className="mb-1 block text-fs-11 font-bold uppercase tracking-[0.1em] text-muted-fg">
         {label}
       </span>
       {children}
@@ -106,7 +106,7 @@ export function AdminFilterPopover({
         <PopoverTrigger asChild>
           <IconButton
             label={active > 0 ? `${t("action.filter")} (${active})` : t("action.filter")}
-            tone="edit"
+            tone="filter"
             icon={<Filter />}
           />
         </PopoverTrigger>
@@ -232,7 +232,7 @@ export function AdminFilterPopover({
         <span
           className={cn(
             "pointer-events-none absolute -right-1 -top-1 z-10 grid min-h-4 min-w-4 place-items-center",
-            "rounded-full bg-primary px-1 text-[9px] font-black leading-none text-primary-fg shadow-sm ring-1 ring-bg",
+            "rounded-full bg-primary px-1 text-fs-9 font-black leading-none text-primary-fg shadow-sm ring-1 ring-bg",
           )}
         >
           {active}

@@ -70,7 +70,7 @@ export function AdminSortPopover({
         </PopoverTrigger>
         <PopoverContent align="end" className="w-56">
           <div className="mb-2 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-2">
-            <p className="text-[11px] font-semibold text-muted-fg">{t("sort.current")}</p>
+            <p className="text-fs-11 font-semibold text-muted-fg">{t("sort.current")}</p>
             <div className="mt-0.5 flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-sm font-bold text-fg">{t(`admin.sort.${sort}`)}</span>
               <IconButton

@@ -8,7 +8,6 @@ public enum TrayGlyph
     AppWindow,
     Activity,
     FolderSearch,
-    Save,
     ScrollText,
     RefreshCw,
     LogOut
@@ -74,20 +73,6 @@ public static class TrayGlyphs
                 });
                 g.DrawEllipse(pen, 14f, 14f, 6f, 6f);
                 g.DrawLine(pen, 19.4f, 19.4f, 21.4f, 21.4f);
-                break;
-
-            case TrayGlyph.Save:
-                using (var body = RoundedRectangle(3f, 3f, 18f, 18f, 2.5f))
-                    g.DrawPath(pen, body);
-                g.DrawLines(pen, new[]
-                {
-                    new PointF(7f, 21f), new PointF(7f, 13f),
-                    new PointF(17f, 13f), new PointF(17f, 21f)
-                });
-                g.DrawLines(pen, new[]
-                {
-                    new PointF(7f, 3f), new PointF(7f, 7f), new PointF(15f, 7f)
-                });
                 break;
 
             case TrayGlyph.ScrollText:

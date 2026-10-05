@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Check, Loader2, Save, X } from "lucide-react";
-import type { GameDetail } from "@/lib/api/domain";
+import { AlertTriangle, ArrowLeft, Check, Loader2, Plus, RefreshCw, Save, X } from "lucide-react";
+import type { GameDetail, GameMetadataPreview } from "@/lib/api/domain";
 import { api } from "@/lib/api/client";
 import { gameDetailApi } from "@/lib/gameDetailApi";
 import { useI18n } from "@/lib/i18n";
@@ -12,6 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTitle,
+  GlassFooter,
   IconButton,
   Select,
   SelectContent,
@@ -65,6 +66,13 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(() => toDraft(game));
   const [pendingExit, setPendingExit] = useState<"close" | "back" | null>(null);
+  /* Ten series sync goi y ma thu vien CHUA co — preview khong duoc tao. */
+  const [seriesSuggestion, setSeriesSuggestion] = useState<string | null>(null);
+  /* Game kho metadata da khop va nguon nao hong — hien ra, khong nuot. */
+  const [syncReport, setSyncReport] = useState<{
+    matchedName: string | null;
+    warnings: NonNullable<GameMetadataPreview["warnings"]>;
+  } | null>(null);
   const baseDraft = useMemo(() => toDraft(game), [game]);
   const dirty = useMemo(
     () => (Object.keys(baseDraft) as Array<keyof InformationDraft>).some((key) => draft[key] !== baseDraft[key]),
@@ -103,8 +111,48 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
     baseGameId: draft.isDlc && draft.baseGameId !== NONE ? draft.baseGameId : null,
   }), [draft, game, series.data]);
 
+  /* Sync = preview theo TEN, chi dien vao ban nhap — KHONG ghi DB, phai bam
+     Luu. Chi lay cac field ma man nay sua; field null (khong nguon nao co) thi
+     giu gia tri dang co. */
+  const sync = useMutation({
+    mutationFn: () => gameDetailApi.previewMetadata(draft.name.trim(), "metadata"),
+    onMutate: () => setSyncReport(null),
+    onSuccess: (preview) => {
+      setDraft((current) => ({
+        ...current,
+        name: preview.name ?? current.name,
+        publisher: preview.publisher ?? current.publisher,
+        developer: preview.developer ?? current.developer,
+        publishDate: preview.publishDate ?? current.publishDate,
+        isDlc: preview.isDlc ?? current.isDlc,
+        /* Server da khop san voi Series dang co; khong khop thi giu lua chon cu. */
+        seriesId: preview.series ? preview.series.id.toString() : current.seriesId,
+      }));
+      setSeriesSuggestion(preview.series ? null : preview.seriesName ?? null);
+      setSyncReport({ matchedName: preview.metadataGameName ?? null, warnings: preview.warnings ?? [] });
+    },
+  });
+  const createSeries = useMutation({
+    mutationFn: (name: string) => api.createTaxonomy("series", { id: 0, name, iconData: null, sortOrder: 0 }),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["taxonomy", "series"] });
+      setDraft((current) => ({ ...current, seriesId: created.id.toString() }));
+      setSeriesSuggestion(null);
+    },
+  });
+
   const save = useMutation({
-    mutationFn: () => gameDetailApi.update(game.id, payload),
+    mutationFn: async () => {
+      let body = payload;
+      /* Series sync goi y ma nguoi dung chua bam tao, cung chua chon Series
+         khac: tao that luc Luu, de series cua sync khong roi mat. */
+      if (!draft.isDlc && draft.seriesId === NONE && seriesSuggestion) {
+        const created = await api.createTaxonomy("series", { id: 0, name: seriesSuggestion, iconData: null, sortOrder: 0 });
+        await queryClient.invalidateQueries({ queryKey: ["taxonomy", "series"] });
+        body = { ...payload, series: created };
+      }
+      return gameDetailApi.update(game.id, body);
+    },
     onSuccess: async (saved) => {
       queryClient.setQueryData(["game-detail", saved.id], saved);
       await Promise.all([
@@ -122,13 +170,13 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
   const set = <K extends keyof InformationDraft>(key: K, value: InformationDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
   const referenceError = draft.isDlc ? baseGames.error : series.error;
-  const error = save.error ?? referenceError;
+  const error = save.error ?? sync.error ?? createSeries.error ?? referenceError;
   const referencesPending = draft.isDlc ? baseGames.isPending : series.isPending;
 
   return (
     <form
       noValidate
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
       onSubmit={(event) => {
         event.preventDefault();
         if (draft.name.trim()) save.mutate();
@@ -160,6 +208,14 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
                 className={cn(editorInputClass, "h-8")}
                 value={draft.name}
                 onChange={(event) => set("name", event.target.value)}
+              />
+              <IconButton
+                size="compact"
+                tone="edit"
+                label={t("editor.syncMetadata")}
+                icon={sync.isPending ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                onClick={() => sync.mutate()}
+                disabled={sync.isPending || save.isPending || !draft.name.trim()}
               />
             </EditorRow>
             <EditorRow label={t("detail.publisher")}>
@@ -199,11 +255,46 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
                 onChange={(value) => set("seriesId", value[0] ? String(value[0]) : NONE)}
               />
             )}
+            {seriesSuggestion && !draft.isDlc && draft.seriesId === NONE ? (
+              <div className="grid grid-cols-[minmax(64px,0.32fr)_minmax(0,1fr)] items-center gap-2">
+                <span aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => createSeries.mutate(seriesSuggestion)}
+                  disabled={createSeries.isPending}
+                  title={t("editor.createSeries")}
+                  className="inline-flex min-w-0 items-center gap-1.5 justify-self-start rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-fs-11 font-bold text-primary transition hover:bg-primary/20 disabled:opacity-50"
+                >
+                  {createSeries.isPending ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                  <span className="truncate">{t("editor.seriesSuggestion").replace("{name}", seriesSuggestion)}</span>
+                </button>
+              </div>
+            ) : null}
           </EditorPanel>
+          {syncReport && (syncReport.matchedName || syncReport.warnings.length > 0) ? (
+            <div role="status" className="mt-3 space-y-1 rounded-lg border border-border bg-muted/40 p-2.5 text-xs text-muted-fg">
+              <p className="flex items-center gap-2">
+                <RefreshCw size={13} className="shrink-0 text-primary" />
+                <span className="min-w-0 break-words">
+                  {syncReport.matchedName
+                    ? t("editor.syncMatchedMetadata").replace("{name}", syncReport.matchedName)
+                    : t("editor.syncNoMetadataMatch")}
+                </span>
+              </p>
+              {syncReport.warnings.map((warning) => (
+                <p key={`${warning.provider}:${warning.code}`} className="flex gap-2 text-warning">
+                  <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                  <span className="min-w-0 break-words">
+                    <span className="font-bold uppercase">{warning.provider}</span> · {warning.message}
+                  </span>
+                </p>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-3 z-30 flex items-center gap-2">
+      <GlassFooter className="justify-end">
         <IconButton
           label={t("action.back")}
           icon={<ArrowLeft />}
@@ -217,7 +308,7 @@ export function GameInformationEditor({ game, onBack, onClose, onSaved, register
           icon={save.isPending ? <Loader2 className="animate-spin" /> : <Check />}
           disabled={referencesPending || save.isPending || !draft.name.trim()}
         />
-      </div>
+      </GlassFooter>
 
       <Dialog open={pendingExit !== null} onOpenChange={(next) => { if (!next) setPendingExit(null); }}>
         <DialogContent className="max-w-sm">

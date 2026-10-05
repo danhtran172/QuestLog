@@ -11,6 +11,12 @@ public sealed record SignupRequestDto(string? Username, string? Email, string? P
 
 public sealed record SignupResponseDto(bool RequiresEmailVerification, string Email);
 
+public sealed record SignupCodeRequestDto(string? Identifier);
+
+public sealed record VerifySignupCodeRequestDto(string? Identifier, string? Code);
+
+public sealed record SignupCodeResponseDto(bool Sent, DateTimeOffset ResendAvailableAt);
+
 public sealed record ChangePasswordRequestDto(string? NewPassword, string? ReauthTicket, string? CurrentPassword);
 
 public sealed record ChangeUsernameRequestDto(string? Username, string? ReauthTicket);

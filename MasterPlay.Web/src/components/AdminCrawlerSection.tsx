@@ -51,7 +51,7 @@ function statusTone(status: AdminCrawlerRun["status"]) {
 function Tile({ label, value, icon }: { label: string; value: string | number; icon?: React.ReactNode }) {
   return (
     <div className="surface-card flex min-w-0 flex-col gap-1 p-3">
-      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">
+      <span className="flex items-center gap-1.5 text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">
         {icon}{label}
       </span>
       <span className="truncate text-xl font-black tabular-nums text-fg">{value}</span>
@@ -163,7 +163,7 @@ export function AdminCrawlerSection() {
           <span className="font-bold tabular-nums text-muted-fg">{formatBytes(data.databaseBytes)} / {formatBytes(data.databaseCapBytes)} · {t("admin.crawler.headroom").replace("{value}", formatBytes(data.discoveryHeadroomBytes))}</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2"><div className={cn("h-full rounded-full", databasePercent >= 90 ? "bg-danger" : "bg-primary")} style={{ width: `${databasePercent}%` }} /></div>
-        <p className="mt-2 text-[11px] text-muted-fg">
+        <p className="mt-2 text-fs-11 text-muted-fg">
           {data.cron?.schedule ? `${t("admin.crawler.schedule")}: ${data.cron.schedule}` : t("admin.crawler.scheduleUnavailable")}
           {data.leaseUntil ? ` · ${t("admin.crawler.leaseUntil")}: ${formatDate(data.leaseUntil)}` : ""}
         </p>
@@ -180,7 +180,7 @@ export function AdminCrawlerSection() {
             {runs.isPending ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.loading")}</p> : null}
             {runs.isError ? <p className="p-5 text-sm text-danger">{runs.error instanceof Error ? runs.error.message : String(runs.error)}</p> : null}
             {allRuns.map((run) => <button key={run.id} type="button" onClick={() => setSelectedRun(run.id)} className={cn("grid w-full grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-border/50 px-4 py-3 text-left last:border-0", selectedRun === run.id && "bg-primary/10")}>
-              <span className="min-w-0"><span className="block truncate text-sm font-bold text-fg">{formatDate(run.startedAt)}</span><span className="mt-0.5 block text-[11px] text-muted-fg">{t("admin.crawler.runCounts").replace("{inserted}", String(run.inserted)).replace("{refreshed}", String(run.refreshed)).replace("{errors}", String(run.errors))}</span></span>
+              <span className="min-w-0"><span className="block truncate text-sm font-bold text-fg">{formatDate(run.startedAt)}</span><span className="mt-0.5 block text-fs-11 text-muted-fg">{t("admin.crawler.runCounts").replace("{inserted}", String(run.inserted)).replace("{refreshed}", String(run.refreshed)).replace("{errors}", String(run.errors))}</span></span>
               <span className={cn("text-xs font-black capitalize", statusTone(run.status))}>{t(`admin.crawler.status.${run.status}`)}</span>
             </button>)}
             {!runs.isPending && allRuns.length === 0 ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.noRuns")}</p> : null}
@@ -191,7 +191,7 @@ export function AdminCrawlerSection() {
             {selectedRun === null ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.selectRun")}</p> : null}
             {items.isPending ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.loading")}</p> : null}
             {items.isError ? <p className="p-5 text-sm text-danger">{items.error instanceof Error ? items.error.message : String(items.error)}</p> : null}
-            {runItems.map((game) => <div key={`${game.gameId}-${game.action}`} className="flex items-center gap-3 border-b border-border/50 px-4 py-2.5 last:border-0"><span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{game.name}</span><span className={cn("text-[11px] font-black uppercase", game.action === "inserted" ? "text-success" : "text-primary")}>{t(`admin.crawler.action.${game.action}`)}</span></div>)}
+            {runItems.map((game) => <div key={`${game.gameId}-${game.action}`} className="flex items-center gap-3 border-b border-border/50 px-4 py-2.5 last:border-0"><span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{game.name}</span><span className={cn("text-fs-11 font-black uppercase", game.action === "inserted" ? "text-success" : "text-primary")}>{t(`admin.crawler.action.${game.action}`)}</span></div>)}
             {selectedRun !== null && !items.isPending && runItems.length === 0 ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.noAudit")}</p> : null}
             {items.hasNextPage ? <button type="button" disabled={items.isFetchingNextPage} onClick={() => void items.fetchNextPage()} className="m-3 rounded-lg border border-border px-3 py-1.5 text-xs font-bold text-fg">{items.isFetchingNextPage ? t("admin.crawler.loading") : t("admin.crawler.more")}</button> : null}
           </div>
@@ -201,13 +201,13 @@ export function AdminCrawlerSection() {
           <div className="border-b border-border px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-muted-fg">{t("admin.crawler.trackedGames")}</div>
           {tracked.isPending ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.loading")}</p> : null}
           {tracked.isError ? <p className="p-5 text-sm text-danger">{tracked.error instanceof Error ? tracked.error.message : String(tracked.error)}</p> : null}
-          {trackedGames.map((game) => <div key={game.gameId} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"><span className="min-w-0 truncate font-semibold text-fg">{game.name}</span><span className="text-xs text-muted-fg">{formatDate(game.checkedAt)}</span>{game.queued ? <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-black uppercase text-warning">{t("admin.crawler.queuedBadge")}</span> : <span />}</div>)}
+          {trackedGames.map((game) => <div key={game.gameId} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"><span className="min-w-0 truncate font-semibold text-fg">{game.name}</span><span className="text-xs text-muted-fg">{formatDate(game.checkedAt)}</span>{game.queued ? <span className="rounded-full bg-warning/15 px-2 py-0.5 text-fs-10 font-black uppercase text-warning">{t("admin.crawler.queuedBadge")}</span> : <span />}</div>)}
           {!tracked.isPending && trackedGames.length === 0 ? <p className="p-5 text-sm text-muted-fg">{t("admin.crawler.noTracked")}</p> : null}
           {tracked.hasNextPage ? <button type="button" disabled={tracked.isFetchingNextPage} onClick={() => void tracked.fetchNextPage()} className="m-3 rounded-lg border border-border px-3 py-1.5 text-xs font-bold text-fg">{tracked.isFetchingNextPage ? t("admin.crawler.loading") : t("admin.crawler.more")}</button> : null}
         </div>
       )}
 
-      <p className="flex items-center gap-1.5 px-1 text-[11px] leading-5 text-muted-fg"><ExternalLink size={12} />{t("admin.crawler.footnote")}</p>
+      <p className="flex items-center gap-1.5 px-1 text-fs-11 leading-5 text-muted-fg"><ExternalLink size={12} />{t("admin.crawler.footnote")}</p>
     </div>
   );
 }

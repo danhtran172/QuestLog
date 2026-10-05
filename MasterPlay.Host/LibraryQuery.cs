@@ -44,6 +44,18 @@ public static class LibraryQuery
         };
     }
 
+    /// <summary>
+    /// Bo cuc khung thong tin so huu (DOMAIN_RULES §14): dung chung tai khoan ->
+    /// "sharedAccount" (tai khoan Steam/Ubisoft + tai lieu), ban tai ve -> "download"
+    /// (link + ghi chu), con lai -> null (khong co gi de xem).
+    /// </summary>
+    public static string? OwnershipInfoLayout(OwnershipStatus? o) => OwnershipSystemKey(o) switch
+    {
+        "Shared" or "SteamOff" => "sharedAccount",
+        "Picklocked" or "Pirated" => "download",
+        _ => null,
+    };
+
     private static string NormalizeName(string? name) =>
         string.IsNullOrWhiteSpace(name) ? "" : name.Replace(" ", "");
 
@@ -114,23 +126,16 @@ public static class LibraryQuery
         (value ?? "").ToLowerInvariant().Contains(term);
 
     /// <summary>DOMAIN_RULES §4 — phan loai theo tab bang SystemKey.</summary>
-    public static IEnumerable<Game> ApplyTab(IEnumerable<Game> games, string tab) => tab switch
+    public static IEnumerable<Game> ApplyTab(IEnumerable<Game> games, string tab, LaunchTargets? launchTargets = null) => tab switch
     {
-        "console" => games.Where(CanLaunch),
+        "console" => games.Where((launchTargets
+            ?? throw new ArgumentNullException(nameof(launchTargets), "Tab console can LaunchTargets.")).CanLaunch),
         "planning" => games.Where(g => ProgressSystemKey(g.Progress) != "Done"),
         "finished" => games.Where(g => ProgressSystemKey(g.Progress) == "Done"),
         "queue" => games.Where(g =>
             ProgressSystemKey(g.Progress) is "Playing" or "NextPlay" or "Intended"),
         _ => games,
     };
-
-    /// <summary>
-    /// Single server-owned launchability predicate used by both Console filtering
-    /// and the read-only canLaunch API field.
-    /// </summary>
-    public static bool CanLaunch(Game game) => !game.IsDlc && (
-        !string.IsNullOrWhiteSpace(game.LaunchTargetPath) ||
-        !string.IsNullOrWhiteSpace(game.ExeName));
 
     /// <summary>DOMAIN_RULES §6.3, §6.4.</summary>
     public static IEnumerable<Game> ApplySearch(IEnumerable<Game> games, string? q, string scope)
@@ -175,6 +180,12 @@ public static class LibraryQuery
         public bool IncludeAvgNone { get; init; }
         public string[] MetaBands { get; init; } = [];
         public bool IncludeMetaNone { get; init; }
+        /// <summary>SystemKey (khong phai id) — §5.8. So voi ProgressSystemKey/OwnershipSystemKey.</summary>
+        public string[] ProgressKeys { get; init; } = [];
+        public string[] OwnershipKeys { get; init; } = [];
+        /// <summary>Genre va Theme la MOT nhom, quan he OR — §5.7.</summary>
+        public int[] GenreIds { get; init; } = [];
+        public int[] ThemeIds { get; init; } = [];
         public bool ReverseFilter { get; init; }
 
         /// <summary>
@@ -189,7 +200,11 @@ public static class LibraryQuery
             || AvgBands.Length > 0
             || IncludeAvgNone
             || MetaBands.Length > 0
-            || IncludeMetaNone;
+            || IncludeMetaNone
+            || ProgressKeys.Length > 0
+            || OwnershipKeys.Length > 0
+            || GenreIds.Length > 0
+            || ThemeIds.Length > 0;
 
         public int ActiveCount =>
             (FinishedYearValue.HasValue ? 1 : 0)
@@ -197,7 +212,11 @@ public static class LibraryQuery
             + (ScoreValue.HasValue ? 1 : 0)
             + (PlaytimeSeconds.HasValue ? 1 : 0)
             + (AvgBands.Length > 0 || IncludeAvgNone ? 1 : 0)
-            + (MetaBands.Length > 0 || IncludeMetaNone ? 1 : 0);
+            + (MetaBands.Length > 0 || IncludeMetaNone ? 1 : 0)
+            + (ProgressKeys.Length > 0 ? 1 : 0)
+            + (OwnershipKeys.Length > 0 ? 1 : 0)
+            // Genre + Theme OR voi nhau nen tinh la MOT nhom.
+            + (GenreIds.Length > 0 || ThemeIds.Length > 0 ? 1 : 0);
     }
 
     /// <summary>
@@ -293,6 +312,18 @@ public static class LibraryQuery
                 }
                 matches &= pass;
             }
+
+            // Progress / Ownership: AND giua nhom, OR trong nhom — §5.8.
+            if (f.ProgressKeys.Length > 0)
+                matches &= f.ProgressKeys.Contains(ProgressSystemKey(g.Progress));
+
+            if (f.OwnershipKeys.Length > 0)
+                matches &= f.OwnershipKeys.Contains(OwnershipSystemKey(g.Ownership));
+
+            // Genre OR Theme — §5.7. Khong phai AND.
+            if (f.GenreIds.Length > 0 || f.ThemeIds.Length > 0)
+                matches &= g.GameGenres.Any(x => f.GenreIds.Contains(x.GenreId))
+                           || g.GameThemes.Any(x => f.ThemeIds.Contains(x.ThemeId));
 
             return f.ReverseFilter ? !matches : matches;
         });

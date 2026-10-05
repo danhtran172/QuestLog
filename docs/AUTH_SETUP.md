@@ -13,7 +13,9 @@ For the desktop app, copy [`auth.local.example.json`](../auth.local.example.json
 Fill in the Supabase URL, publishable key (`SUPABASE_PUBLISHABLE_KEY`; the legacy
 `SUPABASE_ANON_KEY` name is also accepted), and service-role secret
 (`SUPABASE_SECRET_KEY`; the legacy `SUPABASE_SERVICE_ROLE_KEY` name is also accepted),
-and bootstrap administrator values. The Host reads this file at startup. The file is
+and bootstrap administrator values. The Host reads this file at startup. If a
+different data folder was chosen when installing QuestLog, the Host also reads
+`auth.local.json` from that folder, and values there win. The file is
 ignored by Git; never commit it or paste its service-role value into frontend code.
 Environment variables with the same names are still supported and take precedence.
 
@@ -42,13 +44,16 @@ After the migration, enable `public.custom_access_token_hook` under **Authentica
 
 ### 2.1 Email delivery (required for forgot-password and sensitive changes)
 
-QuestLog sends **6-digit codes**, not links, for forgot-password and for confirming password,
-username, and email changes. Desktop links would point at `localhost` and fail on a phone.
+QuestLog sends **6-digit codes**, not links, for sign-up confirmation, forgot-password, and for
+confirming password, username, and email changes. The desktop app has no web page for a link to open
+(it would point at the Site URL or `localhost` and fail, especially on a phone).
 
 1. **Authentication → Emails → SMTP Settings**: configure a custom SMTP provider (Resend, Amazon SES,
    Gmail SMTP, …). Supabase's built-in sender only delivers to project team members at a very low
    rate, so real users would get neither codes nor the sign-up verification email.
 2. **Authentication → Emails → Templates**:
+   - **Confirm signup**: show the code, e.g. `Your QuestLog sign-up code is {{ .Token }}`. Remove
+     `{{ .ConfirmationURL }}`; the app's "Check your email" step takes the code.
    - **Reset Password**: show the code, e.g. `Your QuestLog reset code is {{ .Token }}`.
    - **Magic Link**: show the code, e.g. `Your QuestLog confirmation code is {{ .Token }}`.
      QuestLog uses this template only for reauthentication codes.
@@ -101,7 +106,10 @@ Do not commit a filled `.env`, PowerShell profile, `appsettings` file, or launch
 
 1. `GET /api/auth/config` returns `configured: true` without returning any key.
 2. The QuestLog window shows Sign in and Create account.
-3. Registering creates only a `user` profile and sends an email confirmation.
+3. Registering creates only a `user` profile and emails a 6-digit code; entering it signs in. Signing in
+   before confirming reopens the code step (with **Send again**). An unconfirmed sign-up holds its
+   username and email for 6 hours; after that, a new sign-up, username/email change, or Google username
+   claim that wants either value deletes the abandoned account and proceeds.
 4. Sign in accepts either the username or email.
 5. More → Account opens account settings with username, email, password, and Sign out actions.
 6. Changing username asks for a 6-digit code sent by email and rejects a duplicate normalized username.

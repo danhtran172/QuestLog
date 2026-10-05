@@ -22,7 +22,6 @@ public static class LegacyIntegrationCredentials
         {
             IntegrationProviders.Rawg => Complete(("apiKey", environment("RAWG_API_KEY"))),
             IntegrationProviders.Gemini => Complete(("apiKey", environment("GEMINI_API_KEY"))),
-            IntegrationProviders.Steam => Complete(("apiKey", environment("STEAM_API_KEY"))),
             IntegrationProviders.Igdb =>
                 Complete(("clientId", environment("IGDB_CLIENT_ID")), ("clientSecret", environment("IGDB_CLIENT_SECRET")))
                 ?? FromConfig(loadConfig, config => Complete(

@@ -23,6 +23,11 @@ export function getDesktopGuestToken(): string | null {
   return token && token.length >= 32 ? token : null;
 }
 
+/** Dang chay trong WebView2 cua Shell (khong phai trinh duyet thuong). */
+export function isDesktopShell(): boolean {
+  return window.chrome?.webview != null;
+}
+
 export async function setConsoleFullscreen(enabled: boolean): Promise<void> {
   const webview = window.chrome?.webview;
   if (webview) {
@@ -78,4 +83,30 @@ export function subscribeConsoleToggle(listener: () => void): () => void {
   };
   webview.addEventListener("message", onMessage);
   return () => webview.removeEventListener("message", onMessage);
+}
+
+/**
+ * Shell da tai xong ban moi (Velopack) va bao `questlog.update-ready`. Ngay khi
+ * dang ky, hoi lai trang thai vi Shell co the da bao truoc khi trang nay tai xong.
+ * Ngoai vo desktop (trinh duyet) khong co cap nhat: khong lam gi.
+ */
+export function subscribeUpdateReady(listener: (version: string) => void): () => void {
+  const webview = window.chrome?.webview;
+  if (!webview) return () => {};
+
+  const onMessage = (event: WebViewMessageEvent) => {
+    const message = event.data;
+    if (!message || typeof message !== "object") return;
+    if (!("type" in message) || message.type !== "questlog.update-ready") return;
+    if (!("version" in message) || typeof message.version !== "string") return;
+    listener(message.version);
+  };
+  webview.addEventListener("message", onMessage);
+  webview.postMessage({ type: "questlog.update-status" });
+  return () => webview.removeEventListener("message", onMessage);
+}
+
+/** Shell dung tray, ap dung ban moi va mo lai app. */
+export function applyUpdateAndRestart(): void {
+  window.chrome?.webview?.postMessage({ type: "questlog.update-apply" });
 }

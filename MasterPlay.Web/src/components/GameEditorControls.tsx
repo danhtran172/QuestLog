@@ -75,12 +75,16 @@ export function EditorField({
 export function EditorPanel({
   children,
   className,
+  guide,
 }: {
   children: ReactNode;
   className?: string;
+  /** Moc cho GuideTour (`data-guide`). */
+  guide?: string;
 }) {
   return (
     <section
+      data-guide={guide}
       className={cn(
         "rounded-xl border border-border bg-surface-2/30 p-3 backdrop-blur-sm",
         className,
@@ -196,6 +200,7 @@ export function EditorSection({
   actions,
   collapsible = false,
   defaultOpen = true,
+  guide,
 }: {
   title: string;
   children: ReactNode;
@@ -205,24 +210,26 @@ export function EditorSection({
   /** Cho phep dong/mo ca mang bang cach bam vao tieu de. */
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** Moc cho GuideTour (`data-guide`). */
+  guide?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const showContent = !collapsible || open;
   return (
-    <section className={cn("space-y-3", className)}>
+    <section data-guide={guide} className={cn("space-y-3", className)}>
       <div className="flex items-center gap-3">
         {collapsible ? (
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
             aria-expanded={open}
-            className="flex shrink-0 items-center gap-1 text-[11px] font-black uppercase tracking-[0.14em] text-muted-fg transition-colors hover:text-fg"
+            className="flex shrink-0 items-center gap-1 text-fs-11 font-black uppercase tracking-[0.14em] text-muted-fg transition-colors hover:text-fg"
           >
             <ChevronRight size={13} className={cn("transition-transform", open && "rotate-90")} aria-hidden />
             {title}
           </button>
         ) : (
-          <h3 className="shrink-0 text-[11px] font-black uppercase tracking-[0.14em] text-muted-fg">
+          <h3 className="shrink-0 text-fs-11 font-black uppercase tracking-[0.14em] text-muted-fg">
             {title}
           </h3>
         )}
@@ -291,7 +298,7 @@ export function EditorStat({
         className,
       )}
     >
-      <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-fg">
+      <span className="flex items-center gap-1 text-fs-11 font-semibold text-muted-fg">
         {icon}
         {label}
       </span>

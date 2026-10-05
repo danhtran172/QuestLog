@@ -139,12 +139,12 @@ export function ManageTagsDialog({
 
                   {/* systemKey la BAT BIEN — hien de thay ro cai gi sua duoc, cai gi khong */}
                   {item.systemKey && (
-                    <code className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted-fg">
+                    <code className="rounded bg-surface-2 px-1.5 py-0.5 text-fs-10 text-muted-fg">
                       {item.systemKey}
                     </code>
                   )}
 
-                  <span className="w-10 text-right text-[11px] text-muted-fg">#{item.sortOrder}</span>
+                  <span className="w-10 text-right text-fs-11 text-muted-fg">#{item.sortOrder}</span>
                 </div>
               ))
             )}

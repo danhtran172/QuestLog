@@ -1,4 +1,4 @@
-import { Gauge, Info } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { CommunityPlaytimeIcon, MetaChip } from "./Pills";
 import { InlineEditButton, InlineNumberInput } from "./InlineEditControls";
-import { IconButton } from "./ui";
+import { InfoButton } from "./ui";
 
 type EditableMetadataField = "avgPlaytimeHours" | "metaScore";
 
@@ -66,7 +66,7 @@ export function GameDetailMetadataQuickRows({
   const [inlineValue, setInlineValue] = useState("");
 
   const saveMetadata = useMutation({
-    mutationFn: ({ field, value }: { field: EditableMetadataField; value: number }) => {
+    mutationFn: ({ field, value }: { field: EditableMetadataField; value: number | null }) => {
       const latest = queryClient.getQueryData<GameDetail>(["game-detail", game.id]) ?? game;
       return gameDetailApi.update(game.id, { ...latest, [field]: value });
     },
@@ -89,10 +89,17 @@ export function GameDetailMetadataQuickRows({
     saveMetadata.reset();
   };
 
+  /* De trong = xoa gia tri (luu null). Khong doi gi thi khong goi API. */
   const saveInlineValue = (field: EditableMetadataField, rawValue: string) => {
-    if (!rawValue.trim()) return;
-    const value = Number(rawValue);
-    if (!Number.isFinite(value)) return;
+    let value: number | null = null;
+    if (rawValue.trim()) {
+      value = Number(rawValue);
+      if (!Number.isFinite(value)) return;
+    }
+    if (value === (game[field] ?? null)) {
+      setEditingField(null);
+      return;
+    }
     saveMetadata.mutate({ field, value });
   };
 
@@ -122,7 +129,6 @@ export function GameDetailMetadataQuickRows({
         value={editingField === "avgPlaytimeHours" ? (
           <InlineNumberInput
             autoFocus
-            required
             min="0"
             step="1"
             aria-label={`${t("action.edit")} ${t("sort.avgPlaytime")}`}
@@ -139,18 +145,17 @@ export function GameDetailMetadataQuickRows({
           <span className="text-muted-fg">—</span>
         )}
         externalAction={hltbUrl?.trim() ? (
-          <IconButton
+          <InfoButton
             size="mini"
             label={t("detail.openHltb")}
             tone="open"
-            icon={<Info />}
             onClick={() => window.open(hltbUrl, "_blank", "noopener,noreferrer")}
           />
         ) : undefined}
       />
       <MetadataRow
         label={t("sort.metaScore")}
-        icon={<Gauge size={13} className="text-emerald-400" />}
+        icon={<Gauge size={13} className="text-field-metascore" />}
         editAction={editAction("metaScore", t("sort.metaScore"))}
         onValueDoubleClick={editingField !== "metaScore" && !saveMetadata.isPending
           ? () => startEditing("metaScore")
@@ -158,7 +163,6 @@ export function GameDetailMetadataQuickRows({
         value={editingField === "metaScore" ? (
           <InlineNumberInput
             autoFocus
-            required
             min="0"
             max="100"
             step="1"
@@ -173,15 +177,17 @@ export function GameDetailMetadataQuickRows({
         ) : (
           <MetaChip value={game.metaScore} band={game.metaScoreBand} className="w-full max-w-[50px]" />
         )}
-        externalAction={metacriticUrl?.trim() ? (
-          <IconButton
+        /* Luon hien nut. Backend tra "" khi game thieu slug RAWG -> disable va
+           noi ro ly do o tooltip. `undefined` = link chua tai xong. */
+        externalAction={(
+          <InfoButton
             size="mini"
-            label={t("detail.openMetacritic")}
+            label={t(metacriticUrl === "" ? "detail.metacriticNoSlug" : "detail.openMetacritic")}
             tone="open"
-            icon={<Info />}
-            onClick={() => window.open(metacriticUrl, "_blank", "noopener,noreferrer")}
+            disabled={!metacriticUrl?.trim()}
+            onClick={() => metacriticUrl && window.open(metacriticUrl, "_blank", "noopener,noreferrer")}
           />
-        ) : undefined}
+        )}
       />
     </>
   );

@@ -1,6 +1,6 @@
 ---
-// Anh chup thu vien that dat trong khung cua so Windows 11, hai card game
-// cat rieng (cung du lieu that) noi len nhu anh phong to.
+// Anh chup thu vien dat trong khung cua so Windows 11. Hai card cat rieng noi
+// len nhu anh phong to: mot game da choi (diem ca nhan), mot game sap ra mat.
 import { Image } from "astro:assets";
 import { shot } from "../shots";
 import { ui, type Locale } from "../i18n/ui";
@@ -29,27 +29,30 @@ const t = ui[lang].shots;
         <Image
           src={shot(lang, "library")}
           alt={t.library}
-          widths={[800, 1200, 1600, 2400]}
+          widths={[800, 1200, 1600, 2400, 3200]}
           sizes="(min-width: 1200px) 1136px, 94vw"
+          quality={90}
           loading="eager"
           class="block h-auto w-full"
         />
       </figure>
 
       <Image
-        src={shot(lang, "card-playing")}
-        alt=""
-        aria-hidden="true"
-        widths={[300, 604]}
-        sizes="(min-width: 1024px) 240px, 1px"
-        class="cutout cutout-a"
-      />
-      <Image
         src={shot(lang, "card-done")}
         alt=""
         aria-hidden="true"
-        widths={[300, 602]}
-        sizes="(min-width: 1024px) 230px, 1px"
+        widths={[300, 600, 900]}
+        sizes="(min-width: 1024px) 250px, 1px"
+        quality={92}
+        class="cutout cutout-a"
+      />
+      <Image
+        src={shot(lang, "card-upcoming")}
+        alt=""
+        aria-hidden="true"
+        widths={[300, 600, 900]}
+        sizes="(min-width: 1024px) 240px, 1px"
+        quality={92}
         class="cutout cutout-b"
       />
     </div>

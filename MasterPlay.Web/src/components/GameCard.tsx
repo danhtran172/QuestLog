@@ -139,7 +139,7 @@ export function GameCard({
           {game.isRunning ? (
             <span
               className={cn(
-                "absolute top-2 inline-flex items-center gap-1 rounded-full bg-success/90 px-2 py-0.5 text-[10px] font-bold text-primary-fg",
+                "absolute top-2 inline-flex items-center gap-1 rounded-full bg-success/90 px-2 py-0.5 text-fs-10 font-bold text-primary-fg",
                 game.isDlc ? "left-12" : "left-2",
               )}
             >
@@ -178,25 +178,25 @@ export function GameCard({
                   <GalleryScoreChip
                     score={game.score}
                     band={game.scoreMaterialBand}
-                    className="text-[12px]"
+                    className="text-fs-12"
                   />
                 ) : null}
                 {hasMetaScore ? (
                   <MetaChip
                     value={game.metaScore}
                     band={game.metaScoreBand}
-                    className="text-[12px]"
+                    className="text-fs-12"
                   />
                 ) : null}
               </div>
             ) : null}
           </div>
 
-          <div className="mt-auto grid grid-rows-[1rem_1rem] gap-y-2.5 pt-3 text-[12px] text-muted-fg">
+          <div className="mt-auto grid grid-rows-[1rem_1rem] gap-y-2.5 pt-3 text-fs-12 text-muted-fg">
             <div className="grid min-h-4 grid-cols-2 items-center gap-x-3">
               {game.isDlc && game.baseGameName?.trim() ? (
                 <span className="inline-flex min-w-0 items-center gap-1">
-                  <Package aria-hidden size={13} className="shrink-0 text-indigo-400" />
+                  <Package aria-hidden size={13} className="shrink-0 text-field-base-game" />
                   <span className="shrink-0">{t("detail.baseGame")}:</span>
                   <span className="min-w-0 truncate rounded-md border border-border bg-surface-2/60 px-1.5 py-0.5 font-semibold text-fg">
                     {game.baseGameName}
@@ -204,13 +204,18 @@ export function GameCard({
                 </span>
               ) : publishDate ? (
                 <span className="inline-flex items-center gap-1">
-                  <CalendarDays aria-hidden size={13} className="text-violet-400" />
+                  <CalendarDays aria-hidden size={13} className="text-field-publish" />
                   {publishDate}
                 </span>
               ) : null}
               {hasExcited ? (
                 <span className="col-start-2 justify-self-end">
-                  <ExcitedFire value={game.excited} size={15} className="text-[12px]" />
+                  <ExcitedFire
+                    value={game.excited}
+                    size={15}
+                    className="text-fs-12"
+                    iconClassName="relative -top-px"
+                  />
                 </span>
               ) : null}
             </div>
@@ -219,13 +224,13 @@ export function GameCard({
               {hasAveragePlaytime ? (
                 <CommunityAveragePlaytime
                   hours={game.avgPlaytimeHours}
-                  className="text-[12px]"
+                  className="text-fs-12"
                 />
               ) : null}
               {hasPlayerPlaytime ? (
                 <Tooltip label={t("card.playtime")}>
                   <span className="col-start-2 inline-flex items-center gap-1 justify-self-end">
-                    <PlayerPlaytimeIcon className="text-sky-400" />
+                    <PlayerPlaytimeIcon className="text-field-playtime" />
                     {formatPlaytimeSeconds(game.totalPlaytimeSeconds)}
                   </span>
                 </Tooltip>
@@ -233,7 +238,7 @@ export function GameCard({
             </div>
           </div>
 
-          <div className="mt-2.5 flex h-8 shrink-0 items-center pr-10 text-[12px] text-muted-fg">
+          <div className="mt-2.5 flex h-8 shrink-0 items-center pr-10 text-fs-12 text-muted-fg">
             {finishTime ? (
               <span className="inline-flex items-center gap-1">
                 <Trophy aria-hidden size={13} className="text-success" />

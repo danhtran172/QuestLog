@@ -6,9 +6,8 @@
 /*
   QuestLog Landing — design token.
 
-  Y tuong: trang la mot "tuyen duong tren ban do kho bau" (lay tu anh quest-map
-  cua man hinh dang nhap). Moi chang la mot trang thai tien do THAT trong app
-  (Planned -> Nextplay -> Playing -> Done), ket thuc o dau X = tai xuong.
+  Y tuong: trang tra loi "da choi gi, sap choi gi". Phan chinh la dong thoi
+  gian Da choi -> Dang choi -> Sap choi, moc to dung mau trang thai cua app.
 
   Chi co theme toi: app dang khoa theme toi (THEME_SELECTION_ENABLED = false)
   va anh chup app deu la nen toi.
@@ -28,19 +27,18 @@
   --color-mist: #d6d9de;
   --color-fog: #8d94a0;
 
-  /* Mau thuong hieu cua app (oklch 0.7 0.105 172). */
-  --color-quest: #4db497;
-  --color-quest-ink: #0b1d17;
+  /* Mau thuong hieu cua app (oklch 0.595 0.063 137), trung xanh cua icon. */
+  --color-quest: #6d8863;
+  --color-quest-ink: #0a140c;
 
-  /* Tu tam ban do kho bau: duong di va dau X. */
+  /* Mau am lam diem nhan cho nhan kieu HUD (eyebrow, moc dau dong thoi gian). */
   --color-parchment: #e4cda8;
-  --color-mark: #d9564f;
 
-  /* Mau trang thai tien do, lay mau tu thu vien that. */
-  --color-planned: #f0a830;
-  --color-nextplay: #e5568e;
-  --color-playing: #4c8df0;
-  --color-done: #35c26f;
+  /* Mau trang thai tien do: dung colorCode trong catalog cua app. */
+  --color-planned: #f5a623;
+  --color-nextplay: #ff8fb7;
+  --color-playing: #5eabd6;
+  --color-done: #6dc3bb;
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }

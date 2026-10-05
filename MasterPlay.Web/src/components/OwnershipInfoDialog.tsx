@@ -1,17 +1,18 @@
 /**
  * Popup THONG TIN SO HUU — dung chung cho trang xem va trang sua.
  *
- * Bo cuc doi theo kieu so huu:
- *   - Dung chung tai khoan  -> khung "Steam Account" (+ "Ubisoft Account" neu
- *                              nha phat hanh la Ubisoft) + khung Document/Note.
- *   - Ban tai ve            -> khung "Download": Link + Note.
- *   - Kieu khac             -> chi khung Document/Note.
+ * Bo cuc theo `infoLayout` backend gan cho kieu so huu (DOMAIN_RULES §14.1):
+ *   - sharedAccount -> khung "Steam Account" (+ "Ubisoft Account" neu nha phat
+ *                      hanh la Ubisoft) + khung Document/Note.
+ *   - download      -> khung "Download": Link + Note.
+ *   - null          -> chi khung Document/Note.
  *
  * Khung nao CO DU LIEU thi van hien du bo cuc khong goi ten no, de khong bao
  * gio co du lieu bi khoa lai khong sua/khong xem duoc.
  */
 import { Copy, SquareArrowOutUpRight } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import type { CatalogItem } from "@/lib/api/domain";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { editorInputClass } from "./GameEditorControls";
@@ -34,25 +35,15 @@ export type OwnershipInfoValues = {
   note: string;
 };
 
-/**
- * `systemKey` cua Ownership.
- *
- * CHAP NHAN CA HAI CACH VIET vi backend va hop dong dang khong khop nhau:
- * `openapi.yaml` khai bao enum la `Shared` / `Picklocked` va ghi ro
- * `SteamOff` / `Pirated` la SAI, nhung `MasterPlay.Host/LibraryQuery.cs:31`
- * van tra ve `SteamOff` / `Pirated` cho id 6 va 2. Nhan ca hai thi man hinh
- * chay dung o ca truoc lan sau khi backend duoc chinh lai.
- */
-const SHARED_ACCOUNT_KEYS = ["Shared", "SteamOff"];
-const DOWNLOAD_KEYS = ["Picklocked", "Pirated"];
+export type OwnershipInfoLayout = NonNullable<CatalogItem["infoLayout"]>;
 
 /**
- * Nut ⓘ CHI hien voi hai kieu so huu nay — cac kieu con lai khong co gi de
- * xem. Dung chung cho trang xem va trang sua de hai noi khong lech nhau.
+ * Nut ⓘ CHI hien khi backend gan bo cuc cho kieu so huu (`infoLayout`) — cac
+ * kieu con lai khong co gi de xem. Client KHONG tu so `systemKey`
+ * (DOMAIN_RULES §14.1). Dung chung cho trang xem va trang sua.
  */
-export function ownershipHasInfo(systemKey?: string | null): boolean {
-  const key = systemKey ?? "";
-  return SHARED_ACCOUNT_KEYS.includes(key) || DOWNLOAD_KEYS.includes(key);
+export function ownershipHasInfo(ownership?: Pick<CatalogItem, "infoLayout"> | null): boolean {
+  return Boolean(ownership?.infoLayout);
 }
 
 function isUbisoftPublisher(publisher?: string | null): boolean {
@@ -69,7 +60,7 @@ function Group({
   return (
     <section className="rounded-xl border border-border bg-surface-2/30 p-3 backdrop-blur-sm">
       {title ? (
-        <h4 className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-muted-fg">
+        <h4 className="mb-2 text-fs-11 font-black uppercase tracking-[0.14em] text-muted-fg">
           {title}
         </h4>
       ) : null}
@@ -86,7 +77,7 @@ function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="grid gap-1 text-[11px] font-bold text-muted-fg">
+    <label className="grid gap-1 text-fs-11 font-bold text-muted-fg">
       {label}
       {children}
     </label>
@@ -117,26 +108,43 @@ function ReadValue({
 export function OwnershipInfoDialog({
   open,
   onOpenChange,
-  ownershipKey,
+  layout,
   publisher,
   values,
   onChange,
   onCopy,
+  headerAction,
+  footer,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  ownershipKey?: string | null;
+  /** `infoLayout` cua Ownership dang chon, do backend tra. */
+  layout?: OwnershipInfoLayout | null;
   publisher?: string | null;
   values: OwnershipInfoValues;
   /** Co ham nay = SUA duoc; khong co = chi xem. */
   onChange?: (patch: Partial<OwnershipInfoValues>) => void;
   onCopy?: (value: string) => void;
+  /** Nut o goc tren ben phai (vd nut sua). */
+  headerAction?: ReactNode;
+  /** Thanh nut duoi cung (vd Huy / Luu khi dang sua). */
+  footer?: ReactNode;
 }) {
   const { t } = useI18n();
   const editable = Boolean(onChange);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
-  const sharedLayout = SHARED_ACCOUNT_KEYS.includes(ownershipKey ?? "");
-  const downloadLayout = DOWNLOAD_KEYS.includes(ownershipKey ?? "");
+  /* Vua chuyen sang sua (nut but bien mat): dua focus vao o dau tien, khong de
+     no roi vao khung hop thoai. */
+  useEffect(() => {
+    if (!open || !editable) return;
+    // Hen sau mot nhip: Radix tra focus ve khung khi nut dang focus bi go khoi DOM.
+    const timer = setTimeout(() => bodyRef.current?.querySelector<HTMLElement>("input, textarea")?.focus());
+    return () => clearTimeout(timer);
+  }, [open, editable]);
+
+  const sharedLayout = layout === "sharedAccount";
+  const downloadLayout = layout === "download";
 
   const has = (value: string) => value.trim().length > 0;
   const showSteam = sharedLayout || has(values.steamAccount) || has(values.steamPassword);
@@ -298,7 +306,8 @@ export function OwnershipInfoDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <div className="max-h-[80vh] space-y-3 overflow-y-auto p-5 pr-14">
+        {headerAction ? <div className="absolute right-3 top-3 z-10">{headerAction}</div> : null}
+        <div ref={bodyRef} className="max-h-[80vh] space-y-3 overflow-y-auto p-5 pr-14">
           <div>
             <DialogTitle>{t("detail.ownershipInfo")}</DialogTitle>
             <DialogDescription>{t("ownership.description")}</DialogDescription>
@@ -315,6 +324,7 @@ export function OwnershipInfoDialog({
             </>
           )}
         </div>
+        {footer}
       </DialogContent>
     </Dialog>
   );

@@ -29,7 +29,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Eye,
   FileCheck2,
   FileX,
@@ -41,7 +40,7 @@ import {
   Package,
   Pencil,
   Search,
-  Star,
+  Gauge,
   Building2,
   Users,
   X,
@@ -63,6 +62,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AdminFilterPopover } from "./AdminFilterPopover";
 import { AdminPublishedStatus, unpublishedReason } from "./AdminPublishedStatus";
+import { CommunityPlaytimeIcon } from "./Pills";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, IconButton, Tooltip } from "./ui";
 
 /** So ban ghi lay moi lan — chuyen trong cung mot trang khong goi lai server. */
@@ -141,7 +141,7 @@ function MissingBadge({ state }: { state: Exclude<FieldState, "ok"> }) {
   const badge = (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-fs-10 font-black uppercase tracking-wide",
         state === "blocking"
           ? "border-danger/50 bg-danger/15 text-danger"
           : "border-warning/50 bg-warning/15 text-warning",
@@ -201,7 +201,7 @@ function ImageSlot({
 }) {
   return (
     <figure className={cn("min-w-0 space-y-1.5", className)}>
-      <figcaption className="flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.12em] text-muted-fg">
+      <figcaption className="flex items-center justify-between gap-2 text-fs-11 font-black uppercase tracking-[0.12em] text-muted-fg">
         {label}
         {state !== "ok" ? <MissingBadge state={state} /> : null}
       </figcaption>
@@ -223,7 +223,7 @@ function ImageSlot({
       </div>
       {url ? (
         <Tooltip label={url} className="max-w-96 break-all font-mono">
-          <p className="truncate font-mono text-[10px] text-muted-fg">{url}</p>
+          <p className="truncate font-mono text-fs-10 text-muted-fg">{url}</p>
         </Tooltip>
       ) : null}
     </figure>
@@ -516,7 +516,7 @@ export function AdminGamePreviewDialog({
             <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
               {/* ── Cot trai: Tong quan ── */}
               <div className="flex min-w-0 flex-col gap-4">
-                <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-fg">
+                <h2 className="text-fs-11 font-black uppercase tracking-[0.16em] text-muted-fg">
                   {t("admin.preview.overview")}
                 </h2>
 
@@ -533,7 +533,7 @@ export function AdminGamePreviewDialog({
                     <div className="grid h-full place-items-center text-muted-fg"><Gamepad2 size={44} /></div>
                   )}
                   {game.isDlc ? (
-                    <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-primary-fg">
+                    <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-2 py-0.5 text-fs-10 font-black uppercase tracking-wide text-primary-fg">
                       DLC
                     </span>
                   ) : null}
@@ -550,29 +550,29 @@ export function AdminGamePreviewDialog({
                     {game.isDlc ? (
                       <Row
                         label={t("admin.preview.baseGame")}
-                        icon={<Package size={13} className="text-indigo-400" />}
+                        icon={<Package size={13} className="text-field-base-game" />}
                         state={state("dlcWithoutBase")}
                       >
                         {baseGame.data ? `${baseGame.data.name} · #${baseId}` : `#${baseId}`}
                       </Row>
                     ) : (
-                      <Row label={t("admin.game.series")} icon={<Library size={13} className="text-violet-400" />}>
+                      <Row label={t("admin.game.series")} icon={<Library size={13} className="text-field-series" />}>
                         {seriesName ?? <span className="text-muted-fg">{t("admin.game.noSeries")}</span>}
                       </Row>
                     )}
-                    <Row label={t("admin.game.publishDate")} icon={<CalendarDays size={13} className="text-sky-400" />} state={state("publishDate")}>
+                    <Row label={t("admin.game.publishDate")} icon={<CalendarDays size={13} className="text-field-publish" />} state={state("publishDate")}>
                       {formatPublishDate(game.publishDate) ?? game.publishDate}
                     </Row>
-                    <Row label={t("admin.game.developer")} icon={<Users size={13} className="text-cyan-400" />} state={state("developer")}>
+                    <Row label={t("admin.game.developer")} icon={<Users size={13} className="text-field-developer" />} state={state("developer")}>
                       {game.developer}
                     </Row>
-                    <Row label={t("admin.game.publisher")} icon={<Building2 size={13} className="text-teal-400" />} state={state("publisher")}>
+                    <Row label={t("admin.game.publisher")} icon={<Building2 size={13} className="text-field-publisher" />} state={state("publisher")}>
                       {game.publisher}
                     </Row>
-                    <Row label={t("admin.game.metaScore")} icon={<Star size={13} className="text-amber-400" />} state={state("metaScore")}>
+                    <Row label={t("admin.game.metaScore")} icon={<Gauge size={13} className="text-field-metascore" />} state={state("metaScore")}>
                       <span className="tabular-nums">{game.metaScore}</span>
                     </Row>
-                    <Row label={t("admin.preview.avgPlaytime")} icon={<Clock size={13} className="text-emerald-400" />} state={state("avgPlaytime")}>
+                    <Row label={t("admin.preview.avgPlaytime")} icon={<CommunityPlaytimeIcon />} state={state("avgPlaytime")}>
                       <span className="tabular-nums">{formatAvgPlaytimeHours(game.avgPlaytimeHours)}</span>
                     </Row>
                   </dl>
@@ -595,7 +595,7 @@ export function AdminGamePreviewDialog({
 
               {/* ── Cot phai: Anh & xuat ban ── */}
               <div className="flex min-w-0 flex-col gap-4">
-                <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-fg">
+                <h2 className="text-fs-11 font-black uppercase tracking-[0.16em] text-muted-fg">
                   {t("admin.preview.imagesAndPublishing")}
                 </h2>
 
@@ -638,7 +638,7 @@ export function AdminGamePreviewDialog({
                     <Row label="ID" icon={<Hash size={13} className="text-muted-fg" />}>
                       <span className="font-mono">#{game.id}</span>
                     </Row>
-                    <Row label={t("admin.game.igdbId")} icon={<Fingerprint size={13} className="text-fuchsia-400" />} state={state("igdbId")}>
+                    <Row label={t("admin.game.igdbId")} icon={<Fingerprint size={13} className="text-field-igdb" />} state={state("igdbId")}>
                       <span className="font-mono">{game.igdbId}</span>
                     </Row>
                     <Row label={t("admin.preview.revision")} icon={<Hash size={13} className="text-muted-fg" />}>
@@ -656,7 +656,7 @@ export function AdminGamePreviewDialog({
 
         {/* Chan: sua va duyet. */}
         <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
-          <span className="mr-auto text-[11px] text-muted-fg">{t("admin.preview.keyboardHint")}</span>
+          <span className="mr-auto text-fs-11 text-muted-fg">{t("admin.preview.keyboardHint")}</span>
           <IconButton
             tone="edit"
             label={t("action.edit")}

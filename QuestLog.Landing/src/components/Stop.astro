@@ -1,6 +1,6 @@
 ---
-// Mot chang tren tuyen duong: moc tren duong ray + nhan trang thai + noi dung.
-// Danh so vi day la thu tu that cua trang thai tien do trong app.
+// Mot chang tren dong thoi gian: moc tren duong ray + nhan + noi dung.
+// Danh so vi thu tu la that: da choi -> dang choi -> sap choi.
 import type { Stop } from "../i18n/ui";
 
 interface Props {
@@ -23,7 +23,7 @@ const num = String(index + 1).padStart(2, "0");
     <p class="stop-label">
       <span>{num}</span>
       <span class="stop-dash" aria-hidden="true"></span>
-      <span class="stop-status">{stop.status}</span>
+      <span class="stop-status">{stop.label}</span>
     </p>
     <div class:list={["stop-grid", flip && "stop-grid--flip"]}>
       <div class="stop-copy" data-reveal>

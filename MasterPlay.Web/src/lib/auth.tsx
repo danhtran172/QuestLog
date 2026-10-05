@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiRequestError, setAuthToken, setSessionRecovery } from "./api/client";
+import { routeWithoutSession, startupRoute } from "./authStartup";
 import { getDesktopGuestToken } from "./desktopBridge";
 import { runGoogleFlow, sleep, type GoogleFlowEvent } from "./googleAuthFlow";
 import { withStartupRetry } from "./startupRetry";
@@ -71,6 +72,10 @@ type AuthContextValue = {
   guestAvailable: boolean;
   login: (request: LoginRequest) => Promise<void>;
   signup: (request: SignupRequest) => Promise<SignupResponse>;
+  /** Re-sends the sign-up confirmation code; returns when another resend is allowed. */
+  resendSignupCode: (identifier: string) => Promise<string>;
+  /** Confirms the email with the emailed code and signs in. */
+  verifySignupCode: (identifier: string, code: string) => Promise<void>;
   /** Runs one Google sign-in; resolves once the session is accepted. Abort to cancel. */
   signInWithGoogle: (signal: AbortSignal, onEvent?: (event: GoogleFlowEvent) => void) => Promise<void>;
   /** Re-opens the Google page from a user gesture (popup blocked or tab closed). */
@@ -135,11 +140,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextConfig = await withStartupRetry(() => authApi.config());
       setConfig(nextConfig);
       const desktopToken = getDesktopGuestToken();
-      if (desktopToken && window.sessionStorage.getItem(GUEST_SESSION_KEY) === "1") {
-        acceptGuestSession(await withStartupRetry(() => authApi.guest(desktopToken)));
+      const enterAsGuest = async (token: string) => {
+        acceptGuestSession(await withStartupRetry(() => authApi.guest(token)));
+      };
+      const route = startupRoute({
+        desktop: desktopToken !== null,
+        guestThisSession: window.sessionStorage.getItem(GUEST_SESSION_KEY) === "1",
+        authConfigured: nextConfig.configured,
+      });
+      if (route === "guest" && desktopToken) {
+        await enterAsGuest(desktopToken);
         return;
       }
-      if (!nextConfig.configured) {
+      if (route === "unconfigured") {
         setAuthToken(null);
         setStatus("unconfigured");
         return;
@@ -149,7 +162,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         acceptSession(await withStartupRetry(() => authApi.restoreSession()));
       } catch (error) {
         if (error instanceof ApiRequestError && error.status === 401) {
-          clearSession();
+          // Desktop: chua dang nhap (hoac da dang xuat) thi vao thang app bang du lieu
+          // tren may; man dang nhap chi mo khi nguoi dung chon "Dang nhap".
+          if (routeWithoutSession(desktopToken !== null) === "guest" && desktopToken) {
+            await enterAsGuest(desktopToken);
+          } else {
+            clearSession();
+          }
           return;
         }
         throw error;
@@ -200,6 +219,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [acceptSession]);
 
   const signup = useCallback((request: SignupRequest) => authApi.signup(request), []);
+
+  const resendSignupCode = useCallback(
+    async (identifier: string) => (await authApi.resendSignupCode(identifier)).resendAvailableAt,
+    [],
+  );
+
+  const verifySignupCode = useCallback(async (identifier: string, code: string) => {
+    acceptSession(await authApi.verifySignupCode({ identifier, code }));
+  }, [acceptSession]);
 
   const signInWithGoogle = useCallback(
     async (signal: AbortSignal, onEvent?: (event: GoogleFlowEvent) => void) => {
@@ -306,6 +334,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       guestAvailable,
       login,
       signup,
+      resendSignupCode,
+      verifySignupCode,
       signInWithGoogle,
       reopenGoogle,
       claimUsername,
@@ -334,6 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       reopenGoogle,
       requestEmailChange,
+      resendSignupCode,
       resetPassword,
       restore,
       verifyResetCode,
@@ -341,6 +372,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signup,
       verifyReauthCode,
+      verifySignupCode,
       startupError,
       status,
     ],

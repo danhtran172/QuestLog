@@ -40,7 +40,7 @@ export function ConsolePreview({ game }: { game: GameDetail }) {
         />
       ) : null}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,14,17,.7),rgba(12,14,17,.2)_42%,rgba(12,14,17,.86))]" />
-      <span className="absolute left-3 top-2.5 text-[8px] font-extrabold uppercase tracking-[0.16em] text-white/72">
+      <span className="absolute left-3 top-2.5 text-fs-8 font-extrabold uppercase tracking-[0.16em] text-white/72">
         QuestLog
       </span>
       <div className="absolute left-1/2 top-[13%] aspect-[2/3] h-[66%] -translate-x-1/2 overflow-hidden rounded-lg border border-primary bg-[#252a30] shadow-2xl">

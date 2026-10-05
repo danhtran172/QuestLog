@@ -49,7 +49,7 @@ function Stat({ icon, value }: { icon: React.ReactNode; value: string | null }) 
   return (
     <span
       className={cn(
-        "flex min-w-0 items-center gap-1 text-[12px]",
+        "flex min-w-0 items-center gap-1 text-fs-12",
         value ? "text-muted-fg" : "text-muted-fg/40",
       )}
     >
@@ -119,14 +119,14 @@ export function AdminGameCard({
           )}
 
           {game.isDlc ? (
-            <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-primary-fg">
+            <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-fs-10 font-black uppercase tracking-wide text-primary-fg">
               DLC
             </span>
           ) : null}
 
           {/* id + revision la thong tin lam viec cua admin: bao cao loi, doi chieu
               audit va chan xung dot revision deu can no. */}
-          <span className="absolute right-2 top-2 rounded-md bg-black/55 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+          <span className="absolute right-2 top-2 rounded-md bg-black/55 px-1.5 py-0.5 font-mono text-fs-10 font-bold text-white">
             #{game.id} · r{game.revision}
           </span>
         </div>
@@ -145,7 +145,7 @@ export function AdminGameCard({
                   : t("admin.publishing.unpublishedManually")
               }
             >
-              <span className="mb-0.5 flex w-fit items-center gap-1 rounded-full border border-warning/45 bg-warning/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-warning">
+              <span className="mb-0.5 flex w-fit items-center gap-1 rounded-full border border-warning/45 bg-warning/15 px-2 py-0.5 text-fs-10 font-black uppercase tracking-wide text-warning">
                 <FileX size={10} aria-hidden="true" />
                 {t("admin.publishing.notPublished")}
               </span>

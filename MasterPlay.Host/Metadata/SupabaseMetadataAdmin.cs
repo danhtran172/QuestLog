@@ -348,6 +348,22 @@ public sealed class SupabaseMetadataAdmin(
     public Task<JsonElement> ListCrawlerGamesAsync(JsonElement? cursor, int pageSize, CancellationToken cancellationToken) =>
         CallDataAsync("admin_list_crawler_games", new { p_cursor = cursor, p_limit = pageSize }, cancellationToken);
 
+    // Gemini EXE enrichment has an independent worker and audit boundary.
+    public Task<JsonElement> GetGeminiExeStatusAsync(CancellationToken cancellationToken) =>
+        CallDataAsync("admin_gemini_exe_status", new { }, cancellationToken);
+
+    public Task<JsonElement> SetGeminiExeEnabledAsync(bool enabled, CancellationToken cancellationToken) =>
+        CallDataAsync("admin_set_gemini_exe_enabled", new { p_enabled = enabled }, cancellationToken);
+
+    public Task<JsonElement> TriggerGeminiExeAsync(CancellationToken cancellationToken) =>
+        CallDataAsync("admin_trigger_gemini_exe", new { }, cancellationToken);
+
+    public Task<JsonElement> ListGeminiExeRunsAsync(int pageSize, CancellationToken cancellationToken) =>
+        CallDataAsync("admin_list_gemini_exe_runs", new { p_limit = pageSize }, cancellationToken);
+
+    public Task<JsonElement> ListGeminiExeGamesAsync(int pageSize, CancellationToken cancellationToken) =>
+        CallDataAsync("admin_list_gemini_exe_games", new { p_limit = pageSize }, cancellationToken);
+
     public async Task<MetadataGameDeleteResult> DeleteGameAsync(
         long id,
         string actorUserId,

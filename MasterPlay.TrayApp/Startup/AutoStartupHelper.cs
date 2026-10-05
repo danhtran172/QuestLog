@@ -4,7 +4,7 @@ namespace MasterPlay.TrayApp.Startup
     public static class StartupHelper
     {
         private const string RegistryKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        private const string AppName = "MasterPlayTray";
+        private const string AppName = MasterPlay.Infrastructure.TrayControl.TrayControlProtocol.AutoStartValueName;
 
         public static bool EnableStartup(string executablePath)
         {

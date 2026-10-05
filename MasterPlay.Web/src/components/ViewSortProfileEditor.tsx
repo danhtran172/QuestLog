@@ -121,19 +121,19 @@ export function ViewSortProfileEditor({
           <p className="text-xs font-black uppercase tracking-[0.12em] text-fg">
             {t("sortProfile.title")}
           </p>
-          <p className="truncate text-[11px] text-muted-fg">{t(`nav.${view}`)}</p>
+          <p className="truncate text-fs-11 text-muted-fg">{t(`nav.${view}`)}</p>
         </div>
         {isSaving ? <Loader2 size={15} className="mt-1 animate-spin text-primary" /> : null}
       </div>
 
       {toolbarOverride ? (
-        <div className="mb-2 rounded-lg border border-warning/25 bg-warning/10 px-2.5 py-2 text-[11px] font-semibold text-warning">
+        <div className="mb-2 rounded-lg border border-warning/25 bg-warning/10 px-2.5 py-2 text-fs-11 font-semibold text-warning">
           {t("sortProfile.overrideActive")}
         </div>
       ) : null}
 
       {loadError || error ? (
-        <div className="mb-2 flex gap-2 rounded-lg border border-danger/35 bg-danger/10 p-2 text-[11px] text-danger">
+        <div className="mb-2 flex gap-2 rounded-lg border border-danger/35 bg-danger/10 p-2 text-fs-11 text-danger">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <span>{error ?? messageOf(loadError)}</span>
         </div>

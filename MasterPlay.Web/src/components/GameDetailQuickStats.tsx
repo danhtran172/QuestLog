@@ -109,10 +109,17 @@ export function GameDetailQuickStats({
     saveUserData.reset();
   };
 
+  /* De trong = xoa diem (luu null). Dang trong ma van trong thi khong goi API. */
   const submitInlineEdit = (field: EditableStat, rawValue: string) => {
-    if (!rawValue.trim()) return;
-    const value = Number(rawValue);
-    if (!isValidRating(value)) return;
+    let value: number | null = null;
+    if (rawValue.trim()) {
+      value = Number(rawValue);
+      if (!isValidRating(value)) return;
+    }
+    if (value === (game[field] ?? null)) {
+      setEditingStat(null);
+      return;
+    }
     saveUserData.mutate(gameUserDataPatch(
       game,
       field === "excited" ? { excited: value } : { score: value },
@@ -122,7 +129,6 @@ export function GameDetailQuickStats({
   const inlineInput = (field: EditableStat) => (
     <InlineNumberInput
       autoFocus
-      required
       min="0"
       max={RATING_MAX}
       step="0.5"
@@ -156,8 +162,13 @@ export function GameDetailQuickStats({
   };
 
   const submitPlaytime = () => {
-    const hours = Number(playtimeHours);
-    const minutes = Number(playtimeMinutes);
+    // Ca hai o deu trong = chua co gio choi -> luu null, khong phai 0.
+    if (!playtimeHours.trim() && !playtimeMinutes.trim()) {
+      saveUserData.mutate(gameUserDataPatch(game, { totalPlaytimeSeconds: null }));
+      return;
+    }
+    const hours = Number(playtimeHours || 0);
+    const minutes = Number(playtimeMinutes || 0);
     if (!Number.isFinite(hours) || hours < 0 || !Number.isFinite(minutes) || minutes < 0 || minutes > 59) return;
 
     // Popup chi sua gio/phut; giu lai phan giay hien co de khong lam mat du lieu ngam.
@@ -183,7 +194,7 @@ export function GameDetailQuickStats({
         <DetailStat
           label={t("sort.excited")}
           icon={Flame}
-          iconClassName="text-warning"
+          iconClassName="text-field-excited"
           action={editAction("excited", t("sort.excited"))}
           onValueDoubleClick={editingStat !== "excited" && !saveUserData.isPending
             ? () => startInlineEdit("excited")
@@ -196,7 +207,7 @@ export function GameDetailQuickStats({
         />
         <DetailStat
           label={t("card.playtime")}
-          iconContent={<PlayerPlaytimeIcon className="text-sky-500" />}
+          iconContent={<PlayerPlaytimeIcon className="text-field-playtime" />}
           action={!game.isDlc ? (
             <InlineEditButton
               label={`${t("action.edit")} ${t("card.playtime")}`}
@@ -216,7 +227,7 @@ export function GameDetailQuickStats({
         <DetailStat
           label={t("sort.score")}
           icon={Trophy}
-          iconClassName="text-warning"
+          iconClassName="text-field-score"
           action={editAction("score", t("sort.score"))}
           onValueDoubleClick={editingStat !== "score" && !saveUserData.isPending
             ? () => startInlineEdit("score")
@@ -260,7 +271,6 @@ export function GameDetailQuickStats({
                   {t("editor.playedHours")}
                   <input
                     autoFocus
-                    required
                     type="number"
                     min="0"
                     step="1"
@@ -277,7 +287,6 @@ export function GameDetailQuickStats({
                 <label className="grid gap-1.5 text-xs font-bold text-muted-fg">
                   {t("editor.playedMinutes")}
                   <input
-                    required
                     type="number"
                     min="0"
                     max="59"

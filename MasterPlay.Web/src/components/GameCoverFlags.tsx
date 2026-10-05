@@ -22,21 +22,21 @@ const UPCOMING_BOTTOM_FADE = {
 const flagStyles = {
   card: {
     dlcFrame: "h-14 w-14",
-    dlcRibbon: "-left-7 top-2.5 w-24 py-1 text-[9px] tracking-[0.14em]",
+    dlcRibbon: "-left-7 top-2.5 w-24 py-1 text-fs-9 tracking-[0.14em]",
     upcomingFrame: "h-16 w-20",
-    upcomingRibbon: "-right-8 bottom-3 w-28 py-1 text-[8px] tracking-[0.1em]",
+    upcomingRibbon: "-right-8 bottom-3 w-28 py-1 text-fs-8 tracking-[0.1em]",
   },
   thumbnail: {
     dlcFrame: "h-8 w-8",
-    dlcRibbon: "-left-4 top-1.5 w-14 py-0.5 text-[6px] tracking-[0.1em]",
+    dlcRibbon: "-left-4 top-1.5 w-14 py-0.5 text-fs-6 tracking-[0.1em]",
     upcomingFrame: "h-9 w-11",
-    upcomingRibbon: "-right-5 bottom-1.5 w-16 py-0.5 text-[5px] tracking-[0.06em]",
+    upcomingRibbon: "-right-5 bottom-1.5 w-16 py-0.5 text-fs-5 tracking-[0.06em]",
   },
   hero: {
     dlcFrame: "h-24 w-24",
     dlcRibbon: "-left-11 top-5 w-40 py-1.5 text-xs tracking-[0.16em]",
     upcomingFrame: "h-28 w-36",
-    upcomingRibbon: "-right-12 bottom-6 w-44 py-1.5 text-[11px] tracking-[0.12em]",
+    upcomingRibbon: "-right-12 bottom-6 w-44 py-1.5 text-fs-11 tracking-[0.12em]",
   },
 } as const;
 

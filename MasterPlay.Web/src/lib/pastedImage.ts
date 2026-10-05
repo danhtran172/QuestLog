@@ -2,7 +2,8 @@
  * Anh dan tu clipboard (Ctrl+V) vao o anh cua Editor.
  *
  * Anh di qua dung field anh co san duoi dang data URL; hang doi nen cua Host
- * dua no len Cloudinary va thay o do bang link Cloudinary (DOMAIN_RULES §12).
+ * luu no vao noi luu cua thu vien (Cloudinary voi admin, tren may voi nguoi
+ * khac) va thay o do bang link moi (DOMAIN_RULES §12).
  * Thu nho truoc de chuoi gui di khong nang vai MB — chi doi kich thuoc, khong
  * dong toi noi dung.
  */

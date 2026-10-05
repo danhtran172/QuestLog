@@ -215,7 +215,7 @@ Quy tắc:
 
 Trong `library`, admin làm việc trên thư viện của chính mình như một user thường, với **đúng một đặc quyền được giữ lại**:
 
-- **Manual add vẫn là đặc quyền của admin.** `AddGameMethodDialog` giữ nguyên điều kiện `account?.role === "admin"` tại `App.tsx:927`. Admin ở mode thường vẫn chọn được "Manual" hoặc "From metadata"; user và guest vẫn chỉ có "From metadata".
+- ~~**Manual add vẫn là đặc quyền của admin.**~~ *Đã bỏ 2026-10-05 — xem §12.7: manual add mở cho mọi owner; `AddGameMethodDialog` không còn điều kiện role, guest/user/admin đều chọn được "Manual" hoặc "From metadata".*
   - Game manual tạo ở mode thường là **game local của riêng admin** (`MetadataGameId = null`, scope `LibraryOwnerKey` của admin) — **không** đẩy lên kho dùng chung. Muốn tạo bản ghi trong kho dùng chung thì vào section **Games** của Admin Console. Hai hành động này khác đích đến và không được gộp.
 - Tag manual cá nhân của admin nằm ở scope `user:<id>` như mọi người; muốn sửa bộ dùng chung có icon thì vào console.
 - Mọi thứ còn lại (queue, finish, diary, playtime, launch, dashboard, filter, sort) không phân biệt role.
@@ -349,17 +349,17 @@ Sau thay đổi này, cùng một nút `+` dẫn tới **ba đích đến khác 
 | # | Hành động | Ai làm được | Ở đâu | Endpoint | Ghi vào |
 |---|---|---|---|---|---|
 | **A** | Add từ kho metadata | guest, user, admin | `library` | `POST /api/library/game-imports` | SQLite, scope owner. `MetadataGameId` có giá trị |
-| **B** | Add thủ công | **chỉ admin** | `library` | `POST /api/games` | SQLite, scope owner. `MetadataGameId = null` |
+| **B** | Add thủ công | guest, user, admin *(mở cho mọi owner từ 2026-10-05)* | `library` | `POST /api/games` | SQLite, scope owner. `MetadataGameId = null` |
 | **C** | Tạo bản ghi metadata | **chỉ admin** | `adminConsole` | `POST /api/admin/metadata/games` | **Supabase `metadata_games`** — kho dùng chung |
 
-> **B không phải là C.** Add thủ công tạo game **local riêng của admin**, không ai khác thấy, không lên cloud. Muốn thêm vào kho dùng chung thì phải vào console. Hai việc này trước nay chỉ có một cái nên copy hiện tại không phân biệt — **phải sửa**.
+> **B không phải là C.** Add thủ công tạo game **local riêng của người tạo**, không ai khác thấy, không lên cloud. Muốn thêm vào kho dùng chung thì phải vào console. Hai việc này trước nay chỉ có một cái nên copy hiện tại không phân biệt — **phải sửa**.
 
 #### 12.7.1. Hành vi nút `+`
 
 **Ở `library`** — giữ nguyên `App.tsx:268`, không đổi logic:
 
-- guest / user → mở thẳng `MetadataGamePickerDialog` (luồng A).
-- admin → `AddGameMethodDialog` với hai lựa chọn A và B.
+- ~~guest / user → mở thẳng `MetadataGamePickerDialog` (luồng A); admin → `AddGameMethodDialog` với hai lựa chọn A và B.~~
+- **Từ 2026-10-05:** mọi owner (guest, user, admin) đều mở `AddGameMethodDialog` với hai lựa chọn A và B.
 
 **Ở `adminConsole`**:
 
@@ -539,6 +539,8 @@ Yêu cầu "trượt tiêu chí thì tự động không xuất bản và không
 Thiếu một trong hai thì đây chỉ là lời khuyên, không phải tiêu chí.
 
 Import một bản ghi chưa xuất bản trả `422 METADATA_GAME_NOT_FOUND` — không tiết lộ rằng nó tồn tại.
+
+> **Đổi 2026-10-05 — ngoại lệ cho nút Sync của editor.** `POST /api/game-metadata/preview` (và lệnh `--sync-missing-posters`) tra kho bằng cả bản **chưa xuất bản vì trượt tiêu chí**: dữ liệu đó vẫn tốt hơn gọi API ngoài, và Sync chỉ điền sẵn vào form chứ không import. Bản admin **chủ động gỡ** (`manually_unpublished`) vẫn bị bỏ. Hệ quả chấp nhận được: tên của bản ghi chưa xuất bản có thể hiện ra qua `metadataGameName` của preview.
 
 ### 13.4. Giao diện
 

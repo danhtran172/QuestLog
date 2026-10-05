@@ -11,6 +11,7 @@ import {
   Gamepad2,
   Keyboard,
   LayoutGrid,
+  ListOrdered,
   Loader2,
   Menu,
   Plus,
@@ -31,6 +32,7 @@ import { useGames } from "@/lib/useGames";
 import { useLibraryMetadataRefresh } from "@/lib/useLibraryMetadataRefresh";
 import { usePlayQueue } from "@/lib/usePlayQueue";
 import { useControllerExperience } from "@/lib/useControllerExperience";
+import { useAppModeMemory } from "@/lib/useAppModeMemory";
 import { toggleFullscreen } from "@/lib/desktopBridge";
 import { useViewSortProfiles, type ConfigurableView } from "@/lib/useViewSortProfiles";
 import { useAuth } from "@/lib/auth";
@@ -59,6 +61,8 @@ import { GameDetailDialog } from "@/components/GameDetailDialog";
 import { AddGameMethodDialog } from "@/components/AddGameMethodDialog";
 import { MetadataGamePickerDialog } from "@/components/MetadataGamePickerDialog";
 import { ViewSortProfileEditor } from "@/components/ViewSortProfileEditor";
+import { GuideTour } from "@/components/GuideTour";
+import { VIEW_GUIDE, useViewModesGuide } from "@/components/viewModesGuide";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,11 +82,12 @@ import {
   Tooltip,
 } from "@/components/ui";
 import { AdminConsoleView } from "@/components/AdminConsoleView";
-import { SettingsDialog, type SectionKey } from "@/components/SettingsDialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { DashboardView } from "@/components/DashboardView";
 import { ManageTagsDialog } from "@/components/ManageTagsDialog";
 import { AccountDialog } from "@/components/AccountDialog";
 import { TrayPanel } from "@/components/TrayPanel";
+import { ReleaseNotificationsBell } from "@/components/ReleaseNotificationsBell";
 import {
   EMPTY_FILTER,
   FilterDialog,
@@ -99,6 +104,20 @@ const SHORTCUTS: [string, string][] = [
   ["Ctrl+1..4", "shortcut.tabs"],
   ["Ctrl+K", "shortcut.search"],
   ["Esc", "shortcut.closeSurface"],
+];
+
+/* Cung bang tren nhung cho tay cam — khop voi controllerInput.ts. */
+const GAMEPAD_SHORTCUTS: [string, string][] = [
+  ["A", "controller.select"],
+  ["B", "shortcut.closeSurface"],
+  ["X", "action.play"],
+  ["Y", "shortcut.reload"],
+  ["LB/RB", "shortcut.tabs"],
+  ["LB+RB+A", "shortcut.console"],
+  ["R3", "shortcut.addGame"],
+  ["L3", "controller.changeLayout"],
+  ["View", "settings.title"],
+  ["RS", "controller.scroll"],
 ];
 
 const ConsoleLibraryView = lazy(() => import("@/components/ConsoleLibraryView").then(
@@ -142,7 +161,6 @@ export default function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [addMethodOpen, setAddMethodOpen] = useState(false);
   const [metadataPickerOpen, setMetadataPickerOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState<SectionKey>("general");
   /* Dashboard la mot MAN HINH, khong phai popup — bat len thi <main> doi noi dung. */
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -298,6 +316,9 @@ export default function App() {
   const previousGameCount = tab === "queue" ? 0 : Math.max(0, firstItem - 1);
   const remainingGameCount = tab === "queue" ? 0 : Math.max(0, totalItems - lastItem);
   const activeFilterCount = data?.activeFilterCount ?? 0;
+  /* Tab "Tat ca" khong tim, khong loc ma van rong = thu vien that su chua co game
+     (user moi). Cac tab khac rong khong noi len dieu do. */
+  const libraryIsEmpty = tab === "all" && !query && activeFilterCount === 0;
 
   const openDetail = useCallback((gameId: string) => {
     setSelectedGameId(gameId);
@@ -306,12 +327,8 @@ export default function App() {
   }, []);
 
   const openAdd = useCallback(() => {
-    if (account?.role === "admin") {
-      setAddMethodOpen(true);
-      return;
-    }
-    setMetadataPickerOpen(true);
-  }, [account?.role]);
+    setAddMethodOpen(true);
+  }, []);
 
   const openManualAdd = useCallback(() => {
     setSelectedGameId(null);
@@ -377,10 +394,7 @@ export default function App() {
     onPageChange: setPage,
     onLayoutChange: setLayout,
     onCloseOverlay: closeTopControllerSurface,
-    onOpenSettings: () => {
-      setSettingsSection("general");
-      setSettingsOpen(true);
-    },
+    onOpenSettings: () => setSettingsOpen(true),
     onOpenGame: openDetail,
     onAddGame: openAdd,
     onLaunchGame: (gameId) => launchGame.mutate(gameId),
@@ -398,9 +412,27 @@ export default function App() {
       setDashboardOpen(false);
     },
   });
+  /* Dang dung tay cam: goi y phim tat ban phim doi sang nut tay cam. */
+  const usingGamepad = controller.inputModality === "gamepad";
   const showConsole = controller.showConsole;
+  /* Mo lai app thi vao lai mode cuoi cung (desktop | console) — luu o config. */
+  useAppModeMemory({
+    consoleSession: controller.consoleSession,
+    canRestore: !adminConsoleActive,
+    onRestoreConsole: controller.restoreConsoleSession,
+  });
   /* Ca hai surface fullscreen deu an chrome thu vien. */
   const hideLibraryChrome = showConsole || adminConsoleActive;
+
+  /* Huong dan cac tab: chi bat khi thu vien da co game va khong popup/man hinh
+     nao dang che thanh tab — vd vua Luu game dau tien thi doi the game dong lai. */
+  const viewModesGuide = useViewModesGuide({
+    hasGames: (tab === "queue" ? (queue.data?.length ?? 0) : totalItems) > 0,
+    idle: (authStatus === "signedIn" || authStatus === "guest") &&
+      !hideLibraryChrome && !dashboardOpen && !detailOpen && !addMethodOpen && !metadataPickerOpen &&
+      !settingsOpen && !accountOpen && !filterOpen && !tagsOpen && !trayOpen && !shortcutsOpen &&
+      !sortOpen && sortProfileView == null,
+  });
 
   const enterAdminConsole = useCallback(() => {
     /* Thoat console session dang chay truoc, de tra lai window state — neu khong
@@ -479,8 +511,8 @@ export default function App() {
       ) : null}
 
       <header className={cn("glass-panel sticky top-0 z-40 border-b", hideLibraryChrome && "hidden")}>
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-3 px-4 py-2.5">
-          <nav className="stone-slab flex shrink-0 items-center gap-1 rounded-xl p-1">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5">
+          <nav data-guide={VIEW_GUIDE.tabs} className="stone-slab flex shrink-0 items-center gap-1 rounded-xl p-1">
             {TABS.map((key, i) => {
               const configurableView = key === "queue" ? null : key;
               const profile = configurableView
@@ -494,9 +526,10 @@ export default function App() {
                     if (!nextOpen && sortProfileView === configurableView) setSortProfileView(null);
                   }}
                 >
-                  <Tooltip label={t(`nav.${key}`)} shortcut={`Ctrl+${i + 1}`} side="bottom">
+                  <Tooltip label={t(`nav.${key}`)} shortcut={usingGamepad ? "LB/RB" : `Ctrl+${i + 1}`} side="bottom">
                     <PopoverAnchor asChild>
                       <button
+                      data-guide={VIEW_GUIDE.tab(key)}
                       onClick={() => {
                         // Doi tab = mot con gio quet qua ca man hinh. Day la
                         // tin hieu chuyen canh manh nhat ma khong can animation
@@ -614,8 +647,11 @@ export default function App() {
             {/* Sort dang bat thi noi ro ra: khoa sort + huong. Chi la BANG BAO,
                 thao tac van o nut sort ben canh. Dung dung mat va do bo goc cua
                 thanh search de thuoc cung mot bo thanh cong cu. */}
+            {/* Play Queue khong sort/loc duoc — an han hai nut thay vi de mo. */}
+            {tab !== "queue" ? (
+            <>
             <div className="flex shrink-0 items-center">
-            {tab !== "queue" && !dashboardOpen && (sort !== "default" || reverseSort) ? (
+            {!dashboardOpen && (sort !== "default" || reverseSort) ? (
               <Tooltip
                 label={`${t("action.sort")}: ${t(`sort.${sort}`)} · ${reverseSort ? t("sort.desc") : t("sort.asc")}`}
                 side="bottom"
@@ -635,15 +671,12 @@ export default function App() {
 
             {/* Sort = Popover chua 11 khoa + nut dao chieu ngay ben trong,
                 dung nhu Lovable. Truoc do toi dung <select> native nen trong khac han. */}
-            <Popover
-              open={tab !== "queue" && sortOpen}
-              onOpenChange={(nextOpen) => setSortOpen(tab === "queue" ? false : nextOpen)}
-            >
+            <Popover open={sortOpen} onOpenChange={setSortOpen}>
               <PopoverTrigger asChild>
                 <IconButton
-                  disabled={tab === "queue" || dashboardOpen}
+                  disabled={dashboardOpen}
                   label={`${t("action.sort")}: ${t(`sort.${sort}`)}`}
-                  tone="edit"
+                  tone="sort"
                   /* Icon KHONG dao theo huong nua — huong da nam o khung ben trai. */
                   icon={<ArrowUpDown />}
                   className="relative z-10"
@@ -651,7 +684,7 @@ export default function App() {
               </PopoverTrigger>
               <PopoverContent align="end" className="w-60">
                 <div className="mb-2 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-2">
-                  <p className="text-[11px] font-semibold text-muted-fg">{t("sort.current")}</p>
+                  <p className="text-fs-11 font-semibold text-muted-fg">{t("sort.current")}</p>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="min-w-0 truncate text-sm font-bold text-fg">{t(`sort.${sort}`)}</span>
                     <IconButton
@@ -708,25 +741,30 @@ export default function App() {
 
             <div className="relative shrink-0">
               <IconButton
-                disabled={tab === "queue" || dashboardOpen}
+                disabled={dashboardOpen}
                 onClick={() => setFilterOpen(true)}
                 label={activeFilterCount > 0 ? `${t("action.filter")} (${activeFilterCount})` : t("action.filter")}
-                tone="edit"
+                tone="filter"
                 icon={<Filter />}
               />
               {activeFilterCount > 0 ? (
-                <span className="pointer-events-none absolute -right-1 -top-1 z-10 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-black leading-none text-primary-fg shadow-sm ring-1 ring-bg">
+                <span className="pointer-events-none absolute -right-1 -top-1 z-10 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-fs-9 font-black leading-none text-primary-fg shadow-sm ring-1 ring-bg">
                   {activeFilterCount}
                 </span>
               ) : null}
             </div>
+            </>
+            ) : null}
 
+            {/* Nut them dang pill co chu: hanh dong chinh cua man hinh. Nut dai
+                khong co tooltip nen aria-label giu ten day du "Them game". */}
             <IconButton
               onClick={openAdd}
-              label={t("action.addGame")}
-              shortcut="`"
+              label={t("action.add")}
+              aria-label={t("action.addGame")}
               icon={<Plus />}
               tone="add"
+              wide
             />
 
             <DropdownMenu>
@@ -760,10 +798,7 @@ export default function App() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onSelect={() => {
-                    setSettingsSection("general");
-                    setSettingsOpen(true);
-                  }}
+                  onSelect={() => setSettingsOpen(true)}
                 >
                   <SettingsIcon size={15} /> {t("menu.setting")}
                 </DropdownMenuItem>
@@ -791,7 +826,7 @@ export default function App() {
 
       <main
         ref={gridRef}
-        className={cn("relative z-10 mx-auto max-w-[1800px] px-4 py-5 pb-20", hideLibraryChrome && "hidden")}
+        className={cn("relative z-10 px-4 py-5 pb-20", hideLibraryChrome && "hidden")}
       >
         {dashboardOpen ? (
           <DashboardView onClose={() => setDashboardOpen(false)} />
@@ -846,6 +881,24 @@ export default function App() {
               ))}
             </div>
           )
+        ) : items.length === 0 && libraryIsEmpty ? (
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+            <div className="grid size-20 place-items-center rounded-3xl bg-primary/15 text-primary ring-1 ring-primary/30">
+              <Gamepad2 size={40} strokeWidth={1.6} />
+            </div>
+            <div className="flex max-w-md flex-col gap-1.5">
+              <h3 className="text-xl font-extrabold">{t("empty.newUser")}</h3>
+              <p className="text-sm text-muted-fg">{t("empty.newUserDesc")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={openAdd}
+              className="glass-surface mt-2 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-6 font-bold text-primary-fg outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              <Plus size={18} />
+              {t("action.addGame")}
+            </button>
+          </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
             <Search className="text-muted-fg" size={32} />
@@ -889,8 +942,14 @@ export default function App() {
         )}
       </main>
 
-      <footer className={cn("glass-panel fixed inset-x-0 bottom-0 z-40 border-t", hideLibraryChrome && "hidden")}>
-        <div className="mx-auto grid max-w-[1800px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2 text-xs text-muted-fg">
+      {/* Footer dac hon glass-panel mac dinh (34%) mot chut cho chu/nut de doc. */}
+      <footer
+        className={cn(
+          "glass-panel fixed inset-x-0 bottom-0 z-40 border-t bg-[color-mix(in_oklab,var(--color-surface)_50%,transparent)]!",
+          hideLibraryChrome && "hidden",
+        )}
+      >
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2 text-xs text-muted-fg">
           {/* Trai: khoang item dang hien. Trang thai tray KHONG lap lai o day —
               nut Tray goc phai da co cham xanh/xam cho viec do. */}
           <span className="rune-etch truncate">
@@ -951,45 +1010,50 @@ export default function App() {
             <Popover open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
               <PopoverTrigger asChild>
                 <IconButton
-                  label={t("help.shortcuts")}
-                  icon={<Keyboard />}
+                  label={t(usingGamepad ? "help.controllerButtons" : "help.shortcuts")}
+                  icon={usingGamepad ? <Gamepad2 /> : <Keyboard />}
                   size="compact"
                   tooltipSide="top"
                 />
               </PopoverTrigger>
               <PopoverContent align="end" side="top" className="w-72 p-3">
-                <p className="mb-2 text-sm font-bold text-fg">{t("help.shortcuts")}</p>
+                <p className="mb-2 text-sm font-bold text-fg">
+                  {t(usingGamepad ? "help.controllerButtons" : "help.shortcuts")}
+                </p>
                 <ul className="space-y-1">
-                  {SHORTCUTS.map(([k, v]) => (
+                  {(usingGamepad ? GAMEPAD_SHORTCUTS : SHORTCUTS).map(([k, v]) => (
                     <li key={k} className="flex justify-between gap-3">
-                      <kbd className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] font-bold text-fg">
+                      <kbd className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-fs-11 font-bold text-fg">
                         {k}
                       </kbd>
-                      <span className="text-right text-[11px] text-muted-fg">{t(v)}</span>
+                      <span className="text-right text-fs-11 text-muted-fg">{t(v)}</span>
                     </li>
                   ))}
                 </ul>
               </PopoverContent>
             </Popover>
 
-            <IconButton
-              onClick={() => setTrayOpen(true)}
-              tone="play"
-              label={t("action.tray")}
-              size="compact"
-              tooltipSide="top"
-              icon={
-                <>
-                  <Gamepad2 />
-                  <span
-                    className={cn(
-                      "absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full",
-                      trayRunning ? "bg-success" : "bg-muted-fg",
-                    )}
-                  />
-                </>
-              }
-            />
+            <ReleaseNotificationsBell onOpenGame={openDetail} />
+
+            {/* Cham trang thai nam NGOAI nut: .icon-button co overflow-hidden va
+                bo tron, dat ben trong thi goc cham bi vien tron cat mat. */}
+            <span className="relative inline-grid">
+              <IconButton
+                onClick={() => setTrayOpen(true)}
+                tone="play"
+                label={t("action.tray")}
+                size="compact"
+                tooltipSide="top"
+                icon={<Gamepad2 />}
+              />
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute -right-px -top-px h-2 w-2 rounded-full ring-2 ring-bg",
+                  trayRunning ? "bg-success" : "bg-muted-fg",
+                )}
+              />
+            </span>
           </div>
         </div>
       </footer>
@@ -1018,14 +1082,13 @@ export default function App() {
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        initialSection={settingsSection}
       />
       <AccountDialog
         open={accountOpen && authStatus === "signedIn"}
         onOpenChange={setAccountOpen}
       />
       <AddGameMethodDialog
-        open={addMethodOpen && authStatus === "signedIn" && account?.role === "admin"}
+        open={addMethodOpen}
         onOpenChange={setAddMethodOpen}
         onManual={openManualAdd}
         onMetadata={() => setMetadataPickerOpen(true)}
@@ -1036,6 +1099,24 @@ export default function App() {
       />
       <ManageTagsDialog open={tagsOpen} onOpenChange={setTagsOpen} />
       <TrayPanel open={trayOpen} onOpenChange={setTrayOpen} />
+      <GuideTour
+        open={viewModesGuide.open}
+        steps={viewModesGuide.steps}
+        eyebrow={viewModesGuide.eyebrow}
+        onClose={viewModesGuide.close}
+        finishAction={{
+          label: viewModesGuide.tryLabel,
+          icon: <ListOrdered />,
+          onClick: () => {
+            setTab("all");
+            setPage(1);
+            setDashboardOpen(false);
+            /* Mo sau khi lop tour go xong — cu bam con dang do co the bi Popover
+               coi la bam ra ngoai roi tu dong lai. */
+            window.setTimeout(() => setSortProfileView("all"), 0);
+          },
+        }}
+      />
       <GameDetailDialog
         gameId={selectedGameId}
         open={detailOpen}
@@ -1044,7 +1125,6 @@ export default function App() {
           setDetailOpen(nextOpen);
           if (!nextOpen) setDetailMode("view");
         }}
-        onEdit={() => setDetailMode("edit")}
         onCancelEdit={() => setDetailMode("view")}
         onSaved={(game) => {
           setSelectedGameId(game.id);

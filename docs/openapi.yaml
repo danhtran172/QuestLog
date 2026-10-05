@@ -91,6 +91,28 @@ components:
         requiresEmailVerification: { type: boolean }
         email: { type: string, format: email }
 
+    SignupCodeRequest:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          description: Username hoặc email của tài khoản vừa đăng ký.
+
+    VerifySignupCodeRequest:
+      type: object
+      required: [identifier, code]
+      properties:
+        identifier: { type: string }
+        code: { type: string, pattern: '^[0-9]{6,10}$' }
+
+    SignupCodeResponse:
+      type: object
+      required: [sent, resendAvailableAt]
+      properties:
+        sent: { type: boolean }
+        resendAvailableAt: { type: string, format: date-time }
+
     ChangePasswordRequest:
       type: object
       required: [newPassword]
@@ -403,6 +425,13 @@ components:
         colorCode: { type: string }
         iconData: { type: [string, "null"], description: base64 PNG data URL. }
         sortOrder: { type: integer, description: Nguồn thứ hạng sort. KHÔNG hardcode ở client. }
+        infoLayout:
+          type: [string, "null"]
+          enum: [sharedAccount, download, null]
+          description: >
+            Chỉ có với Ownership. Bố cục khung "thông tin sở hữu": sharedAccount = tài khoản dùng chung,
+            download = bản tải về, null = kiểu này không có thông tin (ẩn nút ⓘ). Client KHÔNG tự suy từ systemKey.
+            Xem DOMAIN_RULES §14.1.
 
     TaxonomyItem:
       type: object
@@ -631,6 +660,56 @@ components:
         nextCursor: { type: [string, "null"], description: Opaque server cursor. }
         pageSize: { type: integer, minimum: 1, maximum: 100 }
 
+    AdminGeminiExeRun:
+      type: object
+      required: [id, started_at, status, candidates, no_candidates, errors, report]
+      properties:
+        id: { type: string, format: uuid }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: [string, "null"], format: date-time }
+        status: { type: string, enum: [running, completed, partial, failed, interrupted] }
+        candidates: { type: integer, minimum: 0 }
+        no_candidates: { type: integer, minimum: 0 }
+        errors: { type: integer, minimum: 0 }
+        report: { type: object, additionalProperties: true }
+    AdminGeminiExeStatus:
+      type: object
+      required: [enabled, queueDepth, latestRun]
+      properties:
+        enabled: { type: boolean }
+        leaseId: { type: [string, "null"], format: uuid }
+        leaseUntil: { type: [string, "null"], format: date-time }
+        nextRunAt: { type: string, format: date-time }
+        queueDepth: { type: integer, minimum: 0 }
+        latestRun: { anyOf: [{ $ref: '#/components/schemas/AdminGeminiExeRun' }, { type: "null" }] }
+    AdminGeminiExeRunPage:
+      type: object
+      required: [items, nextCursor, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminGeminiExeRun' } }
+        nextCursor: { type: [string, "null"] }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+    AdminGeminiExeGame:
+      type: object
+      required: [gameId, name]
+      properties:
+        gameId: { type: integer, format: int64 }
+        igdbId: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        fileName: { type: [string, "null"] }
+        status: { type: [string, "null"], enum: [candidate, no_candidate, "null"] }
+        source: { type: [string, "null"] }
+        enrichedAt: { type: [string, "null"], format: date-time }
+        attempts: { type: [integer, "null"], minimum: 0 }
+        lastErrorCode: { type: [string, "null"] }
+    AdminGeminiExeGamePage:
+      type: object
+      required: [items, nextCursor, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminGeminiExeGame' } }
+        nextCursor: { type: [string, "null"] }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+
     LibraryGameImportUserData:
       type: object
       properties:
@@ -765,18 +844,25 @@ components:
             false = nguoi choi chi nho NAM. `finishedAt` van la ngay day du (1
             thang 1 cua nam do) de sort/filter khong doi, nhung UI phai hien
             "2019" chu khong phai "01/2019". Xem DOMAIN_RULES §9.1.
-        score: { type: [number, "null"], minimum: 0, maximum: 11, multipleOf: 0.5 }
+        score:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 11
+          multipleOf: 0.5
+          deprecated: true
+          description: Du lieu CU. Khong con luu diem theo tung lan — lan moi luon null, UI khong hien. Xem DOMAIN_RULES §9.1.
 
     FinishGameRequest:
       type: object
-      required: [score]
       properties:
         score:
           type: number
           minimum: 0
           maximum: 11
           multipleOf: 0.5
-          description: Thang 0-11 buoc 0.5. Gia tri 11 la Peak Score va hien thi "10+".
+          description: >
+            Thang 0-11 buoc 0.5 (11 = Peak Score, hien "10+"). BAT BUOC o lan hoan thanh dau tien
+            (thieu -> 400 FINISH_SCORE_REQUIRED); cac lan sau bo trong = giu nguyen game.score.
         finishedYear:
           type: [integer, "null"]
           minimum: 1970
@@ -838,6 +924,9 @@ components:
             BANNER từ Steam header.jpg (ngang 460x215) — **đã có tên game in trong ảnh**.
             Card trong lưới và hàng trong Play Queue dùng field này.
             Không bao giờ phủ thêm chữ lên ảnh này.
+            Cả ba field ảnh có thể là URL tuyệt đối (link gốc, hoặc bản Cloudinary với
+            thư viện admin) hoặc URL tương đối `/local-images/{file}` (ảnh lưu trên máy
+            với thư viện không phải admin, Host phục vụ). Client dùng thẳng làm `src`.
         posterPath:
           type: [string, "null"]
           description: POSTER dọc từ IGDB t_cover_big_2x cho Console mode. Không lấy từ Steam.
@@ -956,10 +1045,34 @@ components:
         name: { type: string, minLength: 1 }
         source: { $ref: '#/components/schemas/GameSyncSource' }
 
+    GameMetadataPreviewWarning:
+      type: object
+      required: [provider, code, message]
+      properties:
+        provider:
+          type: string
+          description: metadata | igdb | rawg | steam
+        code:
+          type: string
+          description: Ví dụ RAWG_NOT_CONFIGURED, RAWG_KEY_INVALID, RAWG_RATE_LIMITED, IGDB_NOT_CONFIGURED, IGDB_REQUEST_FAILED.
+        message: { type: string }
+
     GameMetadataPreview:
       type: object
-      description: Dữ liệu preview từ provider ngoài, chỉ để điền draft. Endpoint không ghi DB.
+      description: >
+        Dữ liệu preview chỉ để điền draft; endpoint không ghi DB. Nguồn theo thứ tự: game ĐÃ XUẤT BẢN
+        trong kho metadata có tên giống nhất trước, field nào kho thiếu mới gọi IGDB / RAWG / Steam
+        (bằng tên chuẩn của game kho). Field null = không nguồn nào có — client giữ giá trị đang có.
       properties:
+        metadataGameId:
+          type: [integer, "null"]
+          format: int64
+          description: Game kho metadata đã dùng làm nguồn chính; null = không khớp game nào.
+        metadataGameName: { type: [string, "null"] }
+        warnings:
+          type: array
+          description: Nguồn không đóng góp được và lý do (thiếu key, key sai, timeout...). Client phải hiển thị.
+          items: { $ref: '#/components/schemas/GameMetadataPreviewWarning' }
         name: { type: [string, "null"] }
         developer: { type: [string, "null"] }
         publisher: { type: [string, "null"] }
@@ -967,13 +1080,15 @@ components:
         publishDate: { type: [string, "null"], format: date }
         metaScore: { type: [integer, "null"] }
         avgPlaytimeHours: { type: [integer, "null"] }
-        exeName: { type: [string, "null"] }
+        exeName:
+          type: [string, "null"]
+          description: Tên file chạy lưu trong kho metadata cho game khớp. Không còn đoán bằng Gemini.
         isDlc: { type: [boolean, "null"] }
         bannerPath:   { type: [string, "null"], format: uri }
         backdropPath:
           type: [string, "null"]
           format: uri
-          description: RAWG background_image; RAWG không có thì Steam library_hero (cũng là ảnh sạch, không chữ).
+          description: Kho metadata; thiếu thì RAWG background_image; RAWG không có thì Steam library_hero (cũng là ảnh sạch, không chữ).
         posterPath:   { type: [string, "null"], format: uri }
         series:
           description: >
@@ -1028,15 +1143,42 @@ components:
             launch: { type: boolean }
             filePicker: { type: boolean }
             revealFolder: { type: boolean }
-            tray: { type: boolean }
+            tray:
+              type: boolean
+              description: |
+                Host điều khiển được tiến trình Tray trên máy (GET /api/tray/status, bật/tắt dịch vụ,
+                quét ngay, mở log). Tray có đang chạy hay không thì xem `TrayStatus.running`.
             scanner: { type: boolean }
             controller: { type: boolean }
             imageSync:
               type: boolean
-              description: Host có credential Cloudinary và chạy được POST /api/tray/sync-images (không cần tiến trình Tray).
+              description: >-
+                Chạy được POST /api/tray/sync-images (trong Host, không cần tiến trình Tray).
+                Thư viện không phải admin luôn `true` (ảnh lưu trên máy); thư viện admin cần credential Cloudinary.
             backup:
               type: boolean
               description: Tính năng backup save game đang bật (thư mục backup gốc, thư mục backup từng game, POST /api/games/{id}/backup-folder/generate). Hiện tạm tắt → false; client ẩn mọi UI backup.
+
+    TrayStatus:
+      type: object
+      required: [running, services, startWithWindows]
+      properties:
+        running:
+          type: boolean
+          description: Tiến trình Tray đang chạy và trả lời Host. `false` thì `services` rỗng.
+        services:
+          type: array
+          items: { $ref: '#/components/schemas/TrayServiceStatus' }
+        startWithWindows: { type: boolean }
+
+    TrayServiceStatus:
+      type: object
+      required: [name, enabled]
+      properties:
+        name: { type: string, enum: [playtime, scanner, backup] }
+        enabled: { type: boolean }
+        lastRunAt: { type: [string, "null"], format: date-time }
+        detail: { type: object, additionalProperties: true }
 
     ImageSyncRoleCounts:
       type: object
@@ -1072,7 +1214,7 @@ components:
 
     IntegrationProvider:
       type: string
-      enum: [rawg, igdb, steam, cloudinary, gemini]
+      enum: [rawg, igdb, cloudinary, gemini]
 
     IntegrationLastTest:
       type: object
@@ -1144,6 +1286,25 @@ components:
           enum: [clear, rain]
           default: clear
           description: Chế độ thời tiết của theme jungle (mưa + vũng nước). Chỉ khi themeMode=jungle.
+        appMode:
+          type: string
+          enum: [desktop, console]
+          default: desktop
+          description: |
+            Mode cuối cùng của app. UI ghi mỗi lần vào/thoát console session (F10,
+            LB+RB+A, tray); lần mở app sau vào lại đúng mode này. Thuộc config dùng
+            chung — KHÔNG lưu localStorage.
+        seenGuides:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [gameForm, viewModes]
+          description: |
+            Hướng dẫn UI người dùng đã xem xong: `gameForm` (lần đầu mở form thêm game),
+            `viewModes` (sau khi thêm game đầu tiên — tác dụng từng view và thứ tự riêng).
+            PUT gửi `null`/bỏ field = giữ nguyên; gửi mảng (kể cả rỗng) = thay cả danh sách,
+            mảng rỗng = xem lại toàn bộ hướng dẫn. Thuộc config — KHÔNG lưu localStorage.
         backupRootPath: { type: string }
         databasePath: { type: string }
         libraries:
@@ -1194,6 +1355,63 @@ components:
         systemKey: { type: string }
         colorCode: { type: [string, "null"] }
         count: { type: integer }
+
+    ReleaseNotification:
+      type: object
+      description: |
+        Một mốc nhắc game trong thư viện sắp ra mắt (DOMAIN_RULES §22). Backend quyết định
+        mốc nào hiện; client chỉ render và format `releaseAt` theo `timeZone` của feed.
+      required: [id, gameId, gameName, stage, daysLeft, publishDate, releaseAt, read]
+      properties:
+        id:
+          type: string
+          description: '"{gameId}:{stage}:{publishDate}" — mờ với client, chỉ gửi lại để đánh dấu đã xem.'
+        gameId: { type: string }
+        gameName: { type: string }
+        bannerPath: { type: [string, "null"] }
+        posterPath: { type: [string, "null"] }
+        stage:
+          type: string
+          enum: [soon, today]
+          description: soon = còn 1..3 ngày theo lịch địa phương; today = đúng ngày ra mắt.
+        daysLeft:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Số ngày lịch theo múi giờ `timeZone` tới ngày ra mắt.
+        publishDate:
+          type: string
+          format: date
+          description: Ngày phát hành theo UTC, như lưu trong thư viện.
+        releaseAt:
+          type: string
+          format: date-time
+          description: Mốc ra mắt = 00:00 UTC của `publishDate`.
+        read: { type: boolean }
+
+    ReleaseNotificationFeed:
+      type: object
+      required: [timeZone, generatedAt, unreadCount, items]
+      properties:
+        timeZone:
+          type: string
+          description: Múi giờ server đã dùng để tính `daysLeft` và `stage`.
+        generatedAt: { type: string, format: date-time }
+        unreadCount: { type: integer, minimum: 0 }
+        items:
+          type: array
+          description: Server đã sắp — ngày ra mắt gần nhất trước.
+          items: { $ref: '#/components/schemas/ReleaseNotification' }
+
+    MarkReleaseNotificationsReadRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { type: string }
 
     DashboardStats:
       type: object
@@ -1389,13 +1607,18 @@ paths:
               schema: { $ref: '#/components/schemas/AuthSession' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: EMAIL_NOT_CONFIRMED — nhập mã ở POST /api/auth/signup/verify }
         '423': { $ref: '#/components/responses/Locked' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /api/auth/signup:
     post:
       tags: [auth]
-      summary: Tự đăng ký tài khoản user và gửi email xác minh
+      summary: Tự đăng ký tài khoản user và gửi mã xác minh qua email
+      description: |
+        Tài khoản chưa xác nhận email giữ username và email trong 6 giờ. Quá 6 giờ,
+        lần đăng ký, đổi username/email hoặc chọn username (Google) kế tiếp trùng
+        giá trị đó sẽ xoá tài khoản bỏ dở và tiếp tục.
       security: []
       requestBody:
         required: true
@@ -1410,6 +1633,50 @@ paths:
               schema: { $ref: '#/components/schemas/SignupResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/signup/resend:
+    post:
+      tags: [auth]
+      summary: Gửi lại mã 6 số xác nhận email đăng ký
+      description: |
+        Email "Confirm signup" chứa mã, không chứa link (bản desktop không có trang web
+        để mở link). Tài khoản không tồn tại hoặc đã xác nhận vẫn nhận 202.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignupCodeRequest' }
+      responses:
+        '202':
+          description: Đã nhận yêu cầu
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SignupCodeResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { description: CODE_RESEND_COOLDOWN (error.details.resendAvailableAt) hoặc EMAIL_RATE_LIMITED }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/auth/signup/verify:
+    post:
+      tags: [auth]
+      summary: Xác nhận email đăng ký bằng mã 6 số rồi đăng nhập luôn
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifySignupCodeRequest' }
+      responses:
+        '200':
+          description: Email đã xác nhận; refresh token trong HttpOnly cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '429': { description: CODE_ATTEMPTS_EXCEEDED hoặc quá nhiều yêu cầu }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /api/auth/guest:
@@ -1619,7 +1886,7 @@ paths:
     post:
       tags: [auth]
       summary: Gửi mã 6 số đặt lại mật khẩu qua email
-      description: Luôn trả 202, kể cả khi tài khoản không tồn tại hoặc đang trong cooldown 60 giây.
+      description: 202 khi đã gửi (hoặc đang trong cooldown 60 giây vì mã vừa gửi); 404 ACCOUNT_NOT_FOUND khi không có tài khoản.
       security: []
       requestBody:
         required: true
@@ -1633,7 +1900,8 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ForgotPasswordResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '429': { description: Quá nhiều yêu cầu }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { description: Quá nhiều yêu cầu hoặc EMAIL_RATE_LIMITED }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /api/auth/password/verify-code:
@@ -1875,7 +2143,10 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [game]
-      summary: Tạo game mới
+      summary: Thêm thủ công một game riêng vào thư viện của owner hiện tại (user hoặc guest)
+      description: >-
+        Game tạo ra có `metadataGameId = null`, chỉ nằm trong thư viện của owner gọi API,
+        không ghi vào kho metadata dùng chung. `baseGameId` phải là game của chính owner đó.
       requestBody:
         required: true
         content:
@@ -1888,6 +2159,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/GameDetail' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /api/metadata/games:
     get:
@@ -2172,6 +2444,9 @@ paths:
     post:
       tags: [metadata]
       summary: Resolve metadata theo tên để điền draft; không ghi DB.
+      description: >-
+        Kho metadata trước, kể cả bản chưa xuất bản vì trượt tiêu chí (bỏ bản admin chủ động gỡ);
+        chỉ field kho còn thiếu mới gọi IGDB/RAWG/Steam. Xem API_CONTRACT §preview.
       requestBody:
         required: true
         content:
@@ -2729,6 +3004,38 @@ paths:
         '422': { $ref: '#/components/responses/UnprocessableEntity' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
+  /api/admin/metadata/gemini-exe:
+    get:
+      tags: [admin]
+      summary: Trạng thái worker Gemini executable (admin-only)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AdminGeminiExeStatus' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Admin required }
+  /api/admin/metadata/gemini-exe/enabled:
+    put:
+      tags: [admin]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdminCrawlerEnabledRequest' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AdminGeminiExeStatus' } } } }
+  /api/admin/metadata/gemini-exe/run:
+    post:
+      tags: [admin]
+      responses:
+        '202': { description: Queued, content: { application/json: { schema: { $ref: '#/components/schemas/AdminCrawlerRunRequest' } } } }
+  /api/admin/metadata/gemini-exe/runs:
+    get:
+      tags: [admin]
+      parameters: [{ name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AdminGeminiExeRunPage' } } } }
+  /api/admin/metadata/gemini-exe/games:
+    get:
+      tags: [admin]
+      parameters: [{ name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AdminGeminiExeGamePage' } } } }
+
   /api/admin/integrations:
     get:
       tags: [admin]
@@ -2829,6 +3136,43 @@ paths:
                   ok: { type: boolean }
                   message: { type: string }
         '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /api/notifications/releases:
+    get:
+      tags: [library]
+      summary: Game trong thư viện sắp ra mắt (trước 3 ngày và đúng ngày)
+      description: |
+        DOMAIN_RULES §22. Mốc ra mắt = 00:00 UTC của `publishDate`, đổi sang `timeZone`
+        rồi mới đếm ngày. Bỏ trống `timeZone` thì dùng múi giờ của máy chạy Host.
+      parameters:
+        - name: timeZone
+          in: query
+          required: false
+          description: Tên múi giờ IANA (vd. `Asia/Ho_Chi_Minh`) hoặc Windows.
+          schema: { type: string, maxLength: 64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReleaseNotificationFeed' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/notifications/releases/read:
+    post:
+      tags: [library]
+      summary: Đánh dấu thông báo ra mắt đã xem
+      description: Lưu theo chủ thư viện. Id lạ nhưng đúng dạng vẫn được nhận (idempotent).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MarkReleaseNotificationsReadRequest' }
+      responses:
+        '204': { description: Đã lưu }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /api/dashboard/stats:
     get:
@@ -2949,24 +3293,15 @@ paths:
   /api/tray/status:
     get:
       tags: [native]
+      description: |
+        Host hỏi tiến trình Tray qua named pipe của user hiện tại. Tray không chạy thì vẫn
+        trả 200 với `running: false` (đó là trạng thái, không phải lỗi).
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  services:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name: { type: string, enum: [playtime, scanner, backup] }
-                        enabled: { type: boolean }
-                        lastRunAt: { type: [string, "null"], format: date-time }
-                        detail: { type: object, additionalProperties: true }
-                  startWithWindows: { type: boolean }
+              schema: { $ref: '#/components/schemas/TrayStatus' }
         '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
 
   /api/tray/services/{name}:
@@ -2985,16 +3320,22 @@ paths:
                 enabled: { type: boolean }
       responses:
         '204': { description: OK }
+        '409':
+          description: Tray không chạy (TRAY_NOT_RUNNING) hoặc không bật/tắt được dịch vụ (TRAY_COMMAND_FAILED)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
         '501': { $ref: '#/components/responses/NotImplementedOnHosted' }
 
   /api/tray/sync-images:
     post:
       tags: [native]
-      summary: Đưa ảnh banner/backdrop/poster trong thư viện của người đang đăng nhập lên Cloudinary
+      summary: Đưa ảnh banner/backdrop/poster trong thư viện của người đang đăng nhập về nơi lưu
       description: |
+        Nơi lưu theo chủ thư viện (DOMAIN_RULES §12): tài khoản admin → Cloudinary;
+        user, guest → lưu trên máy (`/local-images/...`). Trong báo cáo, `uploaded` là
+        số ảnh vừa lưu tới nơi đó.
         Chạy trong Host, không cần tiến trình Tray. Đồng bộ (trả báo cáo khi xong),
         chưa qua /api/events. Chỉ thay đúng cột ảnh và chỉ khi giá trị chưa đổi
-        trong lúc chạy. Ảnh đã nằm trong thư mục QuestLog/ (hoặc MasterPlay/ cũ) bỏ qua.
+        trong lúc chạy. Ảnh đã ở đúng nơi lưu thì bỏ qua.
       responses:
         '200':
           description: Báo cáo, kèm lý do từng ảnh lỗi
@@ -3006,7 +3347,7 @@ paths:
           description: Đang có một lần đồng bộ ảnh khác chạy (IMAGE_SYNC_RUNNING)
           content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
         '422':
-          description: Chưa cấu hình Cloudinary (INTEGRATION_NOT_CONFIGURED)
+          description: Thư viện admin nhưng chưa cấu hình Cloudinary (INTEGRATION_NOT_CONFIGURED)
           content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
 
   /api/tray/{action}:
@@ -3019,6 +3360,11 @@ paths:
           schema:
             type: string
             enum: [scan-now, backup-now, open-logs, startup]
+      description: |
+        Đã cài `scan-now` và `open-logs`. `backup-now` (backup đang tắt) và `startup` trả 501.
       responses:
         '202': { description: Đã nhận, tiến độ đẩy qua /api/events }
+        '409':
+          description: Tray không chạy (TRAY_NOT_RUNNING), hoặc dịch vụ quét thư viện đang tắt (SCANNER_STOPPED)
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
         '501': { $ref: '#/components/responses/NotImplementedOnHosted' }

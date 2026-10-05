@@ -110,6 +110,25 @@ export function DialogFooter({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
+/**
+ * Thanh nut o DAY the / hop thoai lon: kinh mo NOI len noi dung, noi dung cuon
+ * xuong ben duoi va nhin xuyen qua no. Cha phai `relative`, va vung cuon phai
+ * chua san le duoi (`pb-16` tro len) de hang cuoi khong nam ket sau thanh nay.
+ */
+export function GlassFooter({ className, ...props }: ComponentProps<"footer">) {
+  return (
+    <footer
+      className={cn(
+        "absolute inset-x-0 bottom-0 z-30 flex min-h-[52px] items-center gap-2 px-4 py-2",
+        "border-t border-border/60 bg-surface/45 backdrop-blur-xl backdrop-saturate-150",
+        "shadow-[0_-14px_32px_-22px_color-mix(in_oklab,black_75%,transparent)]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 /* ── Dropdown menu ── */
 
 export const DropdownMenu = DropdownPrimitive.Root;
@@ -328,7 +347,7 @@ export function Tooltip({
           className={cn(
             "z-[100] max-w-72 origin-[var(--radix-tooltip-content-transform-origin)] rounded-[10px] border",
             "border-[color-mix(in_oklab,white_14%,var(--color-border))] bg-[color-mix(in_oklab,var(--color-surface)_88%,transparent)]",
-            "px-2.5 py-1.5 text-[11px] font-semibold leading-[1.35] text-fg backdrop-blur-md backdrop-saturate-150",
+            "px-2.5 py-1.5 text-fs-11 font-semibold leading-[1.35] text-fg backdrop-blur-md backdrop-saturate-150",
             "shadow-[0_14px_38px_-18px_color-mix(in_oklab,black_72%,transparent),0_4px_12px_-8px_color-mix(in_oklab,black_58%,transparent),inset_0_1px_0_color-mix(in_oklab,white_18%,transparent)]",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:duration-100",
             "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:duration-150 motion-reduce:animate-none",
@@ -337,7 +356,7 @@ export function Tooltip({
         >
           <span>{label}</span>
           {shortcut ? (
-            <kbd className="ml-2 rounded border border-border/70 bg-bg/35 px-1 py-0.5 font-mono text-[9px] font-medium text-muted-fg">
+            <kbd className="ml-2 rounded border border-border/70 bg-bg/35 px-1 py-0.5 font-mono text-fs-9 font-medium text-muted-fg">
               {shortcut}
             </kbd>
           ) : null}
@@ -352,18 +371,21 @@ export function Tooltip({
   );
 }
 
-type IconButtonTone = "neutral" | "play" | "edit" | "add" | "open" | "finish" | "danger";
+type IconButtonTone =
+  | "neutral" | "play" | "edit" | "add" | "open" | "finish" | "danger"
+  /* Tone rieng cho nut thanh cong cu: moi nut mot mau, khong mang nghia hanh dong. */
+  | "sort" | "filter" | "notify";
 type IconButtonSize = "mini" | "compact" | "default";
 
 type LiquidGlassStyle = CSSProperties & {
-  "--liquid-light-angle": string;
-  "--liquid-light-x": string;
-  "--liquid-light-y": string;
   "--liquid-shadow-x": string;
   "--liquid-shadow-y": string;
 };
 
-/** Tao huong sang gia-ngau-nhien, nhung giu nguyen trong suot vong doi cua nut. */
+/**
+ * Tao huong bong toi ben trong gia-ngau-nhien, giu nguyen trong suot vong doi
+ * cua nut.
+ */
 function liquidGlassStyle(seed: string): LiquidGlassStyle {
   let hash = 2166136261;
   for (let index = 0; index < seed.length; index += 1) {
@@ -373,13 +395,8 @@ function liquidGlassStyle(seed: string): LiquidGlassStyle {
 
   const angle = (hash >>> 0) % 360;
   const radians = (angle * Math.PI) / 180;
-  const lightX = 50 + Math.cos(radians) * 34;
-  const lightY = 50 + Math.sin(radians) * 34;
 
   return {
-    "--liquid-light-angle": `${angle}deg`,
-    "--liquid-light-x": `${lightX.toFixed(2)}%`,
-    "--liquid-light-y": `${lightY.toFixed(2)}%`,
     "--liquid-shadow-x": `${(-Math.cos(radians) * 2.4).toFixed(2)}px`,
     "--liquid-shadow-y": `${(-Math.sin(radians) * 2.4).toFixed(2)}px`,
   };
@@ -391,6 +408,10 @@ type IconButtonProps = Omit<ComponentProps<"button">, "children"> & {
   shortcut?: string;
   tone?: IconButtonTone;
   size?: IconButtonSize;
+  /** Nut dai (pill): hien ca nhan ben canh icon, khong can tooltip. */
+  wide?: boolean;
+  /** "lens": thau kinh day (mac dinh). "info": nut nhe, it hieu ung — dung qua InfoButton. */
+  variant?: "lens" | "info";
   tooltipSide?: ComponentProps<typeof TooltipPrimitive.Content>["side"];
 };
 
@@ -400,6 +421,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   shortcut,
   tone = "neutral",
   size = "default",
+  wide = false,
+  variant = "lens",
   tooltipSide = "top",
   className,
   style,
@@ -417,21 +440,31 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       disabled={disabled}
       data-tone={tone}
       data-size={size}
+      data-wide={wide || undefined}
       aria-label={ariaLabel ?? label}
       style={{ ...liquidStyle, ...style }}
       className={cn(
-        /* Nut tron liquid-glass; huong phan sang rieng nam trong CSS variables. */
-        "icon-button relative inline-grid shrink-0 place-items-center rounded-full",
-        size === "mini" ? "h-5 w-5 [&_svg]:size-3"
-          : size === "compact" ? "h-7 w-7 [&_svg]:size-3.5"
-            : "h-9 w-9 [&_svg]:size-[18px]",
+        /* Nut tron thau kinh; huong bong rieng nam trong CSS variables. */
+        variant === "info" ? "info-button" : "icon-button",
+        "relative shrink-0 rounded-full",
+        wide
+          ? "inline-flex items-center justify-center gap-1.5 px-4 text-sm font-semibold"
+          : "inline-grid place-items-center",
+        size === "mini" ? cn("h-5 [&_svg]:size-3", !wide && "w-5")
+          : size === "compact" ? cn("h-7 [&_svg]:size-3.5", !wide && "w-7")
+            : cn("h-9 [&_svg]:size-[18px]", !wide && "w-9"),
         className,
       )}
       {...props}
     >
       {icon}
+      {wide ? <span>{label}</span> : null}
     </button>
   );
+
+  if (wide) {
+    return disabled ? <span className="inline-flex cursor-not-allowed">{button}</span> : button;
+  }
 
   return (
     <Tooltip label={label} shortcut={shortcut} side={tooltipSide}>
@@ -439,6 +472,20 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </Tooltip>
   );
 });
+
+/** Nut xem thong tin: chu "i" tran (khong vien tron), it hieu ung hon IconButton. */
+export const InfoButton = forwardRef<HTMLButtonElement, Omit<IconButtonProps, "icon" | "wide" | "variant">>(
+  function InfoButton(props, ref) {
+    return (
+      <IconButton
+        {...props}
+        ref={ref}
+        variant="info"
+        icon={<span aria-hidden="true" className="info-glyph">i</span>}
+      />
+    );
+  },
+);
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

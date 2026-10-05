@@ -26,11 +26,11 @@ export const PROGRESS: CatalogItem[] = [
 
 export const OWNERSHIP: CatalogItem[] = [
   { id: 1, systemKey: "Ready", name: "Ready", displayName: "Ready", colorCode: "#4ade80", iconData: null, sortOrder: 0 },
-  { id: 2, systemKey: "Pirated", name: "Pirated", displayName: "Pirated", colorCode: "#fbbf24", iconData: null, sortOrder: 1 },
+  { id: 2, systemKey: "Pirated", name: "Pirated", displayName: "Pirated", colorCode: "#fbbf24", iconData: null, sortOrder: 1, infoLayout: "download" },
   { id: 3, systemKey: "GamePass", name: "Game Pass", displayName: "Game Pass", colorCode: "#4ade80", iconData: null, sortOrder: 2 },
   { id: 4, systemKey: "NotOwned", name: "Not owned", displayName: "Not owned", colorCode: "#94a3b8", iconData: null, sortOrder: 3 },
   { id: 5, systemKey: "PSRequired", name: "PS required", displayName: "PS required", colorCode: "#c084fc", iconData: null, sortOrder: 4 },
-  { id: 6, systemKey: "SteamOff", name: "Steam offline", displayName: "Steam offline", colorCode: "#a3a3a3", iconData: null, sortOrder: 5 },
+  { id: 6, systemKey: "SteamOff", name: "Steam offline", displayName: "Steam offline", colorCode: "#a3a3a3", iconData: null, sortOrder: 5, infoLayout: "sharedAccount" },
 ];
 
 /** Nguong dai — PHAI khop DOMAIN_RULES §5.5. Backend that cung dung bang nay. */

@@ -32,10 +32,17 @@ public partial class MainWindow : Window
     private const uint MonitorDefaultToNearest = 2;
     private const uint SwpNoZOrder = 0x0004;
     private const uint SwpNoActivate = 0x0010;
+    private const int WmSetIcon = 0x0080;
+    private const int IconSmall = 0;
+    private const int IconBig = 1;
+    // Windows 11 ve icon taskbar o 24px logic (va o 16px cho icon nho).
+    private const int TaskbarIconSize = 24;
+    private const int SmallIconSize = 16;
 
-    // Dev: Vite dev server. Doi bang bien moi truong khi can.
-    private static readonly string AppUrl =
-        Environment.GetEnvironmentVariable("QUESTORY_URL") ?? "http://localhost:5173/";
+    // Dev: Vite dev server (QUESTORY_URL). Ban cai: Host do Shell tu khoi dong.
+    private static readonly string AppUrl = DesktopRuntime.AppUrl;
+
+    private readonly CancellationTokenSource _updateLoop = new();
 
     private WindowState _stateBeforeFullscreen = WindowState.Normal;
     private Rect _boundsBeforeFullscreen;
@@ -43,6 +50,8 @@ public partial class MainWindow : Window
     private bool _isFullscreen;
     private bool _consoleFullscreenSession;
     private bool _fullscreenBeforeConsoleSession;
+    private IntPtr _bigIcon;
+    private IntPtr _smallIcon;
 
     public MainWindow()
     {
@@ -52,6 +61,11 @@ public partial class MainWindow : Window
         DpiChanged += OnDpiChanged;
         StateChanged += OnWindowStateChanged;
         PreviewKeyDown += OnKeyDown;
+        Closed += (_, _) =>
+        {
+            _updateLoop.Cancel();
+            DestroyWindowIcons();
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -64,7 +78,10 @@ public partial class MainWindow : Window
             "QuestLog", "WebView2");
         Directory.CreateDirectory(userDataFolder);
 
-        var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+        // Am thanh console phat ca khi chi bam tay cam (trinh duyet khong tinh gamepad
+        // la cu chi nguoi dung nen mac dinh se chan AudioContext).
+        var envOptions = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
+        var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder, envOptions);
         await Web.EnsureCoreWebView2Async(env);
 
         var core = Web.CoreWebView2;
@@ -116,7 +133,54 @@ public partial class MainWindow : Window
         // Cho ca API (qua proxy cua Vite) de man dang nhap khong goi vao Host chua len
         // va nhan 500 tu proxy. Het thoi gian thi van mo app; frontend tu thu lai.
         await WaitForServerAsync(new Uri(new Uri(AppUrl), "/api/health").ToString());
+
+        if (DesktopRuntime.IsPackaged && DesktopRuntime.HostProcess is not { HasExited: false })
+        {
+            // Ban cai khong co dev server nao de cho: Host chet la khong co gi de hien.
+            StartupError.Text =
+                "Không khởi động được dịch vụ nền của QuestLog. Hãy mở lại ứng dụng.\n" +
+                $"Nhật ký: {ShellLog.FilePath}";
+            StartupError.Visibility = Visibility.Visible;
+            ShellLog.Write("Host khong chay sau khi cho khoi dong.");
+            return;
+        }
+
         core.Navigate(AppUrl);
+
+        if (DesktopRuntime.IsPackaged) StartUpdateChecks();
+    }
+
+    private void StartUpdateChecks()
+    {
+        var updater = DesktopRuntime.Updater;
+        updater.UpdateReady += version => Dispatcher.BeginInvoke(() => PostUpdateReady(version));
+        _ = RunUpdateLoopAsync(updater);
+    }
+
+    private async Task RunUpdateLoopAsync(AppUpdater updater)
+    {
+        try
+        {
+            await Task.Run(() => updater.RunAsync(_updateLoop.Token));
+        }
+        catch (OperationCanceledException)
+        {
+            // Cua so dong.
+        }
+        catch (Exception ex)
+        {
+            ShellLog.Write($"Vong kiem tra cap nhat dung bat thuong: {ex}");
+        }
+    }
+
+    private void PostUpdateReady(string version)
+    {
+        if (Web.CoreWebView2 == null) return;
+        Web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            type = "questlog.update-ready",
+            version
+        }));
     }
 
     private void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -131,6 +195,23 @@ public partial class MainWindow : Window
             {
                 ToggleFullscreen();
                 PostFullscreenState();
+                return;
+            }
+
+            // Giao dien vua tai (hoac tai lai) hoi xem da co ban moi tai xong chua,
+            // vi questlog.update-ready co the da gui truoc khi trang nghe.
+            if (type.GetString() == "questlog.update-status")
+            {
+                if (DesktopRuntime.IsPackaged && DesktopRuntime.Updater.ReadyVersion is { } readyVersion)
+                {
+                    PostUpdateReady(readyVersion);
+                }
+                return;
+            }
+
+            if (type.GetString() == "questlog.update-apply")
+            {
+                if (DesktopRuntime.IsPackaged) DesktopRuntime.Updater.ApplyAndRestart();
                 return;
             }
 
@@ -188,6 +269,7 @@ public partial class MainWindow : Window
         // WPF ap dung DPI moi truoc; doi mot nhip de WebView va kich thuoc cua so
         // cung dung chung he toa do cua man hinh vua chuyen sang.
         Dispatcher.BeginInvoke(() => FitWindowToCurrentMonitor(usePreferredSize: false));
+        ApplyWindowIcons();
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -195,6 +277,37 @@ public partial class MainWindow : Window
         var handle = new WindowInteropHelper(this).Handle;
         HwndSource.FromHwnd(handle)?.AddHook(WindowMessageHook);
         ApplyWindowCornerPreference();
+        ApplyWindowIcons();
+    }
+
+    // WPF luon gui icon 32px cho taskbar; Windows thu no xuong 24px (ti le 0,75)
+    // nen icon bi vo. Tu lay frame dung kich thuoc tu app.ico trong exe theo DPI.
+    private void ApplyWindowIcons()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        var exePath = Environment.ProcessPath;
+        if (handle == IntPtr.Zero || string.IsNullOrEmpty(exePath)) return;
+
+        var dpi = GetDpiForWindow(handle);
+        if (dpi == 0) dpi = 96;
+        var bigSize = (int)Math.Round(TaskbarIconSize * dpi / 96.0);
+        var smallSize = (int)Math.Round(SmallIconSize * dpi / 96.0);
+        var sizes = (uint)((smallSize << 16) | (bigSize & 0xFFFF));
+        if (SHDefExtractIcon(exePath, 0, 0, out var bigIcon, out var smallIcon, sizes) != 0) return;
+
+        SendMessage(handle, WmSetIcon, (IntPtr)IconBig, bigIcon);
+        SendMessage(handle, WmSetIcon, (IntPtr)IconSmall, smallIcon);
+        DestroyWindowIcons();
+        _bigIcon = bigIcon;
+        _smallIcon = smallIcon;
+    }
+
+    private void DestroyWindowIcons()
+    {
+        if (_bigIcon != IntPtr.Zero) DestroyIcon(_bigIcon);
+        if (_smallIcon != IntPtr.Zero) DestroyIcon(_smallIcon);
+        _bigIcon = IntPtr.Zero;
+        _smallIcon = IntPtr.Zero;
     }
 
     private void ApplyWindowCornerPreference()
@@ -477,6 +590,22 @@ public partial class MainWindow : Window
 
         ApplyWindowCornerPreference();
     }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SHDefExtractIcon(
+        string iconFile,
+        int iconIndex,
+        uint flags,
+        out IntPtr largeIcon,
+        out IntPtr smallIcon,
+        uint iconSizes);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr SendMessage(IntPtr windowHandle, int message, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(IntPtr icon);
 
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr windowHandle, uint flags);

@@ -23,8 +23,8 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogTitle,
+  GlassFooter,
   IconButton,
   Popover,
   PopoverAnchor,
@@ -101,7 +101,7 @@ function CompactGameCard({
         <span className="mt-1 block truncate text-xs text-muted-fg">
           {game.developer ?? game.publisher ?? formatPublishDate(game.publishDate) ?? t("addGame.noMetadata")}
         </span>
-        {game.libraryStatus !== "notInLibrary" ? <span className={cn("mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-black", game.libraryStatus === "disabled" ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary")}>{game.libraryStatus === "disabled" ? t("addGame.restoreRequired") : t("addGame.alreadyInLibrary")}</span> : null}
+        {game.libraryStatus !== "notInLibrary" ? <span className={cn("mt-1 inline-flex rounded-full px-1.5 py-0.5 text-fs-10 font-black", game.libraryStatus === "disabled" ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary")}>{game.libraryStatus === "disabled" ? t("addGame.restoreRequired") : t("addGame.alreadyInLibrary")}</span> : null}
       </span>
       {selected ? <Check size={16} className="mt-1 shrink-0 text-primary" aria-hidden /> : null}
     </button>
@@ -155,7 +155,7 @@ function SelectedGalleryCard({
             <p className="line-clamp-1 text-sm font-black leading-5 text-fg">{game.name}</p>
             <p className="mt-0.5 line-clamp-1 text-xs font-medium text-muted-fg">{game.developer ?? game.publisher ?? t("addGame.noMetadata")}</p>
           </div>
-          <div className="flex min-h-5 flex-wrap items-center gap-1.5 text-[11px] font-bold text-muted-fg">
+          <div className="flex min-h-5 flex-wrap items-center gap-1.5 text-fs-11 font-bold text-muted-fg">
             {progress ? <CatalogPill item={progress} /> : null}
             {ownership ? <CatalogPill item={ownership} /> : null}
             {score ? <span className="rounded-md border border-border bg-surface-2/60 px-1.5 py-0.5 text-fg">{t("sort.score")} {score}</span> : null}
@@ -370,7 +370,7 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl overflow-hidden p-0">
-        <div className="flex max-h-[88vh] min-h-[650px] flex-col">
+        <div className="relative flex max-h-[88vh] min-h-[650px] flex-col">
           <div className="border-b border-border px-5 py-4 pr-14">
             <DialogTitle>{t("addGame.metadataTitle")}</DialogTitle>
             <DialogDescription>{t("addGame.metadataDescription")}</DialogDescription>
@@ -443,7 +443,7 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(300px,0.86fr)]">
-            <section className="min-h-0 overflow-y-auto border-r border-border p-4">
+            <section className="min-h-0 overflow-y-auto border-r border-border p-4 pb-20">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-muted-fg">{t("addGame.selectedGames")}</p>
                 <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-black text-primary">{selectedGames.length}</span>
@@ -464,7 +464,7 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
               ) : <div className="grid min-h-[420px] place-items-center text-center text-sm text-muted-fg"><div><Gamepad2 size={32} className="mx-auto mb-3 opacity-50" aria-hidden /><p>{t("addGame.searchHint")}</p></div></div>}
             </section>
 
-            <section className="min-h-0 overflow-y-auto bg-surface-2/15 p-4">
+            <section className="min-h-0 overflow-y-auto bg-surface-2/15 p-4 pb-20">
               {activeGame ? (
                 <>
                   <div className="mb-4 flex items-start gap-3">
@@ -481,7 +481,7 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
                       tham khao. Sua that su thi lam sau khi da them vao thu
                       vien, o the sua game (khong khoa nua). */}
                   <div className="mb-4 rounded-lg border border-border/70 bg-surface-2/25 p-3">
-                    <div className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-muted-fg">
+                    <div className="mb-2 flex items-center gap-1.5 text-fs-11 font-black uppercase tracking-[0.14em] text-muted-fg">
                       <Lock size={12} aria-hidden />
                       {t("addGame.metadataPreview")}
                     </div>
@@ -493,7 +493,7 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
                       <dt className="text-muted-fg">{t("sort.publish")}</dt>
                       <dd className="truncate text-right text-fg">{formatPublishDate(activeGame.publishDate) || "—"}</dd>
                     </dl>
-                    <p className="mt-2 text-[11px] leading-4 text-muted-fg">{t("addGame.editMetadataLaterHint")}</p>
+                    <p className="mt-2 text-fs-11 leading-4 text-muted-fg">{t("addGame.editMetadataLaterHint")}</p>
                   </div>
 
                   <div className="space-y-4">
@@ -515,7 +515,6 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
                       <div className="space-y-3">
                         <label className="grid gap-1.5 text-xs font-bold text-muted-fg">{t("editor.process")}<input value={activeDraft.exeName} onChange={(event) => patchDraft("exeName", event.target.value)} className="h-9 rounded-lg border border-border bg-surface px-3 text-sm text-fg outline-none focus:border-primary" /></label>
                         <label className="grid gap-1.5 text-xs font-bold text-muted-fg">{t("editor.launchTarget")}<input value={activeDraft.launchTargetPath} onChange={(event) => patchDraft("launchTargetPath", event.target.value)} placeholder={t("editor.pickLaunchTarget")} className="h-9 rounded-lg border border-border bg-surface px-3 text-sm text-fg outline-none focus:border-primary" /></label>
-                        <label className="grid gap-1.5 text-xs font-bold text-muted-fg">{t("editor.saveFolder")}<input value={activeDraft.saveFolderPath} onChange={(event) => patchDraft("saveFolderPath", event.target.value)} className="h-9 rounded-lg border border-border bg-surface px-3 text-sm text-fg outline-none focus:border-primary" /></label>
                         {canBackup && <label className="grid gap-1.5 text-xs font-bold text-muted-fg">{t("editor.backupFolder")}<input value={activeDraft.backupFolderPath} onChange={(event) => patchDraft("backupFolderPath", event.target.value)} className="h-9 rounded-lg border border-border bg-surface px-3 text-sm text-fg outline-none focus:border-primary" /></label>}
                         <label className="grid gap-1.5 text-xs font-bold text-muted-fg">{t("editor.note")}<textarea value={activeDraft.note} onChange={(event) => patchDraft("note", event.target.value)} className="min-h-20 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg outline-none focus:border-primary" /></label>
                       </div>
@@ -525,10 +524,11 @@ export function MetadataGamePickerDialog({ open, onOpenChange }: Props) {
               ) : <div className="grid h-full place-items-center text-center text-sm text-muted-fg"><div><Gamepad2 size={30} className="mx-auto mb-3 opacity-50" aria-hidden /><p>{t("addGame.selectGameHint")}</p></div></div>}
             </section>
           </div>
-          <DialogFooter className="justify-between">
+          {/* Footer kinh mo noi tren hai cot: noi dung cuon xuong duoi va nhin xuyen qua. */}
+          <GlassFooter className="justify-between px-5">
             <p className="text-xs text-muted-fg">{t("addGame.saveDisabled")}</p>
             <div className="flex gap-2"><IconButton label={t("action.cancel")} tone="neutral" icon={<X />} onClick={() => onOpenChange(false)} /><IconButton label={t("addGame.addSelected")} tone="add" icon={importMutation.isPending ? <Loader2 className="animate-spin" /> : <Plus />} disabled={selectedGames.length === 0 || importMutation.isPending} onClick={() => importMutation.mutate()} /></div>
-          </DialogFooter>
+          </GlassFooter>
         </div>
       </DialogContent>
     </Dialog>

@@ -244,7 +244,7 @@ export function ThemeGroupBoard({ scope }: { scope: TaxonomyScope }) {
         <SortableContext items={groupIds} strategy={verticalListSortingStrategy}>
           {scope === "library" && sharedBuckets.length ? (
             <section className="space-y-2">
-              <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">
+              <h3 className="flex items-center gap-1.5 text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">
                 <Lock size={12} /> {t("themes.sharedGroups")}
                 <span className="font-medium normal-case tracking-normal">— {t("themes.sharedLocked")}</span>
               </h3>
@@ -256,7 +256,7 @@ export function ThemeGroupBoard({ scope }: { scope: TaxonomyScope }) {
             <div className="grid gap-3 md:grid-cols-2">{sharedBuckets.map(renderBucket)}</div>
           ) : (
             <section className="space-y-2">
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">{t("themes.myGroups")}</h3>
+              <h3 className="text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">{t("themes.myGroups")}</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 {personalBuckets.map(renderBucket)}
                 {ungrouped ? renderBucket(ungrouped) : null}
@@ -331,7 +331,7 @@ function BucketCard({
           <Lock size={13} className="text-muted-fg" />
         ) : null}
         <span className="min-w-0 flex-1 truncate">{label}</span>
-        <span className="text-[11px] font-semibold text-muted-fg">{bucket.themes.length}</span>
+        <span className="text-fs-11 font-semibold text-muted-fg">{bucket.themes.length}</span>
         {onEditGroup ? (
           <IconButton size="mini" tone="edit" label={editLabel} icon={<Pencil />} onClick={onEditGroup} />
         ) : null}

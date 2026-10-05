@@ -51,6 +51,7 @@ import { AdminDashboardSection } from "./AdminDashboardSection";
 import { AdminPublishingSection } from "./AdminPublishingSection";
 import { AdminIntegrationsSection } from "./AdminIntegrationsSection";
 import { AdminCrawlerSection } from "./AdminCrawlerSection";
+import { AdminGeminiExeSection } from "./AdminGeminiExeSection";
 import { AdminTaxonomySection } from "./AdminTaxonomySection";
 import { AdminGameEditorDialog } from "./AdminGameEditorDialog";
 import { AdminGamePreviewDialog, type AdminPreviewStart } from "./AdminGamePreviewDialog";
@@ -65,6 +66,7 @@ const SECTION_ICONS: Record<AdminSection, typeof Gamepad2> = {
   publishing: FileCheck2,
   integrations: PlugZap,
   crawler: Bot,
+  geminiExe: Bot,
   dashboard: BarChart3,
 };
 
@@ -92,7 +94,7 @@ function SectionPlaceholder({
       </span>
       <h2 className="text-base font-extrabold text-fg">{title}</h2>
       <p className="text-sm leading-6 text-muted-fg">{description}</p>
-      <span className="mt-1 rounded-full border border-border bg-surface-2/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">
+      <span className="mt-1 rounded-full border border-border bg-surface-2/40 px-3 py-1 text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">
         {phase}
       </span>
     </div>
@@ -202,7 +204,7 @@ export function AdminConsoleView({
       </div>
 
       <header className="glass-panel sticky top-[38px] z-40 border-b">
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-3 px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5">
           <nav className="stone-slab flex shrink-0 items-center gap-1 rounded-xl p-1">
             {ADMIN_SECTIONS.map((key, index) => {
               const Icon = SECTION_ICONS[key];
@@ -314,7 +316,7 @@ export function AdminConsoleView({
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1800px] px-4 py-5 pb-20">
+      <main className="px-4 py-5 pb-20">
         {section === "games" ? (
           <AdminGamesSection
             query={query}
@@ -345,6 +347,8 @@ export function AdminConsoleView({
           <AdminIntegrationsSection />
         ) : section === "crawler" ? (
           <AdminCrawlerSection />
+        ) : section === "geminiExe" ? (
+          <AdminGeminiExeSection />
         ) : section === "dashboard" ? (
           <AdminDashboardSection
             onOpenFiltered={(missing) => {

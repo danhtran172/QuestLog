@@ -227,10 +227,12 @@ Supabase email templates "Reset Password" and "Magic Link" are changed to show
 ### 8.1 Forgot password (signed out)
 
 - `POST /api/auth/password/forgot { identifier }` (public). `identifier` is a username or
-  an email; the Host resolves a username to the email internally. The Host calls
-  `POST /auth/v1/recover`. The response is **always** `202 { sent: true }`, including for
-  unknown identifiers and during the 60-second per-account resend cooldown, in which case
-  nothing is sent.
+  an email; the Host resolves a username to the email internally and calls
+  `POST /auth/v1/recover`. Returns `202 { sent: true }` (also during the 60-second resend
+  cooldown, when the previous code is still valid). **Amended 2026-10-04 (product decision):**
+  an identifier with no account returns `404 ACCOUNT_NOT_FOUND`, and sign-up with an email that
+  already has an account returns `409 EMAIL_TAKEN`. This trades enumeration resistance for clear
+  feedback; the `auth` rate limit (10 requests/minute/IP) slows bulk probing.
 - `POST /api/auth/password/verify-code { identifier, code }` (public):
   1. `POST /auth/v1/verify` with `type = recovery`, the resolved email, and the code.
      Supabase consumes the code here, and the recovery session it returns is revoked at once

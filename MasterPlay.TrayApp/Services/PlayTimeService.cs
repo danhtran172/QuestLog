@@ -217,7 +217,7 @@ public sealed class PlayTimeService : IDisposable
         }
 
         // Giu ca doi tuong Game chu khong chi Id: game vua bi go khoi danh sach
-        // active van phai bao duoc da tat de BackupService kip sao luu save cuoi.
+        // active van phai bao duoc da tat cho nguoi dang ky GameStopped.
         foreach (var stopped in _runningGames.Where(entry => !currentlyRunning.ContainsKey(entry.Key)).ToArray())
             RaiseGameStopped(new GameActivity(stopped.Value, now));
 
@@ -242,7 +242,7 @@ public sealed class PlayTimeService : IDisposable
             _runningGames[entry.Key] = entry.Value;
     }
 
-    // Mot handler nem loi (vi du BackupService) khong duoc keo theo ca vong lap dem
+    // Mot handler nem loi khong duoc keo theo ca vong lap dem
     // gio, va cung khong duoc chan cac handler con lai.
     private void RaiseGameStopped(GameActivity activity)
     {

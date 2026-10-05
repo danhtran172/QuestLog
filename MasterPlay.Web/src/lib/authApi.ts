@@ -11,6 +11,8 @@ export type GuestSession = Schemas["GuestSession"];
 export type LoginRequest = Schemas["LoginRequest"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type SignupResponse = Schemas["SignupResponse"];
+export type SignupCodeResponse = Schemas["SignupCodeResponse"];
+export type VerifySignupCodeRequest = Schemas["VerifySignupCodeRequest"];
 export type ChangePasswordRequest = Schemas["ChangePasswordRequest"];
 export type ChangeUsernameRequest = Schemas["ChangeUsernameRequest"];
 export type ChangeEmailRequest = Schemas["ChangeEmailRequest"];
@@ -43,6 +45,16 @@ export const authApi = {
     }),
   signup: (body: SignupRequest) =>
     httpRequest<SignupResponse>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  resendSignupCode: (identifier: string) =>
+    httpRequest<SignupCodeResponse>("/api/auth/signup/resend", {
+      method: "POST",
+      body: JSON.stringify({ identifier }),
+    }),
+  verifySignupCode: (body: VerifySignupCodeRequest) =>
+    httpRequest<AuthSession>("/api/auth/signup/verify", {
       method: "POST",
       body: JSON.stringify(body),
     }),

@@ -1,0 +1,183 @@
+---
+// Hai thang diem cua nguoi dung. Moi chip la anh chup that tu card trong app
+// (chat lieu diem: Rust -> Opal; nhiet do hao huc: lanh cuc do -> dung nham).
+import { Image } from "astro:assets";
+import { chip, shot } from "../shots";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const { scores: t, shots } = ui[lang];
+const scoreKeys = ["rust", "copper", "silver", "gold", "platinum", "diamond", "opal"] as const;
+const excitedKeys = ["extreme-cold", "cold", "neutral", "fire", "extreme-fire", "lava"] as const;
+---
+
+<section id="scores" class="scroll-mt-16 pt-8 pb-28 lg:pb-36" aria-labelledby="scores-title">
+  <div class="container-page">
+    <div class="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-16">
+      <header class="max-w-[44rem]" data-reveal>
+        <p class="eyebrow">◆ {t.eyebrow}</p>
+        <h2 id="scores-title" class="display mt-5 text-[clamp(2.8rem,6.4vw,5.2rem)] text-balance">{t.title}</h2>
+        <p class="mt-6 max-w-[36rem] text-lg leading-relaxed text-mist/80">{t.intro}</p>
+      </header>
+      <figure class="quickstats" data-reveal style="--d:120ms">
+        <Image
+          src={shot(lang, "quickstats")}
+          alt={shots.scoreCard}
+          widths={[480, 720, 960, 1440]}
+          sizes="(min-width: 1024px) 480px, 92vw"
+          quality={92}
+          class="block h-auto w-full"
+        />
+      </figure>
+    </div>
+
+    <div class="mt-14 grid gap-5 lg:mt-16 lg:grid-cols-2">
+      <article class="scale" data-reveal>
+        <h3 class="scale-title">{t.score.title}</h3>
+        <p class="scale-body">{t.score.body}</p>
+        <ol class="chips chips--score">
+          {
+            t.score.bands.map((band, i) => (
+              <li>
+                <Image src={chip(`score-${scoreKeys[i]}`)} alt="" widths={[120, 240]} sizes="60px" class="chip-img" />
+                <span class="chip-name">{band.name}</span>
+                <span class="chip-range">{band.range}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </article>
+
+      <article class="scale scale--heat" data-reveal style="--d:100ms">
+        <h3 class="scale-title">{t.excited.title}</h3>
+        <p class="scale-body">{t.excited.body}</p>
+        <ol class="chips chips--excited">
+          {
+            t.excited.bands.map((band, i) => (
+              <li>
+                <Image src={chip(`excited-${excitedKeys[i]}`)} alt="" widths={[120, 240]} sizes="60px" class="chip-img" />
+                <span class="chip-name">{band.name}</span>
+                <span class="chip-range">{band.range}</span>
+              </li>
+            ))
+          }
+        </ol>
+        <span class="heat-bar" aria-hidden="true"></span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .quickstats :global(img) {
+    border-radius: 14px;
+    box-shadow:
+      0 40px 90px -40px rgb(0 0 0 / 0.95),
+      0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+
+  .scale {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--color-line) 90%, transparent);
+    border-radius: 18px;
+    padding: 1.75rem;
+    background: var(--color-slate);
+  }
+
+  .scale-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--color-mist);
+  }
+
+  :global(:lang(vi)) .scale-title {
+    line-height: 1.12;
+  }
+
+  .scale-body {
+    margin-top: 0.75rem;
+    max-width: 32rem;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-mist) 78%, transparent);
+  }
+
+  .chips {
+    display: grid;
+    gap: 0.6rem 0.4rem;
+    margin-top: 1.75rem;
+  }
+
+  .chips--score {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .chips--excited {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .chips li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .chip-img {
+    width: auto;
+    height: 2.4rem;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .chip-name {
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-mist);
+  }
+
+  .chip-range {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--color-fog);
+  }
+
+  /* Thanh nhiet: mau goc cua tung dai (.excited-band--* trong app), lanh -> dung nham. */
+  .heat-bar {
+    display: block;
+    height: 4px;
+    margin-top: 1.1rem;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      oklch(0.82 0.11 230) 0%,
+      oklch(0.82 0.1 200) 20%,
+      oklch(0.72 0.014 250) 40%,
+      oklch(0.73 0.19 58) 60%,
+      oklch(0.69 0.25 38) 80%,
+      oklch(0.62 0.26 28) 92%,
+      oklch(0.78 0.22 55) 100%
+    );
+  }
+
+  @media (max-width: 639px) {
+    .chips--score {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .chips--excited {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

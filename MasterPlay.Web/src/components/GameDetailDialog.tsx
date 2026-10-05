@@ -5,12 +5,10 @@ import {
   ChevronRight,
   ChevronUp,
   CalendarDays,
-  Cpu,
   FolderSymlink,
   Gamepad2,
   History,
   Image as ImageIcon,
-  Info,
   KeyRound,
   Library,
   ListChecks,
@@ -18,10 +16,9 @@ import {
   Package,
   Palette,
   Pencil,
-  Rocket,
   RotateCcw,
-  Save,
   Tags,
+  Trash2,
   Trophy,
   Users,
 } from "lucide-react";
@@ -43,16 +40,19 @@ import { useI18n } from "@/lib/i18n";
 import type { GameDetail } from "@/lib/api/domain";
 import { cn, iconSrc } from "@/lib/utils";
 import { GameCoverFlags } from "./GameCoverFlags";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { FinishGameDialog } from "./FinishGameDialog";
 import { GameDetailCatalogPicker } from "./GameDetailCatalogPicker";
 import { GameDetailFinishHistoryRow } from "./GameDetailFinishHistoryRow";
+import { GameDetailLaunchRows } from "./GameDetailLaunchRows";
 import { GameDetailMetadataQuickRows } from "./GameDetailMetadataQuickRows";
 import { GameDetailQuickStats } from "./GameDetailQuickStats";
 import { GameDetailTaxonomyRow } from "./GameDetailTaxonomyRow";
 import { GameEditorForm } from "./GameEditorForm";
 import { HERO_IMAGE_FADE } from "./GameEditorControls";
 import { GameInformationEditor } from "./GameInformationEditor";
-import { OwnershipInfoDialog, ownershipHasInfo } from "./OwnershipInfoDialog";
+import { GameDetailOwnershipDialog } from "./GameDetailOwnershipDialog";
+import { ownershipHasInfo } from "./OwnershipInfoDialog";
 import { gameDetailApi } from "@/lib/gameDetailApi";
 import { api } from "@/lib/api/client";
 import {
@@ -61,7 +61,7 @@ import {
   DialogDescription,
   DialogTitle,
   IconButton,
-  Switch,
+  InfoButton,
   Tooltip,
 } from "./ui";
 
@@ -70,7 +70,6 @@ type GameDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit" | "add";
-  onEdit: () => void;
   onCancelEdit: () => void;
   onSaved: (game: GameDetail) => void;
 };
@@ -386,20 +385,15 @@ export function GameDetailDialog({
   open,
   onOpenChange,
   mode,
-  onEdit,
   onCancelEdit,
   onSaved,
 }: GameDetailDialogProps) {
   const { t } = useI18n();
-  const queryClient = useQueryClient();
   const detail = useGameDetail(gameId, open);
   const game = detail.data;
   /* Nut ⓘ chi co nghia voi kieu so huu dung chung tai khoan / ban tai ve. */
-  const ownershipInfoAvailable = ownershipHasInfo(game?.ownership?.systemKey);
+  const ownershipInfoAvailable = ownershipHasInfo(game?.ownership);
   const cardScale = useCardScale(open);
-  const processName = game?.exeName?.trim()
-    ? game.exeName.toLowerCase().endsWith(".exe") ? game.exeName : `${game.exeName}.exe`
-    : null;
   /* Form sua tu dang ky mot chot chan: con thay doi chua luu thi no giu lai
      cu bam dong (nut X, Esc, bam ra ngoai) va tu hoi nguoi dung. */
   const closeGuardRef = useRef<(() => boolean) | null>(null);
@@ -417,6 +411,7 @@ export function GameDetailDialog({
   const [informationEditHint, setInformationEditHint] = useState({ active: false, version: 0 });
   const [ownershipInfoOpen, setOwnershipInfoOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
+  const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
   const overviewScrollerRef = useRef<HTMLElement>(null);
   const filesScrollerRef = useRef<HTMLElement>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -451,34 +446,18 @@ export function GameDetailDialog({
     onError: (error) => toast.error(error instanceof Error ? error.message : String(error)),
   });
 
-  const toggleCustomLaunch = useMutation({
-    mutationFn: async (enabled: boolean) => {
-      if (!game) return null;
-
-      if (!enabled) {
-        return gameDetailApi.update(game.id, { ...game, launchTarget: null });
-      }
-
-      const result = await gameDetailApi.pickFile("exe-or-shortcut");
-      const path = result.path?.trim();
-      if (!path) return null;
-
-      return gameDetailApi.update(game.id, {
-        ...game,
-        launchTarget: {
-          kind: path.toLowerCase().endsWith(".lnk") ? "shortcut" : "exe",
-          path,
-        },
-      });
-    },
-    onSuccess: async (saved) => {
-      if (!saved) return;
-      queryClient.setQueryData(["game-detail", saved.id], saved);
+  const queryClient = useQueryClient();
+  /* "Xoa" game o day la vo hieu hoa — backend chi co /disable, giong nut thung
+     rac trong form sua. */
+  const disableGame = useMutation({
+    mutationFn: (id: string) => gameDetailApi.disable(id),
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["games"] }),
         queryClient.invalidateQueries({ queryKey: ["play-queue"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
       ]);
-      onSaved(saved);
+      onOpenChange(false);
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : String(error)),
   });
@@ -500,15 +479,6 @@ export function GameDetailDialog({
     overviewScrollerRef.current?.scrollTo({ top: 0 });
     filesScrollerRef.current?.scrollTo({ top: 0 });
   }, [gameId, open]);
-
-  const copyOwnershipValue = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success(t("detail.copied"));
-    } catch {
-      toast.error(t("detail.copyFailed"));
-    }
-  };
 
   useEffect(() => {
     return () => {
@@ -743,7 +713,7 @@ export function GameDetailDialog({
                 className="h-full shrink-0 overflow-hidden"
                 style={{ backgroundColor: "var(--color-bg)" }}
               >
-                <div className="flex h-full flex-col gap-3 pb-14 pl-5 pr-7 pt-4 sm:pl-6 sm:pr-8">
+                <div className="flex h-full flex-col gap-3 pb-5 pl-5 pr-7 pt-4 sm:pl-6 sm:pr-8">
 
                   {externalLinks.isError ? (
                     <div className="flex items-center gap-2 rounded-lg border border-danger/35 bg-danger/10 p-2.5 text-xs text-danger">
@@ -799,26 +769,26 @@ export function GameDetailDialog({
                       )}
                     >
                       {game.isDlc ? (
-                        <DetailRow label={t("detail.baseGame")} icon={<Package size={13} className="text-indigo-400" />} onValueDoubleClick={flashInformationEdit}>
+                        <DetailRow label={t("detail.baseGame")} icon={<Package size={13} className="text-field-base-game" />} onValueDoubleClick={flashInformationEdit}>
                           {game.baseGameName?.trim() || <EmptyValue />}
                         </DetailRow>
                       ) : (
-                        <DetailRow label={t("sort.series")} icon={<Library size={13} className="text-violet-400" />} onValueDoubleClick={flashInformationEdit}>
+                        <DetailRow label={t("sort.series")} icon={<Library size={13} className="text-field-series" />} onValueDoubleClick={flashInformationEdit}>
                           {game.series ? <TaxonomyValues items={[game.series]} /> : <EmptyValue />}
                         </DetailRow>
                       )}
-                      <DetailRow label={t("sort.publish")} icon={<CalendarDays size={13} className="text-sky-400" />} onValueDoubleClick={flashInformationEdit}>
+                      <DetailRow label={t("sort.publish")} icon={<CalendarDays size={13} className="text-field-publish" />} onValueDoubleClick={flashInformationEdit}>
                         {game.publishDate ? (formatPublishDate(game.publishDate) ?? game.publishDate) : <EmptyValue />}
                       </DetailRow>
                       {game.developer?.trim() ? (
                         <DetailRowClamped
                           label={t("editor.developer")}
-                          icon={<Users size={13} className="text-cyan-400" />}
+                          icon={<Users size={13} className="text-field-developer" />}
                           text={game.developer}
                           onValueDoubleClick={flashInformationEdit}
                         />
                       ) : (
-                        <DetailRow label={t("editor.developer")} icon={<Users size={13} className="text-cyan-400" />} onValueDoubleClick={flashInformationEdit}>
+                        <DetailRow label={t("editor.developer")} icon={<Users size={13} className="text-field-developer" />} onValueDoubleClick={flashInformationEdit}>
                           <EmptyValue />
                         </DetailRow>
                       )}
@@ -841,17 +811,16 @@ export function GameDetailDialog({
                       />
 
                     <DetailPanel title={t("detail.ratingsStatus")} className="flex-1">
-                      <DetailRow label={t("sort.progress")} icon={<ListChecks size={13} className="text-primary" />}>
+                      <DetailRow label={t("sort.progress")} icon={<ListChecks size={13} className="text-field-progress" />}>
                         <GameDetailCatalogPicker game={game} kind="progress" onSaved={onSaved} />
                       </DetailRow>
                       <DetailRow
                         label={t("sort.ownership")}
-                        icon={<KeyRound size={13} className="text-amber-400" />}
+                        icon={<KeyRound size={13} className="text-field-ownership" />}
                         action={ownershipInfoAvailable ? (
-                          <IconButton
+                          <InfoButton
                             size="mini"
                             label={t(ownershipInfoOpen ? "detail.hideOwnershipInfo" : "detail.showOwnershipInfo")}
-                            icon={<Info />}
                             tone={ownershipInfoOpen ? "edit" : "neutral"}
                             aria-expanded={ownershipInfoOpen}
                             onClick={() => setOwnershipInfoOpen((current) => !current)}
@@ -864,8 +833,17 @@ export function GameDetailDialog({
                         key={`${game.id}:finishes:${open ? "open" : "closed"}`}
                         game={game}
                         label={t("detail.finishHistory")}
-                        icon={<History size={13} className="text-fuchsia-400" />}
+                        icon={<History size={13} className="text-field-finish-history" />}
                         onSaved={onSaved}
+                        action={!game.isDlc ? (
+                          <IconButton
+                            size="mini"
+                            label={t("action.finish")}
+                            tone="finish"
+                            icon={<Trophy />}
+                            onClick={() => setFinishOpen(true)}
+                          />
+                        ) : undefined}
                       />
                     </DetailPanel>
                     </div>
@@ -880,7 +858,7 @@ export function GameDetailDialog({
                       game={game}
                       kind="genres"
                       label={t("editor.genres")}
-                      icon={<Tags size={13} className="text-rose-400" />}
+                      icon={<Tags size={13} className="text-field-genres" />}
                       onSaved={onSaved}
                     />
                     <GameDetailTaxonomyRow
@@ -888,7 +866,7 @@ export function GameDetailDialog({
                       game={game}
                       kind="themes"
                       label={t("editor.themes")}
-                      icon={<Palette size={13} className="text-violet-400" />}
+                      icon={<Palette size={13} className="text-field-themes" />}
                       onSaved={onSaved}
                     />
                   </DetailPanel>
@@ -906,7 +884,7 @@ export function GameDetailDialog({
                 className="h-full shrink-0 overflow-hidden"
                 style={{ backgroundColor: "var(--color-bg)" }}
               >
-                <div className="flex h-full flex-col gap-3 pb-14 pl-5 pr-7 pt-4 sm:pl-6 sm:pr-8">
+                <div className="flex h-full flex-col gap-3 pb-5 pl-5 pr-7 pt-4 sm:pl-6 sm:pr-8">
                   {game.folderWarning && (
                     <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
                       <AlertTriangle size={16} className="shrink-0" /> {game.folderWarning}
@@ -914,62 +892,17 @@ export function GameDetailDialog({
                   )}
 
                   <DetailPanel title={t("detail.files")} listClassName="gap-y-5">
-                    <DetailRow
-                      label={t("detail.process")}
-                      icon={<Cpu size={13} className="text-sky-400" />}
-                      action={(
-                        <label className="flex items-center gap-2 whitespace-nowrap text-xs font-bold text-muted-fg">
-                          {t("editor.hasCustomLaunch")}
-                          <Switch
-                            checked={Boolean(game.launchTarget)}
-                            onCheckedChange={(enabled) => toggleCustomLaunch.mutate(enabled)}
-                            disabled={toggleCustomLaunch.isPending || (
-                              !game.launchTarget && capabilities.data?.features?.filePicker !== true
-                            )}
-                          />
-                        </label>
-                      )}
-                    >
-                      {processName ? (
-                        <span className="break-all font-mono">{processName}</span>
-                      ) : <EmptyValue />}
-                    </DetailRow>
-                    {game.launchTarget ? (
-                      <DetailRow label={t("detail.launchTarget")} icon={<Rocket size={13} className="text-emerald-400" />}>
-                        {game.launchTarget.path?.trim() ? (
-                          <Tooltip label={game.launchTarget.path} className="max-w-80 break-all font-mono font-medium">
-                            <span className="break-all font-mono">{game.launchTarget.path}</span>
-                          </Tooltip>
-                        ) : <EmptyValue />}
-                      </DetailRow>
-                    ) : null}
-                    <DetailRow
-                      label={t("editor.saveFolder")}
-                      icon={<Save size={13} className="text-cyan-400" />}
-                      action={game.saveFolderPath?.trim() && capabilities.data?.features?.revealFolder ? (
-                        <IconButton
-                          size="mini"
-                          label={t("detail.openFolder")}
-                          tone="open"
-                          icon={revealFolder.isPending && revealFolder.variables === game.saveFolderPath
-                            ? <Loader2 className="animate-spin" />
-                            : <FolderSymlink />}
-                          disabled={revealFolder.isPending}
-                          onClick={() => revealFolder.mutate(game.saveFolderPath!)}
-                        />
-                      ) : undefined}
-                    >
-                      {game.saveFolderPath?.trim() ? (
-                        <Tooltip label={game.saveFolderPath} className="max-w-80 break-all font-mono font-medium">
-                          <span className="break-all font-mono">{game.saveFolderPath}</span>
-                        </Tooltip>
-                      ) : <EmptyValue />}
-                    </DetailRow>
+                    <GameDetailLaunchRows
+                      key={`${game.id}:launch:${open ? "open" : "closed"}`}
+                      game={game}
+                      canPickFile={capabilities.data?.features?.filePicker === true}
+                      onSaved={onSaved}
+                    />
                     {/* Backup dang tam tat o backend (capabilities.features.backup). */}
                     {capabilities.data?.features?.backup === true && (
                       <DetailRow
                         label={t("editor.backupFolder")}
-                        icon={<Archive size={13} className="text-amber-400" />}
+                        icon={<Archive size={13} className="text-field-backup" />}
                         action={game.backupFolderPath?.trim() && capabilities.data?.features?.revealFolder ? (
                           <IconButton
                             size="mini"
@@ -1012,6 +945,17 @@ export function GameDetailDialog({
                       <ChevronRight size={15} aria-hidden className="transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </button>
+
+                  {/* `mt-auto` day nut xuong goc duoi phai cua trang. */}
+                  <div className="mt-auto flex justify-end">
+                    <IconButton
+                      tone="danger"
+                      label={t("editor.disableGame")}
+                      icon={disableGame.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                      onClick={() => setDisableConfirmOpen(true)}
+                      disabled={disableGame.isPending}
+                    />
+                  </div>
                 </div>
               </section>
             </div>
@@ -1067,43 +1011,17 @@ export function GameDetailDialog({
                 </Tooltip>
               ))}
             </div>
-            <div className="absolute bottom-3 right-3 z-30 flex items-center gap-2">
-              <IconButton
-                label={t("action.edit")}
-                icon={<Pencil />}
-                tone="edit"
-                onClick={onEdit}
-              />
-              {!game.isDlc ? (
-                <IconButton
-                  label={t("action.finish")}
-                  tone="finish"
-                  icon={<Trophy />}
-                  onClick={() => setFinishOpen(true)}
-                />
-              ) : null}
-            </div>
             </div>
           </div>
         ) : null}
         </div>
       </DialogContent>
     </Dialog>
-    <OwnershipInfoDialog
+    <GameDetailOwnershipDialog
+      game={game}
       open={ownershipInfoOpen && ownershipInfoAvailable}
       onOpenChange={setOwnershipInfoOpen}
-      ownershipKey={game?.ownership?.systemKey}
-      publisher={game?.publisher}
-      values={{
-        steamAccount: game?.ownershipInfo?.steamAccount ?? "",
-        steamPassword: game?.ownershipInfo?.steamPassword ?? "",
-        ubisoftAccount: game?.ownershipInfo?.ubisoftAccount ?? "",
-        ubisoftPassword: game?.ownershipInfo?.ubisoftPassword ?? "",
-        supportDocumentUrl: game?.ownershipInfo?.supportDocumentUrl ?? "",
-        downloadUrl: game?.ownershipInfo?.downloadUrl ?? "",
-        note: game?.ownershipInfo?.note ?? "",
-      }}
-      onCopy={(value) => void copyOwnershipValue(value)}
+      onSaved={onSaved}
     />
     {/* Nut Trophy o day va dau `+` trong hang Finish history ghi CUNG mot thu,
         nen dung chung mot hop thoai — hai ban sao se tach doi hanh vi. */}
@@ -1111,8 +1029,19 @@ export function GameDetailDialog({
       gameId={game?.id ?? gameId ?? ""}
       open={finishOpen}
       onOpenChange={setFinishOpen}
-      defaultScore={game?.finishes?.[0]?.score ?? game?.score ?? null}
+      defaultScore={game?.score ?? null}
+      firstFinish={(game?.finishes?.length ?? 0) === 0}
       onSaved={onSaved}
+    />
+    <ConfirmDialog
+      open={disableConfirmOpen}
+      onOpenChange={setDisableConfirmOpen}
+      title={t("editor.disableGame")}
+      description={t("editor.disableConfirm")}
+      confirmLabel={t("editor.disableGame")}
+      onConfirm={() => {
+        if (game) disableGame.mutate(game.id);
+      }}
     />
     </>
   );

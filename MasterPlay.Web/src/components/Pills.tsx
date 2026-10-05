@@ -38,7 +38,7 @@ export function Pill({
     <span
       style={style}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-fs-11 font-semibold leading-none",
         className,
       )}
     >
@@ -94,11 +94,14 @@ export function ExcitedFire({
   value,
   size = 14,
   className,
+  iconClassName,
   showIcon = true,
 }: {
   value: number | null | undefined;
   size?: number;
   className?: string;
+  /** Can chinh rieng ngon lua (vd nang len 1px tren card) ma khong dung den so. */
+  iconClassName?: string;
   /** Bang co cot rieng cho Excited thi tieu de cot da noi ro roi — tat icon di. */
   showIcon?: boolean;
 }) {
@@ -121,13 +124,13 @@ export function ExcitedFire({
         // `excited-thermal` + `excited-band--*` chi cap bien CSS cho phan so.
         // Kich thuoc theo font-size (chu) + `size` (icon), nen dung o card /
         // detail / list voi co khac nhau ma khong sua CSS.
-        "excited-thermal inline-flex shrink-0 items-center gap-1 align-middle text-[11px] font-black tabular-nums",
+        "excited-thermal inline-flex shrink-0 items-center gap-1 align-middle text-fs-11 font-black tabular-nums",
         `excited-band--${band}`,
         className,
       )}
     >
       {showIcon ? (
-        <Flame aria-hidden size={size} strokeWidth={2} className="excited-thermal__icon shrink-0" />
+        <Flame aria-hidden size={size} strokeWidth={2} className={cn("excited-thermal__icon shrink-0", iconClassName)} />
       ) : null}
       <span aria-hidden className="excited-thermal__text">
         {displayedScore}
@@ -177,7 +180,7 @@ function PlaytimeGlyph({ size = 14, className, children }: PlaytimeIconProps & {
  */
 export function CommunityPlaytimeIcon({ size, className }: PlaytimeIconProps) {
   return (
-    <PlaytimeGlyph size={size} className={cn("text-amber-400", className)}>
+    <PlaytimeGlyph size={size} className={cn("text-field-community-playtime", className)}>
       <path d="M5 2h14" />
       <path d="M5 22h14" />
       <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
@@ -203,7 +206,7 @@ export function CommunityAveragePlaytime({
       role="img"
       aria-label={showValue ? `${label}: ${value}` : label}
       className={cn(
-        "inline-flex items-center gap-1 text-[11px] font-semibold tabular-nums text-muted-fg",
+        "inline-flex items-center gap-1 text-fs-11 font-semibold tabular-nums text-muted-fg",
         className,
       )}
     >

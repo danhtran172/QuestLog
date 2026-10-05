@@ -13,13 +13,12 @@ public static class IntegrationProviders
 {
     public const string Rawg = "rawg";
     public const string Igdb = "igdb";
-    public const string Steam = "steam";
     public const string Cloudinary = "cloudinary";
     public const string Gemini = "gemini";
 
     private static readonly HashSet<string> Known = new(StringComparer.Ordinal)
     {
-        Rawg, Igdb, Steam, Cloudinary, Gemini,
+        Rawg, Igdb, Cloudinary, Gemini,
     };
 
     public static bool IsKnown(string provider) => Known.Contains(provider);
@@ -85,7 +84,11 @@ public sealed class SupabaseIntegrationStore(
         if (array.ValueKind != JsonValueKind.Array)
             throw new IntegrationStoreException(503, "INTEGRATION_STORE_INVALID", "Integration configuration returned an invalid response.");
 
-        return array.Deserialize<List<IntegrationSummaryDto>>(JsonOptions) ?? [];
+        // Chi tra provider app con dung. Steam Web API da bo (anh Steam lay qua API
+        // cong khai, khong can key); DB chua chay migration go bo thi van an o day.
+        return (array.Deserialize<List<IntegrationSummaryDto>>(JsonOptions) ?? [])
+            .Where(summary => IntegrationProviders.IsKnown(summary.Provider))
+            .ToList();
     }
 
     public async Task<IntegrationSummaryDto> ReplaceAsync(
@@ -251,7 +254,6 @@ public sealed class IntegrationConnectionTester(
             {
                 IntegrationProviders.Rawg => await TestRawgAsync(credentials, cancellationToken),
                 IntegrationProviders.Igdb => await TestIgdbAsync(credentials, cancellationToken),
-                IntegrationProviders.Steam => await TestSteamAsync(credentials, cancellationToken),
                 IntegrationProviders.Cloudinary => await TestCloudinaryAsync(credentials, cancellationToken),
                 IntegrationProviders.Gemini => await TestGeminiAsync(credentials, cancellationToken),
                 _ => new IntegrationTestResult(false, "INTEGRATION_PROVIDER_UNKNOWN"),
@@ -301,14 +303,6 @@ public sealed class IntegrationConnectionTester(
         request.Headers.Add("Client-ID", clientId);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.GetString());
         using var response = await Client.SendAsync(request, cancellationToken);
-        return FromStatus(response.StatusCode);
-    }
-
-    private async Task<IntegrationTestResult> TestSteamAsync(IntegrationCredentials credentials, CancellationToken cancellationToken)
-    {
-        using var response = await Client.GetAsync(
-            $"https://api.steampowered.com/ISteamWebAPIUtil/GetServerInfo/v1/?key={Uri.EscapeDataString(Value(credentials, "apiKey"))}",
-            cancellationToken);
         return FromStatus(response.StatusCode);
     }
 

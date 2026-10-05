@@ -1,9 +1,9 @@
 using MasterPlay.Infrastructure.Configuration;
-using MasterPlay.Infrastructure.Integrations.Cloudinary;
+using MasterPlay.Infrastructure.Integrations.Images;
+using MasterPlay.Infrastructure.TrayControl;
 using MasterPlay.TrayApp.Services;
 using MasterPlay.TrayApp.Startup;
 using MasterPlay.TrayApp.UI;
-using MasterPlay.Core;
 using MasterPlay.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,15 +15,14 @@ namespace MasterPlay.TrayApp
     public class TrayApplicationContext : ApplicationContext
     {
         private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
-        // Backup dang tam tat (FeatureFlags.GameBackup) -> chi con hai service.
-        private static int ServiceCount => FeatureFlags.GameBackup ? 3 : 2;
+        // Backup save game da tam bo khoi tray -> con hai dich vu nen.
+        private const int ServiceCount = 2;
 
         private readonly NotifyIcon _trayIcon;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<TrayApplicationContext> _logger;
         private readonly PlayTimeService _playTimeService;
         private readonly LibraryService _libraryService;
-        private readonly BackupService _backupService;
         private readonly SynchronizationContext? _uiContext;
         private readonly object _languageGate = new();
         private readonly List<(ToolStripMenuItem Item, TrayGlyph Glyph, TrayMenuRole Role)> _glyphItems = [];
@@ -32,9 +31,7 @@ namespace MasterPlay.TrayApp
         private ToolStripMenuItem? _statusMenuItem;
         private ToolStripMenuItem? _playTimeMenuItem;
         private ToolStripMenuItem? _libraryMenuItem;
-        private ToolStripMenuItem? _backupMenuItem;
         private ToolStripMenuItem? _scanNowMenuItem;
-        private ToolStripMenuItem? _backupNowMenuItem;
         private ToolStripMenuItem? _syncImagesMenuItem;
         private ToolStripMenuItem? _openMasterPlayMenuItem;
         private ToolStripMenuItem? _openLogMenuItem;
@@ -43,10 +40,13 @@ namespace MasterPlay.TrayApp
         private ContextMenuStrip? _contextMenu;
         private FileSystemWatcher? _configWatcher;
         private System.Threading.Timer? _languageReloadTimer;
+        private TrayShutdownSignal? _shutdownSignal;
+        private TrayControlServer? _controlServer;
 
         private Font? _menuFont;
         private Font? _headerFont;
         private Font? _statusFont;
+        private Font? _serviceFont;
         private TrayTheme _theme = TrayTheme.Dark;
 
         private bool _isSyncingImages = false;
@@ -58,7 +58,6 @@ namespace MasterPlay.TrayApp
             _logger = serviceProvider.GetRequiredService<ILogger<TrayApplicationContext>>();
             _playTimeService = serviceProvider.GetRequiredService<PlayTimeService>();
             _libraryService = serviceProvider.GetRequiredService<LibraryService>();
-            _backupService = serviceProvider.GetRequiredService<BackupService>();
 
             _trayIcon = new NotifyIcon
             {
@@ -71,15 +70,15 @@ namespace MasterPlay.TrayApp
             ApplyTheme(ReadThemeFromConfig());
             _uiContext = SynchronizationContext.Current;
             WatchConfigChanges();
+            ListenForShutdownRequest();
 
-            // Mot service khong khoi dong duoc thi hai cai con lai van phai chay, va
+            // Mot service khong khoi dong duoc thi cai con lai van phai chay, va
             // menu phai hien dung trang thai that thay vi mac dinh "dang bat".
             StartService(_playTimeMenuItem, "playtime", () => _playTimeService.Start());
             _libraryService.GameDiscovered += OnGameDiscovered;
             StartService(_libraryMenuItem, "library scanner", () => _libraryService.Start());
-            if (FeatureFlags.GameBackup)
-                StartService(_backupMenuItem, "backup", () => _backupService.Start());
             RefreshMenuState();
+            ListenForControlRequests();
 
             _logger.LogInformation("Tray application started.");
         }
@@ -91,8 +90,10 @@ namespace MasterPlay.TrayApp
             {
                 if (File.Exists(iconPath))
                 {
+                    // Lay dung frame cho khay theo DPI (16/20/24...), tranh de Windows
+                    // thu nho frame 32px mac dinh lam vo icon.
                     using var stream = File.OpenRead(iconPath);
-                    return new Icon(stream);
+                    return new Icon(stream, SystemInformation.SmallIconSize);
                 }
             }
             catch (Exception ex)
@@ -165,9 +166,10 @@ namespace MasterPlay.TrayApp
         // ------------------------------------------------------------------ menu
         //
         // Bo cuc bam theo bang Tray trong app (MasterPlay.Web/src/components/
-        // TrayPanel.tsx): tieu de kem dong trang thai, ba dich vu co cong tac
-        // bat/tat, roi den hang hanh dong. Ba muc rieng cua tray (mo app, khoi
-        // dong cung Windows, thoat) nam o hai dau.
+        // TrayPanel.tsx): tieu de "Dich vu nen" kem dong trang thai, moi dich vu
+        // la mot card co cong tac, roi den hang hanh dong (quet ngay, mo log,
+        // dong bo anh). Ba muc rieng cua tray (mo app, khoi dong cung Windows,
+        // thoat) web khong co nen gom xuong cuoi.
         private void BuildContextMenu()
         {
             _menuFont = SystemFonts.MenuFont ?? SystemFonts.DefaultFont;
@@ -182,8 +184,11 @@ namespace MasterPlay.TrayApp
             int Scaled(int value) => (int)Math.Round(value * dpi / 96d);
 
             _contextMenu.ImageScalingSize = new Size(Scaled(16), Scaled(16));
-            _headerFont = new Font(_menuFont, FontStyle.Bold);
+            // Ti le chu theo web: tieu de 15px dam, ten dich vu 13px semibold,
+            // dong trang thai 11px mau muted.
+            _headerFont = new Font(_menuFont.FontFamily, _menuFont.Size + 2f, FontStyle.Bold);
             _statusFont = new Font(_menuFont.FontFamily, Math.Max(6f, _menuFont.Size - 0.5f));
+            _serviceFont = CreateSemiboldFont(_menuFont);
 
             _contextMenu.HandleCreated += (_, _) => TrayMenuWindow.UseRoundedCorners(_contextMenu!);
             _contextMenu.Opening += (_, _) => RefreshMenuState();
@@ -206,73 +211,80 @@ namespace MasterPlay.TrayApp
                     e.Cancel = true;
             };
 
-            var itemPadding = new Padding(Scaled(2), Scaled(5), Scaled(12), Scaled(5));
-            var togglePadding = new Padding(Scaled(2), Scaled(5), Scaled(46), Scaled(5));
+            // Le phai: bu cho chu bi day sang phai (icon nam trong le card) va chua
+            // cho cong tac 34px cua dong dich vu / dong khoi dong cung Windows.
+            var itemPadding = new Padding(Scaled(2), Scaled(5), Scaled(24), Scaled(5));
+            var togglePadding = new Padding(Scaled(2), Scaled(5), Scaled(68), Scaled(5));
+            var servicePadding = new Padding(Scaled(2), Scaled(11), Scaled(68), Scaled(11));
 
-            _headerMenuItem = CreateItem("QuestLog", TrayGlyph.Power, null, TrayMenuRole.Header);
+            _headerMenuItem = CreateItem(LocalizationService.Get("TrayServices"), TrayGlyph.Power, null, TrayMenuRole.Header);
             _headerMenuItem.Font = _headerFont;
             _headerMenuItem.Enabled = false;
-            _headerMenuItem.Padding = new Padding(Scaled(2), Scaled(8), Scaled(12), Scaled(1));
+            _headerMenuItem.Padding = new Padding(Scaled(2), Scaled(8), Scaled(24), Scaled(1));
 
             _statusMenuItem = CreateItem(string.Empty, null, null, TrayMenuRole.Subtitle);
             _statusMenuItem.Font = _statusFont;
             _statusMenuItem.Enabled = false;
-            _statusMenuItem.Padding = new Padding(Scaled(2), 0, Scaled(12), Scaled(8));
+            _statusMenuItem.Padding = new Padding(Scaled(2), 0, Scaled(24), Scaled(6));
 
-            _openMasterPlayMenuItem = CreateItem(LocalizationService.Get("OpenMasterPlay"), TrayGlyph.AppWindow, OpenMasterPlay);
-            _openMasterPlayMenuItem.Padding = itemPadding;
-
-            _playTimeMenuItem = CreateItem(LocalizationService.Get("PlayTimeTracking"), TrayGlyph.Activity, TogglePlayTime, TrayMenuRole.Toggle);
-            _libraryMenuItem = CreateItem(LocalizationService.Get("LibraryScanner"), TrayGlyph.FolderSearch, ToggleLibrary, TrayMenuRole.Toggle);
-            // Backup dang tam tat: khong tao muc menu nao cua no.
-            _backupMenuItem = FeatureFlags.GameBackup
-                ? CreateItem(LocalizationService.Get("BackupService"), TrayGlyph.Save, ToggleBackup, TrayMenuRole.Toggle)
-                : null;
+            _playTimeMenuItem = CreateItem(LocalizationService.Get("PlayTimeTracking"), TrayGlyph.Activity, TogglePlayTime, TrayMenuRole.Service);
+            _libraryMenuItem = CreateItem(LocalizationService.Get("LibraryScanner"), TrayGlyph.FolderSearch, ToggleLibrary, TrayMenuRole.Service);
+            foreach (var item in new[] { _playTimeMenuItem, _libraryMenuItem })
+            {
+                item.Font = _serviceFont;
+                item.Padding = servicePadding;
+            }
 
             _scanNowMenuItem = CreateItem(LocalizationService.Get("ScanNow"), TrayGlyph.FolderSearch, ScanNow_Click);
-            _backupNowMenuItem = FeatureFlags.GameBackup
-                ? CreateItem(LocalizationService.Get("BackupNow"), TrayGlyph.Save, BackupNow_Click)
-                : null;
-            _syncImagesMenuItem = CreateItem(LocalizationService.Get("SyncImagesCloudinary"), TrayGlyph.RefreshCw, SyncImagesToCloudinary_Click);
             _openLogMenuItem = CreateItem(LocalizationService.Get("OpenLogFolder"), TrayGlyph.ScrollText, OpenLogFolder);
+            _syncImagesMenuItem = CreateItem(LocalizationService.Get("SyncImagesCloudinary"), TrayGlyph.RefreshCw, SyncImagesToCloudinary_Click);
+
+            _openMasterPlayMenuItem = CreateItem(LocalizationService.Get("OpenMasterPlay"), TrayGlyph.AppWindow, OpenMasterPlay);
 
             _startupMenuItem = CreateItem(LocalizationService.Get("StartWithWindows"), TrayGlyph.Power, ToggleStartWithWindows, TrayMenuRole.Toggle);
             _startupMenuItem.Checked = StartupHelper.IsStartupEnabled();
+            _startupMenuItem.Padding = togglePadding;
 
             _exitMenuItem = CreateItem(LocalizationService.Get("Exit"), TrayGlyph.LogOut, Exit, TrayMenuRole.Danger);
-            _exitMenuItem.Padding = itemPadding;
 
-            foreach (var item in new[] { _playTimeMenuItem, _libraryMenuItem, _backupMenuItem, _startupMenuItem }.OfType<ToolStripMenuItem>())
-                item.Padding = togglePadding;
-
-            foreach (var item in new[] { _scanNowMenuItem, _backupNowMenuItem, _syncImagesMenuItem, _openLogMenuItem }.OfType<ToolStripMenuItem>())
+            foreach (var item in new[] { _scanNowMenuItem, _openLogMenuItem, _syncImagesMenuItem, _openMasterPlayMenuItem, _exitMenuItem })
                 item.Padding = itemPadding;
 
-            _contextMenu.Items.AddRange(new ToolStripItem?[]
+            _contextMenu.Items.AddRange(new ToolStripItem[]
             {
                 _headerMenuItem,
                 _statusMenuItem,
-                new ToolStripSeparator(),
-                _openMasterPlayMenuItem,
-                new ToolStripSeparator(),
                 _playTimeMenuItem,
                 _libraryMenuItem,
-                _backupMenuItem,
                 new ToolStripSeparator(),
                 _scanNowMenuItem,
-                _backupNowMenuItem,
-                _syncImagesMenuItem,
                 _openLogMenuItem,
+                _syncImagesMenuItem,
                 new ToolStripSeparator(),
+                _openMasterPlayMenuItem,
                 _startupMenuItem,
                 _exitMenuItem
-            }.OfType<ToolStripItem>().ToArray());
+            });
 
             _trayIcon.ContextMenuStrip = _contextMenu;
         }
 
+        // Web dung font-semibold cho ten dich vu. Segoe UI co ban Semibold rieng;
+        // may khong co thi lui ve chu thuong chu khong dung Bold (qua dam).
+        private static Font CreateSemiboldFont(Font baseFont)
+        {
+            // Ten font khong co thi GDI+ am tham thay bang Microsoft Sans Serif,
+            // nen phai so lai ten sau khi tao.
+            var semibold = new Font("Segoe UI Semibold", baseFont.Size, FontStyle.Regular, baseFont.Unit);
+            if (string.Equals(semibold.Name, "Segoe UI Semibold", StringComparison.OrdinalIgnoreCase))
+                return semibold;
+
+            semibold.Dispose();
+            return new Font(baseFont, FontStyle.Regular);
+        }
+
         private static bool IsToggle(ToolStripItem? item) =>
-            item?.Tag is TrayMenuRole role && role == TrayMenuRole.Toggle;
+            item?.Tag is TrayMenuRole role && role is TrayMenuRole.Toggle or TrayMenuRole.Service;
 
         /// <summary>
         /// Muc vua duoc bam: lay theo muc nam duoi con tro, va neu con tro khong o
@@ -334,11 +346,13 @@ namespace MasterPlay.TrayApp
             var size = Math.Max(12, _contextMenu.ImageScalingSize.Width);
             foreach (var (item, glyph, role) in _glyphItems)
             {
+                // Nhu web: icon dich vu mau primary, icon tieu de va nut hanh dong
+                // mau chu, chi muc Thoat mau danger.
                 var color = role switch
                 {
-                    TrayMenuRole.Header => _theme.Foreground,
+                    TrayMenuRole.Service or TrayMenuRole.Toggle => _theme.Primary,
                     TrayMenuRole.Danger => _theme.Danger,
-                    _ => _theme.Primary
+                    _ => _theme.Foreground
                 };
 
                 var previous = item.Image;
@@ -367,16 +381,18 @@ namespace MasterPlay.TrayApp
             if (_statusMenuItem == null)
                 return;
 
-            var running = new[] { _playTimeMenuItem, _libraryMenuItem, _backupMenuItem }
+            var running = new[] { _playTimeMenuItem, _libraryMenuItem }
                 .Count(item => item?.Checked == true);
 
-            var status = running == ServiceCount
+            _statusMenuItem.Text = running == ServiceCount
                 ? LocalizationService.Get("TrayRunning")
                 : running == 0
                     ? LocalizationService.Get("TrayStopped")
                     : LocalizationService.Get("TrayPartialRunning", running, ServiceCount);
 
-            _statusMenuItem.Text = LocalizationService.Get("TrayServices") + " · " + status;
+            // Chu doi theo ngon ngu nen be rong cung phai tinh lai moi lan.
+            if (_contextMenu != null && !_contextMenu.IsDisposed)
+                _contextMenu.MinimumSize = new Size(TrayMenuRenderer.MinimumMenuWidth(_contextMenu), 0);
         }
 
         private async void ToggleService(ToolStripMenuItem? menuItem, string serviceName, Action start, Action stop)
@@ -384,30 +400,49 @@ namespace MasterPlay.TrayApp
             if (menuItem == null || !menuItem.Enabled)
                 return;
 
-            var turningOff = menuItem.Checked;
-            menuItem.Enabled = false;
-
             try
             {
-                // Task.Run: Stop() cho worker ket thuc. Cho tren UI thread thi menu
-                // dang mo dong bang, va day la luc nguoi dung dang nhin thang vao no.
-                await Task.Run(turningOff ? stop : start);
-                menuItem.Checked = !turningOff;
-                _logger.LogInformation(
-                    turningOff ? "{ServiceName} disabled." : "{ServiceName} enabled.",
-                    serviceName);
+                await SetServiceAsync(menuItem, serviceName, !menuItem.Checked, start, stop);
             }
             catch (Exception ex)
             {
                 // Bat o day de mot loi khi bat/tat khong thoat ra khoi handler cua
                 // menu va lam sap tray. Dung balloon chu khong phai MessageBox:
                 // hop thoai cuop focus se dong menu dang mo.
+                ShowBalloon(4000, LocalizationService.Get("Error"), ex.Message, ToolTipIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Dung chung cho menu va cho lenh tu QuestLog (TrayControlServer). Chay tren UI
+        /// thread; menu item la noi giu trang thai bat/tat cua dich vu. Loi thi nem ra.
+        /// </summary>
+        private async Task SetServiceAsync(ToolStripMenuItem menuItem, string serviceName, bool enable, Action start, Action stop)
+        {
+            if (menuItem.Checked == enable)
+                return;
+            if (!menuItem.Enabled)
+                throw new TrayBusyException();
+
+            menuItem.Enabled = false;
+            try
+            {
+                // Task.Run: Stop() cho worker ket thuc. Cho tren UI thread thi menu
+                // dang mo dong bang, va day la luc nguoi dung dang nhin thang vao no.
+                await Task.Run(enable ? start : stop);
+                menuItem.Checked = enable;
+                _logger.LogInformation(
+                    enable ? "{ServiceName} enabled." : "{ServiceName} disabled.",
+                    serviceName);
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Could not toggle the {ServiceName} service", serviceName);
 
                 // Stop() la idempotent nen de o trang thai tat: nguoi dung bam lai mot
                 // lan nua la bat duoc, con de "dang bat" thi khong con duong quay lai.
                 menuItem.Checked = false;
-                ShowBalloon(4000, LocalizationService.Get("Error"), ex.Message, ToolTipIcon.Error);
+                throw;
             }
             finally
             {
@@ -416,14 +451,16 @@ namespace MasterPlay.TrayApp
             }
         }
 
+        private sealed class TrayBusyException : InvalidOperationException
+        {
+            public TrayBusyException() : base("The service is already being switched.") { }
+        }
+
         private void TogglePlayTime(object? sender, EventArgs e) =>
             ToggleService(_playTimeMenuItem, "PlayTime tracking", _playTimeService.Start, _playTimeService.Stop);
 
         private void ToggleLibrary(object? sender, EventArgs e) =>
             ToggleService(_libraryMenuItem, "Library scanner", _libraryService.Start, _libraryService.Stop);
-
-        private void ToggleBackup(object? sender, EventArgs e) =>
-            ToggleService(_backupMenuItem, "Backup service", _backupService.Start, _backupService.Stop);
 
         private void ScanNow_Click(object? sender, EventArgs e)
         {
@@ -443,37 +480,6 @@ namespace MasterPlay.TrayApp
             {
                 _logger.LogError(ex, "Could not start a manual library scan.");
                 ShowBalloon(4000, LocalizationService.Get("Error"), ex.Message, ToolTipIcon.Error);
-            }
-        }
-
-        private async void BackupNow_Click(object? sender, EventArgs e)
-        {
-            if (_backupMenuItem?.Checked != true)
-            {
-                ShowServiceStoppedBalloon("BackupService");
-                return;
-            }
-
-            if (_backupNowMenuItem != null)
-                _backupNowMenuItem.Enabled = false;
-
-            try
-            {
-                var queued = await _backupService.RequestBackupAllAsync();
-                if (queued > 0)
-                    ShowBalloon(4000, "QuestLog", LocalizationService.Get("BackupQueued", queued), ToolTipIcon.Info);
-                else
-                    ShowBalloon(4000, "QuestLog", LocalizationService.Get("BackupNothingToDo"), ToolTipIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Could not queue a manual backup.");
-                ShowBalloon(4000, LocalizationService.Get("Error"), ex.Message, ToolTipIcon.Error);
-            }
-            finally
-            {
-                if (_backupNowMenuItem != null)
-                    _backupNowMenuItem.Enabled = true;
             }
         }
 
@@ -504,7 +510,8 @@ namespace MasterPlay.TrayApp
             try
             {
                 var progress = new Progress<string>(msg => _logger.LogInformation("[ImageSync] {msg}", msg));
-                var result = await CloudinaryImageService.MigrateAllGameImagesToCloudinaryAsync(progress);
+                // Admin -> Cloudinary, moi chu khac -> luu tren may (DOMAIN_RULES §12).
+                var result = await GameImageSync.SyncAllAsync(progress);
 
                 string summary = LocalizationService.Get(
                     "ImageSyncSummary",
@@ -540,11 +547,9 @@ namespace MasterPlay.TrayApp
 
         private void OpenLogFolder(object? sender, EventArgs e)
         {
-            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             try
             {
-                Directory.CreateDirectory(logPath);
-                Process.Start("explorer.exe", logPath);
+                OpenLogFolderCore();
             }
             catch (Exception ex)
             {
@@ -556,6 +561,13 @@ namespace MasterPlay.TrayApp
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+        }
+
+        private static void OpenLogFolderCore()
+        {
+            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            Directory.CreateDirectory(logPath);
+            Process.Start("explorer.exe", logPath);
         }
 
         private void OpenMasterPlay(object? sender, EventArgs e)
@@ -603,7 +615,9 @@ namespace MasterPlay.TrayApp
             var candidates = new List<string>
             {
                 Path.Combine(baseDirectory, "QuestLog.exe"),
-                Path.Combine(baseDirectory, "Shell", "QuestLog.exe")
+                Path.Combine(baseDirectory, "Shell", "QuestLog.exe"),
+                // Ban cai: QuestLog.exe o goc, tray nam trong thu muc con tray\.
+                Path.Combine(baseDirectory, "..", "QuestLog.exe")
             };
 
             var outputDirectory = new DirectoryInfo(baseDirectory);
@@ -747,18 +761,122 @@ namespace MasterPlay.TrayApp
             if (_contextMenu == null || _contextMenu.IsDisposed)
                 return;
 
+            if (_headerMenuItem != null) _headerMenuItem.Text = LocalizationService.Get("TrayServices");
             if (_openMasterPlayMenuItem != null) _openMasterPlayMenuItem.Text = LocalizationService.Get("OpenMasterPlay");
             if (_playTimeMenuItem != null) _playTimeMenuItem.Text = LocalizationService.Get("PlayTimeTracking");
             if (_libraryMenuItem != null) _libraryMenuItem.Text = LocalizationService.Get("LibraryScanner");
-            if (_backupMenuItem != null) _backupMenuItem.Text = LocalizationService.Get("BackupService");
             if (_scanNowMenuItem != null) _scanNowMenuItem.Text = LocalizationService.Get("ScanNow");
-            if (_backupNowMenuItem != null) _backupNowMenuItem.Text = LocalizationService.Get("BackupNow");
             if (_syncImagesMenuItem != null && !_isSyncingImages) _syncImagesMenuItem.Text = LocalizationService.Get("SyncImagesCloudinary");
             if (_openLogMenuItem != null) _openLogMenuItem.Text = LocalizationService.Get("OpenLogFolder");
             if (_startupMenuItem != null) _startupMenuItem.Text = LocalizationService.Get("StartWithWindows");
             if (_exitMenuItem != null) _exitMenuItem.Text = LocalizationService.Get("Exit");
             RefreshMenuState();
         }
+
+        private void ListenForShutdownRequest()
+        {
+            try
+            {
+                _shutdownSignal = new TrayShutdownSignal(() =>
+                {
+                    _logger.LogInformation("QuestLog asked the tray to exit (update or uninstall).");
+                    if (_uiContext == null)
+                        Exit(null, EventArgs.Empty);
+                    else
+                        _uiContext.Post(_ => Exit(null, EventArgs.Empty), null);
+                });
+            }
+            catch (Exception ex)
+            {
+                // Khong nghe duoc thi trinh cap nhat se giet cung tray; tray van chay binh thuong.
+                _logger.LogWarning(ex, "Could not listen for the shutdown request from QuestLog.");
+            }
+        }
+
+        /// <summary>Panel "Dich vu nen" trong QuestLog dieu khien tray qua Host -> pipe nay.</summary>
+        private void ListenForControlRequests()
+        {
+            if (_uiContext == null)
+            {
+                _logger.LogWarning("No UI context; QuestLog cannot control the tray.");
+                return;
+            }
+
+            try
+            {
+                _controlServer = new TrayControlServer(HandleControlRequestAsync, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not open the tray control pipe.");
+            }
+        }
+
+        /// <summary>Goi tu luong cua pipe: chuyen sang UI thread nhu mot cu bam menu.</summary>
+        private Task<TrayControlResponse> HandleControlRequestAsync(TrayControlRequest request)
+        {
+            var completion = new TaskCompletionSource<TrayControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _uiContext!.Post(async _ =>
+            {
+                try
+                {
+                    completion.SetResult(await ExecuteControlRequestAsync(request));
+                }
+                catch (TrayBusyException ex)
+                {
+                    completion.SetResult(new TrayControlResponse(false, TrayControlProtocol.TrayBusy, ex.Message, CurrentControlStatus()));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Tray control command {Command} failed.", request.Command);
+                    completion.SetResult(new TrayControlResponse(false, TrayControlProtocol.CommandFailed, ex.Message, CurrentControlStatus()));
+                }
+            }, null);
+            return completion.Task;
+        }
+
+        private async Task<TrayControlResponse> ExecuteControlRequestAsync(TrayControlRequest request)
+        {
+            if (_isExiting)
+                throw new InvalidOperationException("The tray is shutting down.");
+
+            switch (request.Command)
+            {
+                case TrayControlProtocol.Status:
+                    break;
+
+                case TrayControlProtocol.SetService when request.Enabled is bool enabled:
+                    if (request.Service == TrayControlProtocol.Playtime && _playTimeMenuItem != null)
+                        await SetServiceAsync(_playTimeMenuItem, "PlayTime tracking", enabled, _playTimeService.Start, _playTimeService.Stop);
+                    else if (request.Service == TrayControlProtocol.Scanner && _libraryMenuItem != null)
+                        await SetServiceAsync(_libraryMenuItem, "Library scanner", enabled, _libraryService.Start, _libraryService.Stop);
+                    else
+                        return new TrayControlResponse(false, TrayControlProtocol.BadRequest, $"Unknown service '{request.Service}'.");
+                    break;
+
+                case TrayControlProtocol.ScanNow:
+                    if (!_libraryService.RequestScanNow())
+                        return new TrayControlResponse(false, TrayControlProtocol.ScannerStopped, "The library scanner is turned off.", CurrentControlStatus());
+                    _logger.LogInformation("Manual library scan requested from QuestLog.");
+                    break;
+
+                case TrayControlProtocol.OpenLogs:
+                    OpenLogFolderCore();
+                    break;
+
+                default:
+                    return new TrayControlResponse(false, TrayControlProtocol.BadRequest, $"Unknown command '{request.Command}'.");
+            }
+
+            return new TrayControlResponse(true, Status: CurrentControlStatus());
+        }
+
+        private TrayControlStatus CurrentControlStatus() => new(
+            [
+                new TrayServiceState(TrayControlProtocol.Playtime, _playTimeMenuItem?.Checked == true),
+                new TrayServiceState(TrayControlProtocol.Scanner, _libraryMenuItem?.Checked == true),
+            ],
+            StartupHelper.IsStartupEnabled());
 
         private async void Exit(object? sender, EventArgs e)
         {
@@ -774,11 +892,10 @@ namespace MasterPlay.TrayApp
 
             try
             {
-                // Task.Run: Stop() cua ba service cho worker ket thuc, khong duoc cho
+                // Task.Run: Stop() cua cac service cho worker ket thuc, khong duoc cho
                 // tren UI thread.
                 var shutdown = Task.Run(() =>
                 {
-                    _backupService.Stop();
                     _libraryService.Stop();
                     _playTimeService.Stop();
                 });
@@ -810,6 +927,8 @@ namespace MasterPlay.TrayApp
                 }
 
                 _configWatcher?.Dispose();
+                _shutdownSignal?.Dispose();
+                _controlServer?.Dispose();
                 _libraryService.GameDiscovered -= OnGameDiscovered;
 
                 foreach (var (item, _, _) in _glyphItems)
@@ -821,6 +940,7 @@ namespace MasterPlay.TrayApp
 
                 _headerFont?.Dispose();
                 _statusFont?.Dispose();
+                _serviceFont?.Dispose();
                 _menuFont?.Dispose();
                 _contextMenu?.Dispose();
                 _trayIcon?.Dispose();

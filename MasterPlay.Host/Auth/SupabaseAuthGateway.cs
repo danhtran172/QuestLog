@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -11,9 +13,21 @@ public sealed class SupabaseAuthGateway(
     IHttpClientFactory httpClientFactory,
     SupabaseAuthOptions options,
     EmailCodeThrottle codeThrottle,
-    ILogger<SupabaseAuthGateway> logger)
+    ILogger<SupabaseAuthGateway> logger,
+    TimeProvider? timeProvider = null)
 {
+    public static readonly TimeSpan ValidationReuseWindow = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// How long a password sign-up that never confirmed its email keeps its
+    /// username and email. After that the next sign-up for either releases it.
+    /// </summary>
+    public static readonly TimeSpan UnconfirmedSignupHold = TimeSpan.FromHours(6);
+    private const int MaxValidatedTokens = 256;
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly TimeProvider time = timeProvider ?? TimeProvider.System;
+    private readonly ConcurrentDictionary<string, ValidatedToken> validatedTokens = new(StringComparer.Ordinal);
     private static readonly string[] OnboardingColumns = ["onboarding_state", "signup_method", "has_password"];
     private const string UndefinedColumn = "42703";
 
@@ -34,7 +48,17 @@ public sealed class SupabaseAuthGateway(
             HttpMethod.Post,
             "/auth/v1/token?grant_type=password");
         request.Content = JsonContent.Create(new { email, password });
-        var token = await SendAsync<AuthTokenResponse>(request, cancellationToken);
+        AuthTokenResponse token;
+        try
+        {
+            token = await SendAsync<AuthTokenResponse>(request, cancellationToken);
+        }
+        catch (SupabaseAuthException exception) when (exception.Code == "email_not_confirmed")
+        {
+            // The client answers this by showing the signup-code step.
+            throw EmailNotConfirmed();
+        }
+
         var account = await GetAccountAsync(token.User.Id, token.User.Email, token.User.EmailConfirmedAt, cancellationToken);
 
         if (!string.Equals(account.Status, "active", StringComparison.Ordinal))
@@ -58,6 +82,13 @@ public sealed class SupabaseAuthGateway(
             throw RegistrationDisabled();
         }
 
+        // Supabase answers a sign-up for an existing confirmed email with a fake
+        // success (no error, no email), so QuestLog checks the email itself.
+        if (await EmailExistsAsync(email, cancellationToken))
+        {
+            throw EmailTaken();
+        }
+
         if (await UsernameExistsAsync(username, cancellationToken))
         {
             throw UsernameTaken();
@@ -70,8 +101,92 @@ public sealed class SupabaseAuthGateway(
             password,
             data = new { username = username.Trim() },
         });
-        _ = await SendAsync<JsonElement>(request, cancellationToken);
+        try
+        {
+            _ = await SendAsync<JsonElement>(request, cancellationToken);
+        }
+        catch (SupabaseAuthException exception) when (exception.StatusCode == 429)
+        {
+            throw EmailRateLimited();
+        }
+
+        // Supabase just sent the first code; resends wait out the usual cooldown.
+        codeThrottle.TryRecordSend(SignupKey(email), out _);
         return new SignupResponseDto(true, email.Trim());
+    }
+
+    /// <summary>
+    /// Re-sends the sign-up confirmation code. QuestLog has no web page for a
+    /// confirmation link, so the "Confirm signup" email carries a 6-digit code.
+    /// Unknown or already-confirmed identifiers are silent.
+    /// </summary>
+    public async Task<(bool Sent, DateTimeOffset ResendAvailableAt)> ResendSignupCodeAsync(
+        string identifier,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        var email = await TryResolveEmailAsync(identifier, cancellationToken);
+        if (email is null)
+        {
+            return (true, time.GetUtcNow() + EmailCodeThrottle.ResendCooldown);
+        }
+
+        if (!codeThrottle.TryRecordSend(SignupKey(email), out var nextAllowedAt))
+        {
+            return (false, nextAllowedAt);
+        }
+
+        using var request = CreateAnonRequest(HttpMethod.Post, "/auth/v1/resend");
+        request.Content = JsonContent.Create(new { type = "signup", email });
+        using var response = await Client.SendAsync(request, cancellationToken);
+        if ((int)response.StatusCode == 429)
+        {
+            throw EmailRateLimited();
+        }
+
+        if ((int)response.StatusCode >= 500)
+        {
+            throw ProviderFailure((int)response.StatusCode);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Supabase rejected a sign-up code resend with HTTP {Status}.", (int)response.StatusCode);
+        }
+
+        return (true, nextAllowedAt);
+    }
+
+    /// <summary>Confirms the account's email with the emailed code and signs the user in.</summary>
+    public async Task<(AuthSessionDto Session, string RefreshToken)> VerifySignupCodeAsync(
+        string identifier,
+        string code,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        var email = await TryResolveEmailAsync(identifier, cancellationToken);
+        var throttleKey = email is null ? $"signup:unknown:{identifier.Trim().ToLowerInvariant()}" : SignupKey(email);
+        if (codeThrottle.AttemptsExceeded(throttleKey))
+        {
+            throw AttemptsExceeded();
+        }
+
+        if (email is null)
+        {
+            codeThrottle.RecordFailure(throttleKey);
+            throw CodeInvalid();
+        }
+
+        var token = await VerifyCodeAsync("signup", email, code, throttleKey, cancellationToken);
+        var account = await GetAccountAsync(token.User.Id, token.User.Email, token.User.EmailConfirmedAt, cancellationToken);
+        if (!string.Equals(account.Status, "active", StringComparison.Ordinal))
+        {
+            await LogoutAsync(token.AccessToken, cancellationToken, "local");
+            throw Locked();
+        }
+
+        await WriteAuditAsync(token.User.Id, "email_verified", true, cancellationToken);
+        return (ToSession(token, account), token.RefreshToken);
     }
 
     public async Task<(AuthSessionDto Session, string RefreshToken)> RefreshAsync(
@@ -94,11 +209,81 @@ public sealed class SupabaseAuthGateway(
         return (ToSession(token, account), token.RefreshToken);
     }
 
+    /// <summary>
+    /// Runs before every authenticated API request. Asking Supabase costs two
+    /// sequential round trips (user, then profile): 0.2 s warm, several seconds on
+    /// a cold connection, and opening one game detail fires a burst of requests.
+    /// A token proven valid moments ago is therefore reused for
+    /// <see cref="ValidationReuseWindow"/>, and concurrent requests carrying the
+    /// same token share a single provider check. The window bounds how long a
+    /// session revoked elsewhere, or an account locked by an administrator, keeps
+    /// working on this Host. Account changes made through this gateway apply at once.
+    /// </summary>
     public async Task<AuthAccountDto> ValidateAccessTokenAsync(
         string accessToken,
         CancellationToken cancellationToken)
     {
         EnsureConfigured();
+        var key = TokenKey(accessToken);
+        var now = time.GetUtcNow();
+        var entry = validatedTokens.GetOrAdd(key, _ => NewValidation(accessToken, now));
+        if (entry.ExpiresAt <= now)
+        {
+            var renewed = NewValidation(accessToken, now);
+            entry = validatedTokens.TryUpdate(key, renewed, entry)
+                ? renewed
+                : validatedTokens.GetOrAdd(key, renewed);
+        }
+
+        if (validatedTokens.Count > MaxValidatedTokens) ForgetExpiredValidations(now);
+
+        var validation = entry.Validation.Value;
+        try
+        {
+            return await validation.WaitAsync(cancellationToken);
+        }
+        catch when (validation.IsFaulted || validation.IsCanceled)
+        {
+            // Only successes are reused: a rejected token or a provider outage is asked again.
+            validatedTokens.TryRemove(KeyValuePair.Create(key, entry));
+            throw;
+        }
+    }
+
+    private ValidatedToken NewValidation(string accessToken, DateTimeOffset now) => new(
+        // Shared by every request waiting on this token, so one caller hanging up
+        // must not cancel it for the rest. The HttpClient timeout still bounds it.
+        new Lazy<Task<AuthAccountDto>>(() => ValidateWithProviderAsync(accessToken, CancellationToken.None)),
+        now + ValidationReuseWindow);
+
+    private void ForgetExpiredValidations(DateTimeOffset now)
+    {
+        foreach (var (key, entry) in validatedTokens)
+        {
+            if (entry.ExpiresAt <= now) validatedTokens.TryRemove(KeyValuePair.Create(key, entry));
+        }
+    }
+
+    /// <summary>Drops reused validations so the account's next request reads its profile again.</summary>
+    private void ForgetValidatedAccount(string userId)
+    {
+        foreach (var (key, entry) in validatedTokens)
+        {
+            var validation = entry.Validation.IsValueCreated ? entry.Validation.Value : null;
+            if (validation is null || !validation.IsCompletedSuccessfully || validation.Result.Id == userId)
+            {
+                validatedTokens.TryRemove(KeyValuePair.Create(key, entry));
+            }
+        }
+    }
+
+    private static string TokenKey(string accessToken) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(accessToken)));
+
+    private async Task<AuthAccountDto> ValidateWithProviderAsync(
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
         using var request = CreateAnonRequest(HttpMethod.Get, "/auth/v1/user");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         AuthUserResponse user;
@@ -130,6 +315,13 @@ public sealed class SupabaseAuthGateway(
     public async Task LogoutAsync(string accessToken, CancellationToken cancellationToken, string? scope = null)
     {
         if (!options.IsConfigured || string.IsNullOrWhiteSpace(accessToken)) return;
+
+        if (validatedTokens.TryRemove(TokenKey(accessToken), out var signedOut) &&
+            scope != "local" &&
+            signedOut.Validation is { IsValueCreated: true, Value.IsCompletedSuccessfully: true })
+        {
+            ForgetValidatedAccount(signedOut.Validation.Value.Result.Id);
+        }
 
         var path = scope is null ? "/auth/v1/logout" : $"/auth/v1/logout?scope={scope}";
         using var request = CreateAnonRequest(HttpMethod.Post, path);
@@ -191,6 +383,7 @@ public sealed class SupabaseAuthGateway(
             cancellationToken,
             "USERNAME_TAKEN",
             "That username is already in use.");
+        ForgetValidatedAccount(account.Id);
         await WriteAuditAsync(account.Id, "username_changed", true, cancellationToken);
 
         return account with { Username = trimmedUsername };
@@ -274,6 +467,7 @@ public sealed class SupabaseAuthGateway(
             throw new SupabaseAuthException(409, "ONBOARDING_COMPLETE", "This account already has a username.");
         }
 
+        ForgetValidatedAccount(account.Id);
         await WriteAuditAsync(account.Id, "username_claimed", true, cancellationToken);
         return account with { Username = trimmedUsername, Onboarding = AccountOnboarding.Complete };
     }
@@ -369,7 +563,9 @@ public sealed class SupabaseAuthGateway(
     {
         EnsureConfigured();
         var email = await TryResolveEmailAsync(identifier, cancellationToken);
-        if (email is null) return;
+        // Product decision (2026-10-04): tell the user when no account matches, rather
+        // than pretending a code was sent. The "auth" rate limit slows enumeration.
+        if (email is null) throw AccountNotFound();
         if (!codeThrottle.TryRecordSend(RecoveryKey(email), out _)) return;
 
         using var request = CreateAnonRequest(HttpMethod.Post, "/auth/v1/recover");
@@ -638,6 +834,7 @@ public sealed class SupabaseAuthGateway(
         request.Headers.TryAddWithoutValidation("Prefer", "return=minimal");
         request.Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
         await SendNoContentAsync(request, cancellationToken);
+        ForgetValidatedAccount(userId);
     }
 
     /// <summary>
@@ -723,28 +920,55 @@ public sealed class SupabaseAuthGateway(
         return email;
     }
 
-    private async Task<bool> UsernameExistsAsync(
-        string username,
-        CancellationToken cancellationToken,
-        string? excludedUserId = null)
+    /// <summary>
+    /// True when another account holds the value matched by <paramref name="filter"/>.
+    /// Used by sign-up, username/email changes and the Google username claim, so a
+    /// sign-up that expired unconfirmed is deleted here instead of blocking anyone.
+    /// </summary>
+    private async Task<bool> IsHeldAsync(string filter, string? excludedUserId, CancellationToken cancellationToken)
     {
-        var normalized = NormalizeUsername(username);
-        var query = $"/rest/v1/profiles?select=user_id&normalized_username=eq.{Uri.EscapeDataString(normalized)}&limit=1";
-        using var request = CreateServiceRequest(HttpMethod.Get, query);
+        using var request = CreateServiceRequest(HttpMethod.Get, $"/rest/v1/profiles?select=user_id&{filter}&limit=1");
         var profiles = await SendAsync<List<ProfileIdResponse>>(request, cancellationToken);
-        return profiles.Any(profile => !string.Equals(profile.UserId, excludedUserId, StringComparison.Ordinal));
+        var holder = profiles.FirstOrDefault(
+            profile => !string.Equals(profile.UserId, excludedUserId, StringComparison.Ordinal));
+        return holder is not null && !await TryReleaseExpiredSignupAsync(holder.UserId, cancellationToken);
     }
 
-    private async Task<bool> EmailExistsAsync(
+    private async Task<bool> TryReleaseExpiredSignupAsync(string userId, CancellationToken cancellationToken)
+    {
+        using var request = CreateServiceRequest(HttpMethod.Get, $"/auth/v1/admin/users/{Uri.EscapeDataString(userId)}");
+        var user = await SendAsync<AuthUserResponse>(request, cancellationToken);
+        // Only a plain password sign-up that never proved its email: no Google
+        // identity, no bootstrap admin, older than the hold.
+        if (user.EmailConfirmedAt is not null ||
+            user.CreatedAt is not { } createdAt ||
+            createdAt > time.GetUtcNow() - UnconfirmedSignupHold ||
+            user.Identities?.Any(identity => identity.Provider != "email") == true ||
+            (await GetProfileAsync(userId, cancellationToken)).SignupMethod != "password")
+        {
+            return false;
+        }
+
+        // The profile and its audit links go with the user (on delete cascade / set null).
+        await DeleteUserAsync(userId, cancellationToken);
+        await WriteAuditAsync(null, "unconfirmed_signup_released", true, cancellationToken);
+        return true;
+    }
+
+    private Task<bool> UsernameExistsAsync(
+        string username,
+        CancellationToken cancellationToken,
+        string? excludedUserId = null) =>
+        IsHeldAsync(
+            $"normalized_username=eq.{Uri.EscapeDataString(NormalizeUsername(username))}",
+            excludedUserId,
+            cancellationToken);
+
+    private Task<bool> EmailExistsAsync(
         string email,
         CancellationToken cancellationToken,
-        string? excludedUserId = null)
-    {
-        var query = $"/rest/v1/profiles?select=user_id&email=eq.{Uri.EscapeDataString(email.Trim())}&limit=1";
-        using var request = CreateServiceRequest(HttpMethod.Get, query);
-        var profiles = await SendAsync<List<ProfileIdResponse>>(request, cancellationToken);
-        return profiles.Any(profile => !string.Equals(profile.UserId, excludedUserId, StringComparison.Ordinal));
-    }
+        string? excludedUserId = null) =>
+        IsHeldAsync($"email=eq.{Uri.EscapeDataString(email.Trim())}", excludedUserId, cancellationToken);
 
     private async Task<ProfileResponse> GetProfileAsync(string userId, CancellationToken cancellationToken)
     {
@@ -955,8 +1179,17 @@ public sealed class SupabaseAuthGateway(
     private static SupabaseAuthException CodeInvalid() =>
         new(400, "CODE_INVALID", "The code is wrong or has expired.");
 
+    private static SupabaseAuthException EmailTaken() =>
+        new(409, "EMAIL_TAKEN", "That email already has an account.");
+
+    private static SupabaseAuthException AccountNotFound() =>
+        new(404, "ACCOUNT_NOT_FOUND", "No account matches that username or email.");
+
     private static SupabaseAuthException EmailRateLimited() =>
         new(429, "EMAIL_RATE_LIMITED", "Too many emails were sent recently. Try again later.");
+
+    private static SupabaseAuthException EmailNotConfirmed() =>
+        new(403, "EMAIL_NOT_CONFIRMED", "Verify your email before signing in.");
 
     private static SupabaseAuthException AttemptsExceeded() =>
         new(429, "CODE_ATTEMPTS_EXCEEDED", "Too many wrong codes. Request a new code.");
@@ -991,6 +1224,8 @@ public sealed class SupabaseAuthGateway(
 
     private static string ReauthKey(string userId) => $"reauth:{userId}";
 
+    private static string SignupKey(string email) => $"signup:{email.Trim().ToLowerInvariant()}";
+
     private void EnsureConfigured()
     {
         if (!options.IsConfigured)
@@ -1004,6 +1239,8 @@ public sealed class SupabaseAuthGateway(
 
     private HttpClient Client => httpClientFactory.CreateClient(nameof(SupabaseAuthGateway));
 
+    private sealed record ValidatedToken(Lazy<Task<AuthAccountDto>> Validation, DateTimeOffset ExpiresAt);
+
     private sealed record AuthTokenResponse(
         [property: JsonPropertyName("access_token")] string AccessToken,
         [property: JsonPropertyName("refresh_token")] string RefreshToken,
@@ -1014,7 +1251,8 @@ public sealed class SupabaseAuthGateway(
         [property: JsonPropertyName("id")] string Id,
         [property: JsonPropertyName("email")] string Email,
         [property: JsonPropertyName("email_confirmed_at")] DateTimeOffset? EmailConfirmedAt,
-        [property: JsonPropertyName("identities")] List<AuthIdentityResponse>? Identities = null);
+        [property: JsonPropertyName("identities")] List<AuthIdentityResponse>? Identities = null,
+        [property: JsonPropertyName("created_at")] DateTimeOffset? CreatedAt = null);
 
     private sealed record AuthIdentityResponse(
         [property: JsonPropertyName("provider")] string Provider,

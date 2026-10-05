@@ -31,7 +31,7 @@ import { Switch } from "./ui";
 function Tile({ label, value, tone }: { label: string; value: number; tone?: "warn" }) {
   return (
     <div className="surface-card flex flex-col gap-0.5 p-3">
-      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">{label}</span>
+      <span className="text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">{label}</span>
       <span
         className={cn(
           "text-xl font-black tabular-nums",
@@ -143,7 +143,7 @@ export function AdminPublishingSection({
 
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-[11px] font-black uppercase tracking-[0.12em] text-muted-fg">
+            <tr className="border-b border-border text-left text-fs-11 font-black uppercase tracking-[0.12em] text-muted-fg">
               <th className="px-4 py-2">{t("admin.publishing.condition")}</th>
               <th className="px-4 py-2 text-right">{t("admin.publishing.wouldBlock")}</th>
               <th className="px-4 py-2 text-right">{t("admin.publishing.active")}</th>
@@ -191,7 +191,7 @@ export function AdminPublishingSection({
         </table>
       </div>
 
-      <p className="px-1 text-[11px] leading-5 text-muted-fg">{t("admin.publishing.footnote")}</p>
+      <p className="px-1 text-fs-11 leading-5 text-muted-fg">{t("admin.publishing.footnote")}</p>
     </div>
   );
 }

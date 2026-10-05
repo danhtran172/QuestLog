@@ -4,8 +4,8 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogTitle,
+  GlassFooter,
   IconButton,
 } from "./ui";
 
@@ -17,8 +17,9 @@ type Props = {
 };
 
 /**
- * Admin-only method chooser. User accounts skip this dialog and go directly
- * to the metadata picker from App.tsx.
+ * Method chooser for every library owner: start from the shared metadata
+ * catalog, or create a private manual game (POST /api/games) that only exists
+ * in the caller's own library.
  */
 export function AddGameMethodDialog({ open, onOpenChange, onManual, onMetadata }: Props) {
   const { t } = useI18n();
@@ -26,7 +27,7 @@ export function AddGameMethodDialog({ open, onOpenChange, onManual, onMetadata }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl p-0">
-        <div className="space-y-5 p-5 pr-14">
+        <div className="space-y-5 p-5 pb-20 pr-14">
           <div>
             <DialogTitle>{t("addGame.methodTitle")}</DialogTitle>
             <DialogDescription>{t("addGame.methodDescription")}</DialogDescription>
@@ -59,9 +60,9 @@ export function AddGameMethodDialog({ open, onOpenChange, onManual, onMetadata }
             </button>
           </div>
         </div>
-        <DialogFooter>
+        <GlassFooter className="justify-end px-5">
           <IconButton label={t("action.cancel")} tone="neutral" icon={<X />} onClick={() => onOpenChange(false)} />
-        </DialogFooter>
+        </GlassFooter>
       </DialogContent>
     </Dialog>
   );

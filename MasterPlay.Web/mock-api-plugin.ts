@@ -17,6 +17,7 @@ export function mockApiPlugin(): Plugin {
     themeMode: "jungle" as "light" | "dark" | "system" | "jungle",
     jungleFx: "auto" as "auto" | "off" | "medium" | "full",
     jungleWeather: "clear" as "clear" | "rain",
+    appMode: "desktop" as "desktop" | "console",
     backupRootPath: "",
     databasePath: "",
     libraries: { paths: [] as string[], runtime: [] },

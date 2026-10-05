@@ -26,7 +26,7 @@ export function unpublishedReason(game: AdminMetadataGame, t: (key: string) => s
 
 export function AdminPublishedStatus({ game }: { game: AdminMetadataGame }) {
   const { t } = useI18n();
-  const badge = "inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide";
+  const badge = "inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-fs-10 font-black uppercase tracking-wide";
 
   if (game.isPublished) {
     return (

@@ -438,7 +438,7 @@ export function AccountDialog({
                 <p className="truncate text-sm font-extrabold text-fg">{account?.username}</p>
                 <p className="truncate text-xs text-muted-fg">{account?.email}</p>
               </div>
-              <span className="rounded-md border border-border bg-bg/40 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-fg">
+              <span className="rounded-md border border-border bg-bg/40 px-2 py-1 text-fs-10 font-bold uppercase tracking-wider text-muted-fg">
                 {account?.role}
               </span>
             </div>

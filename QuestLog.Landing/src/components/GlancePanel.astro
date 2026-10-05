@@ -1,0 +1,120 @@
+---
+// "Thu vien cua ban" — tom tat dung cau hoi cua trang: vua choi xong gi, dang
+// choi gi, choi gi tiep, gi sap ra mat. Ten game, anh bia va so lieu lay tu bo
+// du lieu dung de chup anh app (src/glance.ts), cung bo voi cac anh chup.
+import { Image } from "astro:assets";
+import { glanceRows } from "../glance";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang].glance;
+const rows = glanceRows(lang);
+---
+
+<aside class="hud glance enter w-full p-5 sm:p-6" style="--d:420ms" aria-label={t.label}>
+  <p class="eyebrow">◆ {t.label}</p>
+  <ul class="mt-4">
+    {
+      rows.map((row, i) => (
+        <li class="row enter" style={`--status: var(--color-${row.status}); --d:${720 + i * 110}ms`}>
+          <Image src={row.thumb} alt="" widths={[104, 208]} sizes="104px" class="thumb" />
+          <div class="min-w-0">
+            <p class="row-label">{t[row.kind]}</p>
+            <p class="row-name">{row.name}</p>
+          </div>
+          <div class="row-metric">
+            {row.kind === "finished" && (
+              <>
+                <Image src={row.chip!} alt={`${t.scoreLabel} ${row.value}`} widths={[82, 164]} sizes="41px" class="chip" />
+                <span class="sub">{row.sub}</span>
+              </>
+            )}
+            {row.kind === "playing" && (
+              <span class="date" aria-label={`${t.playtimeLabel} ${row.value}`}>
+                {row.value}
+              </span>
+            )}
+            {row.kind === "next" && (
+              <Image src={row.chip!} alt={`${t.excitedLabel} ${row.value}`} widths={[82, 164]} sizes="41px" class="chip" />
+            )}
+            {row.kind === "upcoming" && <span class="date">{row.value}</span>}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</aside>
+
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: 4.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.9rem;
+    padding-block: 0.8rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-line) 80%, transparent);
+  }
+
+  .row:first-child {
+    border-top: 0;
+  }
+
+  .thumb {
+    width: 4.25rem;
+    height: 2.4rem;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      inset 0 -2px 0 var(--status);
+  }
+
+  .row-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--status);
+  }
+
+  .row-name {
+    margin-top: 0.15rem;
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .row-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    text-align: right;
+  }
+
+  .sub,
+  .date {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-fog);
+  }
+
+  .date {
+    color: var(--color-mist);
+  }
+
+  /* Chip that cua app (chup 4x, nen trong suot). */
+  .chip {
+    width: auto;
+    height: 1.9rem;
+  }
+
+</style>

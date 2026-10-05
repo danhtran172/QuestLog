@@ -45,7 +45,7 @@ type HealthRow = {
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="surface-card flex flex-col gap-0.5 p-3">
-      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-fg">{label}</span>
+      <span className="text-fs-11 font-bold uppercase tracking-[0.12em] text-muted-fg">{label}</span>
       <span className="text-xl font-black tabular-nums text-fg">{value}</span>
     </div>
   );

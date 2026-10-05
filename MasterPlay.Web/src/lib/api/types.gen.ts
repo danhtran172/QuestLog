@@ -74,6 +74,13 @@ export interface paths {
                 };
                 400: components["responses"]["BadRequest"];
                 401: components["responses"]["Unauthorized"];
+                /** @description EMAIL_NOT_CONFIRMED — nhập mã ở POST /api/auth/signup/verify */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 423: components["responses"]["Locked"];
                 503: components["responses"]["ServiceUnavailable"];
             };
@@ -93,7 +100,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Tự đăng ký tài khoản user và gửi email xác minh */
+        /**
+         * Tự đăng ký tài khoản user và gửi mã xác minh qua email
+         * @description Tài khoản chưa xác nhận email giữ username và email trong 6 giờ. Quá 6 giờ,
+         *     lần đăng ký, đổi username/email hoặc chọn username (Google) kế tiếp trùng
+         *     giá trị đó sẽ xoá tài khoản bỏ dở và tiếp tục.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -118,6 +130,109 @@ export interface paths {
                 };
                 400: components["responses"]["BadRequest"];
                 409: components["responses"]["Conflict"];
+                503: components["responses"]["ServiceUnavailable"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/signup/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Gửi lại mã 6 số xác nhận email đăng ký
+         * @description Email "Confirm signup" chứa mã, không chứa link (bản desktop không có trang web
+         *     để mở link). Tài khoản không tồn tại hoặc đã xác nhận vẫn nhận 202.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SignupCodeRequest"];
+                };
+            };
+            responses: {
+                /** @description Đã nhận yêu cầu */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignupCodeResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                /** @description CODE_RESEND_COOLDOWN (error.details.resendAvailableAt) hoặc EMAIL_RATE_LIMITED */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                503: components["responses"]["ServiceUnavailable"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/signup/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Xác nhận email đăng ký bằng mã 6 số rồi đăng nhập luôn */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["VerifySignupCodeRequest"];
+                };
+            };
+            responses: {
+                /** @description Email đã xác nhận; refresh token trong HttpOnly cookie */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthSession"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                423: components["responses"]["Locked"];
+                /** @description CODE_ATTEMPTS_EXCEEDED hoặc quá nhiều yêu cầu */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 503: components["responses"]["ServiceUnavailable"];
             };
         };
@@ -602,7 +717,7 @@ export interface paths {
         put?: never;
         /**
          * Gửi mã 6 số đặt lại mật khẩu qua email
-         * @description Luôn trả 202, kể cả khi tài khoản không tồn tại hoặc đang trong cooldown 60 giây.
+         * @description 202 khi đã gửi (hoặc đang trong cooldown 60 giây vì mã vừa gửi); 404 ACCOUNT_NOT_FOUND khi không có tài khoản.
          */
         post: {
             parameters: {
@@ -627,7 +742,8 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["BadRequest"];
-                /** @description Quá nhiều yêu cầu */
+                404: components["responses"]["NotFound"];
+                /** @description Quá nhiều yêu cầu hoặc EMAIL_RATE_LIMITED */
                 429: {
                     headers: {
                         [name: string]: unknown;
@@ -1116,7 +1232,10 @@ export interface paths {
             };
         };
         put?: never;
-        /** Tạo game mới */
+        /**
+         * Thêm thủ công một game riêng vào thư viện của owner hiện tại (user hoặc guest)
+         * @description Game tạo ra có `metadataGameId = null`, chỉ nằm trong thư viện của owner gọi API, không ghi vào kho metadata dùng chung. `baseGameId` phải là game của chính owner đó.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -1140,6 +1259,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
             };
         };
         delete?: never;
@@ -1807,7 +1927,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Resolve metadata theo tên để điền draft; không ghi DB. */
+        /**
+         * Resolve metadata theo tên để điền draft; không ghi DB.
+         * @description Kho metadata trước, kể cả bản chưa xuất bản vì trượt tiêu chí (bỏ bản admin chủ động gỡ); chỉ field kho còn thiếu mới gọi IGDB/RAWG/Steam. Xem API_CONTRACT §preview.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -3216,6 +3339,198 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/metadata/gemini-exe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trạng thái worker Gemini executable (admin-only) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminGeminiExeStatus"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description Admin required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/metadata/gemini-exe/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminCrawlerEnabledRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminGeminiExeStatus"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/metadata/gemini-exe/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Queued */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminCrawlerRunRequest"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/metadata/gemini-exe/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminGeminiExeRunPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/metadata/gemini-exe/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminGeminiExeGamePage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/integrations": {
         parameters: {
             query?: never;
@@ -3458,6 +3773,94 @@ export interface paths {
                     };
                 };
                 502: components["responses"]["UpstreamError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Game trong thư viện sắp ra mắt (trước 3 ngày và đúng ngày)
+         * @description DOMAIN_RULES §22. Mốc ra mắt = 00:00 UTC của `publishDate`, đổi sang `timeZone`
+         *     rồi mới đếm ngày. Bỏ trống `timeZone` thì dùng múi giờ của máy chạy Host.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Tên múi giờ IANA (vd. `Asia/Ho_Chi_Minh`) hoặc Windows. */
+                    timeZone?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReleaseNotificationFeed"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/releases/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Đánh dấu thông báo ra mắt đã xem
+         * @description Lưu theo chủ thư viện. Id lạ nhưng đúng dạng vẫn được nhận (idempotent).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MarkReleaseNotificationsReadRequest"];
+                };
+            };
+            responses: {
+                /** @description Đã lưu */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
             };
         };
         delete?: never;
@@ -3760,6 +4163,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Host hỏi tiến trình Tray qua named pipe của user hiện tại. Tray không chạy thì vẫn
+         *     trả 200 với `running: false` (đó là trạng thái, không phải lỗi).
+         */
         get: {
             parameters: {
                 query?: never;
@@ -3775,19 +4182,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            services?: {
-                                /** @enum {string} */
-                                name?: "playtime" | "scanner" | "backup";
-                                enabled?: boolean;
-                                /** Format: date-time */
-                                lastRunAt?: string | null;
-                                detail?: {
-                                    [key: string]: unknown;
-                                };
-                            }[];
-                            startWithWindows?: boolean;
-                        };
+                        "application/json": components["schemas"]["TrayStatus"];
                     };
                 };
                 501: components["responses"]["NotImplementedOnHosted"];
@@ -3834,6 +4229,15 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Tray không chạy (TRAY_NOT_RUNNING) hoặc không bật/tắt được dịch vụ (TRAY_COMMAND_FAILED) */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
                 501: components["responses"]["NotImplementedOnHosted"];
             };
         };
@@ -3853,10 +4257,13 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Đưa ảnh banner/backdrop/poster trong thư viện của người đang đăng nhập lên Cloudinary
-         * @description Chạy trong Host, không cần tiến trình Tray. Đồng bộ (trả báo cáo khi xong),
+         * Đưa ảnh banner/backdrop/poster trong thư viện của người đang đăng nhập về nơi lưu
+         * @description Nơi lưu theo chủ thư viện (DOMAIN_RULES §12): tài khoản admin → Cloudinary;
+         *     user, guest → lưu trên máy (`/local-images/...`). Trong báo cáo, `uploaded` là
+         *     số ảnh vừa lưu tới nơi đó.
+         *     Chạy trong Host, không cần tiến trình Tray. Đồng bộ (trả báo cáo khi xong),
          *     chưa qua /api/events. Chỉ thay đúng cột ảnh và chỉ khi giá trị chưa đổi
-         *     trong lúc chạy. Ảnh đã nằm trong thư mục QuestLog/ (hoặc MasterPlay/ cũ) bỏ qua.
+         *     trong lúc chạy. Ảnh đã ở đúng nơi lưu thì bỏ qua.
          */
         post: {
             parameters: {
@@ -3886,7 +4293,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Chưa cấu hình Cloudinary (INTEGRATION_NOT_CONFIGURED) */
+                /** @description Thư viện admin nhưng chưa cấu hình Cloudinary (INTEGRATION_NOT_CONFIGURED) */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -3912,6 +4319,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Đã cài `scan-now` và `open-logs`. `backup-now` (backup đang tắt) và `startup` trả 501. */
         post: {
             parameters: {
                 query?: never;
@@ -3929,6 +4337,15 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Tray không chạy (TRAY_NOT_RUNNING), hoặc dịch vụ quét thư viện đang tắt (SCANNER_STOPPED) */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
                 };
                 501: components["responses"]["NotImplementedOnHosted"];
             };
@@ -3965,6 +4382,19 @@ export interface components {
             requiresEmailVerification: boolean;
             /** Format: email */
             email: string;
+        };
+        SignupCodeRequest: {
+            /** @description Username hoặc email của tài khoản vừa đăng ký. */
+            identifier: string;
+        };
+        VerifySignupCodeRequest: {
+            identifier: string;
+            code: string;
+        };
+        SignupCodeResponse: {
+            sent: boolean;
+            /** Format: date-time */
+            resendAvailableAt: string;
         };
         ChangePasswordRequest: {
             /** Format: password */
@@ -4172,6 +4602,11 @@ export interface components {
             iconData?: string | null;
             /** @description Nguồn thứ hạng sort. KHÔNG hardcode ở client. */
             sortOrder: number;
+            /**
+             * @description Chỉ có với Ownership. Bố cục khung "thông tin sở hữu": sharedAccount = tài khoản dùng chung, download = bản tải về, null = kiểu này không có thông tin (ẩn nút ⓘ). Client KHÔNG tự suy từ systemKey. Xem DOMAIN_RULES §14.1.
+             * @enum {string|null}
+             */
+            infoLayout?: "sharedAccount" | "download" | null;
         };
         /** @description Genre/theme/series. key, scope, editable, groupId do server điền (spec 2026-10-04-theme-groups); khi là body của request thì bị bỏ qua — client không gửi chủ sở hữu hay quyền. */
         TaxonomyItem: {
@@ -4370,6 +4805,58 @@ export interface components {
             nextCursor: string | null;
             pageSize: number;
         };
+        AdminGeminiExeRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            started_at: string;
+            /** Format: date-time */
+            finished_at?: string | null;
+            /** @enum {string} */
+            status: "running" | "completed" | "partial" | "failed" | "interrupted";
+            candidates: number;
+            no_candidates: number;
+            errors: number;
+            report: {
+                [key: string]: unknown;
+            };
+        };
+        AdminGeminiExeStatus: {
+            enabled: boolean;
+            /** Format: uuid */
+            leaseId?: string | null;
+            /** Format: date-time */
+            leaseUntil?: string | null;
+            /** Format: date-time */
+            nextRunAt?: string;
+            queueDepth: number;
+            latestRun: components["schemas"]["AdminGeminiExeRun"] | null;
+        };
+        AdminGeminiExeRunPage: {
+            items: components["schemas"]["AdminGeminiExeRun"][];
+            nextCursor: string | null;
+            pageSize: number;
+        };
+        AdminGeminiExeGame: {
+            /** Format: int64 */
+            gameId: number;
+            /** Format: int64 */
+            igdbId?: number | null;
+            name: string;
+            fileName?: string | null;
+            /** @enum {string|null} */
+            status?: "candidate" | "no_candidate" | "null" | null;
+            source?: string | null;
+            /** Format: date-time */
+            enrichedAt?: string | null;
+            attempts?: number | null;
+            lastErrorCode?: string | null;
+        };
+        AdminGeminiExeGamePage: {
+            items: components["schemas"]["AdminGeminiExeGame"][];
+            nextCursor: string | null;
+            pageSize: number;
+        };
         LibraryGameImportUserData: {
             score?: number | null;
             excited?: number | null;
@@ -4462,11 +4949,15 @@ export interface components {
              *     "2019" chu khong phai "01/2019". Xem DOMAIN_RULES §9.1.
              */
             hasMonth: boolean;
+            /**
+             * @deprecated
+             * @description Du lieu CU. Khong con luu diem theo tung lan — lan moi luon null, UI khong hien. Xem DOMAIN_RULES §9.1.
+             */
             score?: number | null;
         };
         FinishGameRequest: {
-            /** @description Thang 0-11 buoc 0.5. Gia tri 11 la Peak Score va hien thi "10+". */
-            score: number;
+            /** @description Thang 0-11 buoc 0.5 (11 = Peak Score, hien "10+"). BAT BUOC o lan hoan thanh dau tien (thieu -> 400 FINISH_SCORE_REQUIRED); cac lan sau bo trong = giu nguyen game.score. */
+            score?: number;
             /**
              * @description Bo trong = dung thoi diem hien tai cua backend.
              * @example 2026
@@ -4515,6 +5006,9 @@ export interface components {
              * @description BANNER từ Steam header.jpg (ngang 460x215) — **đã có tên game in trong ảnh**.
              *     Card trong lưới và hàng trong Play Queue dùng field này.
              *     Không bao giờ phủ thêm chữ lên ảnh này.
+             *     Cả ba field ảnh có thể là URL tuyệt đối (link gốc, hoặc bản Cloudinary với
+             *     thư viện admin) hoặc URL tương đối `/local-images/{file}` (ảnh lưu trên máy
+             *     với thư viện không phải admin, Host phục vụ). Client dùng thẳng làm `src`.
              */
             bannerPath?: string | null;
             /** @description POSTER dọc từ IGDB t_cover_big_2x cho Console mode. Không lấy từ Steam. */
@@ -4614,8 +5108,23 @@ export interface components {
             name: string;
             source: components["schemas"]["GameSyncSource"];
         };
-        /** @description Dữ liệu preview từ provider ngoài, chỉ để điền draft. Endpoint không ghi DB. */
+        GameMetadataPreviewWarning: {
+            /** @description metadata | igdb | rawg | steam */
+            provider: string;
+            /** @description Ví dụ RAWG_NOT_CONFIGURED, RAWG_KEY_INVALID, RAWG_RATE_LIMITED, IGDB_NOT_CONFIGURED, IGDB_REQUEST_FAILED. */
+            code: string;
+            message: string;
+        };
+        /** @description Dữ liệu preview chỉ để điền draft; endpoint không ghi DB. Nguồn theo thứ tự: game ĐÃ XUẤT BẢN trong kho metadata có tên giống nhất trước, field nào kho thiếu mới gọi IGDB / RAWG / Steam (bằng tên chuẩn của game kho). Field null = không nguồn nào có — client giữ giá trị đang có. */
         GameMetadataPreview: {
+            /**
+             * Format: int64
+             * @description Game kho metadata đã dùng làm nguồn chính; null = không khớp game nào.
+             */
+            metadataGameId?: number | null;
+            metadataGameName?: string | null;
+            /** @description Nguồn không đóng góp được và lý do (thiếu key, key sai, timeout...). Client phải hiển thị. */
+            warnings?: components["schemas"]["GameMetadataPreviewWarning"][];
             name?: string | null;
             developer?: string | null;
             publisher?: string | null;
@@ -4624,13 +5133,14 @@ export interface components {
             publishDate?: string | null;
             metaScore?: number | null;
             avgPlaytimeHours?: number | null;
+            /** @description Tên file chạy lưu trong kho metadata cho game khớp. Không còn đoán bằng Gemini. */
             exeName?: string | null;
             isDlc?: boolean | null;
             /** Format: uri */
             bannerPath?: string | null;
             /**
              * Format: uri
-             * @description RAWG background_image; RAWG không có thì Steam library_hero (cũng là ảnh sạch, không chữ).
+             * @description Kho metadata; thiếu thì RAWG background_image; RAWG không có thì Steam library_hero (cũng là ảnh sạch, không chữ).
              */
             backdropPath?: string | null;
             /** Format: uri */
@@ -4672,13 +5182,33 @@ export interface components {
                 launch?: boolean;
                 filePicker?: boolean;
                 revealFolder?: boolean;
+                /**
+                 * @description Host điều khiển được tiến trình Tray trên máy (GET /api/tray/status, bật/tắt dịch vụ,
+                 *     quét ngay, mở log). Tray có đang chạy hay không thì xem `TrayStatus.running`.
+                 */
                 tray?: boolean;
                 scanner?: boolean;
                 controller?: boolean;
-                /** @description Host có credential Cloudinary và chạy được POST /api/tray/sync-images (không cần tiến trình Tray). */
+                /** @description Chạy được POST /api/tray/sync-images (trong Host, không cần tiến trình Tray). Thư viện không phải admin luôn `true` (ảnh lưu trên máy); thư viện admin cần credential Cloudinary. */
                 imageSync?: boolean;
                 /** @description Tính năng backup save game đang bật (thư mục backup gốc, thư mục backup từng game, POST /api/games/{id}/backup-folder/generate). Hiện tạm tắt → false; client ẩn mọi UI backup. */
                 backup?: boolean;
+            };
+        };
+        TrayStatus: {
+            /** @description Tiến trình Tray đang chạy và trả lời Host. `false` thì `services` rỗng. */
+            running: boolean;
+            services: components["schemas"]["TrayServiceStatus"][];
+            startWithWindows: boolean;
+        };
+        TrayServiceStatus: {
+            /** @enum {string} */
+            name: "playtime" | "scanner" | "backup";
+            enabled: boolean;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+            detail?: {
+                [key: string]: unknown;
             };
         };
         ImageSyncRoleCounts: {
@@ -4703,7 +5233,7 @@ export interface components {
             failures: components["schemas"]["ImageSyncFailure"][];
         };
         /** @enum {string} */
-        IntegrationProvider: "rawg" | "igdb" | "steam" | "cloudinary" | "gemini";
+        IntegrationProvider: "rawg" | "igdb" | "cloudinary" | "gemini";
         IntegrationLastTest: {
             /** @enum {string} */
             status: "never_tested" | "passed" | "failed";
@@ -4767,6 +5297,21 @@ export interface components {
              * @enum {string}
              */
             jungleWeather: "clear" | "rain";
+            /**
+             * @description Mode cuối cùng của app. UI ghi mỗi lần vào/thoát console session (F10,
+             *     LB+RB+A, tray); lần mở app sau vào lại đúng mode này. Thuộc config dùng
+             *     chung — KHÔNG lưu localStorage.
+             * @default desktop
+             * @enum {string}
+             */
+            appMode: "desktop" | "console";
+            /**
+             * @description Hướng dẫn UI người dùng đã xem xong: `gameForm` (lần đầu mở form thêm game),
+             *     `viewModes` (sau khi thêm game đầu tiên — tác dụng từng view và thứ tự riêng).
+             *     PUT gửi `null`/bỏ field = giữ nguyên; gửi mảng (kể cả rỗng) = thay cả danh sách,
+             *     mảng rỗng = xem lại toàn bộ hướng dẫn. Thuộc config — KHÔNG lưu localStorage.
+             */
+            seenGuides?: ("gameForm" | "viewModes")[];
             backupRootPath?: string;
             databasePath?: string;
             /** @description Tách CONFIG khỏi RUNTIME. Không gộp làm một như bản Lovable. */
@@ -4801,6 +5346,48 @@ export interface components {
             systemKey: string;
             colorCode?: string | null;
             count: number;
+        };
+        /**
+         * @description Một mốc nhắc game trong thư viện sắp ra mắt (DOMAIN_RULES §22). Backend quyết định
+         *     mốc nào hiện; client chỉ render và format `releaseAt` theo `timeZone` của feed.
+         */
+        ReleaseNotification: {
+            /** @description "{gameId}:{stage}:{publishDate}" — mờ với client, chỉ gửi lại để đánh dấu đã xem. */
+            id: string;
+            gameId: string;
+            gameName: string;
+            bannerPath?: string | null;
+            posterPath?: string | null;
+            /**
+             * @description soon = còn 1..3 ngày theo lịch địa phương; today = đúng ngày ra mắt.
+             * @enum {string}
+             */
+            stage: "soon" | "today";
+            /** @description Số ngày lịch theo múi giờ `timeZone` tới ngày ra mắt. */
+            daysLeft: number;
+            /**
+             * Format: date
+             * @description Ngày phát hành theo UTC, như lưu trong thư viện.
+             */
+            publishDate: string;
+            /**
+             * Format: date-time
+             * @description Mốc ra mắt = 00:00 UTC của `publishDate`.
+             */
+            releaseAt: string;
+            read: boolean;
+        };
+        ReleaseNotificationFeed: {
+            /** @description Múi giờ server đã dùng để tính `daysLeft` và `stage`. */
+            timeZone: string;
+            /** Format: date-time */
+            generatedAt: string;
+            unreadCount: number;
+            /** @description Server đã sắp — ngày ra mắt gần nhất trước. */
+            items: components["schemas"]["ReleaseNotification"][];
+        };
+        MarkReleaseNotificationsReadRequest: {
+            ids: string[];
         };
         DashboardStats: {
             totalGames?: number;

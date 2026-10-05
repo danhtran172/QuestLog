@@ -4,6 +4,7 @@ import { AuthScreen } from "./AuthScreen";
 import { PasswordChangeScreen } from "./PasswordChangeScreen";
 import { UsernameClaimScreen } from "./UsernameClaimScreen";
 import { useAuth } from "@/lib/auth";
+import { SettingsLanguageGate } from "@/lib/languageSettings";
 
 /**
  * Man hinh cho trong luc dang kiem tra phien dang nhap. Truoc day cho nay tra
@@ -32,5 +33,5 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (status !== "signedIn" && status !== "guest") return <AuthScreen />;
   if (account?.onboarding === "usernameRequired") return <UsernameClaimScreen />;
   if (account?.mustChangePassword) return <PasswordChangeScreen />;
-  return children;
+  return <SettingsLanguageGate fallback={<LoadingSplash />}>{children}</SettingsLanguageGate>;
 }

@@ -23,7 +23,7 @@ Cập nhật lần cuối: 2026-09-04
 
 | # | Tính năng | Điều khoản | Màn hình | TT |
 |---|---|---|---|---|
-| A1 | Filter Genre/Theme (OR giữa 2 nhóm) | DOMAIN §5.7 | Library | ⬜ |
+| A1 | Filter Genre/Theme (OR giữa 2 nhóm) | DOMAIN §5.7 | Library | 🟨 Host nhận `genreIds`/`themeIds` (+ `progressKeys`/`ownershipKeys` §5.8), unit test `LibraryFilterTests`; FilterDialog có chip + tìm ở server. Chưa đối chiếu trên DB thật |
 | A2 | Card field visibility động (`cardHints`) | DOMAIN §17 | Library | 🟨 |
 | A3 | DLC (`isDlc`, `baseGameId`) | DOMAIN §13 | Editor | ✅ Editor dùng selector base game từ API; backend validate game gốc và chặn tự tham chiếu |
 | A4 | Lịch sử hoàn thành nhiều lần (`GameFinish[]`) | DOMAIN §9 | Editor/Detail | ✅ Detail hiển thị toàn bộ lịch sử; Editor sửa riêng tháng/năm từng lần qua API thật |

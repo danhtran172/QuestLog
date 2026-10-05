@@ -4,8 +4,7 @@
 
 Mục tiêu là tạo kho metadata dùng chung và cho phép admin, user và guest thêm game vào thư viện local theo đúng quyền.
 
-- Admin: Manual hoặc From metadata.
-- User và guest: chỉ From metadata.
+- Admin, user và guest: Manual hoặc From metadata *(trước 2026-10-05 Manual chỉ dành cho admin)*.
 - Metadata dùng chung: Supabase.
 - Userdata và dữ liệu thiết bị: SQLite local.
 - Không gọi IGDB trực tiếp từ luồng tìm kiếm.
@@ -88,7 +87,7 @@ Response luôn có cùng shape, gồm trạng thái từng item và tổng số 
 
 `PATCH /api/games/{id}/userdata` chỉ cập nhật userdata/device data và kiểm tra owner. Metadata-derived game không đổi metadata qua endpoint này.
 
-`POST /api/games` giữ flow manual hiện tại nhưng backend bắt buộc admin; game manual có `MetadataGameId = null`.
+`POST /api/games` giữ flow manual hiện tại, mở cho mọi owner (trước 2026-10-05 bắt buộc admin); game manual có `MetadataGameId = null`, scope theo owner, `BaseGameId` phải cùng owner.
 
 ### 5.4. Errors
 
