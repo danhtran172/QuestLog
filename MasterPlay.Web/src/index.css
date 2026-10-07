@@ -26,31 +26,40 @@
   --shadow-lift: 0 2px 6px oklch(0.12 0.01 150 / 0.32), 0 20px 44px oklch(0.08 0.01 150 / 0.45);
 
   /*
-    CO CHU co gian theo be rong man hinh, giu dung ti le o moi kich thuoc.
-    Thiet ke cho 1920px: --font-unit = 1px o 1920, 0.5px o 960, 1.33px o 2560.
-    Chi CHU doi — khoang cach, icon, kich thuoc nut van theo rem/px nhu cu.
-    Dung text-xs..text-4xl hoac text-fs-N (N = so px o 1920), KHONG viet
-    text-[Npx] vi gia tri px co dinh se khong co gian.
+    CO CHU — thang chu "fluid" co CHAN va TRAN (noi suy tuyen tinh + clamp).
+
+    Ban cu nhan thang co chu voi 100vw/1920, khong chan khong tran: cua so
+    1500px -> chu 0.78x (text-xs con 9.4px), man 2560 phong to -> 1.33x, trong
+    khi khoang cach/icon/nut van theo rem nen chu va khung lech nhau.
+
+    Ban nay moi bac co hai moc: MIN o cua so <= 1024px, MAX o >= 1920px (dung
+    co thiet ke cu), o giua noi suy tuyen tinh theo --type-t. Ngoai khoang do
+    chu dung yen, nen phong to len man lon KHONG phinh them.
+    Chu nho (xs, sm, fs-N) giu co dinh — chung da sat nguong doc, khong duoc co lai.
+    Chu cang to thi bien do co gian cang lon (tieu de co ~19%, chu than ~6%).
+
+    Dung text-xs..text-4xl hoac text-fs-N (N = so px), KHONG viet text-[Npx].
   */
-  --text-xs: calc(12 * var(--font-unit));
-  --text-sm: calc(14 * var(--font-unit));
-  --text-base: calc(16 * var(--font-unit));
-  --text-lg: calc(18 * var(--font-unit));
-  --text-xl: calc(20 * var(--font-unit));
-  --text-2xl: calc(24 * var(--font-unit));
-  --text-3xl: calc(30 * var(--font-unit));
-  --text-4xl: calc(36 * var(--font-unit));
-  --text-fs-5: calc(5 * var(--font-unit));
-  --text-fs-6: calc(6 * var(--font-unit));
-  --text-fs-8: calc(8 * var(--font-unit));
-  --text-fs-9: calc(9 * var(--font-unit));
-  --text-fs-10: calc(10 * var(--font-unit));
-  --text-fs-11: calc(11 * var(--font-unit));
-  --text-fs-12: calc(12 * var(--font-unit));
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: calc(15px + 1 * var(--type-t));
+  --text-lg: calc(17px + 1 * var(--type-t));
+  --text-xl: calc(18px + 2 * var(--type-t));
+  --text-2xl: calc(21px + 3 * var(--type-t));
+  --text-3xl: calc(25px + 5 * var(--type-t));
+  --text-4xl: calc(29px + 7 * var(--type-t));
+  --text-fs-5: 5px;
+  --text-fs-6: 6px;
+  --text-fs-8: 8px;
+  --text-fs-9: 9px;
+  --text-fs-10: 10px;
+  --text-fs-11: 11px;
+  --text-fs-12: 12px;
 }
 
 :root {
-  --font-unit: calc(100vw / 1920);
+  /* Tien do co gian cua chu: 0px o cua so <= 1024px, 1px o >= 1920px. */
+  --type-t: clamp(0px, (100vw - 1024px) / 896, 1px);
 }
 
 /* Tailwind v4 chi sinh utility mau tu token nam trong @theme.
@@ -405,7 +414,7 @@
   body {
     background-color: var(--color-bg);
     color: var(--color-fg);
-    /* Chu khong co class co cung theo --font-unit, khong dung 1rem co dinh. */
+    /* Chu khong co class cung theo thang chu o tren, khong dung 1rem co dinh. */
     font-size: var(--text-base);
     -webkit-font-smoothing: antialiased;
     transition:
