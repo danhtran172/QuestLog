@@ -3916,6 +3916,9 @@ export interface paths {
          * SSE stream
          * @description Sự kiện: runningProcesses, refresh, trayNotification, syncProgress.
          *     Thay thế cơ chế WeakReferenceMessenger + GlobalEvents của bản WPF (mismatch M40).
+         *     Hiện mới phát `runningProcesses` (payload: RunningProcessesEvent). Không có gì mới
+         *     thì 20s gửi một dòng chú thích `: ping`. Cần header Bearer như mọi route khác,
+         *     nên client đọc bằng fetch thay vì EventSource.
          */
         get: {
             parameters: {
@@ -3935,6 +3938,7 @@ export interface paths {
                         "text/event-stream": string;
                     };
                 };
+                401: components["responses"]["Unauthorized"];
             };
         };
         put?: never;
@@ -5068,7 +5072,7 @@ export interface components {
             readonly isUpcoming: boolean;
             /** @description Kết quả scan. UI KHÔNG sửa được. */
             ready: boolean;
-            /** @description Từ process monitor */
+            /** @description GameProcessMonitor đo mỗi 2s: có tiến trình trùng `exeName` hoặc trùng file exe của `launchTarget` (chung quy tắc với playtime tracking). Thay đổi đẩy qua SSE `runningProcesses`. */
             isRunning: boolean;
             /** @description Backend quyết định. UI chỉ hiện/ẩn nút Play. */
             canLaunch: boolean;
@@ -5194,6 +5198,14 @@ export interface components {
                 /** @description Tính năng backup save game đang bật (thư mục backup gốc, thư mục backup từng game, POST /api/games/{id}/backup-folder/generate). Hiện tạm tắt → false; client ẩn mọi UI backup. */
                 backup?: boolean;
             };
+        };
+        /**
+         * @description Payload (`data:`) của sự kiện SSE `runningProcesses` trên `GET /api/events`.
+         *     Gửi ngay khi kết nối, sau đó mỗi khi tập game đang chạy của chủ thư viện đổi.
+         *     Danh sách đầy đủ — client thay thế, không cộng dồn.
+         */
+        RunningProcessesEvent: {
+            gameIds: string[];
         };
         TrayStatus: {
             /** @description Tiến trình Tray đang chạy và trả lời Host. `false` thì `services` rỗng. */

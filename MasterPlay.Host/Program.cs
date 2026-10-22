@@ -100,6 +100,8 @@ builder.Services.AddHostedService<BootstrapAdminService>();
 builder.Services.AddHostedService<IntegrationCredentialWarmupService>();
 builder.Services.AddSingleton<ImageAutoSyncQueue>();
 builder.Services.AddHostedService<ImageAutoSyncService>();
+builder.Services.AddSingleton(RunningGamesRegistry.Shared);
+builder.Services.AddHostedService<GameProcessMonitor>();
 builder.Services.AddRateLimiter(rateLimiterOptions =>
 {
     rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -1014,6 +1016,63 @@ app.MapPost("/api/tray/{action}", async (string action, CancellationToken cancel
     return TrayCommandResult(
         await TrayControlClient.SendAsync(new TrayControlRequest(command), cancellationToken),
         StatusCodes.Status202Accepted);
+});
+
+/*
+ * SSE /api/events. Hien moi co `runningProcesses`: gui ngay danh sach game dang chay cua
+ * chu thu vien khi ket noi, sau do moi lan tap do doi. Khong co gi moi thi 20s gui mot
+ * dong `: ping` de ket noi khong bi cat vi im lang. Client doc bang fetch vi can header
+ * Bearer — EventSource khong gui duoc header.
+ */
+app.MapGet("/api/events", async Task<IResult> (HttpContext context, RunningGamesRegistry runningGames) =>
+{
+    if (!TryGetLibraryOwnerKey(context, out var ownerKey))
+        return AuthErrorResult(401, "AUTH_REQUIRED", "Sign in or continue as guest to receive events.");
+
+    var cancellationToken = context.RequestAborted;
+    var response = context.Response;
+    response.Headers.ContentType = "text/event-stream";
+    response.Headers.CacheControl = "no-cache";
+    response.Headers["X-Accel-Buffering"] = "no";
+    context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()?.DisableBuffering();
+
+    using var changed = new SemaphoreSlim(0, 1);
+    using var subscription = runningGames.Subscribe(() =>
+    {
+        // Nhieu thay doi lien tiep gop thanh mot lan danh thuc; vong lap luon gui snapshot
+        // moi nhat. Monitor co the goi ngay sau khi ket noi vua dong -> bo qua.
+        try { changed.Release(); }
+        catch (SemaphoreFullException) { }
+        catch (ObjectDisposedException) { }
+    });
+
+    var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    IReadOnlyList<string>? sent = null;
+    try
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var current = runningGames.ForOwner(ownerKey);
+            if (sent is null || !current.SequenceEqual(sent))
+            {
+                var payload = JsonSerializer.Serialize(new RunningProcessesEventDto(current), jsonOptions);
+                await response.WriteAsync($"event: runningProcesses\ndata: {payload}\n\n", cancellationToken);
+                sent = current;
+            }
+            else
+            {
+                await response.WriteAsync(": ping\n\n", cancellationToken);
+            }
+
+            await response.Body.FlushAsync(cancellationToken);
+            await changed.WaitAsync(TimeSpan.FromSeconds(20), cancellationToken);
+        }
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+    }
+
+    return Results.Empty;
 });
 
 app.MapGet("/api/metadata/games", async (
@@ -4219,8 +4278,8 @@ static GameListItemDto ToDto(Game g, bool canLaunch)
         IsUpcoming: g.PublishDate.HasValue &&
             g.PublishDate.Value > DateOnly.FromDateTime(DateTime.Now),
         Ready: g.Ready,
-        // TODO(A11): lay tu GameProcessMonitor qua SSE.
-        IsRunning: false,
+        // GameProcessMonitor do moi 2s; thay doi sau do di qua SSE /api/events.
+        IsRunning: RunningGamesRegistry.Shared.IsRunning(g.Id),
         CanLaunch: canLaunch,
         // TODO(A10): tinh theo GameViewModel.CheckFolderWarning.
         FolderWarning: null,

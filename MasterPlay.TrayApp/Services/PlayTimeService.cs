@@ -1,8 +1,8 @@
 using MasterPlay.Infrastructure.Data.Services;
+using MasterPlay.Infrastructure.Processes;
 using MasterPlay.Core.Entities;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace MasterPlay.TrayApp.Services;
@@ -155,7 +155,7 @@ public sealed class PlayTimeService : IDisposable
     {
         try
         {
-            _games = DataService.LoadActiveGames();
+            _games = DataService.LoadWatchedGames();
             return true;
         }
         catch (Exception ex)
@@ -183,37 +183,19 @@ public sealed class PlayTimeService : IDisposable
         GetWindowThreadProcessId(foregroundWindow, out var foregroundProcessId);
         var userIsActive = GetIdleTime() < IdleThreshold;
         var currentlyRunning = new Dictionary<string, Game>(StringComparer.Ordinal);
+        // Cung anh chup va quy tac khop ExeName voi GameProcessMonitor cua Host (isRunning),
+        // nen game hien "Playing" tren UI cung chinh la game dang duoc dem gio.
+        var processes = GameProcessSnapshot.Capture();
 
         foreach (var game in _games)
         {
-            var processName = NormalizeProcessName(game.ExeName);
-            if (processName.Length == 0)
+            var processIds = processes.ProcessIdsFor(game);
+            if (processIds.Count == 0)
                 continue;
 
-            Process[] processes;
-            try
-            {
-                processes = Process.GetProcessesByName(processName);
-            }
-            catch
-            {
-                continue;
-            }
-
-            try
-            {
-                if (processes.Length == 0)
-                    continue;
-
-                currentlyRunning[game.Id] = game;
-                if (userIsActive && processes.Any(x => x.Id == foregroundProcessId))
-                    _pendingSeconds.AddOrUpdate(game.Id, (int)SampleInterval.TotalSeconds, (_, value) => value + (int)SampleInterval.TotalSeconds);
-            }
-            finally
-            {
-                foreach (var process in processes)
-                    process.Dispose();
-            }
+            currentlyRunning[game.Id] = game;
+            if (userIsActive && processIds.Contains((int)foregroundProcessId))
+                _pendingSeconds.AddOrUpdate(game.Id, (int)SampleInterval.TotalSeconds, (_, value) => value + (int)SampleInterval.TotalSeconds);
         }
 
         // Giu ca doi tuong Game chu khong chi Id: game vua bi go khoi danh sach
@@ -304,11 +286,6 @@ public sealed class PlayTimeService : IDisposable
         {
             _flushLock.Release();
         }
-    }
-
-    private static string NormalizeProcessName(string? executableName)
-    {
-        return Path.GetFileNameWithoutExtension(executableName?.Trim() ?? string.Empty);
     }
 
     private static TimeSpan GetIdleTime()

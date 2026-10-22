@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronsLeft, ChevronsRight, Gamepad2, Play, RotateCcw } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Gamepad2, Loader2, Play, RotateCcw } from "lucide-react";
+import { PlayingPill } from "./GameCard";
 import type { GameListItem } from "@/lib/api/domain";
 import { cn } from "@/lib/utils";
 
@@ -150,6 +151,9 @@ export function ConsoleLibraryView({
   moreGamesLabel,
   continueLabel,
   playLabel,
+  playingLabel,
+  launchingLabel,
+  launchingGameId,
   exitHoldLabel,
   exitHoldSource,
   exitHoldDurationMs,
@@ -173,6 +177,10 @@ export function ConsoleLibraryView({
   moreGamesLabel: string;
   continueLabel: string;
   playLabel: string;
+  playingLabel: string;
+  launchingLabel: string;
+  /** Game vua bam Play ma Host chua bao dang chay (trang thai giao dien cua App). */
+  launchingGameId: string | null;
   exitHoldLabel: string;
   exitHoldSource: "keyboard" | "gamepad" | null;
   exitHoldDurationMs: number;
@@ -299,14 +307,22 @@ export function ConsoleLibraryView({
                   </span>
                 ) : null}
               </div>
-              {selectedGame.canLaunch ? (
+              {/* Dang chay (`isRunning` tu backend) thi thay nut bang trang thai, khong mo them lan nua. */}
+              {selectedGame.isRunning ? (
+                <PlayingPill label={playingLabel} className="mx-auto mt-4 rounded-xl" />
+              ) : selectedGame.canLaunch ? (
                 <button
                   type="button"
                   onClick={() => onPlayGame(selectedGame.id)}
-                  className="pointer-events-auto mx-auto mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/45 bg-primary px-4 py-2 text-sm font-black text-primary-fg shadow-lg outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-white/70"
+                  disabled={launchingGameId === selectedGame.id}
+                  className="pointer-events-auto mx-auto mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/45 bg-primary px-4 py-2 text-sm font-black text-primary-fg shadow-lg outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-white/70 disabled:cursor-wait disabled:opacity-80 disabled:hover:brightness-100"
                 >
-                  <Play aria-hidden size={16} fill="currentColor" />
-                  {playLabel}
+                  {launchingGameId === selectedGame.id ? (
+                    <Loader2 aria-hidden size={16} className="animate-spin" />
+                  ) : (
+                    <Play aria-hidden size={16} fill="currentColor" />
+                  )}
+                  {launchingGameId === selectedGame.id ? launchingLabel : playLabel}
                 </button>
               ) : null}
             </div>

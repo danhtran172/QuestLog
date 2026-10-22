@@ -468,6 +468,9 @@ public record CapabilitiesDto(string Mode, CapabilityFeaturesDto Features);
 
 public sealed record TrayServiceStatusDto(string Name, bool Enabled);
 
+/// <summary>Su kien SSE `runningProcesses` cua `GET /api/events`: id game dang chay cua chu thu vien.</summary>
+public sealed record RunningProcessesEventDto(IReadOnlyList<string> GameIds);
+
 /// <summary>`GET /api/tray/status`. Tray khong chay thi Running = false, Services rong.</summary>
 public sealed record TrayStatusDto(bool Running, IReadOnlyList<TrayServiceStatusDto> Services, bool StartWithWindows);
 

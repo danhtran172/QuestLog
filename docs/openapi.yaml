@@ -1002,7 +1002,7 @@ components:
           readOnly: true
           description: Backend tính `publishDate > ngày hiện tại`; client chỉ hiển thị.
         ready: { type: boolean, description: Kết quả scan. UI KHÔNG sửa được. }
-        isRunning: { type: boolean, description: Từ process monitor, đẩy qua SSE. }
+        isRunning: { type: boolean, description: "GameProcessMonitor đo mỗi 2s: có tiến trình trùng `exeName` hoặc trùng file exe của `launchTarget` (chung quy tắc với playtime tracking). Thay đổi đẩy qua SSE `runningProcesses`." }
         canLaunch: { type: boolean, description: Backend quyết định. UI chỉ hiện/ẩn nút Play. }
         folderWarning: { type: [string, "null"], description: Đã localize. }
         baseGameId: { type: [string, "null"], description: DLC → id base game (card đổi ngày phát hành thành chip base game). }
@@ -1158,6 +1158,18 @@ components:
             backup:
               type: boolean
               description: Tính năng backup save game đang bật (thư mục backup gốc, thư mục backup từng game, POST /api/games/{id}/backup-folder/generate). Hiện tạm tắt → false; client ẩn mọi UI backup.
+
+    RunningProcessesEvent:
+      type: object
+      description: |
+        Payload (`data:`) của sự kiện SSE `runningProcesses` trên `GET /api/events`.
+        Gửi ngay khi kết nối, sau đó mỗi khi tập game đang chạy của chủ thư viện đổi.
+        Danh sách đầy đủ — client thay thế, không cộng dồn.
+      required: [gameIds]
+      properties:
+        gameIds:
+          type: array
+          items: { type: string }
 
     TrayStatus:
       type: object
@@ -3192,12 +3204,16 @@ paths:
       description: |
         Sự kiện: runningProcesses, refresh, trayNotification, syncProgress.
         Thay thế cơ chế WeakReferenceMessenger + GlobalEvents của bản WPF (mismatch M40).
+        Hiện mới phát `runningProcesses` (payload: RunningProcessesEvent). Không có gì mới
+        thì 20s gửi một dòng chú thích `: ping`. Cần header Bearer như mọi route khác,
+        nên client đọc bằng fetch thay vì EventSource.
       responses:
         '200':
           description: text/event-stream
           content:
             text/event-stream:
               schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ---------- NATIVE — chỉ Local API. Hosted trả 501 ----------
 

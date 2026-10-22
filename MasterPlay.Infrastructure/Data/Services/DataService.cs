@@ -4,6 +4,7 @@ using MasterPlay.Core;
 using MasterPlay.Core.Entities;
 using MasterPlay.Infrastructure.Data.Repositories;
 using MasterPlay.Infrastructure.Data.Schema;
+using MasterPlay.Infrastructure.Processes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 using System;
@@ -213,11 +214,12 @@ namespace MasterPlay.Infrastructure.Data.Services
             }
         }
 
-        public static List<Game> LoadActiveGames()
+        /// <summary>Game duoc dem gio choi — cung danh sach voi isRunning cua Host (GameProcessWatch).</summary>
+        public static List<Game> LoadWatchedGames()
         {
-            using (var uow = new UnitOfWork(new MasterPlayContext()))
+            using (var context = new MasterPlayContext())
             {
-                return uow.Games.GetActiveGames().ToList();
+                return context.Games.AsNoTracking().Where(GameProcessWatch.Watchable).ToList();
             }
         }
 

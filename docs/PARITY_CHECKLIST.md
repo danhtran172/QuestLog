@@ -33,7 +33,7 @@ Cập nhật lần cuối: 2026-09-04
 | A8 | Generate Backup Folder | API §8 | Editor | ✅ Backend tạo tên thư mục duy nhất, ghi `SaveLocation.txt`; Editor cập nhật path và hiển thị lỗi |
 | A9 | Mở Save/Backup folder (2 nút riêng) | API §8 | Detail | ✅ Hai nút icon gọi `/api/fs/reveal`; tự ẩn khi capability không hỗ trợ và hiển thị lỗi API |
 | A10 | Cảnh báo thiếu folder trên card | DOMAIN §11 | Library | 🟨 |
-| A11 | Trạng thái "đang chơi" thật (SSE) | DOMAIN §11 | Library | 🟨 |
+| A11 | Trạng thái "đang chơi" thật (SSE) | DOMAIN §11 | Library | ✅ |
 | A12 | Promote to Next Play | DOMAIN §8.4 | Card/Queue | ⬜ |
 | A13 | Quy tắc nghiệp vụ kéo-thả Queue | DOMAIN §8.2 | Queue | ✅ API thật nhận `gameIds[]`, cập nhật Progress + PlayOrder trong transaction |
 | A14 | Chuẩn hoá + persist thứ tự queue | DOMAIN §8.3 | Queue | ✅ `GET /api/queue` chuẩn hoá và persist thứ tự |

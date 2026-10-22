@@ -31,6 +31,7 @@ import { useI18n } from "@/lib/i18n";
 import { useGames } from "@/lib/useGames";
 import { useLibraryMetadataRefresh } from "@/lib/useLibraryMetadataRefresh";
 import { usePlayQueue } from "@/lib/usePlayQueue";
+import { useRunningGames } from "@/lib/useRunningGames";
 import { useControllerExperience } from "@/lib/useControllerExperience";
 import { useAppModeMemory } from "@/lib/useAppModeMemory";
 import { toggleFullscreen } from "@/lib/desktopBridge";
@@ -124,6 +125,9 @@ const ConsoleLibraryView = lazy(() => import("@/components/ConsoleLibraryView").
   (module) => ({ default: module.ConsoleLibraryView }),
 ));
 
+/** Bam Play ma sau chung nay game van chua chay (launcher cham, mo loi...) thi nut tro lai Play. */
+const LAUNCH_PENDING_MS = 30_000;
+
 export default function App() {
   const { t } = useI18n();
   const { account, status: authStatus, logout } = useAuth();
@@ -193,10 +197,23 @@ export default function App() {
   const trayRunning = caps?.features?.tray === true;
   const launchGame = useMutation({
     mutationFn: (gameId: string) => gameDetailApi.launch(gameId),
+    onSuccess: (_, gameId) => setLaunchedGameId(gameId),
     onError: (launchError) => toast.error(
       launchError instanceof Error ? launchError.message : String(launchError),
     ),
   });
+  /* Vua bam Play: nut hien "Dang mo" toi khi SSE bao game dang chay (nut tu doi sang
+     Playing) hoac het LAUNCH_PENDING_MS. Chi la trang thai giao dien — game co chay hay
+     khong van do `isRunning` cua backend quyet dinh. */
+  const [launchedGameId, setLaunchedGameId] = useState<string | null>(null);
+  useEffect(() => {
+    if (launchedGameId == null) return;
+    const timer = setTimeout(() => setLaunchedGameId(null), LAUNCH_PENDING_MS);
+    return () => clearTimeout(timer);
+  }, [launchedGameId]);
+  const launchingGameId = launchGame.isPending ? launchGame.variables : launchedGameId;
+  useRunningGames(caps?.features?.launch === true, (eventsError) =>
+    toast.error(`${t("events.runningUnavailable")} ${eventsError.message}`));
 
   const { data, isPending, isError, error, refetch } = useGames(
     {
@@ -499,6 +516,9 @@ export default function App() {
             moreGamesLabel={t("controller.moreGames").replace("{count}", String(remainingGameCount))}
             continueLabel={t("controller.continueBrowsing")}
             playLabel={t("action.play")}
+            playingLabel={t("action.playing")}
+            launchingLabel={t("action.launching")}
+            launchingGameId={launchingGameId}
             exitHoldLabel={t("controller.holdToExit")}
             exitHoldSource={controller.exitHoldSource}
             exitHoldDurationMs={controller.exitHoldDurationMs}
@@ -935,6 +955,7 @@ export default function App() {
                 game={game}
                 hints={data?.cardHints}
                 onOpen={() => openDetail(game.id)}
+                launching={launchingGameId === game.id}
                 onPlay={() => launchGame.mutate(game.id)}
               />
             ))}

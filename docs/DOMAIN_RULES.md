@@ -486,7 +486,7 @@ giữ cột InitExeName (deprecated) cho tới khi xác nhận migrate sạch
 |---|---|---|
 | `ready` | `LibraryService` (scanner) | **Kết quả quét**, không phải người dùng nhập. ⚠️ Mismatch M11: Lovable set `= !!exeName` khi gõ tay — sai bản chất. |
 | `folderWarning` | Backend tính | `string \| null`, lý do cảnh báo thiếu folder. |
-| `isRunning` | `GameProcessMonitor` | Đẩy qua SSE, poll 2s, chỉ phát khi snapshot đổi. |
+| `isRunning` | `GameProcessMonitor` (Host) | Đẩy qua SSE, poll 2s, chỉ phát khi snapshot đổi. Game được theo dõi = không DLC, không disabled, có `exeName` **hoặc** `launchTarget` kiểu exe (`GameProcessWatch`, **không** đòi `ready`). Đang chạy = có tiến trình trùng `exeName` **hoặc** trùng file exe của `launchTarget` (launcher kiểu "Play X.exe" có thể chạy game ngay trong tiến trình của nó). Cả danh sách lẫn quy tắc khớp (`GameProcessSnapshot`) dùng **chung** với playtime tracking của Tray, nên game "Playing" trên UI và game đang được đếm giờ luôn là một. Host tự đo chứ không hỏi Tray: Tray tắt hay tắt playtime tracking thì nút Play vẫn phải biết game đang chạy. |
 | `createAt` | DB | Không sửa. |
 | `library.valid`, `library.exeCount` | Scanner | **Dữ liệu runtime, KHÔNG phải config.** Mismatch M13: phải tách khỏi `Config.GameLibraryPath` (vốn chỉ là `string[]`). |
 

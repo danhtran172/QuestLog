@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, Gamepad2, Package, Play, Trophy } from "lucide-react";
+import { AlertTriangle, CalendarDays, Gamepad2, Loader2, Package, Play, Trophy } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { CardBush } from "@/jungle/CardDecor";
@@ -48,11 +48,14 @@ export function GameCardSkeleton() {
 export function GameCard({
   game,
   hints,
+  launching = false,
   onOpen,
   onPlay,
 }: {
   game: GameListItem;
   hints?: CardHints;
+  /** Vua bam Play, Host chua bao game chay — trang thai giao dien do App giu. */
+  launching?: boolean;
   onOpen: () => void;
   onPlay: () => void;
 }) {
@@ -89,7 +92,9 @@ export function GameCard({
         // Rong 100% cot luoi (cot toi thieu 270px roi gian ra lap day) —
         // neu de cung 270px va canh giua thi phan thua bi don het ra hai mep.
         "game-card surface-card group relative flex w-full flex-col",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-primary/45",
+        // Nen sang len mot bac den khi hover — chi card game; dialog cung dung
+        // surface-card nhung phai giu nguyen lop kinh.
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-primary/45 hover:bg-surface-2/62",
         "hover:shadow-[0_18px_45px_-18px_color-mix(in_oklab,var(--color-primary)_55%,transparent)]",
       )}
     >
@@ -135,17 +140,6 @@ export function GameCard({
           <div className="absolute inset-0 bg-primary-deep/15 opacity-0 backdrop-blur-[1.5px] transition-opacity duration-200 group-hover:opacity-100" />
 
           <GameCoverFlags isDlc={game.isDlc} isUpcoming={game.isUpcoming} publishDate={game.publishDate} />
-
-          {game.isRunning ? (
-            <span
-              className={cn(
-                "absolute top-2 inline-flex items-center gap-1 rounded-full bg-success/90 px-2 py-0.5 text-fs-10 font-bold text-primary-fg",
-                game.isDlc ? "left-12" : "left-2",
-              )}
-            >
-              ● {t("action.play")}
-            </span>
-          ) : null}
 
           {game.folderWarning ? (
             <Tooltip label={game.folderWarning}>
@@ -249,20 +243,45 @@ export function GameCard({
         </div>
       </div>
 
-      {game.canLaunch ? (
+      {game.isRunning || game.canLaunch ? (
         <div className="absolute bottom-3 right-3 z-30">
-          {/* `canLaunch` do BACKEND quyet dinh — client khong tu suy tu exeName. */}
-          <IconButton
-            onClick={() => {
-              onPlay();
-            }}
-            label={t("action.play")}
-            icon={<Play className="fill-current" />}
-            tone="play"
-          />
+          {/* `isRunning` va `canLaunch` do BACKEND quyet dinh — client khong tu suy tu exeName.
+              Dang chay thi khong con la nut: bam lan nua se mo game them mot lan. */}
+          {game.isRunning ? (
+            <PlayingPill label={t("action.playing")} />
+          ) : (
+            <IconButton
+              onClick={() => {
+                onPlay();
+              }}
+              disabled={launching}
+              label={launching ? t("action.launching") : t("action.play")}
+              icon={launching ? <Loader2 className="animate-spin" /> : <Play className="fill-current" />}
+              tone="play"
+            />
+          )}
         </div>
       ) : null}
       </article>
     </div>
+  );
+}
+
+/** Thay cho nut Play khi game dang chay (`isRunning` tu SSE `runningProcesses`). */
+export function PlayingPill({ label, className }: { label: string; className?: string }) {
+  return (
+    <span
+      role="status"
+      className={cn(
+        "inline-flex h-9 items-center gap-2 rounded-full bg-success/90 px-3.5 text-sm font-bold text-primary-fg shadow-lg",
+        className,
+      )}
+    >
+      <span aria-hidden className="relative grid size-2.5 place-items-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-60" />
+        <span className="size-2 rounded-full bg-current" />
+      </span>
+      {label}
+    </span>
   );
 }

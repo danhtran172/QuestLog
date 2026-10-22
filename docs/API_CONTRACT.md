@@ -660,7 +660,7 @@ Một endpoint **duy nhất**, nhận `{ name, source }`, resolve provider theo 
 | `GET/PUT` | `/api/settings` | gồm `language`, `themeMode`, Cloudinary, RAWG key, library paths |
 | `POST` | `/api/settings/test-cloudinary` | ping thật |
 | `GET` | `/api/dashboard/stats` | 6 ô thống kê + top-5 playtime — **backend tính**, không tính ở client |
-| `GET` | `/api/events` | **SSE**: `runningProcesses`, `refresh`, `trayNotification`, `syncProgress` |
+| `GET` | `/api/events` | **SSE**: `runningProcesses`, `refresh`, `trayNotification`, `syncProgress`. Hiện mới phát `runningProcesses` (`{ gameIds }`, danh sách đầy đủ của chủ thư viện, gửi ngay khi kết nối rồi mỗi lần đổi; `: ping` mỗi 20s). Cần Bearer → client đọc bằng `fetch`, không dùng `EventSource` |
 | `GET` | `/api/notifications/releases?timeZone=` | Game trong thư viện sắp ra mắt: `stage` `soon` (còn 1..3 ngày) / `today`, kèm `releaseAt` UTC và `read`. Client gửi múi giờ IANA của trình duyệt; tính ngày ở **server** (DOMAIN_RULES §22) |
 | `POST` | `/api/notifications/releases/read` | body `{ ids }` → `204`. Lưu đã xem theo chủ thư viện |
 

@@ -78,7 +78,7 @@ Map từng field trên card:
 
 **Còn thiếu trên card Lovable:**
 - ❌ Cảnh báo thiếu folder (A10) → thêm badge từ `folderWarning`
-- ❌ Icon "đang chơi" thật (A11) → từ `isRunning` qua SSE
+- ✅ Icon "đang chơi" thật (A11) → từ `isRunning` qua SSE: nút Play thành "Playing" (card + Console)
 - ❌ Ẩn/hiện field động theo sort+filter (A2) → dùng `cardHints`
 - ❌ Nút Promote to Next Play (A12)
 

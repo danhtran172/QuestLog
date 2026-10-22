@@ -328,7 +328,8 @@ export function useControllerExperience({
         ? document.activeElement.closest<HTMLElement>("[data-game-id]")?.dataset.gameId
         : null;
       const game = showConsole ? selectedGame : games.find((item) => item.id === focusedGameId);
-      if (game?.canLaunch) {
+      // Dang chay (`isRunning` tu backend) thi khong mo them lan nua.
+      if (game?.canLaunch && !game.isRunning) {
         sound("launch");
         onLaunchGame(game.id);
       } else {
